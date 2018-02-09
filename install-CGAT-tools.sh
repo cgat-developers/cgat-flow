@@ -430,7 +430,7 @@ conda env update --quiet --file pipeline-peakcalling-sicer.yml
 # need to install the CGAT Code Collection as well
 install_cgat_apps() {
 
-log "install cgat scripts"
+log "install cgat core"
 
 OLDWD=`pwd`
 cd $CGAT_HOME

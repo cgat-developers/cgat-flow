@@ -337,7 +337,10 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
       # brute force: modify console_scripts variable/entry point for cgat command
       sed -i'' -e 's/CGATScripts/scripts/g' setup.py
 
-      # need to install the CGAT Code Collection as well
+      # install cgat-core
+      install_cgat_core
+
+      # install cgat-apps
       install_cgat_apps
 
       # Python preparation
@@ -569,7 +572,10 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    # show conda environment used for testing
    conda env export
 
-   # need to install the CGAT Code Collection as well
+   # install cgat-core
+   install_cgat_core
+
+   # install cgat-apps
    install_cgat_apps
 
    # python preparation

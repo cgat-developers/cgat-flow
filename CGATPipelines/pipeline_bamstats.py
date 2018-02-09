@@ -164,7 +164,7 @@ import CGAT.IOTools as IOTools
 from ruffus import *
 
 
-import CGATPipelines.Pipeline as P
+import CGATCore.Pipeline as P
 import CGATPipelines.PipelineBamStats as PipelineBamStats
 
 

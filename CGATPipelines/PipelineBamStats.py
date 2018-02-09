@@ -37,7 +37,7 @@ import pandas as pd
 import CGAT.Experiment as E
 import CGAT.IOTools as IOTools
 import CGAT.BamTools as BamTools
-import CGATPipelines.Pipeline as P
+import CGATCore.Pipeline as P
 
 PICARD_MEMORY = "9G"
 

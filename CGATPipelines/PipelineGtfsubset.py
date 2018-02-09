@@ -13,7 +13,7 @@ import MySQLdb
 import pysam
 import CGAT.IOTools as IOTools
 import CGAT.GTF as GTF
-import CGATPipelines.Pipeline as P
+import CGATCore.Pipeline as P
 
 
 class SubsetGTF():

@@ -328,7 +328,7 @@ from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
 import CGAT.IndexedFasta as IndexedFasta
 import CGAT.Experiment as E
 import CGAT.IOTools as IOTools
-import CGATPipelines.Pipeline as P
+import CGATCore.Pipeline as P
 import CGATPipelines.PipelineGtfsubset as PipelineGtfsubset
 import CGATPipelines.PipelineUCSC as PipelineUCSC
 import CGATPipelines.PipelineGeneset as PipelineGeneset

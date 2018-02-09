@@ -7,7 +7,7 @@ Reference
 
 """
 
-import CGAT.Experiment as E
+import CGATCore.Experiment as E
 import os
 import MySQLdb
 import pysam

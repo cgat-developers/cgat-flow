@@ -326,7 +326,7 @@ import pandas as pd
 from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
     suffix, regex, add_inputs, originate
 import CGAT.IndexedFasta as IndexedFasta
-import CGAT.Experiment as E
+import CGATCore.Experiment as E
 import CGAT.IOTools as IOTools
 import CGATCore.Pipeline as P
 import CGATPipelines.PipelineGtfsubset as PipelineGtfsubset

@@ -35,7 +35,7 @@ import pandas as pd
 
 # load CGAT specific modules
 import CGATCore.Experiment as E
-import CGAT.IOTools as IOTools
+import CGATCore.IOTools as IOTools
 import CGAT.BamTools as BamTools
 import CGATCore.Pipeline as P
 

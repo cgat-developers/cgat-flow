@@ -159,7 +159,7 @@ Code
 import sys
 import os
 import sqlite3
-import CGAT.IOTools as IOTools
+import CGATCore.IOTools as IOTools
 
 from ruffus import *
 

@@ -11,7 +11,7 @@ import CGATCore.Experiment as E
 import os
 import MySQLdb
 import pysam
-import CGAT.IOTools as IOTools
+import CGATCore.IOTools as IOTools
 import CGAT.GTF as GTF
 import CGATCore.Pipeline as P
 

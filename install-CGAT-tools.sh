@@ -337,7 +337,7 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
       sed -i'' -e 's/CGATScripts/scripts/g' setup.py
 
       # need to install the CGAT Code Collection as well
-      install_cgat_scripts
+      install_cgat_apps
 
       # Python preparation
       sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
@@ -428,7 +428,7 @@ conda env update --quiet --file pipeline-peakcalling-sicer.yml
 
 
 # need to install the CGAT Code Collection as well
-install_cgat_scripts() {
+install_cgat_apps() {
 
 log "install cgat scripts"
 
@@ -489,7 +489,7 @@ fi # if-$?
 # go back to old working directory
 cd $OLDWD
 
-} # install_cgat_scripts
+} # install_cgat_apps
 
 
 # test code with conda install
@@ -513,7 +513,7 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    conda env export
 
    # need to install the CGAT Code Collection as well
-   install_cgat_scripts
+   install_cgat_apps
 
    # python preparation
    log "install CGAT code into conda environment"

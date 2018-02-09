@@ -221,9 +221,31 @@ get_cgat_env
 mkdir -p $CGAT_HOME
 cd $CGAT_HOME
 
+# select Miniconda bootstrap script depending on Operating System
+MINICONDA=
+
+if [[ `uname` == "Linux" ]] ; then
+
+   MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+
+elif [[ `uname` == "Darwin" ]] ; then
+
+   MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+
+else
+
+   echo
+   echo " Unsupported operating system detected. "
+   echo
+   echo " Aborting installation... "
+   echo
+   exit 1
+
+fi
+
 log "downloading miniconda"
 # download and install conda
-wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+curl -O http://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $CONDA_INSTALL_DIR
@@ -241,9 +263,9 @@ log "installing conda CGAT environment"
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
 
-wget -O env-scripts.yml https://raw.githubusercontent.com/cgat-developers/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
+curl -o env-scripts.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
 
-wget -O env-pipelines.yml https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
+curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
 [[ ${CGAT_DASHBOARD} -eq 0 ]] && sed -i'' -e '/pika/d' env-pipelines.yml
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
@@ -279,7 +301,7 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
 
          if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
             # get the latest version from Git Hub in zip format
-            wget https://github.com/cgat-developers/cgat-flow/archive/$PIPELINES_BRANCH.zip
+            curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$PIPELINES_BRANCH.zip
             unzip $PIPELINES_BRANCH.zip
             rm $PIPELINES_BRANCH.zip
             if [[ ${RELEASE} ]] ; then
@@ -375,14 +397,14 @@ install_extra_deps() {
 
 log "install extra deps"
 
-wget https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-wget https://raw.githubusercontent.com/cgat-developers/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
 
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file scripts-extra.yml
 
 if [[ ${INSTALL_IDE} -eq 1 ]] ; then
-   wget https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
+   curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
    conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-ide.yml
 fi
 
@@ -394,11 +416,11 @@ install_py2_deps() {
 
 log "install Python 2 deps"
 
-wget https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
 
 conda env update --quiet --file pipelines-py2.yml
 
-wget https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
 
 conda env update --quiet --file pipeline-peakcalling-sicer.yml
 
@@ -421,7 +443,7 @@ else
 
    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
       # get the latest version from Git Hub in zip format
-      wget https://github.com/cgat-developers/cgat-apps/archive/$SCRIPTS_BRANCH.zip
+      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$SCRIPTS_BRANCH.zip
       unzip $SCRIPTS_BRANCH.zip
       rm $SCRIPTS_BRANCH.zip
       if [[ ${RELEASE} ]] ; then

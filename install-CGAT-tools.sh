@@ -245,7 +245,7 @@ fi
 
 log "downloading miniconda"
 # download and install conda
-curl -O http://repo.continuum.io/miniconda/${MINICONDA}
+curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $CONDA_INSTALL_DIR

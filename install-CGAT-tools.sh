@@ -42,7 +42,7 @@ error_handler() {
    echo " ${SCRIPT_NAME} ${SCRIPT_PARAMS}"
    echo
    echo " Please copy and paste this error and report it via Git Hub: "
-   echo " https://github.com/CGATOxford/CGATPipelines/issues "
+   echo " https://github.com/cgat-developers/cgat-flow/issues "
    print_env_vars
    echo " ########################################################## "
 }
@@ -173,6 +173,7 @@ echo " CONDA_INSTALL_ENV: "$CONDA_INSTALL_ENV
 echo " PYTHONPATH: "$PYTHONPATH
 [[ ! $INSTALL_TEST ]] && echo " PIPELINES_BRANCH: "$PIPELINES_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " SCRIPTS_BRANCH: "$SCRIPTS_BRANCH
+[[ ! $INSTALL_TEST ]] && echo " CORE_BRANCH: "$CORE_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " RELEASE: "$RELEASE
 echo " CODE_DOWNLOAD_TYPE: "$CODE_DOWNLOAD_TYPE
 echo " INSTALL_IDE: "$INSTALL_IDE
@@ -221,9 +222,31 @@ get_cgat_env
 mkdir -p $CGAT_HOME
 cd $CGAT_HOME
 
+# select Miniconda bootstrap script depending on Operating System
+MINICONDA=
+
+if [[ `uname` == "Linux" ]] ; then
+
+   MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+
+elif [[ `uname` == "Darwin" ]] ; then
+
+   MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+
+else
+
+   echo
+   echo " Unsupported operating system detected. "
+   echo
+   echo " Aborting installation... "
+   echo
+   exit 1
+
+fi
+
 log "downloading miniconda"
 # download and install conda
-wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $CONDA_INSTALL_DIR
@@ -241,9 +264,9 @@ log "installing conda CGAT environment"
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
 
-wget -O env-scripts.yml https://raw.githubusercontent.com/CGATOxford/cgat/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
+curl -o env-scripts.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
 
-wget -O env-pipelines.yml https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
+curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
 [[ ${CGAT_DASHBOARD} -eq 0 ]] && sed -i'' -e '/pika/d' env-pipelines.yml
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
@@ -279,27 +302,27 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
 
          if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
             # get the latest version from Git Hub in zip format
-            wget https://github.com/CGATOxford/CGATPipelines/archive/$PIPELINES_BRANCH.zip
+            curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$PIPELINES_BRANCH.zip
             unzip $PIPELINES_BRANCH.zip
             rm $PIPELINES_BRANCH.zip
             if [[ ${RELEASE} ]] ; then
                NEW_NAME=`echo $PIPELINES_BRANCH | sed 's/^v//g'`
-               mv CGATPipelines-$NEW_NAME/ cgat-pipelines/
+               mv cgat-flow-$NEW_NAME/ cgat-flow/
             else
-               mv CGATPipelines-$PIPELINES_BRANCH/ cgat-pipelines/
+               mv cgat-flow-$PIPELINES_BRANCH/ cgat-flow/
             fi
          elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
             # get latest version from Git Hub with git clone
-            git clone --branch=$PIPELINES_BRANCH https://github.com/CGATOxford/CGATPipelines.git $CGAT_HOME/cgat-pipelines
+            git clone --branch=$PIPELINES_BRANCH https://github.com/cgat-developers/cgat-flow.git
          elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
             # get latest version from Git Hub with git clone
-            git clone --branch=$PIPELINES_BRANCH git@github.com:CGATOxford/CGATPipelines.git $CGAT_HOME/cgat-pipelines
+            git clone --branch=$PIPELINES_BRANCH git@github.com:cgat-developers/cgat-flow.git
          else
             report_error " Unknown download type for CGAT code... "
          fi
 
-         # make sure you are in the CGAT_HOME/cgat-pipelines folder
-         cd $CGAT_HOME/cgat-pipelines
+         # make sure you are in the CGAT_HOME/cgat-flow folder
+         cd $CGAT_HOME/cgat-flow
 
       else
 
@@ -314,8 +337,11 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
       # brute force: modify console_scripts variable/entry point for cgat command
       sed -i'' -e 's/CGATScripts/scripts/g' setup.py
 
-      # need to install the CGAT Code Collection as well
-      install_cgat_scripts
+      # install cgat-core
+      install_cgat_core
+
+      # install cgat-apps
+      install_cgat_apps
 
       # Python preparation
       sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
@@ -328,7 +354,7 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
          echo " Installation did not finish properly. "
          echo 
          echo " Please submit this issue via Git Hub: "
-         echo " https://github.com/CGATOxford/CGATPipelines/issues "
+         echo " https://github.com/cgat-developers/cgat-flow/issues "
 	 echo
 
          print_env_vars
@@ -347,7 +373,7 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
       echo " Installation did not finish properly. "
       echo
       echo " Please submit this issue via Git Hub: "
-      echo " https://github.com/CGATOxford/CGATPipelines/issues "
+      echo " https://github.com/cgat-developers/cgat-flow/issues "
       echo
 
       print_env_vars
@@ -375,14 +401,14 @@ install_extra_deps() {
 
 log "install extra deps"
 
-wget https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-wget https://raw.githubusercontent.com/CGATOxford/cgat/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
 
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file scripts-extra.yml
 
 if [[ ${INSTALL_IDE} -eq 1 ]] ; then
-   wget https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
+   curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
    conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-ide.yml
 fi
 
@@ -394,21 +420,21 @@ install_py2_deps() {
 
 log "install Python 2 deps"
 
-wget https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
 
 conda env update --quiet --file pipelines-py2.yml
 
-wget https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
 
 conda env update --quiet --file pipeline-peakcalling-sicer.yml
 
 }
 
 
-# need to install the CGAT Code Collection as well
-install_cgat_scripts() {
+# helper function to install cgat-apps
+install_cgat_apps() {
 
-log "install cgat scripts"
+log "install cgat apps"
 
 OLDWD=`pwd`
 cd $CGAT_HOME
@@ -421,26 +447,26 @@ else
 
    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
       # get the latest version from Git Hub in zip format
-      wget https://github.com/CGATOxford/cgat/archive/$SCRIPTS_BRANCH.zip
+      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$SCRIPTS_BRANCH.zip
       unzip $SCRIPTS_BRANCH.zip
       rm $SCRIPTS_BRANCH.zip
       if [[ ${RELEASE} ]] ; then
          NEW_NAME=`echo $SCRIPTS_BRANCH | sed 's/^v//g'`
-         mv cgat-$NEW_NAME/ cgat-scripts/
+         mv cgat-apps-$NEW_NAME/ cgat-apps/
       else
-         mv cgat-$SCRIPTS_BRANCH/ cgat-scripts/
+         mv cgat-apps-$SCRIPTS_BRANCH/ cgat-apps/
       fi
    elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH https://github.com/CGATOxford/cgat.git $CGAT_HOME/cgat-scripts
+      git clone --branch=$SCRIPTS_BRANCH https://github.com/cgat-developers/cgat-apps.git
    elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH git@github.com:CGATOxford/cgat.git $CGAT_HOME/cgat-scripts
+      git clone --branch=$SCRIPTS_BRANCH git@github.com:cgat-developers/cgat-apps.git
    else
       report_error " Unknown download type for CGAT code... "
    fi
 
-   cd cgat-scripts/
+   cd cgat-apps/
 
 fi
 
@@ -455,7 +481,7 @@ if [[ $? -ne 0 ]] ; then
    echo " Installation did not finish properly. "
    echo
    echo " Please submit this issue via Git Hub: "
-   echo " https://github.com/CGATOxford/CGATPipelines/issues "
+   echo " https://github.com/cgat-developers/cgat-flow/issues "
    echo
    print_env_vars
 
@@ -467,7 +493,63 @@ fi # if-$?
 # go back to old working directory
 cd $OLDWD
 
-} # install_cgat_scripts
+} # install_cgat_apps
+
+# helper function to install cgat-core
+install_cgat_core() {
+
+log "install cgat core"
+
+OLDWD=`pwd`
+cd $CGAT_HOME
+
+if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
+   # get the latest version from Git Hub in zip format
+   curl -LOk https://github.com/cgat-developers/cgat-core/archive/$CORE_BRANCH.zip
+   unzip $CORE_BRANCH.zip
+   rm $CORE_BRANCH.zip
+   if [[ ${RELEASE} ]] ; then
+      NEW_NAME=`echo $CORE_BRANCH | sed 's/^v//g'`
+      mv cgat-core-$NEW_NAME/ cgat-core/
+   else
+      mv cgat-core-$CORE_BRANCH/ cgat-core/
+   fi
+elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
+   # get latest version from Git Hub with git clone
+   git clone --branch=$CORE_BRANCH https://github.com/cgat-developers/cgat-core.git
+elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
+   # get latest version from Git Hub with git clone
+   git clone --branch=$CORE_BRANCH git@github.com:cgat-developers/cgat-core.git
+else
+   report_error " Unknown download type for CGAT core... "
+fi
+
+cd cgat-core/
+
+# remove install_requires (no longer required with conda package)
+sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
+python setup.py develop
+
+if [[ $? -ne 0 ]] ; then
+   echo
+   echo " There was a problem doing: 'python setup.py develop' "
+   echo " Installation did not finish properly. "
+   echo
+   echo " Please submit this issue via Git Hub: "
+   echo " https://github.com/cgat-developers/cgat-apps/issues "
+   echo
+   print_env_vars
+
+fi # if-$?
+
+# revert setup.py if downloaded with git
+[[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
+
+# go back to old working directory
+cd $OLDWD
+
+} # install_cgat_core
 
 
 # test code with conda install
@@ -490,8 +572,11 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    # show conda environment used for testing
    conda env export
 
-   # need to install the CGAT Code Collection as well
-   install_cgat_scripts
+   # install cgat-core
+   install_cgat_core
+
+   # install cgat-apps
+   install_cgat_apps
 
    # python preparation
    log "install CGAT code into conda environment"
@@ -528,8 +613,8 @@ else
       # prepare environment
       source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
-      # make sure you are in the CGAT_HOME/cgat-pipelines folder
-      cd $CGAT_HOME/cgat-pipelines
+      # make sure you are in the CGAT_HOME/cgat-flow folder
+      cd $CGAT_HOME/cgat-flow
 
       # python preparation
       sed -i'' -e 's/install_requires=install_requires,//g' setup.py
@@ -596,7 +681,7 @@ if [[ ! $? -eq 0 ]] ; then
    echo " There was a problem updating the installation. "
    echo 
    echo " Please submit this issue via Git Hub: "
-   echo " https://github.com/CGATOxford/CGATPipelines/issues "
+   echo " https://github.com/cgat-developers/cgat-flow/issues "
    echo 
 
 else 
@@ -685,6 +770,24 @@ test_mix_branch_release() {
    fi
 }
 
+
+# test whether a branch exists in the cgat-core repository
+# https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
+test_core_branch() {
+   RELEASE_TEST=0
+   curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/README.md || RELEASE_TEST=$?
+   if [[ ${RELEASE_TEST} -ne 0 ]] ; then
+      echo
+      echo " The branch provided for cgat-core does not exist: ${CORE_BRANCH}"
+      echo
+      echo " Please have a look at valid branches here: "
+      echo " https://github.com/cgat-developers/cgat-core/branches"
+      echo
+      report_error " Please use a valid branch and try again."
+   fi
+}
+
+
 # test whether a release exists or not
 # https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
 test_release() {
@@ -692,14 +795,14 @@ test_release() {
    # check pipelines
    curl --output /dev/null \
       --silent --head --fail \
-      https://raw.githubusercontent.com/CGATOxford/CGATPipelines/${RELEASE}/README.rst || RELEASE_PIPELINES=$?
+      https://raw.githubusercontent.com/cgat-developers/cgat-flow/${RELEASE}/README.rst || RELEASE_PIPELINES=$?
 
 if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
       echo
       echo " The release number provided for the pipelines does not exist: ${RELEASE}"
       echo
       echo " Please have a look at valid releases here: "
-      echo " https://github.com/CGATOxford/CGATPipelines/releases"
+      echo " https://github.com/cgat-developers/cgat-flow/releases"
       echo
       echo " An example of valid release is: --release v0.3.1"
       report_error " Please use a valid release and try again."
@@ -709,14 +812,14 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
    # check scripts
    curl --output /dev/null \
       --silent --head --fail \
-      https://raw.githubusercontent.com/CGATOxford/cgat/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
+      https://raw.githubusercontent.com/cgat-developers/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
       
    if [[ ${RELEASE_SCRIPTS} -ne 0 ]] ; then
       echo
       echo " The release number provided for the scripts does not exist: ${RELEASE}"
       echo
       echo " Please have a look at valid releases here: "
-      echo " https://github.com/CGATOxford/cgat/releases"
+      echo " https://github.com/cgat-developers/releases"
       echo
       echo " An example of valid release is: --release v0.3.1"
       report_error " Please use a valid release and try again."
@@ -727,19 +830,16 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
 # function to display help message
 help_message() {
 echo
-echo " This script uses Conda to install the CGAT pipelines:"
-echo " https://www.cgat.org/downloads/public/cgatpipelines/documentation/"
-echo
-echo " To install the pipelines please type:"
+echo " This script uses Conda to install cgat-flow. To proceed, please type:"
 echo " ./install-CGAT-tools.sh --devel --no-dashboard [--location </full/path/to/folder/without/trailing/slash>]"
 echo
-echo " The default location is: $HOME/cgat-install"
+echo " The default install folder will be: $HOME/cgat-install"
 echo
 echo " It is also possible to install/test a specific branch of the code on GitHub:"
-echo " ./install-CGAT-tools.sh --devel --no-dashboard --pipelines-branch <branch> --scripts-branch <branch>"
+echo " ./install-CGAT-tools.sh --devel --no-dashboard --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
 echo
 echo " This will create an isolated Conda environment with both the pipelines and the scripts from:"
-echo " https://github.com/CGATOxford/cgat"
+echo " https://github.com/cgat-developers/cgat-apps"
 echo
 echo " The default name of the newly created conda environment is cgat-p, but you can change it with:"
 echo " --env-name name"
@@ -754,9 +854,6 @@ echo
 echo " If you want to download and install IDEs like Spyder or RStudio with this installation, please use:"
 echo " --ide"
 echo
-echo " As of release v0.3.1 it is also possible to install specific releases of the code:"
-echo " --release v0.3.1"
-echo
 echo " To test the installation:"
 echo " ./install-CGAT-tools.sh --test [--location </full/path/to/folder/without/trailing/slash>]"
 echo
@@ -767,7 +864,7 @@ echo " To uninstall the CGAT code:"
 echo " ./install-CGAT-tools.sh --uninstall [--location </full/path/to/folder/without/trailing/slash>]"
 echo
 echo " Please submit any issues via Git Hub:"
-echo " https://github.com/CGATOxford/CGATPipelines/issues"
+echo " https://github.com/cgat-developers/cgat-flow/issues"
 echo
 exit 1
 } # help_message
@@ -805,6 +902,7 @@ CODE_DOWNLOAD_TYPE=0
 # which github branch to use (default: master)
 PIPELINES_BRANCH="master"
 SCRIPTS_BRANCH="master"
+CORE_BRANCH="master"
 # type of installation
 CONDA_INSTALL_TYPE_PIPELINES=
 CONDA_INSTALL_TYPE_SCRIPTS=
@@ -906,6 +1004,12 @@ case $key in
     --scripts-branch)
     SCRIPTS_BRANCH="$2"
     test_mix_branch_release
+    shift 2
+    ;;
+
+    --core-branch)
+    CORE_BRANCH="$2"
+    test_core_branch
     shift 2
     ;;
 

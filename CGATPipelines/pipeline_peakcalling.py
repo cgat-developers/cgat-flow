@@ -11,9 +11,15 @@ analysis (e.g. motif identification, quantification of peaks etc.). Pipeline
 also and generates QC  statistics that will inform you about the quality of
 the peaksets generated.
 
+In addition this pipeline will also produce normalised BigWigs if the samples
+are generated using the quantitative ChIP-seq method.
+
 Functionality
 -------------
 
+- Will generate BigWigs. If the samples are ran as a quantitative ChIP-Rx
+  experiment then the samples will be normalised according to spike-in's (
+  usually sp1 or drosophila cells)
 - Takes Paired-end or single end :term:`Bam` files you want to call peaks in
   (e.g. ChIP-Seq or ATAC-Seq samples and their appropriate 'input' controls).
 - Runs peakcallers
@@ -118,42 +124,17 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
-software to be in the path:
-
-+---------+------------+------------------------------------------------+
-|*Program*|*Version*   |*Purpose*                                       |
-+---------+------------+------------------------------------------------+
-|samtools |>=0.1.16    |bam/sam file manipulation & stats               |
-+---------+------------+------------------------------------------------+
-|bedtools |            |working with intervals                          |
-+---------+------------+------------------------------------------------+
-|picard   |>=1.42      |duplication stats. The .jar files need to be in |
-|         |            | your CLASSPATH environment variable.           |
-+---------+------------+------------------------------------------------+
-|macs2	  |>=2.1.1.    |peakcalling                                 	|
-+---------+------------+------------------------------------------------+
-|Conda	  |	           |		?????????????		                  	|
-+---------+------------+------------------------------------------------+
-|python   |>= 3.0      |run IDR analysis - currently set up in a        |
-|         | 	       |conda enviroment that the pipeline calls	    |
-+---------+------------+------------------------------------------------+
-|IDR      |>= 2.0.2    |IDR analysis of peaks (bed files)               |
-|         |            |from: (https://github.com/nboley/idr)           |
-+---------+------------+------------------------------------------------+
-|R        |            | used for QC stats                              |
-+---------+------------+------------------------------------------------+
-|ChIPQC   |            |                                                |
-|R Package|            |                                                |
-+---------+------------+------------------------------------------------+
-|SICER
-+---------+------------+------------------------------------------------+
+The software environment is handled by the CGATPipelines conda environment
+and all software is installed as part of the installation process.
 
 Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
 information how to use CGAT pipelines.
+
+See :ref:`Tutorials` for a comprehensive introduction of how to run a
+CGATPipeline.
 
 
 Pipeline Input
@@ -167,8 +148,16 @@ Input_bam = control file used as background reference in peakcalling
 pipeline.ini = File containing paramaters and options for
 running the pipeline
 
-design.tsv = Design file based on design file for R package DiffBind
-Has the following collumns:
+design.tsv = This is a tab seperated file based on the design file for R package
+DiffBind
+
+It has the following collumns:
+
++---------+--------+--------+-----------+-----------+-----------+----------+-----------+--------------+
+|SampleID | Tissue | Factor | Condition | Treatment | Replicate | bamReads | ControlID | bamControl   |
++---------+--------+--------+-----------+-----------+-----------+----------+-----------+--------------+
+|F123     |blood   |H3K4    |normal     |NA         |1          |F123.bam  |           |F123_input.bam|
++---------+--------+--------+-----------+-----------+-----------+----------+-----------+--------------+
 
 
 Pipeline output
@@ -197,8 +186,13 @@ stages of the pipeline
             * for paired-end samples a file with the frequency of fragment
               lengths (the distance between the paired reads 5' start positions)
 
+2) BigWigs
+   -------
+   Wiggle files that are normalised are generated depending on the type of ChIP-seq
+   i.e. ChIP-Rx is normalised to spike-ins.
 
-2) IDR.dir
+
+3) IDR.dir
     -------
     Directory conatining the output files from IDR analysis
     IDR is currently only set up to use with macs2 because this
@@ -209,8 +203,8 @@ stages of the pipeline
 
     Directory contains:
             * IDR_inputs.dir
-    This directory contains the files that are
-broad
+    This directory contains the files that are broad
+
     IDR_inputs.dir
 
     macs2.dir/
@@ -275,7 +269,7 @@ PARAMS = P.PARAMS
 # add parameters from annotations pipeline.ini
 PARAMS.update(P.peekParameters(
     PARAMS["annotations_dir"],
-    "pipeline_annotations.py",
+    "pipeline_genesets.py",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -369,7 +363,7 @@ def connect():
 # 1) Preprocessing Steps - Filter bam files & generate bam stats
 ###########################################################################
 
-
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform("design.tsv", suffix(".tsv"), ".load")
 def loadDesignTable(infile, outfile):
     ''' load design.tsv to database '''
@@ -474,6 +468,7 @@ def mergeFilteringStats(infiles, outfile):
     bigtab.to_csv(outfile, sep="\t", index=False)
 
 
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(mergeFilteringStats, "post_filtering_read_counts.load")
 def loadFilteringStats(infile, outfile):
     '''load filtering stats to database'''
@@ -497,6 +492,7 @@ def mergeFilteringChecks(infiles, outfile):
     bigtab.to_csv(outfile, sep="\t", index=False)
 
 
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(mergeFilteringChecks, suffix(".tsv"), ".load")
 def loadFilteringChecks(infile, outfile):
     '''load filtering stats to database '''
@@ -504,6 +500,7 @@ def loadFilteringChecks(infile, outfile):
 
 
 @active_if(PARAMS['paired_end'])
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform((filterChipBAMs, filterInputBAMs), suffix(".bam"),
            "_fraglengths.load")
 def loadFragmentLengthDistributions(infiles, outfile):
@@ -523,10 +520,13 @@ def getIdxstats(infiles, outfile):
     '''gets idxstats for bam file so number of reads per chromosome can
     be plotted later'''
     infile = infiles[0]
-    statement = '''samtools idxstats %(infile)s > %(outfile)s''' % locals()
+    # I have had to add a sleep to make sure the output is written before
+    # the next test.
+    statement = '''samtools idxstats %(infile)s > %(outfile)s && sleep 20'''
     P.run()
 
 
+@follows(getIdxstats)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(getIdxstats, "idxstats_reads_per_chromosome.load")
 def loadIdxstats(infiles, outfile):
@@ -581,6 +581,7 @@ def filtering():
 
 @transform((filterChipBAMs, filterInputBAMs),
            suffix(".bam"),
+           add_inputs([getIdxstats]),
            ".bw")
 def buildBigWig(infile, outfile):
     '''build wiggle files from bam files.
@@ -598,12 +599,34 @@ def buildBigWig(infile, outfile):
        Input filename in :term:`bed` format
 
     '''
-    inf = infile[0]
+    inf = infile[0][0]
+    inf_name = inf.replace(".bam", "")
+    idxstats = infile[1]
+
     # scale by Million reads mapped
     reads_mapped = Bamtools.getNumberOfAlignments(inf)
-    scale = 1000000.0 / float(reads_mapped)
+
+    # To handle quantitative ChIP-seq
+    if PARAMS['quant_norm'] == 1:
+        for idx in idxstats:
+            file_name = idx.replace(".idxstats", "")
+            if file_name == inf_name:
+                # pass to a function that extracts the number of reads aligned to
+                # spike in and human genome
+                regex = str(PARAMS['quant_regex']) + "*"
+                scale = PipelinePeakcalling.getSpikeInReads(idx, regex)
+                contig_sizes = PipelinePeakcalling.getContigSizes(idx)
+            else:
+                continue
+
+    elif PARAMS['quant_norm'] == 0:
+        scale = 1000000.0 / float(reads_mapped)
+        contig_sizes = PARAMS["annotations_interface_contigs"]
+    else:
+        raise KeyError('''please add 0 for FALSE and 1 for TRUE to quant_norm
+                        ini file''')
+
     tmpfile = P.getTempFilename()
-    contig_sizes = PARAMS["annotations_interface_contigs"]
     job_memory = "3G"
     statement = '''bedtools genomecov
     -ibam %(inf)s
@@ -611,7 +634,7 @@ def buildBigWig(infile, outfile):
     -bg
     -scale %(scale)f
     > %(tmpfile)s;
-    checkpoint;
+    sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s;
     bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
     checkpoint;
     rm -f %(tmpfile)s
@@ -869,6 +892,7 @@ def makeBamInputTable(outfile):
     out.close()
 
 
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(makeBamInputTable, suffix(".tsv"), ".load")
 def loadBamInputTable(infile, outfile):
     P.load(infile, outfile)
@@ -887,7 +911,7 @@ def estimateInsertSize(infile, outfile):
                                            PARAMS['paired_end'],
                                            PARAMS['insert_alignments'],
                                            PARAMS['insert_macs2opts'],
-                                           PARAMS['python2_macs2'])
+                                           PARAMS['conda_py2'])
 
 
 @merge(estimateInsertSize, "insert_sizes.tsv")
@@ -903,6 +927,7 @@ def mergeInsertSizes(infiles, outfile):
     out.close()
 
 
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(mergeInsertSizes, suffix(".tsv"), ".load")
 def loadInsertSizes(infile, outfile):
     P.load(infile, outfile)
@@ -973,7 +998,7 @@ def callMacs2peaks(infiles, outfile):
                                  PARAMS['macs2_idrsuffix'],
                                  PARAMS['macs2_idrcol'],
                                  PARAMS['macs2_broad_peak'],
-                                 PARAMS['python2_macs2'])
+                                 PARAMS['conda_py2'])
     P.run()
     peakcaller.summarise(outfile)
 
@@ -1045,7 +1070,7 @@ def callNarrowerPeaksWithSicer(infiles, outfile):
                                  idrc=PARAMS['sicer_idrkeeppeaks'],
                                  idrcol=PARAMS['sicer_idrcol'],
                                  broad_peak=0,
-                                 conda_env=PARAMS['python2_sicer'])
+                                 conda_env=PARAMS['conda_sicer'])
 
     P.run()
     peakcaller.summarise(outfile, mode="narrow")
@@ -1118,7 +1143,7 @@ def callBroaderPeaksWithSicer(infiles, outfile):
                                  idrc=PARAMS['sicer_idrkeeppeaks'],
                                  idrcol=PARAMS['sicer_idrcol'],
                                  broad_peak=1,
-                                 conda_env=PARAMS['python2_sicer'])
+                                 conda_env=PARAMS['conda_sicer'])
 
     P.run()
     peakcaller.summarise(outfile, mode="broad")
@@ -1153,6 +1178,7 @@ def summarisePeakCalling(infiles, outfile):
     bigtab.to_csv(outfile, sep="\t", index=False)
 
 
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(summarisePeakCalling, suffix(".tsv"), ".load")
 def loadPeakCallingStats(infile, outfile):
     P.load(infile, outfile)
@@ -1223,6 +1249,7 @@ def makeIDRPairs(infiles, outfile):
 
 
 @active_if(IDR_ON)
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(makeIDRPairs, suffix(".tsv"), ".load")
 def loadIDRPairs(infile, outfile):
     P.load(infile, outfile)
@@ -1290,8 +1317,6 @@ def runIDR(infile, outfile):
     statement = PipelinePeakcalling.buildIDRStatement(
         infile1, infile2,
         T,
-        PARAMS['IDR_sourcecommand'],
-        PARAMS['IDR_unsourcecommand'],
         idrthresh,
         idrPARAMS, options, oraclefile, test=True)
 
@@ -1305,8 +1330,6 @@ def runIDR(infile, outfile):
         statement = PipelinePeakcalling.buildIDRStatement(
             infile1, infile2,
             outfile,
-            PARAMS['IDR_sourcecommand'],
-            PARAMS['IDR_unsourcecommand'],
             idrthresh,
             idrPARAMS, options, oraclefile)
 
@@ -1440,6 +1463,7 @@ def summariseIDR(infiles, outfile):
 
 
 @active_if(IDR_ON)
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(summariseIDR, suffix(".tsv"), ".load")
 def loadIDRsummary(infile, outfile):
     P.load(infile, outfile)
@@ -1452,6 +1476,7 @@ def runIDRQC(infile, outfile):
 
 
 @active_if(IDR_ON)
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(runIDRQC, suffix(".tsv"), ".load")
 def loadIDRQC(infile, outfile):
     P.load(infile, outfile)
@@ -1635,7 +1660,7 @@ def makeCHIPQCInputTables(infiles, outfiles):
 #    R('''''')
 
 
-@follows(filtering, peakcalling, IDR)
+@follows(filtering, peakcalling, IDR, buildBigWig)
 def full():
     ''' runs entire pipeline '''
 
@@ -1660,17 +1685,6 @@ def update_report():
     E.info("updating documentation")
     P.run_report(clean=False)
 
-
-@follows(mkdir("%s/bamfiles" % PARAMS["web_dir"]),
-         mkdir("%s/medips" % PARAMS["web_dir"]),
-         )
-def publish():
-    '''publish files to web directory'''
-
-    # directory : files
-
-    # publish web pages
-    # P.publish_report(export_files=export_files)
 
 ###############################################################
 # Notebook reports

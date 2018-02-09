@@ -19,6 +19,38 @@ pandas2ri.activate()
 ##############################################
 # Preprocessing Functions
 
+
+def getSpikeInReads(idx, regex):
+
+    idx_file = pd.read_csv(idx, "\t",
+                           header=None,
+                           names=["Name", "Length", "Mapped", "Unmapped"])
+
+    spikes = idx_file[idx_file.Name.str.match(regex)]
+    spikes = spikes.Mapped.sum()
+
+    mapped_reads = idx_file[-idx_file.Name.str.match(regex)]
+    mapped_reads = mapped_reads.Mapped.sum()
+
+    scale = spikes/mapped_reads
+
+    return scale
+
+
+def getContigSizes(idx):
+    idx_file = pd.read_csv(idx, "\t",
+                           header=None,
+                           names=["Name", "Length", "Mapped", "Unmapped"])
+
+    contigs = idx_file[['Name', 'Length']]
+
+    contig_file = idx.replace(".idxstats", ".contig")
+
+    contigs.to_csv(contig_file, sep="\t", header=None, index=None)
+
+    return contig_file
+
+
 def getWantedContigs(unwanted_contigs, all_contigs):
     '''takes a string of characters in unwanted contigs seperated by '|' and a
     list of all contigs present in the file - returns a string of space
@@ -216,7 +248,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
         log = outfile.replace(".bam", "_duplicates.log")
         outT = P.getTempFilename("./filtered_bams.dir")
         statement += """
-        MarkDuplicates \
+        picard MarkDuplicates \
         INPUT=%(inT)s.bam \
         ASSUME_SORTED=true \
         REMOVE_DUPLICATES=true \
@@ -690,6 +722,9 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
         mean, std, n = BamTools.estimateInsertSizeDistribution(
             infile, int(nalignments))
     else:
+        # configure conda environment
+        conda_env = P.getCondaEnvironment(conda_env)
+
         logfile = "%s.log" % P.snip(outfile)
         mode = "SE"
         statement = '''
@@ -1287,6 +1322,9 @@ class Macs2Peakcaller(Peakcaller):
         # CG put brackets () around conda call and macs statement to run this
         # portion of the statement in subshell with specific conda env
 
+        # configure conda environment
+        conda_env = P.getCondaEnvironment(conda_env)
+
         statement = '''
         (%(conda_env)s &&
         macs2 callpeak
@@ -1785,6 +1823,9 @@ class SicerPeakcaller(Peakcaller):
 
         outfile = os.path.basename(outfile)
 
+        # configure conda environment
+        conda_env = P.getCondaEnvironment(conda_env)
+
         window_size = self.window_size
         gap_size = self.gap_size
         effective_genome_fraction = self.effective_genome_fraction
@@ -2159,7 +2200,7 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
 
 
 def buildIDRStatement(infile1, infile2, outfile,
-                      sourcec, unsourcec, soft_idr_thresh, idrPARAMS, options,
+                      soft_idr_thresh, idrPARAMS, options,
                       oraclefile=None, test=False):
     '''
     Constructs a command line statement to run the idr software package -
@@ -2178,10 +2219,6 @@ def buildIDRStatement(infile1, infile2, outfile,
         path to second IDR input bam file
     outfile: str
         path to main IDR output file
-    sourcec: str
-        statement to source the environment in which to run IDR software
-    unsourcec: str
-        statement to revert to the original environment
     soft_idr_thresh:
         threshold below which to discard peaks
     idrPARAMS: dict
@@ -2204,7 +2241,6 @@ def buildIDRStatement(infile1, infile2, outfile,
         the scripts will fail downstream) 0 = run full IDR analysis
     '''
     statement = []
-    statement.append(sourcec)
 
     log = "%s.log" % P.snip(outfile)
 
@@ -2223,36 +2259,34 @@ def buildIDRStatement(infile1, infile2, outfile,
 
     if test is True:
         # this statement only returns the merged peak list to check length
-        idrstatement = """idr --version >>%(log)s;
-                          idr
-                          --samples %(infile1)s %(infile2)s
-                          --output-file %(outfile)s
-                          --soft-idr-threshold %(soft_idr_thresh)s
-                          --input-file-type %(inputfiletype)s
-                          --rank %(rank)s
-                          --output-file-type %(outputfiletype)s
-                           %(oraclestatement)s
-                           %(options)s
-                          --only-merge-peaks
-                          --verbose 2>>%(log)s
-        """ % locals()
+        statement.append("""idr --version >>%(log)s;
+                            idr
+                            --samples %(infile1)s %(infile2)s
+                            --output-file %(outfile)s
+                            --soft-idr-threshold %(soft_idr_thresh)s
+                            --input-file-type %(inputfiletype)s
+                            --rank %(rank)s
+                            --output-file-type %(outputfiletype)s
+                             %(oraclestatement)s
+                             %(options)s
+                            --only-merge-peaks
+                            --verbose 2>>%(log)s
+                         """ % locals())
 
     else:
-        idrstatement = """idr --version >>%(log)s;
-                          idr
-                          --samples %(infile1)s %(infile2)s
-                          --output-file %(outfile)s
-                          --plot
-                          --soft-idr-threshold %(soft_idr_thresh)s
-                          --input-file-type %(inputfiletype)s
-                          --rank %(rank)s
-                          --output-file-type %(outputfiletype)s
-                           %(oraclestatement)s
-                           %(options)s
-                          --verbose 2>>%(log)s
-        """ % locals()
-    statement.append(idrstatement)
-    statement.append(unsourcec)
+        statement.append("""idr --version >>%(log)s;
+                            idr
+                            --samples %(infile1)s %(infile2)s
+                            --output-file %(outfile)s
+                            --plot
+                            --soft-idr-threshold %(soft_idr_thresh)s
+                            --input-file-type %(inputfiletype)s
+                            --rank %(rank)s
+                            --output-file-type %(outputfiletype)s
+                             %(oraclestatement)s
+                             %(options)s
+                            --verbose 2>>%(log)s
+                         """ % locals())
     statement = "; ".join(statement)
     return statement
 

@@ -246,10 +246,12 @@ fi
 
 log "downloading miniconda"
 # download and install conda
-curl -O https://repo.continuum.io/miniconda/${MINICONDA}
+# curl -O https://repo.continuum.io/miniconda/${MINICONDA}
+# Conda 4.4 breaks everything again
+curl -o Miniconda.sh -O https://repo.continuum.io/miniconda/Miniconda3-4.3.31-Linux-x86_64.sh
 
 log "installing miniconda"
-bash Miniconda3-latest-Linux-x86_64.sh -b -p $CONDA_INSTALL_DIR
+bash Miniconda.sh -b -p $CONDA_INSTALL_DIR
 source ${CONDA_INSTALL_DIR}/bin/activate
 hash -r
 
@@ -1061,7 +1063,8 @@ if [[ $INSTALL_PRODUCTION ]] && [[ $INSTALL_DEVEL ]] ; then
 fi
 
 # sanity check 2: make sure one installation option is selected
-if [[ -z $INSTALL_PRODUCTION ]] && \
+if [[ -z $INSTALL_TEST ]] && \
+   [[ -z $INSTALL_PRODUCTION ]] && \
    [[ -z $INSTALL_DEVEL ]] && \
    [[ -z $TRAVIS_INSTALL ]] && \
    [[ -z $JENKINS_INSTALL ]] ; then

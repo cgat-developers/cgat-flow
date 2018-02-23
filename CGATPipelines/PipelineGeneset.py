@@ -681,7 +681,7 @@ def buildCDSFasta(infiles, outfile):
     '''
     P.run(statement)
 
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     dbhandle = sqlite3.connect(PARAMS["database_name"])
     cc = dbhandle.cursor()
@@ -1196,7 +1196,7 @@ def buildPseudogenes(infiles, outfile, dbhandle):
         P.run(statement)
         return
 
-    tmpfile1 = P.getTempFilename(shared=True)
+    tmpfile1 = P.get_temp_filename(shared=True)
 
     # collect processed transcripts and save as fasta sequences
     statement = '''
@@ -1312,7 +1312,7 @@ def buildNUMTs(infile, outfile):
         P.touch(outfile)
         return
 
-    tmpfile_mito = P.getTempFilename(".")
+    tmpfile_mito = P.get_temp_filename(".")
 
     statement = '''
     cgat index_fasta
@@ -1477,7 +1477,7 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
 
     cc = dbh.cursor()
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     c = E.Counter()
     term2description = {}
     for db in ('go', 'goslim'):
@@ -1546,7 +1546,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     repeats_gff, rna_gff, annotations_gtf, geneset_flat_gff, \
         cpgisland_bed, go_tsv = infiles
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
     tmpfiles = ["%s_%i" % (tmpfile, x) for x in range(6)]
 
     # add ENSEMBL annotations

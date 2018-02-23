@@ -323,7 +323,7 @@ def buildReferenceGeneSet(infile, outfile):
        :term:`PARAMS`. Genome name (e.g hg38)
     '''
 
-    tmp_mergedfiltered = P.getTempFilename(".")
+    tmp_mergedfiltered = P.get_temp_filename(".")
 
     if "geneset_remove_repetetive_rna" in PARAMS:
         rna_file = PARAMS["annotations_interface_rna_gff"]
@@ -387,7 +387,7 @@ def buildRefFlat(infile, outfile):
     '''build flat geneset for Picard RnaSeqMetrics.
     '''
 
-    tmpflat = P.getTempFilename(".")
+    tmpflat = P.get_temp_filename(".")
 
     statement = '''
     gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;
@@ -1970,7 +1970,7 @@ def loadReadCounts(infiles, outfile):
 
     '''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
         track = P.snip(infile, ".nreads")
@@ -2018,7 +2018,7 @@ def buildBigWig(infile, outfile):
         # scale by Million reads mapped
         reads_mapped = BamTools.getNumberOfAlignments(infile)
         scale = 1000000.0 / float(reads_mapped)
-        tmpfile = P.getTempFilename()
+        tmpfile = P.get_temp_filename()
         contig_sizes = PARAMS["annotations_interface_contigs"]
         job_memory = "3G"
         statement = '''bedtools genomecov

@@ -357,7 +357,7 @@ def nameVariants(infiles, outfile):
     bim_file = infiles[1][1]
 
     # temporary file name
-    temp_file = P.getTempFilename(shared=True)
+    temp_file = P.get_temp_filename(shared=True)
 
     job_memory = "2G"
 
@@ -636,7 +636,7 @@ def makeTrimmedData(infiles, outfile):
     job_memory = "60G"
     job_threads = 1
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
 
     # find duplicates
     state1 = '''
@@ -690,7 +690,7 @@ def mergePlinkFiles(infiles, outfile):
 
     # generate text file that contains the names of the files
     # to be merged
-    temp_file = P.getTempFilename(shared=True)
+    temp_file = P.get_temp_filename(shared=True)
 
     # not all multi-allelic SNPs have been removed properly
     # include the *.missnp file as an exclusion
@@ -736,7 +736,7 @@ def calcInbreeding(infiles, outfile):
     bim_file = infiles[1][1]
 
     plink_files = ",".join([bed_file, fam_file, bim_file])
-    temp_file = P.getTempFilename(shared=True)
+    temp_file = P.get_temp_filename(shared=True)
 
     job_memory = "4G"
     statement = '''
@@ -822,7 +822,7 @@ def genderChecker(infiles, outfile):
     job_memory = "6G"
     job_threads = 1
 
-    tmp_file = P.getTempFilename(shared=True)
+    tmp_file = P.get_temp_filename(shared=True)
 
     state1 = '''
     cgat geno2qc
@@ -992,7 +992,7 @@ def runFilteredPCA(infiles, outfile):
     fam_file = infiles[1][0]
     bim_file = infiles[1][1]
     plink_files = ",".join([bed_file, fam_file, bim_file])
-    temp_out = P.getTempFilename(shared=True)
+    temp_out = P.get_temp_filename(shared=True)
 
     statement1 = '''
     cgat geno2assoc
@@ -1900,7 +1900,7 @@ def mergeGwasHits(infiles, outfile):
 
     # generate text file that contains the names of the files
     # to be merged
-    temp_file = P.getTempFilename(shared=True)
+    temp_file = P.get_temp_filename(shared=True)
     outpattern = ".".join(outfile.split(".")[:-1])
     job_memory = "3G"
     job_threads = 10
@@ -2127,7 +2127,7 @@ def ldExcludedEpistasisVsGwasLead(infiles, outfile):
     out_pattern = out_pattern
 
     # write the SNP id to a dummy set file
-    tmpf = P.getTempFilename(shared=True)
+    tmpf = P.get_temp_filename(shared=True)
     with open(tmpf, "w") as tfile:
         tfile.write("VAR\n{}\nEND".format(snp))
 
@@ -2191,7 +2191,7 @@ def ldExcludedEpistasis(infiles, outfile):
     out_pattern = ".".join(outfile.split(".")[:-2])
 
     # write the SNP id to a dummy set file
-    tmpf = P.getTempFilename(shared=True)
+    tmpf = P.get_temp_filename(shared=True)
     with open(tmpf, "w") as tfile:
         tfile.write("VAR\n{}\nEND".format(snp))
 
@@ -2797,8 +2797,8 @@ def subSampleIndividuals(infiles, outfile):
 
     fam_file = infiles[0]
     keep_file = infiles[1]
-    keep_temp = P.getTempFilename(shared=True)
-    fam_temp = P.getTempFilename(shared=True)
+    keep_temp = P.get_temp_filename(shared=True)
+    fam_temp = P.get_temp_filename(shared=True)
 
     statement = '''
     cat %(keep_file)s | cut -f1,2 | sort | grep -v "FID" > %(keep_temp)s;
@@ -3251,7 +3251,7 @@ def bgzipLdFiles(infile, outfile):
     '''
 
     job_memory = "1G"
-    tmp_file = P.getTempFilename()
+    tmp_file = P.get_temp_filename()
     statements = []
 
     statements.append('''
@@ -3307,7 +3307,7 @@ def loadLd(infile, outfile):
 
     job_memory = "60G"
     # ld output files need whitespace substituting for tabs
-    temp_file = P.getTempFilename(shared=True)
+    temp_file = P.get_temp_filename(shared=True)
     statement = '''
     zcat %(infile)s | tr -s " " "\\t" |
      sed 's/^[[:space:]]*//g' |
@@ -3909,8 +3909,8 @@ def subSampleIndividualsForReml(infiles, outfile):
 
     fam_file = infiles[0]
     keep_file = infiles[1]
-    keep_temp = P.getTempFilename(shared=True)
-    fam_temp = P.getTempFilename(shared=True)
+    keep_temp = P.get_temp_filename(shared=True)
+    fam_temp = P.get_temp_filename(shared=True)
 
     statement = '''
     cat %(keep_file)s | tr -s " " "\\t" | cut -f1,2 | sort | grep -v "FID" > %(keep_temp)s;

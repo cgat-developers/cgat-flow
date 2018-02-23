@@ -202,7 +202,7 @@ PipelineExome.PARAMS = PARAMS
            ".load")
 def loadManualAnnotations(infile, outfile):
 
-    tmp = P.getTempFilename(".")
+    tmp = P.get_temp_filename(".")
 
     annotation = P.snip(infile, "_annotations.tsv")
 

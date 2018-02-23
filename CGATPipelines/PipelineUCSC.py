@@ -102,7 +102,7 @@ def getRepeatsFromUCSC(dbhandle,
         raise ValueError("could not find any `rmsk` tables")
 
     # now collect repeats
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     for table in tables:
 

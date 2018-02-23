@@ -591,7 +591,7 @@ def makeBarCharts(infiles, outfile):
            r"cytoscape.dir/\1\2.tsv")
 def makeCytoscapeInputs(infiles, outfile):
     infile = infiles[1]
-    T = P.getTempFilename(".")
+    T = P.get_temp_filename(".")
     statement = """
     awk -F "\\t" '{printf("%%%%s\\t%%%%s\\t%%%%s\\t%%%%s\\t+1\\n",\
     $1, $12, $8, $9)}' %(infile)s > %(T)s""" % locals()

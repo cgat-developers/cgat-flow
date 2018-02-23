@@ -308,7 +308,7 @@ def buildPicardDuplicationStats(infile, outfile):
     # currently, MarkDuplicates cannot handle split alignments from gsnap
     # these can be identified by the custom XT tag.
     if ".gsnap.bam" in infile:
-        tmpf = P.getTempFile(".")
+        tmpf = P.get_temp_file(".")
         tmpfile_name = tmpf.name
         statement = '''samtools view -h %(infile)s
         | awk "!/\\tXT:/"
@@ -525,7 +525,7 @@ def summarizeTagsWithinContext(tagfile,
         Memory to reserve.
     '''
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
     tmpfiles = ["%s_%i" % (tmpfile, x) for x in range(2)]
     statement = '''
     cgat bam_vs_bed
@@ -586,7 +586,7 @@ def loadTranscriptProfile(infiles, outfile,
     if not tablename:
         tablename = "%s" % (suffix)
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     table_count = 0
     table_join = None
@@ -628,7 +628,7 @@ def loadStrandSpecificity(infiles, outfile,
     if not tablename:
         tablename = "%s_%s" % (P.toTable(outfile), suffix)
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     table_count = 0
     table_join = None
@@ -684,7 +684,7 @@ def loadCountReads(infiles, outfile,
     if not tablename:
         tablename = "%s_%s" % (P.toTable(outfile), suffix)
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     outf.write("%s\t%s\n" % ("track", "nreads"))
 
@@ -735,7 +735,7 @@ def loadPicardMetrics(infiles, outfile, suffix,
     if not tablename:
         tablename = "%s_%s" % (P.toTable(outfile), suffix)
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     filenames = ["%s.%s" % (x, suffix) for x in infiles]
 
@@ -965,7 +965,7 @@ def loadPicardCoverageStats(infiles, outfile):
         Logfile. The table name will be derived from `outfile`.
     '''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     first = True
     for f in infiles:
         track = P.snip(os.path.basename(f), ".cov")
@@ -1172,7 +1172,7 @@ def loadIdxstats(infiles, outfile):
         Logfile. The table name will be derived from `outfile`.
     '''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     dfs = []
     for f in infiles:
         track = P.snip(f, ".idxstats").split('/')[-1]
@@ -1428,8 +1428,8 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     outfile : string
        Output filename in :term:`gtf` format
     """
-    tmpfile1 = P.getTempFilename(".")
-    tmpfile2 = P.getTempFilename(".")
+    tmpfile1 = P.get_temp_filename(".")
+    tmpfile2 = P.get_temp_filename(".")
 
     #################################################
     E.info("adding tss_id and p_id")

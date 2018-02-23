@@ -85,7 +85,7 @@ def BedFileVenn(infiles, outfile):
 
     else:
 
-        tmpfile = P.getTempFilename(".")
+        tmpfile = P.get_temp_filename(".")
 
         # need to merge incrementally
         fn = infiles[0]

@@ -922,10 +922,10 @@ def annotateVariants1000G(infile, outfile):
             else:
                 vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
 
-    T = P.getTempFilename(".")
+    T = P.get_temp_filename(".")
     shutil.copy(infile, T)
     tempin = T
-    tempout = P.getTempFilename(".")
+    tempout = P.get_temp_filename(".")
 
     for vcf in vcfs:
         statement = """SnpSift.sh annotate
@@ -1000,7 +1000,7 @@ def makeAnnotationsTables(infiles, outfile):
     '''
     bamname = infiles[0]
     inputvcf = infiles[1]
-    TF = P.getTempFilename(".")
+    TF = P.get_temp_filename(".")
     samplename = bamname.replace(".realigned.bam",
                                  ".bam").replace("gatk/", "")
 

@@ -649,7 +649,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
     outf.close()
 
     # filter gtf file
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
     inf = GTF.iterator(IOTools.open_file(infile))
 
     genes_input, genes_output = set(), set()
@@ -880,7 +880,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
 
     if bamfile.endswith(".remote"):
         token = glob.glob("gdc-user-token*")
-        tmpfilename = P.getTempFilename()
+        tmpfilename = P.get_temp_filename()
         if len(token) > 0:
             token = token[0]
         else:
@@ -1266,7 +1266,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     # cuff = R('''readCufflinks(dir = %(indir)s, dbfile=%(indir)s/csvdb)''' )
     # to be continued...
 
-    tmpname = P.getTempFilename(shared=True)
+    tmpname = P.get_temp_filename(shared=True)
 
     # ignore promoters and splicing - no fold change column, but  sqrt(JS)
     for fn, level in (("cds_exp.diff.gz", "cds"),
@@ -1327,7 +1327,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
 
         tablename = prefix + "_" + level + "sample_fpkms"
 
-        tmpf = P.getTempFilename(".")
+        tmpf = P.get_temp_filename(".")
         inf = IOTools.open_file(os.path.join(indir, fn)).readlines()
         outf = IOTools.open_file(tmpf, "w")
 
@@ -1409,7 +1409,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     tracks = Database.getColumnNames(dbhandle, tablename)
     tracks = [x[:-len("_FPKM")] for x in tracks if x.endswith("_FPKM")]
 
-    tmpfile = P.getTempFile(dir=".")
+    tmpfile = P.get_temp_file(dir=".")
     tmpfile.write("track\n")
     tmpfile.write("\n".join(tracks) + "\n")
     tmpfile.close()

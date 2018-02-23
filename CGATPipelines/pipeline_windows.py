@@ -822,7 +822,7 @@ def buildBigBed(infile, outfile):
         filename of :term:`bigbed` file to output the results
     '''
 
-    tmpfile = P.getTempFilename()
+    tmpfile = P.get_temp_filename()
 
     contig_sizes = os.path.join(
         PARAMS["annotations_dir"], PARAMS["annotations_interface_contigs"])
@@ -1395,7 +1395,7 @@ def normalizeBed(infile, outfile):
 
     # normalize count column by total library size
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
 
     P.submit(module='CGATPipelines.PipelineWindows',
              function='normalizeBed',
@@ -1434,7 +1434,7 @@ def enrichVsInput(infile, outfile):
         filename of output :term:`bedGraph` file
     '''
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
     P.submit(module='CGATPipelines.PipelineWindows',
              function='enrichmentVsInput',
              infiles=infile,
@@ -1462,7 +1462,7 @@ def convertBed2BigWig(infile, outfile):
         filename of :term:`bigwig` formatted file
     '''
 
-    tmpfile = P.getTempFilename()
+    tmpfile = P.get_temp_filename()
 
     contig_file = PARAMS['annotations_dir'] + "/contigs.tsv"
 

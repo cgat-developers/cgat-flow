@@ -1005,7 +1005,7 @@ class OntologyAnnotation(APIAnnotation):
         download an up to date ontology file, parse the xml data into a
         Python "ElementTree" and delete the ontology file.
         '''
-        ontologyfile = P.getTempFilename(".")
+        ontologyfile = P.get_temp_filename(".")
         os.system("wget -O %s %s" % (ontologyfile, self.datasource))
         tree = ET.parse(ontologyfile)
         os.remove(ontologyfile)

@@ -153,7 +153,7 @@ def getRepeatDataFromUCSC(dbhandle,
         raise ValueError("could not find any `rmsk` tables")
 
     # now collect repeats
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     for table in tables:
 
@@ -231,7 +231,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
 
     repeats_gff, rna_gff, annotations_gtf, utr_gtf, intron_gtf = infiles
 
-    tmpfile = P.getTempFilename(shared=True)
+    tmpfile = P.get_temp_filename(shared=True)
     tmpfiles = ["%s_%i" % (tmpfile, x) for x in range(4)]
 
     # add ENSEMBL annotations

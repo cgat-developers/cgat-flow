@@ -68,7 +68,7 @@ def convertReadsToIntervals(bamfile,
 
     is_paired = BamTools.isPaired(bamfile)
     current_file = bamfile
-    tmpdir = P.getTempFilename()
+    tmpdir = P.get_temp_filename()
     os.unlink(tmpdir)
     statement = ["mkdir %(tmpdir)s"]
     nfiles = 0
@@ -270,7 +270,7 @@ def aggregateWindowsTagCounts(infiles,
     src = " ".join(["""<( zcat %s |
               awk '{printf("%%s:%%i-%%i\\t%%i\\n", $1,$2,$3,$%s );}')""" %
                     (x, column) for x in infiles])
-    tmpfile = P.getTempFilename(".")
+    tmpfile = P.get_temp_filename(".")
     statement = '''paste %(src)s > %(tmpfile)s'''
     P.run(statement)
 
@@ -1037,7 +1037,7 @@ def buildSpikeResults(infile, outfile):
 
     ########################################
     # output and load spiked results
-    tmpfile_name = P.getTempFilename(shared=True)
+    tmpfile_name = P.get_temp_filename(shared=True)
 
     statement = '''zcat %(spikefile)s
     | grep -e "^spike" -e "^test_id"

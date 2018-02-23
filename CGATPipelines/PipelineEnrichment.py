@@ -445,7 +445,7 @@ def genericImportAnnotator(infiles, outfile, table, workspace, slice, subset, fd
     infile = " ".join(infiles)
     x, suffix = os.path.splitext(infiles[0])
 
-    tmpfilename = P.getTempFilename()
+    tmpfilename = P.get_temp_filename()
 
     statement = '''
     cgat annotator2tsv \
@@ -457,7 +457,7 @@ def genericImportAnnotator(infiles, outfile, table, workspace, slice, subset, fd
     '''
     P.run(statement)
 
-    tmpfile = P.getTempFile()
+    tmpfile = P.get_temp_file()
 
     for line in open(tmpfilename, "r"):
         if line.startswith("id"):

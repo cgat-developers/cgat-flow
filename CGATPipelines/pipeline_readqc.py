@@ -209,7 +209,7 @@ if PARAMS.get("preprocessors", None):
             Collate fasta files into a single contaminants file for
             adapter removal.
             '''
-            tempfile = P.getTempFilename()
+            tempfile = P.get_temp_filename()
             infiles = " ".join(infiles)
 
             statement = """

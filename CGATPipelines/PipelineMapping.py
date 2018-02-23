@@ -339,8 +339,8 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     outfile : string
        Output filename in :term:`gtf` format
     """
-    tmpfile1 = P.getTempFilename(shared=True)
-    tmpfile2 = P.getTempFilename(shared=True)
+    tmpfile1 = P.get_temp_filename(shared=True)
+    tmpfile2 = P.get_temp_filename(shared=True)
 
     #################################################
     E.info("adding tss_id and p_id")
@@ -1099,7 +1099,7 @@ class FastQc(Mapper):
         ofile.close()
 
         # get temporary file name
-        outfile = P.getTempFilename(shared=True)
+        outfile = P.get_temp_filename(shared=True)
         with IOTools.open_file(outfile, "w") as wfile:
             for key, value in list(adaptor_dict.items()):
                 wfile.write("%s\t%s\n" % (key, value))
@@ -1170,7 +1170,7 @@ class FastqScreen(Mapper):
 
         statement = '''fastq_screen %%(fastq_screen_options)s
                     --outdir %%(outdir)s --conf %%(tempdir)s/fastq_screen.conf
-                    %(input_files)s;''' % locals()
+                    %(input_files)s >& %%(outdir)s/fastqscreen.log;''' % locals()
         return statement
 
 

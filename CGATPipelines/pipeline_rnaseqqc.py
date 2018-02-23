@@ -339,7 +339,7 @@ def buildReferenceGeneSet(infile, outfile):
        :term:`PARAMS`. Genome name (e.g hg38)
     '''
 
-    tmp_mergedfiltered = P.getTempFilename(".")
+    tmp_mergedfiltered = P.get_temp_filename(".")
 
     if "geneset_remove_repetetive_rna" in PARAMS:
         rna_file = PARAMS["annotations_interface_rna_gff"]
@@ -850,7 +850,7 @@ def buildBedContext(outfile):
 
     dbh = connect()
 
-    tmp_bed_sorted_filename = P.getTempFilename(shared=True)
+    tmp_bed_sorted_filename = P.get_temp_filename(shared=True)
 
     sql_statements = [
         '''SELECT DISTINCT GTF.contig, GTF.start, GTF.end, "lincRNA"
@@ -1029,7 +1029,7 @@ def loadSailfishResults(infile, outfile):
 def buildRefFlat(infile, outfile):
     '''build flat geneset for Picard RnaSeqMetrics.'''
 
-    tmpflat = P.getTempFilename(".")
+    tmpflat = P.get_temp_filename(".")
 
     statement = '''
     gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;

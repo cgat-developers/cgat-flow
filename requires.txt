@@ -18,6 +18,7 @@
 
 # not part of CGATCore?
 sqlalchemy
+sqlite
 
 ## Modules that are specific pipeline associated
 

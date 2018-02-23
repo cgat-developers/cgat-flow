@@ -223,7 +223,7 @@ def buildGff(infile, outfile):
        all ensembl annotations
     '''
 
-    tmpgff = P.getTempFilename(".")
+    tmpgff = P.get_temp_filename(".")
     statement = "gunzip -c %(infile)s > %(tmpgff)s"
     P.run(statement)
 

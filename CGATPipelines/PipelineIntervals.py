@@ -494,7 +494,7 @@ def buildNormalizedBAM(infiles, outfile, normalize=True):
 
     # if more than one samfile: sort
     if len(samfiles) > 1:
-        tmpfilename = P.getTempFilename()
+        tmpfilename = P.get_temp_filename()
         pysam.sort(outfile, tmpfilename)
         shutil.move(tmpfilename + ".bam", outfile)
         os.unlink(tmpfilename)
@@ -549,7 +549,7 @@ def exportIntervalsAsBed(infile,
     cc.execute(statement)
 
     bd = pybedtools.BedTool(list(cc.fetchall()))
-    tmpfile = P.getTempFilename()
+    tmpfile = P.get_temp_filename()
     bd.saveas(tmpfile)
     cc.close()
 
@@ -1312,7 +1312,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
     # min, as it is -10log10
     min_pvalue = float(PARAMS["macs_min_pvalue"])
 
-    outtemp = P.getTempFile(".")
+    outtemp = P.get_temp_file(".")
     tmpfilename = outtemp.name
 
     id = 0
@@ -1513,7 +1513,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
     # min, as it is -10log10
     min_pvalue = float(PARAMS["macs_min_pvalue"])
 
-    outtemp = P.getTempFile(".")
+    outtemp = P.get_temp_file(".")
     tmpfilename = outtemp.name
 
     id = 0
@@ -2477,11 +2477,11 @@ def removeEmptyBins(infile, outfile):
 def createBroadPeakBedgraphFile(infiles, outfile, params):
     tmpdir = P.getTempDir("/scratch")
     E.info("Creating tempdir: %s" % tmpdir)
-    sample_bed = P.getTempFilename(tmpdir)
-    sample_bedgraph = P.getTempFilename(tmpdir)
-    input_bed = P.getTempFilename(tmpdir)
-    input_bedgraph = P.getTempFilename(tmpdir)
-    bgremoved_bedgraph = P.getTempFilename(tmpdir)
+    sample_bed = P.get_temp_filename(tmpdir)
+    sample_bedgraph = P.get_temp_filename(tmpdir)
+    input_bed = P.get_temp_filename(tmpdir)
+    input_bedgraph = P.get_temp_filename(tmpdir)
+    bgremoved_bedgraph = P.get_temp_filename(tmpdir)
 
     overlap, remove_background = params
 
@@ -2673,8 +2673,8 @@ def buildIntervalCounts(infile, outfile, track, fg_replicates, bg_replicates):
     samfiles_fg = ",".join(samfiles_fg)
     samfiles_bg = ",".join(samfiles_bg)
 
-    tmpfile1 = P.getTempFilename(os.getcwd()) + ".fg"
-    tmpfile2 = P.getTempFilename(os.getcwd()) + ".bg"
+    tmpfile1 = P.get_temp_filename(os.getcwd()) + ".fg"
+    tmpfile2 = P.get_temp_filename(os.getcwd()) + ".bg"
 
     # start counting
     statement = """
@@ -2737,7 +2737,7 @@ def loadIntervalsFromBed(bedfile, track, outfile,
 
     '''
 
-    tmpfile = P.getTempFile()
+    tmpfile = P.get_temp_file()
 
     headers = ("AvgVal", "DisttoStart", "GeneList", "Length", "PeakCenter",
                "PeakVal", "Position",

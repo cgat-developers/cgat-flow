@@ -406,7 +406,7 @@ def loadIntervals(infile, outfile):
        avgval: average coverage within interval
     '''
 
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     headers = ("avgval", "disttostart",
                "genelist", "length",
@@ -1037,7 +1037,7 @@ def runMeme(infile, outfile):
 def loadMemeSummary(infiles, outfile):
     '''load information about motifs into database.'''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     outf.write("track\n")
 
@@ -1079,7 +1079,7 @@ def loadMotifSequenceComposition(infile, outfile):
 def loadMotifInformation(infiles, outfile):
     '''load information about motifs into database.'''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     outf.write("motif\n")
 
@@ -1138,7 +1138,7 @@ def loadTomTom(infile, outfile):
             alt = name
         name2alt[name] = alt
 
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     # parse the text file
     for line in IOTools.open_file(infile):
@@ -1221,7 +1221,7 @@ def exportMotifLocations(infiles, outfile):
 
     for motif in motifs:
 
-        tmpf = P.getTempFile(".")
+        tmpf = P.get_temp_file(".")
 
         for infile in infiles:
             table = P.toTable(infile)

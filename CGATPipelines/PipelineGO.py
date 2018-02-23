@@ -521,7 +521,7 @@ def loadGOs(infiles, outfile, tablename):
 
     header = False
 
-    tempf1 = P.getTempFile()
+    tempf1 = P.get_temp_file()
 
     pvalues = []
 
@@ -558,7 +558,7 @@ def loadGOs(infiles, outfile, tablename):
     E.info("got %i qvalues" % len(fdr.mQValues))
     qvalues = ["global_qvalue"] + fdr.mQValues
 
-    tempf2 = P.getTempFile()
+    tempf2 = P.get_temp_file()
 
     for line, qvalue in zip(open(tempf1.name, "r"), qvalues):
         tempf2.write("%s\t%s\n" % (line[:-1], str(qvalue)))

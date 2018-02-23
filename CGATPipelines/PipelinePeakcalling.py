@@ -182,10 +182,10 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
         if filt in ["unmapped", "unpaired", "lowqual", "secondary"]:
             j += 1
             if i == 0:
-                outT = P.getTempFilename(".")
+                outT = P.get_temp_filename(".")
             else:
                 inT = outT
-                outT = P.getTempFilename(".")
+                outT = P.get_temp_filename(".")
             # filter to a temporary file, remove the original temporary file
             statement += """samtools view -b %(string)s %(inT)s.bam
             > %(outT)s.bam; rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
@@ -246,7 +246,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
     outT = inT
     if 'duplicates' in filters:
         log = outfile.replace(".bam", "_duplicates.log")
-        outT = P.getTempFilename("./filtered_bams.dir")
+        outT = P.get_temp_filename("./filtered_bams.dir")
         statement += """
         picard MarkDuplicates \
         INPUT=%(inT)s.bam \
@@ -299,13 +299,13 @@ def appendBlacklistFilter(statement, inT, tabout, bedfiles, blthresh, pe):
         1 = paired end, 0 = single end
 
     '''
-    outT = P.getTempFilename("./filtered_bams.dir")
+    outT = P.get_temp_filename("./filtered_bams.dir")
     if pe is True:
         statement += """samtools sort -n %(inT)s.bam -o %(outT)s.bam;
                         rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
         for bedfile in bedfiles:
             inT = outT
-            outT = P.getTempFilename("./filtered_bams.dir")
+            outT = P.get_temp_filename("./filtered_bams.dir")
             statement += """pairToBed -abam %(inT)s.bam
                                       -b %(bedfile)s
                                       -f %(blthresh)f10 -type neither
@@ -313,13 +313,13 @@ def appendBlacklistFilter(statement, inT, tabout, bedfiles, blthresh, pe):
                             rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
             statement += trackFilters(bedfile, outT, tabout)
             inT = outT
-        outT = P.getTempFilename("./filtered_bams.dir")
+        outT = P.get_temp_filename("./filtered_bams.dir")
         statement += """samtools sort %(inT)s.bam -o %(outT)s.bam;
                         rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
 
     else:
         for bedfile in bedfiles:
-            outT = P.getTempFilename("./filtered_bams.dir")
+            outT = P.get_temp_filename("./filtered_bams.dir")
             statement += """bedtools intersect -abam %(inT)s.bam
                                       -b %(bedfile)s
                                       -f %(blthresh)f10 -v
@@ -365,7 +365,7 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
     keep_contigs, remove_contigs = getWantedContigs(contigs_to_remove,
                                                     all_contigs)
 
-    outT = P.getTempFilename("./filtered_bams.dir")
+    outT = P.get_temp_filename("./filtered_bams.dir")
 
     statement += """samtools index %(inT)s.bam;
                     samtools view -b %(inT)s.bam %(keep_contigs)s > %(outT)s.bam;
@@ -436,7 +436,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     inT = infile
     if not os.path.exists("filtered_bams.dir"):
         os.mkdir("filtered_bams.dir")
-    outT = P.getTempFilename("./filtered_bams.dir")
+    outT = P.get_temp_filename("./filtered_bams.dir")
 
     if filters == ['']:
         cwd = os.getcwd()
@@ -474,7 +474,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         # is merged (Katy)
         # if int(strip) == 1 and BamTools.isStripped(inT) is False:
         #     # strip sequence if requested
-        #     outT = P.getTempFilename(".")
+        #     outT = P.get_temp_filename(".")
         #     statement += """python %%(scriptsdir)s/bam2bam.py
         #                     -I %(inT)s.bam
         #                     --strip-method=all
@@ -515,7 +515,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     # if unpaired is specified in bamfilters in the pipeline.ini
     # remove reads whose mate has been filtered out elsewhere
 
-    T = P.getTempFilename(".")
+    T = P.get_temp_filename(".")
     checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True)
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
@@ -787,7 +787,7 @@ def makePseudoBams(infile, outfiles, pe, randomseed, filters):
 
     # read bam file
     bamfile = pysam.AlignmentFile(infile, "rb")
-    T = P.getTempFilename(".")
+    T = P.get_temp_filename(".")
     # sort
     # pysam.sort("-n", infile, T, catch_stdout=False)
     os.system("""samtools sort -n %(infile)s -o %(T)s.bam""" % locals())
@@ -840,7 +840,7 @@ def makePseudoBams(infile, outfiles, pe, randomseed, filters):
     # check that there are twice as many reads as read names for a paired
     # end bam file and check the lengths of the files
     for outf in outfiles:
-        T = P.getTempFilename(".")
+        T = P.get_temp_filename(".")
         os.system("""samtools sort %(outf)s -o %(T)s.bam;
         samtools index %(T)s.bam""" % locals())
 #      pysam.sort(outf, T, catch_stdout=False)
@@ -919,8 +919,8 @@ def mergeSortIndex(bamfiles, out):
 
     '''
     infiles = " ".join(bamfiles)
-    T1 = P.getTempFilename(".")
-    T2 = P.getTempFilename(".")
+    T1 = P.get_temp_filename(".")
+    T2 = P.get_temp_filename(".")
     statement = """samtools merge %(T1)s.bam %(infiles)s;
     samtools sort %(T1)s.bam -o %(T2)s.bam;
     samtools index %(T2)s.bam;
@@ -951,7 +951,7 @@ def sortIndex(bamfile):
         path to bam file to sort and index
 
     '''
-    T1 = P.getTempFilename(".")
+    T1 = P.get_temp_filename(".")
     bamfile = P.snip(bamfile)
     statement = """
     samtools sort %(bamfile)s.bam -o %(T1)s.bam;
@@ -1406,13 +1406,13 @@ class Macs2Peakcaller(Peakcaller):
         # convert normalized bed graph to bigwig
         # saves 75% of space
         # compressing only saves 60%
-        temp = P.getTempFilename('.')
+        temp = P.get_temp_filename('.')
         statement.append('''
         sort -k1,1 -k2,2n %(outfile)s_treat_pileup.bdg > %(temp)s;
         bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_treat_pileup.bw ;
         checkpoint ; rm -rf %(outfile)s_treat_pileup.bdg; rm -rf %(temp)s;''' % locals())
 
-        temp = P.getTempFilename('.')
+        temp = P.get_temp_filename('.')
         statement.append('''
         sort -k1,1 -k2,2n %(outfile)s_control_lambda.bdg > %(temp)s;
         bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_control_lambda.bw ;
@@ -1607,7 +1607,7 @@ class Macs2Peakcaller(Peakcaller):
         statement = ''
         idrout = "%s_IDRpeaks" % outfile
         narrowpeaks = "%s_peaks.%s" % (outfile, idrsuffix)
-        tmpfile = P.getTempFilename()
+        tmpfile = P.get_temp_filename()
         col = idrcol
         statement += '''sort -k%(col)igr,%(col)igr %(narrowpeaks)s
         > %(tmpfile)s;

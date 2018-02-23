@@ -626,7 +626,7 @@ def buildBigWig(infile, outfile):
         raise KeyError('''please add 0 for FALSE and 1 for TRUE to quant_norm
                         ini file''')
 
-    tmpfile = P.getTempFilename()
+    tmpfile = P.get_temp_filename()
     job_memory = "3G"
     statement = '''bedtools genomecov
     -ibam %(inf)s
@@ -1313,7 +1313,7 @@ def runIDR(infile, outfile):
         options += " %s" % PARAMS['IDR_options_replicateconsistency']
 
     # Make the statement to run the test and check merged peak list length
-    T = P.getTempFilename(".")
+    T = P.get_temp_filename(".")
     statement = PipelinePeakcalling.buildIDRStatement(
         infile1, infile2,
         T,

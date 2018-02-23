@@ -500,7 +500,7 @@ def loadMAST(infile, outfile):
 
     tablename = P.toTable(outfile)
 
-    tmpfile = P.getTempFile(".")
+    tmpfile = P.get_temp_file(".")
 
     tmpfile.write(MAST.Match().header +
                   "\tmotif\tcontig"
@@ -515,7 +515,7 @@ def loadMAST(infile, outfile):
     def readChunk(lines, chunk):
         # use real file, as MAST parser can not deal with a
         # list of lines
-        tmpfile2 = P.getTempFile(".")
+        tmpfile2 = P.get_temp_file(".")
         try:
             motif, part = re.match(
                 ":: motif = (\S+) - (\S+) ::", lines[chunks[chunk]]).groups()
@@ -624,7 +624,7 @@ def runBioProspector(infiles, outfile, dbhandle):
     # on the old ones.
     # job_options = "-l mem_free=8000M"
 
-    tmpfasta = P.getTempFilename(".")
+    tmpfasta = P.get_temp_filename(".")
     track = outfile[:-len(".bioprospector")]
     nseq = writeSequencesForIntervals(
         track,
@@ -661,7 +661,7 @@ def loadBioProspector(infile, outfile):
 
     results = Bioprospector.parse(IOTools.open_file(infile, "r"))
 
-    tmpfile = P.getTempFile()
+    tmpfile = P.get_temp_file()
     tmpfile.write("id\tmotif\tstart\tend\tstrand\tarrangement\n")
 
     for x, motifs in enumerate(results):
@@ -733,7 +733,7 @@ def runMAST(infiles, outfile):
         os.remove(outfile)
 
     tmpdir = P.getTempDir(".")
-    tmpfile = P.getTempFilename(".")
+    tmpfile = P.get_temp_filename(".")
 
     for motiffile in motiffiles:
         if IOTools.isEmpty(motiffile):

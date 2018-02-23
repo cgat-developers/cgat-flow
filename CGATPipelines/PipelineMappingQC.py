@@ -130,7 +130,7 @@ def buildPicardDuplicationStats(infile, outfile):
     # currently, MarkDuplicates cannot handle split alignments from gsnap
     # these can be identified by the custom XT tag.
     if ".gsnap.bam" in infile:
-        tmpf = P.getTempFile(".")
+        tmpf = P.get_temp_file(".")
         tmpfile_name = tmpf.name
         statement = '''samtools view -h %(infile)s
         | awk "!/\\tXT:/"
@@ -292,7 +292,7 @@ def loadPicardMetrics(infiles, outfile, suffix,
     if not tablename:
         tablename = "%s_%s" % (P.toTable(outfile), suffix)
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
 
     filenames = ["%s.%s" % (x, suffix) for x in infiles]
 
@@ -532,7 +532,7 @@ def loadPicardCoverageStats(infiles, outfile):
         Logfile. The table name will be derived from `outfile`.
     '''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     first = True
     for f in infiles:
         track = P.snip(os.path.basename(f), ".cov")
@@ -759,7 +759,7 @@ def loadIdxstats(infiles, outfile):
         Logfile. The table name will be derived from `outfile`.
     '''
 
-    outf = P.getTempFile(".")
+    outf = P.get_temp_file(".")
     dfs = []
     for f in infiles:
         track = P.snip(f, ".idxstats").split('/')[-1]

@@ -800,7 +800,7 @@ def buildRefFlat(infile, outfile):
     '''build flat geneset for Picard RnaSeqMetrics.
     '''
 
-    tmpflat = P.getTempFilename(".")
+    tmpflat = P.get_temp_filename(".")
 
     statement = '''
     gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;

@@ -185,7 +185,7 @@ import pandas as pd
 # load options from the config file
 
 
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0], "pipeline.ini"])
 
 PARAMS = P.PARAMS
@@ -221,7 +221,7 @@ def loadROI(infile, outfile):
               --header-names=%(header)s
               --table=%(tablename)s
             > %(outfile)s  '''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -238,7 +238,7 @@ def loadROI2Gene(infile, outfile):
               --retry
               --table=%(tablename)s
             > %(outfile)s  '''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -255,7 +255,7 @@ def loadSamples(infile, outfile):
               --retry
               --table=%(tablename)s
             > %(outfile)s  '''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -273,7 +273,7 @@ def mapReads(infiles, outfile):
     track = P.snip(os.path.basename(outfile), ".bam")
     m = PipelineMapping.BWAMEM(remove_unique=PARAMS["bwa_remove_non_unique"])
     statement = m.build((infiles,), outfile)
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -408,7 +408,7 @@ def mergeBAMs(infiles, outfile):
                    OUTPUT=%(outfile)s
                    ASSUME_SORTED=true; checkpoint; '''
     statement += '''samtools index %(outfile)s ;''' % locals()
-    P.run()
+    P.run(statement)
 
     for inputfile in infiles:
         IOTools.zapFile(inputfile)
@@ -524,7 +524,7 @@ def mergeXYRatio(infiles, outfile):
                    -L %(outfile)s.log -v 6
                    --cat=Track %(inlist)s
                    > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -583,7 +583,7 @@ def SelectExonicHapmapVariants(infile, outfile):
     statement = '''tabix -B %(infile)s %(bed)s |
                    awk '{OFS="\\t"; if (!/^#/){print $1,$2-1,$2}}'
                    > %(outfile)s''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -612,7 +612,7 @@ def indexVCFs(infile, outfile):
     '''Genotype HapMap SNPs using HaplotypeCaller in each individual'''
     statement = '''bgzip -c %(infile)s > %(outfile)s;
                    tabix -p vcf %(outfile)s; '''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -632,7 +632,7 @@ def vcfCompare(infiles, outfile):
     name2 = P.snip(os.path.basename(sample2), ".hapmap.vcf.gz")
     statement = '''vcf-compare -g -m %(name1)s:%(name2)s
                    %(sample1)s %(sample2)s > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -646,7 +646,7 @@ def parseVcfCompare(infile, outfile):
                    | grep "Non-reference Discordance Rate (NDR):"
                    | cut -f 3
                    > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -695,7 +695,7 @@ def annotateVariantsSNPeff(infile, outfile):
                    -c %(config)s
                    -v %(snpeff_genome)s
                    -o gatk %(infile)s > %(outfile)s''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -725,7 +725,7 @@ def loadTableSnpEff(infile, outfile):
 @merge(GATKIndelRealignSample, "gatk/all_samples.list")
 def listOfBAMs(infiles, outfile):
     '''generates a file containing a list of BAMs for use in VQSR'''
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         for infile in infiles:
             outf.write(infile + '\n')
 
@@ -842,7 +842,7 @@ def annotateVariantsDBNSFP(infile, outfile):
     statement = """SnpSift.sh dbnsfp -db %(dbNSFP)s -v %(infile)s
                    %(annostring)s >
                    %(outfile)s;"""
-    P.run()
+    P.run(statement)
 
 
 @transform(annotateVariantsDBNSFP,
@@ -856,7 +856,7 @@ def annotateVariantsClinvar(infile, outfile):
     intout = outfile.replace("samples", "samples_clinvar")
     statement = """SnpSift.sh annotate %(clinvar)s
                 %(infile)s > %(outfile)s;"""
-    P.run()
+    P.run(statement)
 
 
 @transform(annotateVariantsClinvar,
@@ -870,7 +870,7 @@ def annotateVariantsExAC(infile, outfile):
     statement = """SnpSift.sh annotate
                 %(exac)s
                 %(infile)s > %(outfile)s;"""
-    P.run()
+    P.run(statement)
 
 
 @transform(annotateVariantsExAC,
@@ -884,7 +884,7 @@ def annotateVariantsGWASC(infile, outfile):
     gwas_catalog = PARAMS["annotation_gwas_catalog"]
     statement = """SnpSift.sh gwasCat -db %(gwas_catalog)s
                    %(infile)s > %(outfile)s;"""
-    P.run()
+    P.run(statement)
 
 
 @transform(annotateVariantsGWASC,
@@ -902,7 +902,7 @@ def annotateVariantsPhastcons(infile, outfile):
     statement = """ln -sf %(genomeind)s %(phastcons)s/genome.fai;
                    SnpSift.sh phastCons %(phastcons)s %(infile)s >
                    %(outfile)s;"""
-    P.run()
+    P.run(statement)
 
 
 @transform(annotateVariantsPhastcons,
@@ -932,7 +932,7 @@ def annotateVariants1000G(infile, outfile):
                        %(vcf)s
                        %(tempin)s > %(tempout)s;
                        mv %(tempout)s %(tempin)s"""
-        P.run()
+        P.run(statement)
 
     shutil.move(tempin, outfile)
 
@@ -950,7 +950,7 @@ def annotateVariantsDBSNP(infile, outfile):
                 %(dbsnp)s
                 %(infile)s > %(outfile)s;"""
 
-    P.run()
+    P.run(statement)
 
 
 @follows(annotateVariantsDBSNP)
@@ -986,7 +986,7 @@ def annotateVariantsVEP(infile, outfile):
                        --assembly %(vep_assembly)s --input_file %(infile)s
                        --output_file %(outfile)s --force_overwrite
                        %(annostring)s --offline;'''
-        P.run()
+        P.run(statement)
 
 
 @follows(mkdir("variant_tables"))
@@ -1008,11 +1008,11 @@ def makeAnnotationsTables(infiles, outfile):
                    awk -F '=|,' '$1=="##INFO" || $1=="##FORMAT"
                    {printf("%%s\\t%%s\\n", $3, $9)}'
                    | sed 's/>//g' > %(TF)s'''
-    P.run()
+    P.run(statement)
     cols = []
     colds = []
     cols2 = []
-    for line in IOTools.openFile(TF).readlines():
+    for line in IOTools.open_file(TF).readlines():
         if line.split("\t")[0] != "Samples":
             cols.append("[%%%s]" % line.split("\t")[0])
             colds.append(line.split("\t")[1].strip().replace(" ", "_"))
@@ -1037,7 +1037,7 @@ def makeAnnotationsTables(infiles, outfile):
                    -f '%(cstring)s\\n'
                    -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
                    %(inputvcf)s >> %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 ###############################################################################
@@ -1091,7 +1091,7 @@ def getSampleGenotypes(infiles, outfile):
         Indels
     '''
     snps = set([line.strip()
-                for line in IOTools.openFile(infiles[1][1]).readlines()])
+                for line in IOTools.open_file(infiles[1][1]).readlines()])
     PipelineExomeAncestry.GenotypeSNPs(infiles[0], snps, outfile, submit=True)
 
 
@@ -1104,12 +1104,12 @@ def concatenateSNPs(infiles, outfile):
     '''
     snps = set()
     for f in infiles:
-        with IOTools.openFile(f) as inp:
+        with IOTools.open_file(f) as inp:
             for line in inp:
                 line = line.strip().split("\t")
                 snps.add("%s\t%s\t%s\t%s" % (line[0], line[4],
                                              line[1], line[2]))
-    out = IOTools.openFile(outfile, "w")
+    out = IOTools.open_file(outfile, "w")
     for snp in snps:
         out.write("%s\n" % (snp))
     out.close()
@@ -1146,12 +1146,12 @@ def mergeAncestry(infiles, outfile):
     large diamonds represent the best match and small triangles the second
     best match
     '''
-    out = IOTools.openFile(outfile, "w")
+    out = IOTools.open_file(outfile, "w")
     for f in infiles:
         infile = f[1]
         scores = []
         ancs = []
-        for line in IOTools.openFile(infile).readlines():
+        for line in IOTools.open_file(infile).readlines():
             line = line.strip().split("\t")
             anc = line[0]
             score = decimal.Decimal(line[1])
@@ -1197,7 +1197,7 @@ def runPlinkandKing(infiles, outfile):
           --no-parents --no-sex --no-pheno;
     %(k)s/king -b plink.bed --binary --prefix %(pref)s;
     %(k)s/king -b %(pref)s.bgeno --kinship --ibs --prefix %(pref)s"""
-    P.run()
+    P.run(statement)
 
 
 @active_if(len(matches) > 1)
@@ -1337,14 +1337,14 @@ def familyFilterVariants(infiles, outfiles):
 
         # figure out who is related to who
         families = [line.strip().split("\t")[:2]
-                    for line in IOTools.openFile(infiles[1]).readlines()]
+                    for line in IOTools.open_file(infiles[1]).readlines()]
         infam = [line[0] for line in families] + [line[1] for line in families]
 
         # no relatives - copy the input file to the output file and generate
         # a blank "failed" file
         if infilenam not in infam or PARAMS['filtering_family'] == 0:
             shutil.copy(infile, outfiles[0])
-            o = IOTools.openFile(outfiles[1], "w")
+            o = IOTools.open_file(outfiles[1], "w")
             o.close()
         else:
             for line in families:
@@ -1358,7 +1358,7 @@ def familyFilterVariants(infiles, outfiles):
     else:
         infile = infiles[0][0]
         shutil.copy(infile, outfiles[0])
-        out = IOTools.openFile(outfiles[1], "w")
+        out = IOTools.open_file(outfiles[1], "w")
         out.close()
 
 
@@ -1377,15 +1377,15 @@ def makeGeneLists(infiles, outfiles):
     genes = PARAMS['general_geneset']
 
     # four %s because they need to be escaped in generating the statement
-    # then again when submitting the P.run()
+    # then again when submitting the P.run(statement)
     statement = '''awk 'NR > 2 {printf("%%%%s\\t%%%%s\\t%%%%s\\n",\
     $1, $2, $2 + 1)}'\
     %(infile)s |\
     bedtools intersect -wo -a stdin -b %(genes)s > %(outfile)s''' % locals()
-    P.run()
+    P.run(statement)
 
     geneids = set()
-    with IOTools.openFile(outfile) as inp:
+    with IOTools.open_file(outfile) as inp:
         for line in inp:
             line = line.strip().split("\t")
             details = line[11].split(";")
@@ -1394,7 +1394,7 @@ def makeGeneLists(infiles, outfiles):
                 if r:
                     geneid = detail.split(" ")[-1]
                     geneids.add(geneid.replace("\"", ""))
-    out = IOTools.openFile(outfiles[0], "w")
+    out = IOTools.open_file(outfiles[0], "w")
     for geneid in geneids:
         out.write("%s\n" % geneid)
     out.close()
@@ -1424,14 +1424,14 @@ def findGenes(infile, outfile):
     '''Adds expression "GENE_OF_INTEREST" to the FILTER column of the vcf
     if variant is within a gene of interest as defined in the ini
     file'''
-    geneList = P.asList(PARAMS["annotation_genes_of_interest"])
+    geneList = P.as_list(PARAMS["annotation_genes_of_interest"])
     expression = '\'||SNPEFF_GENE_NAME==\''.join(geneList)
     statement = '''GenomeAnalysisTK -T VariantFiltration
                    -R %%(genome_dir)s/%%(gatkgenome)s.fa
                    --variant %(infile)s
                    --filterExpression "SNPEFF_GENE_NAME=='%(expression)s'"
                    --filterName "GENE_OF_INTEREST" -o %(outfile)s''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -1549,7 +1549,7 @@ def confirmParentage(infiles, outfile):
                AND cast(%(proband)s_DP as INTEGER) > 10)''' % locals()
     statement = '''sqlite3 %(database)s "%(query)s" > %(outfile)s
                    2> %(outfile)s.log''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -1568,7 +1568,7 @@ def deNovoVariants(infiles, outfile):
     genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
-        IOTools.openFile(pedfile), delimiter='\t', fieldnames=[
+        IOTools.open_file(pedfile), delimiter='\t', fieldnames=[
             'family', 'sample', 'father', 'mother', 'sex', 'status'])
     for row in pedigree:
         if row['status'] == '2':
@@ -1612,7 +1612,7 @@ def lowerStringencyDeNovos(infiles, outfile):
     genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
-        IOTools.openFile(pedfile), delimiter='\t', fieldnames=[
+        IOTools.open_file(pedfile), delimiter='\t', fieldnames=[
             'family', 'sample', 'father', 'mother', 'sex', 'status'])
     for row in pedigree:
         if row['status'] == '2':
@@ -1886,7 +1886,7 @@ def phasing(infiles, outfile):
                    -ped %(pedfile)s
                    -mvf %(infile)s.mvf
                    -o %(outfile)s ;''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -1904,7 +1904,7 @@ def readbackedphasing(infiles, outfile):
                    -I %(bamlist)s
                    -V %(infile)s
                    -o %(outfile)s; ''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -1931,7 +1931,7 @@ def compoundHets(infiles, outfile):
                    AND (in_1kg = 0 OR aaf_1kg_all < 0.01)"
                    %(family_id)s.db > %(outfile)s;'''
     # rm -f %(family_id)s.db'''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -1967,7 +1967,7 @@ def candidateCoverage(infile, outfile):
                     candidate_gene_names.txt ;''' % locals()
     statement += '''GenomeAnalysisTK -T DepthOfCoverage -R %(genome)s
                     -o candidate -I %(infile)s -ct %(threshold)s -L candidate.interval_list ;''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -1979,7 +1979,7 @@ def candidateCoveragePlots(infile, outfile):
     rscript = PARAMS["coverage_rscript"]
     threshold = PARAMS["coverage_threshold"]
     statement = '''Rscript %(rscript)s %(infile)s candidate_gene_names.txt %(threshold)s %(outfile)s ;'''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -1993,7 +1993,7 @@ def buildVCFstats(infile, outfile):
     '''Calculate statistics on VCF file'''
     statement = '''vcf-stats %(infile)s > %(outfile)s
                    2>>%(outfile)s.log;''' % locals()
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 
@@ -2020,7 +2020,7 @@ def loadVCFstats(infiles, outfile):
     statement += '''cat snpstats.txt | cgat csv2db
                     %(csv2db_options)s --allow-empty-file --add-index=track
                     --table=snp_stats >> %(outfile)s; '''
-    P.run()
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################

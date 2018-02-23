@@ -195,7 +195,7 @@ class product(task_decorator):
 ###################################################
 # Pipeline configuration
 ###################################################
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"],
@@ -204,9 +204,9 @@ P.getParameters(
 
 PARAMS = P.PARAMS
 
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True))
 
@@ -281,7 +281,7 @@ def getAssociatedBAMFiles(track):
 
     if bamfiles == []:
         if "bams_%s" % fn.lower() in PARAMS:
-            for ff in P.asList(PARAMS["bams_%s" % fn.lower()]):
+            for ff in P.as_list(PARAMS["bams_%s" % fn.lower()]):
                 bamfiles.extend(glob.glob(ff))
         else:
             for pattern, value in P.CONFIG.items("bams"):
@@ -292,7 +292,7 @@ def getAssociatedBAMFiles(track):
 
     offsets = []
     if "offsets_%s" % fn.lower() in PARAMS:
-        offsets = list(map(int, P.asList(PARAMS["offsets_%s" % fn.lower()])))
+        offsets = list(map(int, P.as_list(PARAMS["offsets_%s" % fn.lower()])))
     else:
         for pattern, value in P.CONFIG.items("offsets"):
             if "%" in pattern:
@@ -347,13 +347,13 @@ def prepareIntervals(infile, outfile):
     > %(outfile)s;
     tabix -p bed %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @merge(prepareIntervals, "preprocess.tsv.gz")
 def buildProcessingSummary(infiles, outfile):
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
 
     for infile in infiles:
         before = os.path.join(
@@ -385,7 +385,7 @@ def indexIntervals(infile, outfile):
     | bgzip > %(outfile)s;
     tabix -p bed %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -437,7 +437,7 @@ def loadIntervals(infile, outfile):
     c = E.Counter()
 
     # count tags
-    for bed in Bed.iterator(IOTools.openFile(infile, "r")):
+    for bed in Bed.iterator(IOTools.open_file(infile, "r")):
 
         c.input += 1
 
@@ -511,7 +511,7 @@ def exportPeakLocations(infile, outfile):
     '''
 
     dbh = connect()
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     cc = dbh.cursor()
     table = P.toTable(infile)
     for x in cc.execute(
@@ -556,7 +556,7 @@ def prepareGTFsByOverlapWithIntervals(infile, outfiles):
     | gzip > %(out4)s;
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("contextstats.dir"))
@@ -610,7 +610,7 @@ def annotateIntervals(infile, outfile):
     | gzip
     > %(outfile)s"""
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("annotations.dir"))
@@ -642,7 +642,7 @@ def annotateBinding(infile, outfile):
     | gzip
     > %(outfile)s"""
 
-    P.run()
+    P.run(statement)
 
 
 @transform(BedFiles,
@@ -667,7 +667,7 @@ def annotateTSS(infile, outfile):
     | gzip
     > %(outfile)s"""
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("annotations.dir"))
@@ -692,7 +692,7 @@ def annotateRepeats(infile, outfile):
     | gzip
     > %(outfile)s"""
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("annotations.dir"))
@@ -714,7 +714,7 @@ def annotateComposition(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("annotations.dir"))
@@ -734,7 +734,7 @@ def annotateTSSComposition(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -779,7 +779,7 @@ def buildIntervalProfileOfTranscripts(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(prepareGTFsByOverlapWithIntervals,
@@ -826,7 +826,7 @@ def buildTranscriptsByIntervalsProfiles(infile, outfile):
     %(bamfile)s <(zcat %(infile)s)
     > %(outfile)s ;
     '''
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -890,7 +890,7 @@ def buildPeakShapeTable(infile, outfile):
                    | gzip
                    > %(outfile)s
                 '''
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -924,7 +924,7 @@ def buildOverlap(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -964,7 +964,7 @@ def exportMotifSequences(infile, outfile):
         outfile,
         dbhandle,
         full=False,
-        masker=P.asList(p['motifs_masker']),
+        masker=P.as_list(p['motifs_masker']),
         halfwidth=int(p["motifs_halfwidth"]),
         maxsize=int(p["motifs_max_size"]),
         proportion=p["motifs_proportion"],
@@ -1071,7 +1071,7 @@ def loadMotifSequenceComposition(infile, outfile):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1141,7 +1141,7 @@ def loadTomTom(infile, outfile):
     tmpfile = P.getTempFile(".")
 
     # parse the text file
-    for line in IOTools.openFile(infile):
+    for line in IOTools.open_file(infile):
         if line.startswith("#Query"):
             tmpfile.write('\t'.join(
                 ("target_name", "query_id", "target_id",
@@ -1238,7 +1238,7 @@ def exportMotifLocations(infiles, outfile):
         tmpfname = tmpf.name
 
         statement = '''mergeBed -i %(tmpfname)s -nms | gzip > %(outfile)s'''
-        P.run()
+        P.run(statement)
 
         os.unlink(tmpf.name)
 
@@ -1297,7 +1297,7 @@ def runGATOnGenomicContext(infiles, outfile):
          | gzip
          > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("gat_annotations.dir"))
@@ -1342,7 +1342,7 @@ def runGATOnGenomicAnnotations(infiles, outfile):
     | gzip
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("gat_genestructure.dir"))
@@ -1399,7 +1399,7 @@ def runGATOnGeneStructure(infiles, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("gat_functions.dir"))
@@ -1455,7 +1455,7 @@ def runGATOnGeneAnnotations(infiles, outfile):
          | gzip
          > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("gat_sets.dir"))
@@ -1479,7 +1479,7 @@ def runGATOnSets(infiles, outfile, isochorefile):
     printf "track name=%%s\\n" `basename $x` >> %(segments)s;
     zcat $x >> %(segments)s; done'''
 
-    P.run()
+    P.run(statement)
 
     shutil.copyfile(segments, annotations)
 
@@ -1497,7 +1497,7 @@ def runGATOnSets(infiles, outfile, isochorefile):
          | gzip
          > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1538,8 +1538,8 @@ def summarizeGAT(infiles, outfile):
 
     # output qvalues
     column = "qvalue"
-    with IOTools.openFile(outfile + "." + column + ".gz", "w") as outf:
-        IOTools.writeMatrix(outf, qval_matrix, qval_row_headers, col_headers)
+    with IOTools.open_file(outfile + "." + column + ".gz", "w") as outf:
+        IOTools.write_matrix(outf, qval_matrix, qval_row_headers, col_headers)
 
     ncols = len(infiles)
     min_qvalue = PARAMS["gat_fdr"]
@@ -1593,8 +1593,8 @@ def summarizeGAT(infiles, outfile):
 
         col_headers = [P.snip(os.path.basename(x), ".gat.tsv.gz")
                        for x in infiles]
-        with IOTools.openFile(outfile + "." + column + ".gz", "w") as outf:
-            IOTools.writeMatrix(outf, matrix, row_headers, col_headers)
+        with IOTools.open_file(outfile + "." + column + ".gz", "w") as outf:
+            IOTools.write_matrix(outf, matrix, row_headers, col_headers)
 
     P.touch(outfile)
 
@@ -1667,7 +1667,7 @@ def summarizeReadCounts(infile, outfile):
               --output-filename-pattern=%(prefix)s_
               --log=%(outfile)s.log
               > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 ############################################################
@@ -1688,7 +1688,7 @@ def summarizeReadCounts(infile, outfile):
 def viewIntervals(infiles, outfiles):
 
     outfile_bed, outfile_code = outfiles
-    outs = IOTools.openFile(outfile_bed, "w")
+    outs = IOTools.open_file(outfile_bed, "w")
     version = PARAMS["version"]
     for infile in infiles:
 
@@ -1698,7 +1698,7 @@ def viewIntervals(infiles, outfiles):
             '''track name="interval_%(track)s_%(version)s" description="Intervals in %(track)s - version %(version)s" visibility=2\n''' %
             locals())
 
-        with IOTools.openFile(infile, "r") as f:
+        with IOTools.open_file(infile, "r") as f:
             for bed in Bed.iterator(f):
                 # MACS intervals might be less than 0
                 if bed.start <= 0:
@@ -1718,7 +1718,7 @@ def viewIntervals(infiles, outfiles):
 
     filename = re.sub("^.*/ucsc_tracks/", "", dest)
 
-    outs = IOTools.openFile(outfile_code, "w")
+    outs = IOTools.open_file(outfile_code, "w")
     outs.write("#paste the following into the UCSC browser:\n")
     outs.write(
         "http://wwwfgu.anat.ox.ac.uk/~andreas/ucsc_tracks/%(filename)s\n" %
@@ -1897,7 +1897,7 @@ def reset(infile, outfile):
     rm -f *.meme* *.tomtom* *.fasta*;
     rm -rf *.dir;
     '''
-    P.run()
+    P.run(statement)
 
 
 def main(argv=None):

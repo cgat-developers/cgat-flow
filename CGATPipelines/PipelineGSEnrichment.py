@@ -92,7 +92,7 @@ def translateGenelist(dbname, genelistfile, idtype):
     '''
 
     genelist = [line.strip() for line in
-                IOTools.openFile(genelistfile).readlines()]
+                IOTools.open_file(genelistfile).readlines()]
     trans = pd.DataFrame(
         readDBTable(dbname, "ensemblg2%s$geneid" % idtype))
     trans.columns = getDBColumnNames(dbname, "ensemblg2%s$geneid" % idtype)
@@ -107,7 +107,7 @@ def translateGenelist(dbname, genelistfile, idtype):
 @cluster_runnable
 def untranslateGenelist(dbname, tab, genelistfile, idtype, outfile):
     genelist = [line.strip() for line in
-                IOTools.openFile(genelistfile).readlines()]
+                IOTools.open_file(genelistfile).readlines()]
     trans = pd.DataFrame(readDBTable(dbname, tab), columns=[idtype,
                                                             'ensemblg'])
     T = trans[idtype][trans['ensemblg'].isin(genelist)]
@@ -119,7 +119,7 @@ def writeList(genelist, outfile):
     '''
     Writes a list or set of genes to an output file, one per line
     '''
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     for gene in genelist:
         outf.write("%s\n" % gene)
     outf.close()
@@ -241,7 +241,7 @@ class AnnotationSet(object):
         e.g. {A:set("a", "b", "c")} would be stored as
         A    a,b,c
         '''
-        out = IOTools.openFile(outfile, "w")
+        out = IOTools.open_file(outfile, "w")
         out.write("%s\n" % ("\t".join(cnames)))
 
         for id1, id2 in list(adict.items()):
@@ -257,7 +257,7 @@ class AnnotationSet(object):
         are tuples rather than sets.
         The first line of the output file is the DetailsColumns column names
         '''
-        out = IOTools.openFile(outfile, "w")
+        out = IOTools.open_file(outfile, "w")
         out.write("%s\n" % ("\t".join(cnames)))
         for nam, val in list(adict.items()):
             tval = removeNonAscii("\t".join(val))
@@ -276,7 +276,7 @@ class AnnotationSet(object):
         '''
         D = dict()
         i = 0
-        with IOTools.openFile(infile) as inf:
+        with IOTools.open_file(infile) as inf:
             for line in inf:
                 if i != 0:
                     line = line.strip().split("\t")
@@ -293,7 +293,7 @@ class AnnotationSet(object):
         '''
         D = dict()
         i = 0
-        with IOTools.openFile(infile) as inf:
+        with IOTools.open_file(infile) as inf:
             for line in inf:
                 line = line.strip().split("\t")
                 if i == 0:
@@ -617,13 +617,13 @@ class FlatFileParser(AnnotationParser):
             isd = True
 
         else:
-            allcols = IOTools.openFile(
+            allcols = IOTools.open_file(
                 options['l']).readline().split(options['d1'])
             k = allcols.index(options['k'])
             o = allcols.index(options['o'])
             usecols = [k, o]
 
-        inf = IOTools.openFile(options['l']).readlines()
+        inf = IOTools.open_file(options['l']).readlines()
         (self.AS.GenesToTerms, self.AS.TermsToDetails,
          self.AS.DetailsColumns) = self.makeDict(inf, usecols, isd)
 
@@ -692,7 +692,7 @@ class FlatFileParser(AnnotationParser):
         TermsToOnt = dict()
         Tname = None
         isas = set()
-        with IOTools.openFile(self.options['ont'], encoding="utf-8") as infile:
+        with IOTools.open_file(self.options['ont'], encoding="utf-8") as infile:
             for line in infile:
                 line = line.strip()
                 if line.startswith("id"):
@@ -723,7 +723,7 @@ class EnrichmentTester(object):
         #  AnnotationSet
         self.background = (set([line.strip()
                                 for line in
-                                IOTools.openFile(background).readlines()]) &
+                                IOTools.open_file(background).readlines()]) &
                            allgenes)
 
         # read the list of background genes, remove genes not in the
@@ -731,15 +731,15 @@ class EnrichmentTester(object):
         # the foreground should also be in the background)
         self.foreground = (set([line.strip()
                                 for line in
-                                IOTools.openFile(foreground).readlines()]) &
+                                IOTools.open_file(foreground).readlines()]) &
                            allgenes) & self.background
 
         original_fg = set([line.strip() for line in
-                           IOTools.openFile(foreground.replace(
+                           IOTools.open_file(foreground.replace(
                                "clean_", "")).readlines()])
         if os.path.exists(background.replace("clean_", "")):
             original_bg = set([line.strip() for line in
-                               IOTools.openFile(foreground.replace(
+                               IOTools.open_file(foreground.replace(
                                    "clean_", "")).readlines()])
         else:
             original_bg = None
@@ -829,10 +829,10 @@ class EnrichmentTester(object):
                 for term in terms:
                     fg = outfile.replace(".tsv", "_fg_genes_%s.tsv"
                                          % (term.replace(":", "_")))
-                    fgo = IOTools.openFile(fg, "w")
+                    fgo = IOTools.open_file(fg, "w")
                     bg = outfile.replace(".tsv", "_bg_genes_%s.tsv"
                                          % (term.replace(":", "_")))
-                    bgo = IOTools.openFile(bg, "w")
+                    bgo = IOTools.open_file(bg, "w")
                     fggenes = tdict_fg[term]
                     bggenes = tdict_bg[term]
 
@@ -1151,7 +1151,7 @@ def cleanGeneLists(infile, outfile, idtype, dbname):
 
     if idtype == "ensemblg":
         cleangenes = set([line.strip()
-                          for line in IOTools.openFile(infile).readlines()])
+                          for line in IOTools.open_file(infile).readlines()])
     else:
         cleangenes = translateGenelist(dbname, infile, idtype)
     writeList(cleangenes, outfile)

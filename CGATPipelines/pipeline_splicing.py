@@ -137,16 +137,16 @@ import CGATPipelines.PipelineSplicing as PipelineSplicing
 ###################################################################
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
 
 # add configuration values from associated pipelines
 PARAMS = P.PARAMS
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))  # add config values from associated pipelines
@@ -225,12 +225,12 @@ def buildGff(infile, outfile):
 
     tmpgff = P.getTempFilename(".")
     statement = "gunzip -c %(infile)s > %(tmpgff)s"
-    P.run()
+    P.run(statement)
 
     ps = PYTHONSCRIPTSDIR
     statement = '''python %(ps)s/dexseq_prepare_annotation.py
                 %(tmpgff)s %(outfile)s'''
-    P.run()
+    P.run(statement)
 
     os.unlink(tmpgff)
 
@@ -278,7 +278,7 @@ def countDEXSeq(infiles, outfile):
     -s %(strandedness)s
     -r pos
     -f bam  %(gfffile)s %(infile)s %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @collate(countDEXSeq,
@@ -312,7 +312,7 @@ def aggregateExonCounts(infiles, outfile):
     %(infiles)s
     > %(outfile)s '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(aggregateExonCounts)
@@ -370,7 +370,7 @@ def runDEXSeq(infile, outfile):
     > %(outfile)s;
     ''' % locals()
 
-    P.run()
+    P.run(statement)
 
 
 ###################################################################

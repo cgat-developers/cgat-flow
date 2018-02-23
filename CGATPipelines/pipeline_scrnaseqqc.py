@@ -75,7 +75,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -85,9 +85,9 @@ PARAMS = P.getParameters(
 # 1. pipeline_annotations: any parameters will be added with the
 #    prefix "annotations_". The interface will be updated with
 #    "annotations_dir" to point to the absolute path names.
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -174,7 +174,7 @@ def makeRepTranscripts(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeRepTranscripts)
@@ -193,7 +193,7 @@ def makeSplicedCatalog(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeSplicedCatalog)
@@ -212,7 +212,7 @@ def addSpikeIn(infiles, outfile):
     cat %(infile)s > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(addSpikeIn,
@@ -236,7 +236,7 @@ def addSpikeInTranscripts(infiles, outfile):
     %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # MM this should be changed to use Salmon rather than
@@ -265,7 +265,7 @@ def makeSailfishIndex(infile, outfile):
     --log=%(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 if PARAMS['paired']:
@@ -308,7 +308,7 @@ if PARAMS['paired']:
         --threads=%(job_threads)s
         %(fastqs)s'''
 
-        P.run()
+        P.run(statement)
 
 else:
     @follows(mkdir("tpm.dir"),
@@ -347,7 +347,7 @@ else:
         %(fastqs)s;
         '''
 
-        P.run()
+        P.run(statement)
 
 
 @transform(quantifyWithSailfish,
@@ -366,7 +366,7 @@ def transformSailfishOutput(infile, outfile):
     awk 'BEGIN {printf("Name\\tLength\\tEffectiveLength\\tTPM\\tNumReads\\n")}
      {if(NR > 11) {print $0}}' >  %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @collate(transformSailfishOutput,
@@ -391,7 +391,7 @@ def mergeSailfishRuns(infiles, outfile):
     %(infiles)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -432,7 +432,7 @@ def mergeSailfishCounts(infiles, outfile):
     %(infiles)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -485,7 +485,7 @@ def dedupBamFiles(infile, outfile):
     REMOVE_DUPLICATES=true
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("feature_counts.dir"))
@@ -535,7 +535,7 @@ def buildFeatureCounts(infiles, outfile):
     gzip %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @collate(buildFeatureCounts,
@@ -562,7 +562,7 @@ def aggregatePlateFeatureCounts(infiles, outfile):
     | tee %(outfile)s.table.tsv
     | gzip > %(outfile)s '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(aggregatePlateFeatureCounts)
@@ -591,7 +591,7 @@ def aggregateAllFeatureCounts(infiles, outfile):
     | tee %(outfile)s.table.tsv
     | gzip > %(outfile)s '''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -636,7 +636,7 @@ def getContextStats(outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @originate("stats.dir/alignment_stats.tsv")
@@ -659,7 +659,7 @@ def getAlignmentStats(outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @originate("stats.dir/picard_stats.tsv")
@@ -682,7 +682,7 @@ def getPicardAlignStats(outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 if PARAMS['paired']:
@@ -706,7 +706,7 @@ if PARAMS['paired']:
         > %(outfile)s
         '''
 
-        P.run()
+        P.run(statement)
 
 else:
     def getPicardInsertStats():
@@ -733,7 +733,7 @@ def getDuplicationStats(outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @originate("stats.dir/coverage_stats.tsv")
@@ -760,7 +760,7 @@ def getCoverageStats(outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(getDuplicationStats,
@@ -797,7 +797,7 @@ def aggregateQcTables(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(aggregateQcTables)
@@ -818,7 +818,7 @@ def cleanQcTable(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")

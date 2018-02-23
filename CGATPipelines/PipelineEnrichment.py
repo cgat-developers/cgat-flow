@@ -16,7 +16,7 @@ from CGATCore import Pipeline as P
 import sqlite3
 
 try:
-    PARAMS = P.getParameters()
+    PARAMS = P.get_parameters()
 except IOError:
     pass
 
@@ -77,7 +77,7 @@ def buildGenomeGCSegmentation(infile, outfile):
         --log=%(outfile)s.log
     < %(genome)s.fasta > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildAnnotatorGC(infile, outfile):
@@ -91,7 +91,7 @@ def buildAnnotatorGC(infile, outfile):
         --log=%(outfile)s.log
     < %(infile)s > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildIsochoresGC(infile, outfile):
@@ -111,7 +111,7 @@ def buildIsochoresGC(infile, outfile):
     | gzip
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 ############################################################
 ############################################################
@@ -242,7 +242,7 @@ def buildWorkSpace(outfile, workspace):
     else:
         raise ValueError("unknown workspace '%s'" % workspace)
 
-    P.run()
+    P.run(statement)
 
 
 def buildAnnotatorAnnotations(tmpdir, outfile,
@@ -289,7 +289,7 @@ def buildAnnotatorAnnotations(tmpdir, outfile,
     else:
         raise ValueError("unknown annotations '%s'" % annotations)
 
-    P.run()
+    P.run(statement)
 
     return tmpannotations
 
@@ -342,13 +342,13 @@ def buildGeneSetAnnotations(infiles, outfile, slice):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
     statement = '''
     rm -f %(outfile)s.tmp*
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def buildAnnotatorSlicedSegments(tmpdir, outfile, track, slice):
@@ -373,7 +373,7 @@ def buildAnnotatorSlicedSegments(tmpdir, outfile, track, slice):
     > %(tmpsegments)s
     '''
 
-    P.run()
+    P.run(statement)
 
     if os.path.getsize(tmpsegments) == 0:
         return None
@@ -396,7 +396,7 @@ def buildAnnotatorSegments(tmpdir, infile, outfile):
     > %(tmpsegments)s
     '''
 
-    P.run()
+    P.run(statement)
 
     return tmpsegments
 
@@ -433,7 +433,7 @@ def runAnnotator(tmpdir, outfile,
     %(options)s
     > %(outfile)s '''
 
-    P.run()
+    P.run(statement)
 
 
 def genericImportAnnotator(infiles, outfile, table, workspace, slice, subset, fdr_method):
@@ -455,7 +455,7 @@ def genericImportAnnotator(infiles, outfile, table, workspace, slice, subset, fd
     --regex-identifier="(.*)%(suffix)s" \
     %(infile)s > %(tmpfilename)s
     '''
-    P.run()
+    P.run(statement)
 
     tmpfile = P.getTempFile()
 
@@ -507,7 +507,7 @@ def importAnnotator(infiles, outfile, regex_id, table,
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def makeAnnotatorGO(infile, outfile, gofile, workspace):

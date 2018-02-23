@@ -106,7 +106,7 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
         return
 
     # read contaminants from existing file
-    with IOTools.openFile(contaminants_file, "r") as inf:
+    with IOTools.open_file(contaminants_file, "r") as inf:
         known_contaminants = [l.split() for l in inf
                               if not l.startswith("#") and l.strip()]
         known_contaminants = {" ".join(x[:-1]): x[-1]
@@ -116,7 +116,7 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
     # in the list of known contaminants, otherwise don't report!
 
     matched_contaminants = set()
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         for found_source, found_seq in found_contaminants:
             possible_source = found_source.split(" (")[0]
 

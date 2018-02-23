@@ -258,7 +258,7 @@ import matplotlib.gridspec as gridspec
 # Load PARAMS Dictionary from Pipeline.innni file options ###############
 #########################################################################
 # load options from pipeline.ini file into PARAMS dictionary
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -267,9 +267,9 @@ P.getParameters(
 PARAMS = P.PARAMS
 
 # add parameters from annotations pipeline.ini
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -508,7 +508,7 @@ def loadFragmentLengthDistributions(infiles, outfile):
     only be computed if sample is paired-end if samples are not this function
     is not run'''
     infile = infiles[0].replace(".bam", ".fraglengths")
-    if len(IOTools.openFile(infile).readlines()) > 2:
+    if len(IOTools.open_file(infile).readlines()) > 2:
         P.load(infile, outfile)
     else:
         os.system("touch %s" % outfile)
@@ -523,7 +523,7 @@ def getIdxstats(infiles, outfile):
     # I have had to add a sleep to make sure the output is written before
     # the next test.
     statement = '''samtools idxstats %(infile)s > %(outfile)s && sleep 20'''
-    P.run()
+    P.run(statement)
 
 
 @follows(getIdxstats)
@@ -639,7 +639,7 @@ def buildBigWig(infile, outfile):
     checkpoint;
     rm -f %(tmpfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 ###############################################################################
@@ -872,7 +872,7 @@ def makeBamInputTable(outfile):
     above.
     '''
     ks = inputD.keys()
-    out = IOTools.openFile(outfile, "w")
+    out = IOTools.open_file(outfile, "w")
     out.write('ChipBam\tInputBam\n')
     bamfiles = os.listdir("peakcalling_bams.dir")
 
@@ -919,10 +919,10 @@ def mergeInsertSizes(infiles, outfile):
     '''
     Combines insert size outputs into one file
     '''
-    out = IOTools.openFile(outfile, "w")
+    out = IOTools.open_file(outfile, "w")
     out.write("filename\tmode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     for infile in infiles:
-        res = IOTools.openFile(infile).readlines()
+        res = IOTools.open_file(infile).readlines()
         out.write("%s\t%s\n" % (infile, res[-1].strip()))
     out.close()
 
@@ -999,7 +999,7 @@ def callMacs2peaks(infiles, outfile):
                                  PARAMS['macs2_idrcol'],
                                  PARAMS['macs2_broad_peak'],
                                  PARAMS['conda_py2'])
-    P.run()
+    P.run(statement)
     peakcaller.summarise(outfile)
 
 
@@ -1072,7 +1072,7 @@ def callNarrowerPeaksWithSicer(infiles, outfile):
                                  broad_peak=0,
                                  conda_env=PARAMS['conda_sicer'])
 
-    P.run()
+    P.run(statement)
     peakcaller.summarise(outfile, mode="narrow")
 
 
@@ -1145,7 +1145,7 @@ def callBroaderPeaksWithSicer(infiles, outfile):
                                  broad_peak=1,
                                  conda_env=PARAMS['conda_sicer'])
 
-    P.run()
+    P.run(statement)
     peakcaller.summarise(outfile, mode="broad")
 
 
@@ -1164,7 +1164,7 @@ mapToPeakCallers = {'macs2': (callMacs2peaks,),
                     'sicer': (runSicer,), }
 
 # Call the peakcallers specified in the list
-for x in P.asList(PARAMS['peakcalling_peakcallers']):
+for x in P.as_list(PARAMS['peakcalling_peakcallers']):
     PEAKCALLERS.extend(mapToPeakCallers[x])
 
 
@@ -1277,7 +1277,7 @@ def splitForIDR(infile, outfiles):
 
         pairstring = "%s_v_%s" % (p1, p2)
 
-        out = IOTools.openFile("IDR.dir/%s.dummy" % pairstring, "w")
+        out = IOTools.open_file("IDR.dir/%s.dummy" % pairstring, "w")
         out.write("%s\n" % "\n".join(p))
         out.close()
 
@@ -1297,7 +1297,7 @@ def runIDR(infile, outfile):
     means?
 
     '''
-    lines = [line.strip() for line in IOTools.openFile(infile).readlines()]
+    lines = [line.strip() for line in IOTools.open_file(infile).readlines()]
     infile1, infile2, setting, oraclefile, condition, tissue = lines
     options = PARAMS['IDR_options']
 
@@ -1320,8 +1320,8 @@ def runIDR(infile, outfile):
         idrthresh,
         idrPARAMS, options, oraclefile, test=True)
 
-    P.run()
-    lines = IOTools.openFile(T).readlines()
+    P.run(statement)
+    lines = IOTools.open_file(T).readlines()
     os.remove(T)
     os.remove('%s.log' % T)
 
@@ -1333,7 +1333,7 @@ def runIDR(infile, outfile):
             idrthresh,
             idrPARAMS, options, oraclefile)
 
-        P.run()
+        P.run(statement)
 
     else:
         E.warn("""
@@ -1341,7 +1341,7 @@ def runIDR(infile, outfile):
         IDR failed for %(infile1)s vs %(infile2)s - fewer than 20\
         peaks in the merged peak list\
         *******************************************************""" % locals())
-        out = IOTools.openFile(outfile, "w")
+        out = IOTools.open_file(outfile, "w")
         out.write("IDR FAILED - NOT ENOUGH PEAKS IN MERGED PEAK LIST")
         out.close()
 
@@ -1445,7 +1445,7 @@ def filterIDR(infile, outfiles):
     else:
         T = ((0, 0, 0, 0, 0, "FALSE"))
 
-    out = IOTools.openFile(outfiles[1], "w")
+    out = IOTools.open_file(outfiles[1], "w")
     out.write("%s\n" % "\t".join(H))
     out.write("%s\n" % "\t".join([str(t) for t in T]))
 
@@ -1501,7 +1501,7 @@ def findConservativePeaks(infile, outfiles):
         PipelinePeakcalling.makeLink(peakfile, outnam)
         bedname = outnam.replace(".tsv", ".bed")
         statement = "cut -f2-4 %(peakfile)s | awk 'NR!=1' | bedtools sort -i stdin > %(bedname)s"
-        P.run()
+        P.run(statement)
         i += 1
 
 
@@ -1525,7 +1525,7 @@ def findOptimalPeaks(infile, outfiles):
         PipelinePeakcalling.makeLink(peakfile, outnam)
         bedname = outnam.replace(".tsv", ".bed")
         statement = "cut -f2-4 %(peakfile)s | awk 'NR!=1' | bedtools sort -i stdin > %(bedname)s"
-        P.run()
+        P.run(statement)
         i += 1
 
 
@@ -1705,7 +1705,7 @@ def buildFilteringNotebook(outfile):
     shutil.copyfile(notebook_path, outfile)
     statement = '''jupyter nbconvert --to=html --execute %s''' % outfile
 
-    P.run()
+    P.run(statement)
 
 
 @follows(buildFilteringNotebook)
@@ -1721,7 +1721,7 @@ def buildReadsPerChrNotebook(outfile):
     shutil.copyfile(notebook_path, outfile)
     statement = '''jupyter nbconvert --to=html --execute %s''' % outfile
 
-    P.run()
+    P.run(statement)
 
 
 @active_if(PARAMS['paired_end'])
@@ -1737,7 +1737,7 @@ def buildReadsInsertSizeNotebook(outfile):
     shutil.copyfile(notebook_path, outfile)
     statement = '''jupyter nbconvert --to=html --execute %s''' % outfile
 
-    P.run()
+    P.run(statement)
 
 
 @follows(buildReadsInsertSizeNotebook)
@@ -1752,7 +1752,7 @@ def buildPeakStatsNotebook(outfile):
     shutil.copyfile(notebook_path, outfile)
     statement = '''jupyter nbconvert --to=html --execute %s''' % outfile
 
-    P.run()
+    P.run(statement)
 
 
 @follows(buildPeakStatsNotebook)
@@ -1767,7 +1767,7 @@ def buildNotebookIndex(outfile):
     shutil.copyfile(notebook_path, outfile)
     statement = '''jupyter nbconvert --to=html --execute %s''' % outfile
 
-    P.run()
+    P.run(statement)
 
 
 @follows(buildFilteringNotebook,

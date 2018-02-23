@@ -445,7 +445,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         statement = """ln -s %(cwd)s/%(inT)s %(bamout)s; """
         statement += """ln -s %(cwd)s/%(index)s %(index_out)s; """
         statement += trackFilters("none", P.snip(inT), tabout)
-        P.run()
+        P.run(statement)
 
     else:
         statement = """samtools sort %(inT)s -o %(outT)s.bam; """ % locals()
@@ -492,7 +492,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         if int(keep_intermediates) == 1:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
-        P.run()
+        P.run(statement)
 
     # reformats the read counts into a table
     inf = [line.strip() for line in open(tabout).readlines()]
@@ -657,7 +657,7 @@ def checkBams(infile, filters, qlim, pe, outfile, contigs_to_remove):
     else:
         outbam = "%s.bam" % outfile
         shutil.copy(infile, outbam)
-    out = IOTools.openFile(infile.replace(".bam", ".fraglengths"), "w")
+    out = IOTools.open_file(infile.replace(".bam", ".fraglengths"), "w")
     out.write("frag_length\tfrequency\n")
     for key in fragment_length:
         out.write("%s\t%d\n" % (key, fragment_length[key]))
@@ -737,9 +737,9 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
         %(insert_macs2opts)s
         >& %(logfile)s
         '''
-        P.run()
+        P.run(statement)
 
-        with IOTools.openFile(logfile) as inf:
+        with IOTools.open_file(logfile) as inf:
             lines = inf.readlines()
             line = [x for x in lines
                     if "# predicted fragment length is" in x]
@@ -751,7 +751,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
                 line[0]).groups()[0]
             std = 'na'
         shutil.rmtree("%s.dir" % outfile)
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     outf.write("\t".join(
         map(str, (mode, mean, std, tagsize))) + "\n")
@@ -886,7 +886,7 @@ def getMacsPeakShiftEstimate(infile):
         path to input file
     '''
 
-    with IOTools.openFile(infile, "r") as inf:
+    with IOTools.open_file(infile, "r") as inf:
 
         header = inf.readline().strip().split("\t")
         values = inf.readline().strip().split("\t")
@@ -926,7 +926,7 @@ def mergeSortIndex(bamfiles, out):
     samtools index %(T2)s.bam;
     mv %(T2)s.bam %(out)s;
     mv %(T2)s.bam.bai %(out)s.bai""" % locals()
-    P.run()
+    P.run(statement)
     os.remove("%s.bam" % T1)
     os.remove(T1)
     os.remove(T2)
@@ -958,7 +958,7 @@ def sortIndex(bamfile):
     samtools index %(T1)s.bam;
     mv %(T1)s.bam %(bamfile)s.bam;
     mv %(T1)s.bam.bai %(bamfile)s.bam.bai""" % locals()
-    P.run()
+    P.run(statement)
     os.remove(T1)
 
 
@@ -1658,7 +1658,7 @@ class Macs2Peakcaller(Peakcaller):
         keys = [x[1] for x in map_targets]
 
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with IOTools.open_file(infile) as f:
             for line in f:
                 for x, y in mapper.items():
                     s = y.search(line)
@@ -1676,7 +1676,7 @@ class Macs2Peakcaller(Peakcaller):
                 v = "\t".join(map(str, val + ["na"] * (c - len(val))))
             row.append(v)
 
-        peaks = IOTools.openFile(
+        peaks = IOTools.open_file(
             infile.replace(".macs2_log",
                            ".macs2_peaks.xls.gz")).readlines()
         npeaks = 0
@@ -1687,7 +1687,7 @@ class Macs2Peakcaller(Peakcaller):
         row.extend([str(npeaks)])
         keys.extend(["number_of_peaks"])
 
-        out = IOTools.openFile(outfile, "w")
+        out = IOTools.open_file(outfile, "w")
         out.write("sample\t%s\n%s\n" % ("\t".join(keys), "\t".join(row)))
         out.close()
 
@@ -1957,7 +1957,7 @@ class SicerPeakcaller(Peakcaller):
 
         # build headers
         outfile = "%s_log.table" % infile
-        outs = IOTools.openFile(outfile, "w")
+        outs = IOTools.open_file(outfile, "w")
 
         headers = []
         for k in keys:
@@ -1970,7 +1970,7 @@ class SicerPeakcaller(Peakcaller):
         outs.write("track\t%s" % "\t".join(headers) + "\n")
 
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with IOTools.open_file(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -2190,7 +2190,7 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
     pairs = pseudoreppairs_rows + pseudopooledpairs_rows + reppairs_rows
 
     # Write all the table rows to the output file
-    out = IOTools.openFile(outfile, "w")
+    out = IOTools.open_file(outfile, "w")
     out.write(
         "file1\tfile2\tIDR_comparison_type\tOracle_Peak_File\tCondition\tTissue\n")
     for p in pairs:

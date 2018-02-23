@@ -166,17 +166,19 @@ import CGATCore.IOTools as IOTools
 
 # load options from the config file
 from CGATCore import Pipeline as P
-P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
 
-PARAMS = P.PARAMS
+# WARNING: pipeline names with underscores in their name are not allowed
+TESTS = sorted(set(["test_{}".format(x.split("_")[1])
+                    for x in PARAMS.keys() if x.startswith("test_")]))
 
 
 # obtain prerequisite generic data
 @files([(None, "%s.tgz" % x)
-        for x in P.asList(PARAMS.get("prerequisites", ""))])
+        for x in P.as_list(PARAMS.get("prerequisites", ""))])
 def setupPrerequisites(infile, outfile):
     '''setup pre-requisites.
 
@@ -189,15 +191,13 @@ def setupPrerequisites(infile, outfile):
     # obtain data - should overwrite pipeline.ini file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
-    P.run()
+    P.run(statement)
 
     tf = tarfile.open(outfile)
     tf.extractall()
 
 
-@files([(None, "%s.tgz" % x)
-        for x in P.CONFIG.sections()
-        if x.startswith("test")])
+@files([(None, "{}.tgz".format(x)) for x in TESTS])
 def setupTests(infile, outfile):
     '''setup tests.
 
@@ -215,21 +215,21 @@ def setupTests(infile, outfile):
     os.mkdir(track + ".dir")
 
     # run pipeline config
-    pipeline_name = PARAMS.get(
-        "%s_pipeline" % track,
-        "pipeline_" + track[len("test_"):])
+    pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     statement = '''
     (cd %(track)s.dir;
-    python %(pipelinedir)s/%(pipeline_name)s.py
-    %(pipeline_options)s config) >& %(outfile)s.log
+    cgatflow %(pipeline_name)s
+    %(pipeline_options)s
+    %(workflow_options)s
+    config) >& %(outfile)s.log
     '''
-    P.run()
+    P.run(statement)
 
     # obtain data - should overwrite pipeline.ini file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
-    P.run()
+    P.run(statement)
 
     tf = tarfile.open(outfile)
 
@@ -240,7 +240,7 @@ def setupTests(infile, outfile):
             "test package did not create directory '%s.dir'" % track)
 
 
-def runTest(infile, outfile):
+def run_test(infile, outfile):
     '''run a test.
 
     Multiple targets are run iteratively.
@@ -248,70 +248,62 @@ def runTest(infile, outfile):
 
     track = P.snip(outfile, ".log")
 
-    pipeline_name = PARAMS.get(
-        "%s_pipeline" % track,
-        "pipeline_" + track[len("test_"):])
+    pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
-    pipeline_targets = P.asList(
-        PARAMS.get("%s_target" % track,
-                   "full"))
+    pipeline_targets = P.as_list(PARAMS.get("%s_target" % track, "full"))
 
     # do not run on cluster, mirror
     # that a pipeline is started from
     # the head node
     to_cluster = False
 
-    template_statement = '''
-    (cd %%(track)s.dir;
-    python %%(pipelinedir)s/%%(pipeline_name)s.py
-    %%(pipeline_options)s make %s) 1> %%(outfile)s 2> %%(outfile)s.stderr
-    '''
+    template_statement = (
+        "(cd %%(track)s.dir; "
+        "cgatflow %%(pipeline_name)s "
+        "%%(pipeline_options)s "
+        "%%(workflow_options)s make %s) 1> %%(outfile)s 2> %%(outfile)s.stderr ")
+
     if len(pipeline_targets) == 1:
         statement = template_statement % pipeline_targets[0]
-        P.run(ignore_errors=True)
+        P.run(statement, ignore_errors=True)
     else:
         statements = []
         for pipeline_target in pipeline_targets:
             statements.append(template_statement % pipeline_target)
-        P.run(ignore_errors=True)
+        P.run(statement, ignore_errors=True)
 
 
 # @follows(setupTests)
 # @files([("%s.tgz" % x, "%s.log" % x)
-#         for x in P.asList(PARAMS.get("prerequisites", ""))])
+#         for x in P.as_list(PARAMS.get("prerequisites", ""))])
 # def runPreparationTests(infile, outfile):
 #     '''run pre-requisite pipelines.'''
-#     runTest(infile, outfile)
+#     run_test(infile, outfile)
 
 
 @follows(setupTests, setupPrerequisites)
-@files([("%s.tgz" % x, "%s.log" % x)
-        for x in P.CONFIG.sections()
-        if x.startswith("test") and
-        x not in P.asList(PARAMS.get("prerequisites", ""))])
-def runTests(infile, outfile):
+@files([("%s.tgz" % x, "%s.log" % x) for x in TESTS if x not in P.as_list(PARAMS.get("prerequisites", ""))])
+def run_tests(infile, outfile):
     '''run a pipeline with test data.'''
-    runTest(infile, outfile)
+    run_test(infile, outfile)
 
 
-@transform(runTests,
+@transform(run_tests,
            suffix(".log"),
            ".report")
-def runReports(infile, outfile):
+def run_reports(infile, outfile):
     '''run a pipeline report.'''
 
     track = P.snip(outfile, ".report")
 
-    pipeline_name = PARAMS.get(
-        "%s_pipeline" % track,
-        "pipeline_" + track[len("test_"):])
+    pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     statement = '''
-    (cd %(track)s.dir; python %(pipelinedir)s/%(pipeline_name)s.py
-    %(pipeline_options)s make build_report) 1> %(outfile)s 2> %(outfile)s.stderr
+    (cd %(track)s.dir; cgatflow %(pipeline_name)s
+    %(pipeline_options)s %(workflow_options)s make build_report) 1> %(outfile)s 2> %(outfile)s.stderr
     '''
 
-    P.run(ignore_errors=True)
+    P.run(statement, ignore_errors=True)
 
 
 def compute_file_metrics(infile, outfile, metric, suffixes):
@@ -353,11 +345,11 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
         | sort -k1,1
         > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
-@follows(runReports)
-@transform(runTests,
+@follows(run_reports)
+@transform(run_tests,
            suffix(".log"),
            ".md5")
 def buildCheckSums(infile, outfile):
@@ -371,10 +363,10 @@ def buildCheckSums(infile, outfile):
         infile,
         outfile,
         metric="md5sum",
-        suffixes=P.asList(P.asList(PARAMS.get('%s_regex_md5' % track, ""))))
+        suffixes=P.as_list(P.as_list(PARAMS.get('%s_regex_md5' % track, ""))))
 
 
-@transform(runTests,
+@transform(run_tests,
            suffix(".log"),
            ".lines")
 def buildLineCounts(infile, outfile):
@@ -387,10 +379,10 @@ def buildLineCounts(infile, outfile):
         infile,
         outfile,
         metric="wc -l",
-        suffixes=P.asList(P.asList(PARAMS.get('%s_regex_linecount' % track, ""))))
+        suffixes=P.as_list(P.as_list(PARAMS.get('%s_regex_linecount' % track, ""))))
 
 
-@transform(runTests,
+@transform(run_tests,
            suffix(".log"),
            ".exist")
 def checkFileExistence(infile, outfile):
@@ -403,7 +395,7 @@ def checkFileExistence(infile, outfile):
         infile,
         outfile,
         metric="file",
-        suffixes=P.asList(P.asList(PARAMS.get('%s_regex_exist' % track, ""))))
+        suffixes=P.as_list(P.as_list(PARAMS.get('%s_regex_exist' % track, ""))))
 
 
 @collate((buildCheckSums, buildLineCounts, checkFileExistence),
@@ -419,7 +411,7 @@ def mergeFileStatistics(infiles, outfile):
     %(pipeline_scriptsdir)s/merge_testing_output.sh
     %(infiles)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @merge(mergeFileStatistics,
@@ -429,7 +421,7 @@ def compareCheckSums(infiles, outfile):
     '''
 
     to_cluster = False
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("\t".join((
         ("track", "status",
          "job_finished",
@@ -463,24 +455,24 @@ def compareCheckSums(infiles, outfile):
         # regular expression of files to test only for existence
         regex_exist = PARAMS.get('%s_regex_exist' % track, None)
         if regex_exist:
-            regex_exist = re.compile("|".join(P.asList(regex_exist)))
+            regex_exist = re.compile("|".join(P.as_list(regex_exist)))
 
         regex_linecount = PARAMS.get('%s_regex_linecount' % track, None)
         if regex_linecount:
-            regex_linecount = re.compile("|".join(P.asList(regex_linecount)))
+            regex_linecount = re.compile("|".join(P.as_list(regex_linecount)))
 
         regex_md5 = PARAMS.get('%s_regex_md5' % track, None)
         if regex_md5:
-            regex_md5 = re.compile("|".join(P.asList(regex_md5)))
+            regex_md5 = re.compile("|".join(P.as_list(regex_md5)))
 
         if not os.path.exists(reffile):
             raise ValueError('no reference data defined for %s' % track)
 
-        cmp_data = pandas.read_csv(IOTools.openFile(infile),
+        cmp_data = pandas.read_csv(IOTools.open_file(infile),
                                    sep="\t",
                                    index_col=0)
 
-        ref_data = pandas.read_csv(IOTools.openFile(reffile),
+        ref_data = pandas.read_csv(IOTools.open_file(reffile),
                                    sep="\t",
                                    index_col=0)
 
@@ -592,7 +584,7 @@ def loadReference(infile, outfile):
     P.load(infile, outfile, options="--add-index=file")
 
 
-@follows(runTests, runReports)
+@follows(run_tests)
 def run_components():
     pass
 
@@ -612,7 +604,7 @@ def reset(infile, outfile):
     rm -rf prereq_* ctmp*;
     rm -rf test_* _cache _static _templates _tmp report;
     rm -f *.log csvdb *.load *.tsv'''
-    P.run()
+    P.run(statement)
 
 ###################################################################
 ###################################################################
@@ -646,10 +638,14 @@ def publish_report():
 
 
 def main(argv=None):
-    if argv is None:
-        argv = sys.argv
+    workflow_options = []
+    if "--local" in argv:
+        workflow_options.append("--local")
+    workflow_options.append("-p {}".format(P.get_params()["cluster"]["num_jobs"]))
+    
+    P.get_params()["workflow_options"] == "".join(workflow_options)
     P.main(argv)
 
 
 if __name__ == "__main__":
-    sys.exit(P.main(sys.argv))
+    sys.exit(main())

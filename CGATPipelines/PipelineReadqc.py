@@ -13,7 +13,7 @@ import os
 import re
 import glob
 import collections
-from six import StringIO
+from io import StringIO
 import pandas as pd
 from CGATCore import Pipeline as P
 import CGATCore.IOTools as IOTools
@@ -84,7 +84,7 @@ def collectFastQCSections(infiles, section, datadir):
         filename = os.path.join(datadir, track + "*_fastqc", "fastqc_data.txt")
         for fn in glob.glob(filename):
             for name, status, header, data in FastqcSectionIterator(
-                    IOTools.openFile(fn)):
+                    IOTools.open_file(fn)):
                 if name == section:
                     results.append((track, status, header, data))
     return results
@@ -133,7 +133,7 @@ def loadFastqc(filename,
         results = []
 
         for name, status, header, data in FastqcSectionIterator(
-                IOTools.openFile(fn)):
+                IOTools.open_file(fn)):
             # do not collect basic stats, see loadFastQCSummary
             if name == "Basic Statistics":
                 continue
@@ -168,7 +168,7 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
 
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     names = set()
     results = []
     for infile in infiles:
@@ -180,7 +180,7 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
         for fn in glob.glob(filename):
             stats = collections.defaultdict(str)
             for name, status, header, data in FastqcSectionIterator(
-                    IOTools.openFile(fn)):
+                    IOTools.open_file(fn)):
                 stats[name] = status
 
             results.append((track, fn, stats))
@@ -212,7 +212,7 @@ def buildFastQCSummaryBasicStatistics(infiles, outfile, datadir):
 
     data = collectFastQCSections(infiles, "Basic Statistics", datadir)
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     first = True
     for track, status, header, rows in data:
         rows = [x.split("\t") for x in rows]
@@ -265,4 +265,4 @@ def buildExperimentReadQuality(infiles, outfile, datadir):
     df_out = pd.DataFrame(df_out.sum(axis=1))
     df_out.columns = ["_".join(T.split("-")[:-1]), ]
 
-    df_out.to_csv(IOTools.openFile(outfile, "w"), sep="\t")
+    df_out.to_csv(IOTools.open_file(outfile, "w"), sep="\t")

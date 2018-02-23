@@ -57,7 +57,7 @@ def createGOFromENSEMBL(infile, outfile):
     > %(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def createGOFromGeneOntology(infile, outfile):
@@ -87,7 +87,7 @@ def createGOFromGeneOntology(infile, outfile):
     wget -O %(filename)s http://cvsweb.geneontology.org/cgi-bin/cvsweb.cgi/go/gene-associations/%(go_geneontology_file)s?rev=HEAD
     '''
 
-        P.run()
+        P.run(statement)
 
     # see http://www.geneontology.org/gene-associations/readme/goa.README
     Data = collections.namedtuple(
@@ -112,9 +112,9 @@ def createGOFromGeneOntology(infile, outfile):
 
     c = E.Counter()
     found_uniprot, found_genes, notfound_uniprot = set(), set(), set()
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("go_type\tgene_id\tgo_id\tdescription\tevidence\n")
-    for line in IOTools.openFile(filename):
+    for line in IOTools.open_file(filename):
         if line.startswith("!"):
             continue
         c.input += 1
@@ -171,7 +171,7 @@ def imputeGO(infile_go, infile_paths, outfile):
     c = E.Counter()
 
     term2ancestors = collections.defaultdict(set)
-    with IOTools.openFile(infile_paths) as inf:
+    with IOTools.open_file(infile_paths) as inf:
         for line in inf:
             parts = line[:-1].split()
             term = parts[0]
@@ -182,7 +182,7 @@ def imputeGO(infile_go, infile_paths, outfile):
     goid2description = {}
     gene2goids = collections.defaultdict(list)
     goid2type = {}
-    with IOTools.openFile(infile_go) as inf:
+    with IOTools.open_file(infile_go) as inf:
         for line in inf:
             if line.startswith("go_type"):
                 continue
@@ -192,7 +192,7 @@ def imputeGO(infile_go, infile_paths, outfile):
             goid2description[goid] = description
             goid2type[goid] = go_type
 
-    outf = IOTools.openFile(outfile, "w ")
+    outf = IOTools.open_file(outfile, "w ")
     for gene_id, in_goids in gene2goids.items():
         c.genes += 1
         out_goids = set(in_goids)
@@ -232,7 +232,7 @@ def buildGOPaths(infile, outfile):
     statement = '''
     go2fmt.pl -w pathlist %(infile)s > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildGOTable(infile, outfile):
@@ -251,7 +251,7 @@ def buildGOTable(infile, outfile):
     echo -e "go_id\\tdescription\\tlong_description\\ttext\\n" > %(outfile)s;
     go2fmt.pl -w tbl %(infile)s >> %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def getGODescriptions(infile):
@@ -268,7 +268,7 @@ def getGODescriptions(infile):
         Dictionary mapping GOid to GOtype and GOdescription.
     '''
 
-    with IOTools.openFile(infile) as inf:
+    with IOTools.open_file(infile) as inf:
         fields, table = CSV.readTable(inf, as_rows=False)
 
     return dict([(y, (x, z)) for x, y, z in zip(
@@ -307,12 +307,12 @@ def createGOSlimFromENSEMBL(infile, outfile):
     goslim_fn = os.path.join(dirname, "goslim.obo")
     statement = '''wget %(go_url_goslim)s
     --output-document=%(goslim_fn)s'''
-    P.run()
+    P.run(statement)
 
     ontology_fn = os.path.join(dirname, "go_onotology.obo")
     statement = '''wget %(go_url_ontology)s
     --output-document=%(ontology_fn)s'''
-    P.run()
+    P.run(statement)
 
     E.info("mapping GO to GOSlim")
     job_memory = "5G"
@@ -321,7 +321,7 @@ def createGOSlimFromENSEMBL(infile, outfile):
     %(goslim_fn)s
     %(ontology_fn)s
     '''
-    P.run()
+    P.run(statement)
 
     job_memory = "5G"
     statement = '''
@@ -334,7 +334,7 @@ def createGOSlimFromENSEMBL(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def runGOFromFiles(outfile,
@@ -415,7 +415,7 @@ def runGOFromFiles(outfile,
     %(options)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def runGOFromDatabase(outfile,
@@ -500,7 +500,7 @@ def loadGO(infile, outfile, tablename):
     | %(load_statement)s
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def loadGOs(infiles, outfile, tablename):

@@ -62,7 +62,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -89,7 +89,7 @@ def countWords(infile, outfile):
     # configuration files or variable that are declared in the calling
     # function.  For example, %(infile)s will we substituted with the
     # contents of the variable "infile".
-    P.run()
+    P.run(statement)
 
 
 @transform(countWords,

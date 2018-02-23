@@ -39,7 +39,7 @@ import os
 from CGATCore import Pipeline as P
 
 
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])

@@ -169,7 +169,7 @@ import CGATPipelines.PipelineBamStats as PipelineBamStats
 
 
 # load options from the config file
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -180,9 +180,9 @@ PARAMS = P.PARAMS
 # only the interface section. All PARAMS options
 # will have the prefix `annotations_`
 
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["gtf_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -235,11 +235,11 @@ def countReads(infile, outfile):
 
     statement = '''printf "nreads \\t" >> %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
     statement = '''samtools view %(infile)s | wc -l | xargs printf >> %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 #########################################################################
 # QC tasks start here
@@ -369,7 +369,7 @@ def buildBAMStats(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(intBam)
@@ -381,7 +381,7 @@ def processGenomicContext(infile, outfile):
     This module process genomic context file.
     It assigns each and every features of context
     file to a specific catagory. It helps us to
-    understand heiarchical classification
+    understand hiearchical classification
     of features.
     '''
     PipelineBamStats.defineBedFeatures(infile, outfile)
@@ -409,7 +409,7 @@ def buildIdxStats(infile, outfile):
 
     statement = '''samtools idxstats %(infile)s > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 # ------------------------------------------------------------------
 # QC specific to spliced mapping
@@ -451,7 +451,7 @@ def buildExonValidation(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -504,7 +504,7 @@ def buildTranscriptLevelReadCounts(infiles, outfile):
     > %(outfile)s
     ''' % locals()
 
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -554,7 +554,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -601,7 +601,7 @@ def buildTranscriptProfiles(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -783,7 +783,7 @@ def renderRreport():
 
     statement = '''cp %(report_path)s/* R_report.dir ; cd R_report.dir ; R -e "rmarkdown::render_site()"'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("Jupyter_report.dir"))
@@ -800,7 +800,7 @@ def renderJupyterReport():
                     mkdir _site;
                     mv -t _site *.html cgat_logo.jpeg oxford.png'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("MultiQC_report.dir"))
@@ -811,7 +811,7 @@ def renderMultiqc(infile):
     statement = '''LANG=en_GB.UTF-8 multiqc . -f;
                    mv multiqc_report.html MultiQC_report.dir/'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(renderRreport,

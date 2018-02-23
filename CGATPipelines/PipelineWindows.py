@@ -148,7 +148,7 @@ def convertReadsToIntervals(bamfile,
     statement.append("tabix -p bed %(bedfile)s")
     statement.append("rm -rf %(tmpdir)s")
     statement = " ; checkpoint; ".join(statement)
-    P.run()
+    P.run(statement)
 
 
 def countTags(infile, outfile):
@@ -171,7 +171,7 @@ def countTags(infile, outfile):
     --per-contig
     --log=%(outfile)s.log
     >& %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def countTagsWithinWindows(tagfile,
@@ -221,7 +221,7 @@ def countTagsWithinWindows(tagfile,
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def aggregateWindowsTagCounts(infiles,
@@ -272,13 +272,13 @@ def aggregateWindowsTagCounts(infiles,
                     (x, column) for x in infiles])
     tmpfile = P.getTempFilename(".")
     statement = '''paste %(src)s > %(tmpfile)s'''
-    P.run()
+    P.run(statement)
 
     # build track names
     tracks = [re.search(regex, os.path.basename(x)).groups()[0]
               for x in infiles]
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("interval_id\t%s\n" % "\t".join(tracks))
 
     # filter for uniqueness - keys with the same value as the
@@ -335,7 +335,7 @@ def normalizeTagCounts(infile, outfile, method):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildDMRStats(infiles, outfile, method, fdr_threshold=None):
@@ -386,13 +386,13 @@ def buildDMRStats(infiles, outfile, method, fdr_threshold=None):
     def f_status(x):
         return x.status
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
 
     is_first = True
     for infile in infiles:
 
         xx = 0
-        for line in IOTools.iterate(IOTools.openFile(infile)):
+        for line in IOTools.iterate(IOTools.open_file(infile)):
             key = f_key(line)
 
             r, s = results[key], status[key]
@@ -477,7 +477,7 @@ def buildFDRStats(infile, outfile, method):
     '''
 
     raise NotImplementedError("function is incomplete")
-    data = pandas.read_csv(IOTools.openFile(infile), sep="\t", index_col=0)
+    data = pandas.read_csv(IOTools.open_file(infile), sep="\t", index_col=0)
 
     assert data['treatment_name'][0] == data['treatment_name'][-1]
     assert data['control_name'][0] == data['control_name'][-1]
@@ -508,8 +508,8 @@ def outputAllWindows(infile, outfile):
     outfile : string
         Output filename in :term:`bed` format.
     '''
-    outf = IOTools.openFile(outfile, "w")
-    for line in IOTools.iterate(IOTools.openFile(infile)):
+    outf = IOTools.open_file(outfile, "w")
+    for line in IOTools.iterate(IOTools.open_file(infile)):
         outf.write("\t".join(
             (line.contig, line.start, line.end,
              "%6.4f" % float(line.l2fold))) + "\n")
@@ -597,7 +597,7 @@ def outputRegionsOfInterest(design_file, counts_file, outfile,
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def runDE(design_file,
@@ -689,7 +689,7 @@ def runDE(design_file,
     > %(outfile)s '''
     E.info(statement)
 
-    P.run()
+    P.run(statement)
 
 
 def normalizeBed(countsfile, outfile):
@@ -827,7 +827,7 @@ def runMEDIPSQC(infile, outfile):
             | gzip
             > %(outfile)s
             """
-    P.run()
+    P.run(statement)
 
 
 def runMEDIPSDMR(design_file, outfile):
@@ -884,7 +884,7 @@ def runMEDIPSDMR(design_file, outfile):
             > %(outfile)s
             """)
 
-    P.run()
+    P.run(statement)
 
 
 @P.cluster_runnable
@@ -957,7 +957,7 @@ def outputSpikeCounts(outfile, infile_name,
     dd = pandas.DataFrame(d2hist_counts)
     dd.index = list(xedges[:-1])
     dd.columns = list(yedges[:-1])
-    dd.to_csv(IOTools.openFile(outfile, "w"),
+    dd.to_csv(IOTools.open_file(outfile, "w"),
               sep="\t")
 
     return df, d2hist_counts, xedges, yedges, l10average, l2fold
@@ -1043,7 +1043,7 @@ def buildSpikeResults(infile, outfile):
     | grep -e "^spike" -e "^test_id"
     > %(tmpfile_name)s
     '''
-    P.run()
+    P.run(statement)
 
     E.debug("outputting spiked counts")
     (spiked, spiked_d2hist_counts, xedges, yedges,
@@ -1060,7 +1060,7 @@ def buildSpikeResults(infile, outfile):
     | grep -v -e "^spike"
     > %(tmpfile_name)s
     '''
-    P.run()
+    P.run(statement)
     E.debug("outputting unspiked counts")
 
     (unspiked, unspiked_d2hist_counts, unspiked_xedges,
@@ -1075,7 +1075,7 @@ def buildSpikeResults(infile, outfile):
 
     assert xedges.all() == unspiked_xedges.all()
 
-    tmpfile = IOTools.openFile(tmpfile_name, "w")
+    tmpfile = IOTools.open_file(tmpfile_name, "w")
     tmpfile.write("\t".join(
         ("expression",
          "fold",
@@ -1089,7 +1089,7 @@ def buildSpikeResults(infile, outfile):
     spiked_total = float(spiked_d2hist_counts.sum().sum())
     unspiked_total = float(unspiked_d2hist_counts.sum().sum())
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("fdr\tpower\tintervals\tintervals_percent\n")
 
     # significant results
@@ -1185,7 +1185,7 @@ def summarizeTagsWithinContext(tagfile,
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def mergeSummarizedContextStats(infiles, outfile, samples_in_columns=False):
@@ -1224,7 +1224,7 @@ def mergeSummarizedContextStats(infiles, outfile, samples_in_columns=False):
     > %(outfile)s
     """
 
-    P.run()
+    P.run(statement)
 
 
 def loadSummarizedContextStats(infiles,
@@ -1262,7 +1262,7 @@ def loadSummarizedContextStats(infiles,
     | %(load_statement)s
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 
 def testTagContextOverlap(tagfile,
@@ -1312,4 +1312,4 @@ def testTagContextOverlap(tagfile,
     > %(outfile)s
     """
 
-    P.run()
+    P.run(statement)

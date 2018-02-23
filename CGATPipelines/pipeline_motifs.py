@@ -144,7 +144,7 @@ import CGATPipelines.PipelineTracks as PipelineTracks
 # Pipeline configuration
 ###################################################
 from CGATCore import Pipeline as P
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"],
@@ -153,9 +153,9 @@ P.getParameters(
 
 PARAMS = P.PARAMS
 
-PARAMS_ANNOTATIONS = P.peekParameters(
+PARAMS_ANNOTATIONS = P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py")
+    "genesets")
 
 ###################################################################
 ###################################################################
@@ -209,7 +209,7 @@ def getAssociatedBAMFiles(track):
 
     if bamfiles == []:
         if "bams_%s" % fn.lower() in PARAMS:
-            for ff in P.asList(PARAMS["bams_%s" % fn.lower()]):
+            for ff in P.as_list(PARAMS["bams_%s" % fn.lower()]):
                 bamfiles.extend(glob.glob(ff))
         else:
             for pattern, value in P.CONFIG.items("bams"):
@@ -220,7 +220,7 @@ def getAssociatedBAMFiles(track):
 
     offsets = []
     if "offsets_%s" % fn.lower() in PARAMS:
-        offsets = list(map(int, P.asList(PARAMS["offsets_%s" % fn.lower()])))
+        offsets = list(map(int, P.as_list(PARAMS["offsets_%s" % fn.lower()])))
     else:
         for pattern, value in P.CONFIG.items("offsets"):
             if "%" in pattern:
@@ -311,7 +311,7 @@ def loadIntervals(infile, outfile):
                        --allow-empty-file
                 > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir(os.path.join(PARAMS["exportdir"], "bed")))
@@ -322,7 +322,7 @@ def indexIntervals(infile, outfile):
     '''index intervals.
     '''
     statement = '''zcat %(infile)s | sort -k1,1 -k2,2n | bgzip > %(outfile)s; tabix -p bed %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir(os.path.join(PARAMS["exportdir"], "peaks")))
@@ -334,7 +334,7 @@ def exportPeakLocations(infile, outfile):
     '''
 
     dbh = connect()
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     cc = dbh.cursor()
     table = P.toTable(infile)
     for x in cc.execute("""SELECT contig, peakcenter,
@@ -374,7 +374,7 @@ def exportMotifDiscoverySequences(infile, outfile):
         outfile,
         dbhandle,
         full=False,
-        masker=P.asList(
+        masker=P.as_list(
             p['motifs_masker']),
         halfwidth=int(
             p["motifs_halfwidth"]),
@@ -568,7 +568,7 @@ def buildBackgroundSequences(infile, outfile, npeaks, width, masker):
 def buildMemeBackgroundFiles(infile, outfile):
     '''prepare the meme background model'''
     statement = '''fasta-get-markov -m 2 %(infile)s  > %(outfile)s''' % locals()
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("memechip.dir"))
@@ -583,7 +583,7 @@ def filterTransfac(infile, outfile):
     --log=%(outfile)s.log
     >  %(outfile)s
                 '''
-    P.run()
+    P.run(statement)
 
 
 @transform(filterTransfac,
@@ -598,7 +598,7 @@ def makeMemeMotifs(infile, outfile):
     %(infile)s
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("memechip.dir"))
@@ -646,7 +646,7 @@ def runMemeChip(infiles, outfile):
                    > %(outfile)s
                 '''
 
-    P.run()
+    P.run(statement)
 
 
 @merge(runMemeChip, "memechip_summary.load")
@@ -691,7 +691,7 @@ def loadMotifSequenceComposition(infile, outfile):
         --table=%(tablename)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @merge("*.motif", "motif_info.load")
@@ -750,7 +750,7 @@ def loadTomTom(infile, outfile):
     tmpfile = P.getTempFile(".")
 
     # parse the text file
-    for line in IOTools.openFile(infile):
+    for line in IOTools.open_file(infile):
         if line.startswith("#Query"):
             tmpfile.write(
                 "target_name\tquery_id\ttarget_id\toptimal_offset\tpvalue\tevalue\tqvalue\tOverlap\tquery_consensus\ttarget_consensus\torientation\n")
@@ -830,7 +830,7 @@ def exportMotifLocations(infiles, outfile):
         tmpfname = tmpf.name
 
         statement = '''mergeBed -i %(tmpfname)s -nms | gzip > %(outfile)s'''
-        P.run()
+        P.run(statement)
 
         os.unlink(tmpf.name)
 

@@ -352,15 +352,15 @@ CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
 ###################################################
 
 # load options from the config file
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
 
 PARAMS = P.PARAMS
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -463,7 +463,7 @@ def buildReferenceTranscriptome(infile, outfile):
     samtools faidx %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildReferenceTranscriptome,
@@ -492,7 +492,7 @@ def buildKallistoIndex(infile, outfile):
     kallisto index -i %(outfile)s -k %(kallisto_kmer)s %(infile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildReferenceTranscriptome,
@@ -527,7 +527,7 @@ def buildSalmonIndex(infile, outfile):
     -k %(salmon_kmer)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildReferenceTranscriptome,
@@ -563,14 +563,14 @@ def buildSailfishIndex(infile, outfile):
     %(sailfish_index_options)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @originate("transcript2geneMap.tsv")
 def getTranscript2GeneMap(outfile):
     ''' Extract a 1:1 map of transcript_id to gene_id from the geneset '''
 
-    iterator = GTF.iterator(IOTools.openFile(PARAMS['geneset']))
+    iterator = GTF.iterator(IOTools.open_file(PARAMS['geneset']))
     transcript2gene_dict = {}
 
     for entry in iterator:
@@ -585,7 +585,7 @@ def getTranscript2GeneMap(outfile):
         else:
             transcript2gene_dict[entry.transcript_id] = entry.gene_id
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("transcript_id\tgene_id\n")
         for key, value in sorted(transcript2gene_dict.items()):
             outf.write("%s\t%s\n" % (key, value))
@@ -595,7 +595,7 @@ def getTranscript2GeneMap(outfile):
 # count-based quantifiers
 ###################################################
 
-@active_if("featurecounts" in P.asList(PARAMS["quantifiers"]))
+@active_if("featurecounts" in P.as_list(PARAMS["quantifiers"]))
 @follows(mkdir("featurecounts.dir"))
 @transform(["%s.bam" % x.asFile() for x in BAM_TRACKS],
            regex("(\S+).bam"),
@@ -1024,7 +1024,7 @@ mapToQuantTargets = {'kallisto': (runKallisto,),
                      'featurecounts': (runFeatureCounts,),
                      'gtf2table': (runGTF2Table,)}
 
-for x in P.asList(PARAMS["quantifiers"]):
+for x in P.as_list(PARAMS["quantifiers"]):
     QUANTTARGETS.extend(mapToQuantTargets[x])
 
 
@@ -1068,7 +1068,7 @@ def loadMergedCounts(infiles, outfiles):
     P.load(infiles[1], outfiles[1])
 
 
-@active_if("featurecounts" in P.asList(PARAMS["quantifiers"]))
+@active_if("featurecounts" in P.as_list(PARAMS["quantifiers"]))
 @collate(runFeatureCounts,
          regex("featurecounts.dir/([^.]+)/([^.]+).tsv.gz"),
          r"featurecounts.dir/genelength.tsv.gz")
@@ -1092,7 +1092,7 @@ def mergeLengths(infiles, outfile):
     final_df.to_csv(outfile, sep="\t", compression="gzip")
 
 
-@active_if("featurecounts" in P.asList(PARAMS["quantifiers"]))
+@active_if("featurecounts" in P.as_list(PARAMS["quantifiers"]))
 @transform(mergeLengths,
            suffix(".tsv.gz"),
            ".load")
@@ -1163,7 +1163,7 @@ def runDESeq2(infiles, outfiles, design_name):
     -v 0
     > %(transcript_out)s;
     '''
-    P.run()
+    P.run(statement)
 
     statement = '''
     cgat counts2table
@@ -1182,7 +1182,7 @@ def runDESeq2(infiles, outfiles, design_name):
 
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @mkdir("DEresults.dir/edger")
@@ -1235,7 +1235,7 @@ def runEdgeR(infiles, outfiles, design_name):
     -v 0
     > %(transcript_out)s;
     '''
-    P.run()
+    P.run(statement)
 
     statement = '''
     cgat counts2table
@@ -1251,7 +1251,7 @@ def runEdgeR(infiles, outfiles, design_name):
     -v 0
     > %(gene_out)s;'''
 
-    P.run()
+    P.run(statement)
 
 
 @mkdir("DEresults.dir/sleuth")
@@ -1291,7 +1291,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     # to estimate sleuth memory, we need to know the number of
     # samples, transcripts and boostraps
     number_transcripts = 0
-    with IOTools.openFile(transcripts, "r") as inf:
+    with IOTools.open_file(transcripts, "r") as inf:
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1
@@ -1325,7 +1325,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     >%(transcript_out)s
     '''
 
-    P.run()
+    P.run(statement)
 
     if PARAMS['sleuth_genewise']:
 
@@ -1362,7 +1362,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
         >%(transcript_out)s
         '''
 
-        P.run()
+        P.run(statement)
 
 
 @mkdir("DEresults.dir/deseq2")
@@ -1456,7 +1456,7 @@ mapToNormTargets = {'edger': (getEdgeRNormExp, ),
                     'deseq2': (getDESeqNormExp, ),
                     'sleuth': (getSleuthNormExp,)}
 
-for x in P.asList(PARAMS["de_tools"]):
+for x in P.as_list(PARAMS["de_tools"]):
     DETARGETS.extend(mapToDETargets[x])
     if x in mapToNormTargets:
         NORMTARGETS.extend(mapToNormTargets[x])

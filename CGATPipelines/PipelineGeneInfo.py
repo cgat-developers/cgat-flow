@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
-from future.moves.urllib.request import urlopen
+from urllib.request import urlopen
 from CGATCore.Pipeline import cluster_runnable
 import mygene
 
@@ -20,7 +20,7 @@ def readGeneList(filename):
     '''
     Reads a file containing one gene ID per line into a list
     '''
-    return [line.strip() for line in IOTools.openFile(filename).readlines()]
+    return [line.strip() for line in IOTools.open_file(filename).readlines()]
 
 
 def getSymbols(hostfile):
@@ -29,7 +29,7 @@ def getSymbols(hostfile):
     returns a list of gene symbols
     '''
     return [line.strip().split("\t")[0]
-            for line in IOTools.openFile(hostfile).readlines()]
+            for line in IOTools.open_file(hostfile).readlines()]
 
 
 class APIAnnotation(object):
@@ -136,7 +136,7 @@ class APIAnnotation(object):
             cnames = tab[1]
             ctypes = tab[2]
             zipped = tab[0]
-            outf = (IOTools.openFile(tabkey + ".load", "w"))
+            outf = (IOTools.open_file(tabkey + ".load", "w"))
             #  check there are the right number of column names for the dataset
             assert len(cnames) == len(
                 zipped[0]), "length of column names doesn't \

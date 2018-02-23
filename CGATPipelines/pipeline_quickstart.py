@@ -174,8 +174,8 @@ def main(argv=sys.argv):
         if fn_src.endswith(".png"):
             shutil.copyfile(fn_src, fn_dest)
         else:
-            with IOTools.openFile(fn_dest, "w") as outfile:
-                with IOTools.openFile(fn_src) as infile:
+            with IOTools.open_file(fn_dest, "w") as outfile:
+                with IOTools.open_file(fn_src) as infile:
                     for line in infile:
                         outfile.write(rx_reportdir.sub(reportdir,
                                                        rx_template.sub(name, line)))

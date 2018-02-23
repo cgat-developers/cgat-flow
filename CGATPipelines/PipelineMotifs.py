@@ -51,7 +51,8 @@ import CGAT.Glam2Scan as Glam2Scan
 import CGAT.MAST as MAST
 import CGATCore.IOTools as IOTools
 import CGAT.Bed as Bed
-import CGAT.Bioprospector as Bioprospector
+# TODO: remove dependency
+# import CGAT.Bioprospector as Bioprospector
 import CGAT.FastaIterator as FastaIterator
 
 # Set from importing module
@@ -121,10 +122,10 @@ def exportSequencesFromBedFile(infile, outfile, masker=None, mode="intervals"):
 
     fasta = IndexedFasta.IndexedFasta(
         os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
-    outs = IOTools.openFile(outfile, "w")
+    outs = IOTools.open_file(outfile, "w")
 
     ids, seqs = [], []
-    for bed in Bed.setName(Bed.iterator(IOTools.openFile(infile))):
+    for bed in Bed.setName(Bed.iterator(IOTools.open_file(infile))):
         lcontig = fasta.getLength(bed.contig)
 
         if mode == "intervals":
@@ -292,7 +293,7 @@ def writeSequencesForIntervals(track,
         sequences = maskSequences(["".join(x) for x in sequences], masker)
 
     c = E.Counter()
-    outs = IOTools.openFile(filename, "w")
+    outs = IOTools.open_file(filename, "w")
     for masker in masker:
         if masker not in ("unmasked", "none", None):
             sequences = maskSequences(sequences, masker)
@@ -334,9 +335,9 @@ def runRegexMotifSearch(infiles, outfile):
         motifs.append(
             ("ER%i" % x, re.compile(motif + "." * x + reverse_motif, re.IGNORECASE)))
 
-    db_positions = Motifs.countMotifs(IOTools.openFile(dbfile, "r"), motifs)
+    db_positions = Motifs.countMotifs(IOTools.open_file(dbfile, "r"), motifs)
     control_positions = Motifs.countMotifs(
-        IOTools.openFile(controlfile, "r"), motifs)
+        IOTools.open_file(controlfile, "r"), motifs)
 
     db_counts, control_counts = Motifs.getCounts(
         db_positions), Motifs.getCounts(control_positions)
@@ -344,7 +345,7 @@ def runRegexMotifSearch(infiles, outfile):
         db_positions), Motifs.getCounts(control_positions)
 
     ndb, ncontrol = len(db_positions), len(control_positions)
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write(
         "motif\tmotifs_db\tmotifs_control\tseq_db\tseq_db_percent\tseq_control\tseq_control_percent\tfold\n")
     for motif, pattern in motifs:
@@ -359,9 +360,9 @@ def runRegexMotifSearch(infiles, outfile):
                     db_counts[motif],
                     control_counts[motif],
                     db_seqcounts[motif],
-                    IOTools.prettyPercent(db_seqcounts[motif], ndb),
+                    IOTools.pretty_percent(db_seqcounts[motif], ndb),
                     control_seqcounts[motif],
-                    IOTools.prettyPercent(control_seqcounts[motif], ncontrol),
+                    IOTools.pretty_percent(control_seqcounts[motif], ncontrol),
                     fold))
 
 
@@ -386,7 +387,7 @@ def runGLAM2SCAN(infiles, outfile):
         os.remove(outfile)
 
     for motiffile in motiffiles:
-        of = IOTools.openFile(outfile, "a")
+        of = IOTools.open_file(outfile, "a")
         motif, x = os.path.splitext(motiffile)
         of.write(":: motif = %s ::\n" % motif)
         of.close()
@@ -395,7 +396,7 @@ def runGLAM2SCAN(infiles, outfile):
         cat %(dbfile)s %(controlfile)s
         | %(execglam2scan)s -2 -n %(glam2scan_results)i n %(motiffile)s - >> %(outfile)s
         '''
-        P.run()
+        P.run(statement)
 
 
 def loadGLAM2SCAN(infile, outfile):
@@ -408,7 +409,7 @@ def loadGLAM2SCAN(infile, outfile):
     tmpfile.write(
         "motif\tid\tnmatches\tscore\tscores\tncontrols\tmax_controls\n")
 
-    lines = IOTools.openFile(infile).readlines()
+    lines = IOTools.open_file(infile).readlines()
     chunks = [x for x in range(len(lines)) if lines[x].startswith("::")]
     chunks.append(len(lines))
 
@@ -431,7 +432,7 @@ def loadGLAM2SCAN(infile, outfile):
         tmpfile2 = tempfile.NamedTemporaryFile(delete=False)
         tmpfile2.write("".join(lines[chunks[chunk] + 1:chunks[chunk + 1]]))
         tmpfile2.close()
-        glam = Glam2Scan.parse(IOTools.openFile(tmpfile2.name, "r"))
+        glam = Glam2Scan.parse(IOTools.open_file(tmpfile2.name, "r"))
 
         os.unlink(tmpfile2.name)
 
@@ -507,7 +508,7 @@ def loadMAST(infile, outfile):
                   "\tr_evalue\tr_pvalue\tr_nmatches\tr_length\tr_start\tr_end"
                   "\tmin_evalue\tmin_pvalue\tmax_nmatches" + "\n")
 
-    lines = IOTools.openFile(infile).readlines()
+    lines = IOTools.open_file(infile).readlines()
     chunks = [x for x in range(len(lines)) if lines[x].startswith("::")]
     chunks.append(len(lines))
 
@@ -527,7 +528,7 @@ def loadMAST(infile, outfile):
         tmpfile2.write("".join(lines[chunks[chunk] + 1:chunks[chunk + 1]]))
         tmpfile2.close()
 
-        mast = MAST.parse(IOTools.openFile(tmpfile2.name, "r"))
+        mast = MAST.parse(IOTools.open_file(tmpfile2.name, "r"))
 
         os.unlink(tmpfile2.name)
 
@@ -640,7 +641,7 @@ def runBioProspector(infiles, outfile, dbhandle):
         statement = '''
         BioProspector -i %(tmpfasta)s %(bioprospector_options)s -o %(outfile)s > %(outfile)s.log
     '''
-        P.run()
+        P.run(statement)
 
     os.unlink(tmpfasta)
 
@@ -658,7 +659,7 @@ def loadBioProspector(infile, outfile):
 
     track = infile[:-len(".bioprospector")]
 
-    results = Bioprospector.parse(IOTools.openFile(infile, "r"))
+    results = Bioprospector.parse(IOTools.open_file(infile, "r"))
 
     tmpfile = P.getTempFile()
     tmpfile.write("id\tmotif\tstart\tend\tstrand\tarrangement\n")
@@ -739,7 +740,7 @@ def runMAST(infiles, outfile):
             L.info("skipping empty motif file %s" % motiffile)
             continue
 
-        of = IOTools.openFile(tmpfile, "a")
+        of = IOTools.open_file(tmpfile, "a")
         motif, x = os.path.splitext(motiffile)
         of.write(":: motif = %s - foreground ::\n" % motif)
         of.close()
@@ -752,9 +753,9 @@ def runMAST(infiles, outfile):
         | mast %(motiffile)s - -nohtml -oc %(tmpdir)s -ev %(mast_evalue)f %(mast_options)s >> %(outfile)s.log 2>&1;
         cat %(tmpdir)s/mast.txt >> %(tmpfile)s 2>&1
         '''
-        P.run()
+        P.run(statement)
 
-        of = IOTools.openFile(tmpfile, "a")
+        of = IOTools.open_file(tmpfile, "a")
         motif, x = os.path.splitext(motiffile)
         of.write(":: motif = %s - background ::\n" % motif)
         of.close()
@@ -764,10 +765,10 @@ def runMAST(infiles, outfile):
         | mast %(motiffile)s - -nohtml -oc %(tmpdir)s -ev %(mast_evalue)f %(mast_options)s >> %(outfile)s.log 2>&1;
         cat %(tmpdir)s/mast.txt >> %(tmpfile)s 2>&1
         '''
-        P.run()
+        P.run(statement)
 
     statement = "gzip < %(tmpfile)s > %(outfile)s"
-    P.run()
+    P.run(statement)
 
     shutil.rmtree(tmpdir)
     os.unlink(tmpfile)
@@ -813,7 +814,7 @@ def runGLAM2(infile, outfile, dbhandle):
     statement = '''
     %(execglam2)s -2 -O %(tmpdir)s %(glam2_options)s -z %(min_sequences)i n %(tmpfasta)s > %(outfile)s.log
     '''
-    P.run()
+    P.run(statement)
 
     # copy over results
     try:
@@ -856,7 +857,7 @@ def collectMEMEResults(tmpdir, target_path, outfile):
         b, ext = os.path.splitext(epsfile)
         pngfile = b + ".png"
         statement = '''convert %(epsfile)s %(pngfile)s '''
-        P.run()
+        P.run(statement)
 
 
 def runMEME(track, outfile, dbhandle):
@@ -890,7 +891,7 @@ def runMEME(track, outfile, dbhandle):
         track, tmpfasta,
         dbhandle,
         full=False,
-        masker=P.asList(PARAMS['motifs_masker']),
+        masker=P.as_list(PARAMS['motifs_masker']),
         halfwidth=int(PARAMS["meme_halfwidth"]),
         maxsize=int(PARAMS["meme_max_size"]),
         proportion=PARAMS["meme_proportion"],
@@ -903,7 +904,7 @@ def runMEME(track, outfile, dbhandle):
         statement = '''
         meme %(tmpfasta)s -dna -revcomp -mod %(meme_model)s -nmotifs %(meme_nmotifs)s -oc %(tmpdir)s -maxsize %(meme_max_size)s %(meme_options)s > %(outfile)s.log
         '''
-        P.run()
+        P.run(statement)
 
         collectMEMEResults(tmpdir, target_path, outfile)
 
@@ -944,7 +945,7 @@ def runMEMEOnSequences(infile, outfile):
        > %(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
     collectMEMEResults(tmpdir, target_path, outfile)
 
@@ -953,7 +954,7 @@ def runTomTom(infile, outfile):
     '''compare ab-initio motifs against tomtom.'''
 
     tmpdir = P.getTempDir(".")
-    databases = " ".join(P.asList(PARAMS["tomtom_databases"]))
+    databases = " ".join(P.as_list(PARAMS["tomtom_databases"]))
 
     target_path = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "tomtom", outfile)
@@ -967,7 +968,7 @@ def runTomTom(infile, outfile):
     tomtom %(tomtom_options)s -oc %(tmpdir)s %(infile)s %(databases)s > %(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
     # copy over results
     try:

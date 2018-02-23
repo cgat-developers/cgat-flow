@@ -82,7 +82,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -92,9 +92,9 @@ PARAMS = P.getParameters(
 # 1. pipeline_annotations: any parameters will be added with the
 #    prefix "annotations_". The interface will be updated with
 #    "annotations_dir" to point to the absolute path names.
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     on_error_raise=__name__ == "__main__",
     prefix="annotations_",
     update_interface=True))
@@ -159,7 +159,7 @@ def formatPhenotypeData(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(formatPhenotypeData)
@@ -194,7 +194,7 @@ def selectBritish(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(selectBritish)
@@ -212,7 +212,7 @@ def makeKeepFile(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(loadPhenotypes,
@@ -236,7 +236,7 @@ def dichotimisePhenotype(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(loadPhenotypes,
@@ -280,7 +280,7 @@ def plotPhenotypeMap(infile, outfile):
     %(infile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 # ----------------------------------------------------------------------------------------#
 # ----------------------------------------------------------------------------------------#
@@ -328,7 +328,7 @@ def convertToPlink(infiles, outfiles):
     %(infiles)s
     '''
 
-    P.run()
+    P.run(statement)
 
 # ----------------------------------------------------------------------------------------#
 # ----------------------------------------------------------------------------------------#
@@ -386,7 +386,7 @@ def nameVariants(infiles, outfile):
     '''
 
     statement = ";".join([state0, state1, state2])
-    P.run()
+    P.run(statement)
 
 # ----------------------------------------------------------------------------------------#
 # ----------------------------------------------------------------------------------------#
@@ -470,7 +470,7 @@ def ldPruneSNPsRound1(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("QC.dir"),
@@ -539,7 +539,7 @@ def ldPruneSNPsRound2(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("QC.dir"),
@@ -608,7 +608,7 @@ def ldPruneSNPsRound3(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(ldPruneSNPsRound3,
@@ -672,7 +672,7 @@ def makeTrimmedData(infiles, outfile):
 
     statement = ";".join([state1, state2, state3])
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeTrimmedData)
@@ -713,7 +713,7 @@ def mergePlinkFiles(infiles, outfile):
     rm -rf %(temp_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles)
@@ -754,7 +754,7 @@ def calcInbreeding(infiles, outfile):
     sed -E 's/^[[:space:]]|[[:space:]]$//g' | gzip > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcInbreeding)
@@ -789,7 +789,7 @@ def findExcessHomozygotes(infiles, outfile):
     %(plink_files)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("QC.dir"))
@@ -848,7 +848,7 @@ def genderChecker(infiles, outfile):
 
     statement = ";".join([state1, state2])
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles,
@@ -893,7 +893,7 @@ def makeGRM(infiles, outfiles):
     > %(outfiles)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles)
@@ -935,7 +935,7 @@ def calculateIdentityByDescent(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles,
@@ -971,7 +971,7 @@ def runNaivePCA(infiles, outfile):
              --outpve %(out_pattern)s.pve
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(runNaivePCA,
@@ -1025,7 +1025,7 @@ def runFilteredPCA(infiles, outfile):
     statement = " ; ".join([statement1,
                             statement2])
 
-    P.run()
+    P.run(statement)
 
 
 @follows(runNaivePCA,
@@ -1058,7 +1058,7 @@ def plotPcaResults(infiles, outfile):
     %(pcs_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 ###############################################
@@ -1088,7 +1088,7 @@ def excludeDiscordantGender(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(findExcessHomozygotes,
@@ -1120,7 +1120,7 @@ def excludeInbred(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcInbreeding)
@@ -1149,7 +1149,7 @@ def findExcessHeterozygotes(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles)
@@ -1197,7 +1197,7 @@ def excludeRelated(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(excludeRelated)
@@ -1223,7 +1223,7 @@ def flagRelated(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calculateIdentityByDescent)
@@ -1246,7 +1246,7 @@ def plotIbdHistogram(infile, outfile):
     --log=%(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 # ----------------------------------------------------------------------------------------#
 # ----------------------------------------------------------------------------------------#
@@ -1301,7 +1301,7 @@ if PARAMS['candidate_region']:
         %(plink_files)s
         '''
 
-        P.run()
+        P.run(statement)
 
     # make a GRM from the candidate region for MLM analysis
     # need to remove duplicates first
@@ -1344,7 +1344,7 @@ if PARAMS['candidate_region']:
         > %(outfiles)s.gcta.log
         '''
 
-        P.run()
+        P.run(statement)
 
     @follows(getCandidateRegion)
     @transform(getCandidateRegion,
@@ -1387,7 +1387,7 @@ if PARAMS['candidate_region']:
         %(plink_files)s
         '''
 
-        P.run()
+        P.run(statement)
 
     @follows(testCandidateRegion)
     @transform(getCandidateRegion,
@@ -1427,7 +1427,7 @@ if PARAMS['candidate_region']:
         %(plink_files)s
         '''
 
-        P.run()
+        P.run(statement)
 else:
     pass
 
@@ -1466,7 +1466,7 @@ def mergeExclusions(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 if PARAMS['gwas_model'] == "linear":
@@ -1517,7 +1517,7 @@ if PARAMS['gwas_model'] == "linear":
         > %(outfile)s.plink.log
         '''
 
-        P.run()
+        P.run(statement)
 
 else:
     @follows(convertToPlink,
@@ -1569,7 +1569,7 @@ else:
         > %(outfile)s.plink.log
         '''
 
-        P.run()
+        P.run(statement)
 
 
 @follows(mkdir("covariates.dir"),
@@ -1597,7 +1597,7 @@ def mergeCovariates(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(convertToPlink,
@@ -1654,7 +1654,7 @@ def pcAdjustedAssociation(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("plots.dir"),
@@ -1684,7 +1684,7 @@ def plotUnadjustedManhattan(infiles, outfile):
     > %(out_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("plots.dir"),
@@ -1716,7 +1716,7 @@ def plotGenomeManhattan(infiles, outfile):
     > %(out_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("plots.dir"),
@@ -1745,7 +1745,7 @@ def plotGenomeQQ(infiles, outfile):
     %(res_files)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # testing conditional analysis of multiple regions
@@ -1768,7 +1768,7 @@ def splitRegionsFile(infile, outfile):
     $1, $2, $3, $4)}}' | awk '{system("touch " $0)}';
     '''
 
-    P.run()
+    P.run(statement)
     P.touch(outfile)
 
 
@@ -1821,7 +1821,7 @@ def getConditionalRegions(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(getConditionalRegions)
@@ -1874,7 +1874,7 @@ def conditionalAssociation(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -1920,7 +1920,7 @@ def mergeGwasHits(infiles, outfile):
     rm -rf %(temp_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergeGwasHits)
@@ -1966,7 +1966,7 @@ def testEpistasisVsRegion(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 ############################################
 # We want to test for epistasis explicitly between target region variants
@@ -1997,7 +1997,7 @@ def splitTargetVariants(infile, outfile):
     | awk '{system("touch " $0)}';
     '''
 
-    P.run()
+    P.run(statement)
     P.touch(outfile)
 
 
@@ -2026,7 +2026,7 @@ def excludeLdVariants(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(splitTargetVariants,
@@ -2067,7 +2067,7 @@ def convertToRawFormat(infiles, outfile):
     %(plink_files)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(convertToRawFormat)
@@ -2095,7 +2095,7 @@ def mergeGenotypeAndCovariates(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(excludeLdVariants)
@@ -2154,11 +2154,11 @@ def ldExcludedEpistasisVsGwasLead(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
     statement = '''rm -rf %(tmpf)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(excludeLdVariants,
@@ -2217,11 +2217,11 @@ def ldExcludedEpistasis(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
     statement = '''rm -rf %(tmpf)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(ldExcludedEpistasis)
@@ -2248,7 +2248,7 @@ def plotLdExcludedEpistasis(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # @jobs_limit(6)
@@ -2310,7 +2310,7 @@ def plotLdExcludedEpistasis(infile, outfile):
 #     > %(outfile)s.plink.log
 #     '''
 
-#     P.run()
+#     P.run(statement)
 
 
 # @follows(adjustedEpistasis)
@@ -2337,7 +2337,7 @@ def plotLdExcludedEpistasis(infile, outfile):
 #     > %(outfile)s
 #     '''
 
-#     P.run()
+#     P.run(statement)
 
 
 #######################################################
@@ -2384,7 +2384,7 @@ def makeCassiFiles(infiles, outfile):
     --out %(out_pattern)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(convertToRawFormat,
@@ -2423,7 +2423,7 @@ def makeOtherCassiFiles(infiles, outfile):
     --out %(out_pattern)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergeGenotypeAndCovariates,
@@ -2473,7 +2473,7 @@ def testAdjustedEpistasis(infiles, outfile):
     -o %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(testAdjustedEpistasis)
@@ -2501,7 +2501,7 @@ def plotAdjustedEpistasis(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergeGenotypeAndCovariates,
@@ -2557,7 +2557,7 @@ def testUnadjustedEpistasis(infiles, outfile):
     -o %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 # @jobs_limit(6)
 # @follows(mergeGenotypeAndCovariates,
@@ -2621,7 +2621,7 @@ def testUnadjustedEpistasis(infiles, outfile):
 #     > %(outfile)s.plink.log
 #     '''
 
-#     P.run()
+#     P.run(statement)
 
 
 # @follows(testUnadjustedEpistasis)
@@ -2648,7 +2648,7 @@ def testUnadjustedEpistasis(infiles, outfile):
 #     > %(outfile)s
 #     '''
 
-#     P.run()
+#     P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -2690,7 +2690,7 @@ def mergeForPleiotropy(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergeForPleiotropy)
@@ -2720,7 +2720,7 @@ def calcPleiotropyTest(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -2778,7 +2778,7 @@ def getGrmRegion(infiles, outfile):
     %(plink_files)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(getGrmRegion)
@@ -2808,7 +2808,7 @@ def subSampleIndividuals(infiles, outfile):
     rm -rf %(keep_temp)s %(fam_temp)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(getGrmRegion,
@@ -2853,7 +2853,7 @@ def calcRegionGrm(infiles, outfiles):
     > %(outfiles)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(subSampleIndividuals)
@@ -2876,7 +2876,7 @@ def subsetPhenotype(infile, outfile):
     awk 'BEGIN {printf("FID\\tIID\\tPHENO\\n")} {print $0}'
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(subsetPhenotype)
@@ -2929,7 +2929,7 @@ def runMixedModel(infiles, outfile):
     > %(outfile)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("plots.dir"),
@@ -2959,7 +2959,7 @@ def plotMixedModelManhattan(infiles, outfile):
     > %(out_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("plots.dir"),
@@ -2984,7 +2984,7 @@ def plotMixedModelQQ(infiles, outfile):
     %(res_files)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -3032,7 +3032,7 @@ def getGenomeWideFst(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergePlinkFiles,
@@ -3077,7 +3077,7 @@ def getFstByChromosome(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -3104,7 +3104,7 @@ def selectRefPopulation(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(convertToPlink,
@@ -3151,7 +3151,7 @@ def defineHaplotypeBlocks(infiles, outfile):
     %(plink_files)s
     > %(outfile)s.plink.log
     '''
-    P.run()
+    P.run(statement)
 
 
 # LD calculations need to be on defined regions,
@@ -3193,7 +3193,7 @@ def convertRefVcf(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(convertRefVcf,
@@ -3236,7 +3236,7 @@ def calcLd(infiles, outfile):
     > %(outfile)s.plink.log;
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcLd)
@@ -3273,7 +3273,7 @@ def bgzipLdFiles(infile, outfile):
     # rm -rf %(tmp_file)s
     # ''')
 
-    P.run()
+    P.run(statement)
 
 
 @follows(bgzipLdFiles)
@@ -3292,7 +3292,7 @@ def tabixIndexLd(infile, outfile):
     tabix -S 1 -b 2 -e 2 %(infile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcLd)
@@ -3314,7 +3314,7 @@ def loadLd(infile, outfile):
      sed 's/[[:space:]]$//g' > %(temp_file)s
     '''
 
-    P.run()
+    P.run(statement)
 
     P.load(temp_file, outfile,
            job_memory=job_memory,
@@ -3354,7 +3354,7 @@ def splitGwasRegions(infile, outfile):
     %(infile)s
     '''
 
-    P.run()
+    P.run(statement)
     P.touch(outfile)
 
 
@@ -3382,7 +3382,7 @@ def splitConditionalRegions(infile, outfile):
     %(infile)s
     '''
 
-    P.run()
+    P.run(statement)
     P.touch(outfile)
 
 
@@ -3408,7 +3408,7 @@ def transformMetalForLocuszoom(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(transformMetalForLocuszoom)
@@ -3452,7 +3452,7 @@ def plotLocusZoom(infile, outfile):
     cd ../ ;
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(splitGwasRegions,
@@ -3471,7 +3471,7 @@ def makeSnpSets(infile, outfile):
     cat %(infile)s | cut -f 7 > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeSnpSets,
@@ -3501,7 +3501,7 @@ def getSnpFunctionalScores(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(splitGwasRegions,
@@ -3536,7 +3536,7 @@ def calcPicsScores(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcPicsScores,
@@ -3565,7 +3565,7 @@ def makePicsCredibleSet(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makePicsCredibleSet)
@@ -3588,7 +3588,7 @@ def summarisePicsResults(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 ###########################
@@ -3622,7 +3622,7 @@ def summarisePicsResults(infiles, outfile):
 #     > %(outfile)s
 #     '''
 
-#     P.run()
+#     P.run(statement)
 
 
 @follows(splitGwasRegions,
@@ -3652,7 +3652,7 @@ def calcTop1pcLdRanks(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(splitGwasRegions,
@@ -3683,7 +3683,7 @@ def calcApproxBayesFactorScore(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcApproxBayesFactorScore,
@@ -3712,7 +3712,7 @@ def makeAbfCredibleSet(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeAbfCredibleSet,
@@ -3736,7 +3736,7 @@ def summariseAbfResults(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -3776,7 +3776,7 @@ def selectRegionGenes(infiles, outfile):
     {print $0}}' | cut -f 4 | sort | uniq > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # trait summary statistic results files need to contain
@@ -3816,7 +3816,7 @@ def ldExtractResults(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(selectRegionGenes,
@@ -3857,7 +3857,7 @@ def colocTesteQTL(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -3890,7 +3890,7 @@ def getGwasTopHits(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(getGrmRegion)
@@ -3920,7 +3920,7 @@ def subSampleIndividualsForReml(infiles, outfile):
     rm -rf %(keep_temp)s %(fam_temp)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mergeGwasHits,
@@ -3969,7 +3969,7 @@ def subsetCohortForReml(infiles, outfile):
     > %(outfile)s.plink.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(subsetCohortForReml)
@@ -4009,7 +4009,7 @@ def makeRemlGrm(infiles, outfile):
     > %(outfile)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeRemlGrm)
@@ -4029,7 +4029,7 @@ def subsetRemlPhenotype(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeRemlGrm,
@@ -4076,7 +4076,7 @@ def calcHeritabilityReml(infiles, outfile):
     > %(outfile)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(calcHeritabilityReml)
@@ -4115,7 +4115,7 @@ def snpBlup(infiles, outfile):
     > %(outfile)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeRemlGrm)
@@ -4143,7 +4143,7 @@ def subsetAllPhenotypes(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(makeRemlGrm,
@@ -4190,7 +4190,7 @@ def calcBivariateReml(infiles, outfile):
     > %(outfile)s.gcta.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -4223,7 +4223,7 @@ def transformGwasToCojo(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # ----------------------------------------------------------------------------------------#
@@ -4276,7 +4276,7 @@ def test_dissectGrmSingleFile(infiles, outfile):
     > dissect_test.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("dissect.dir"),
@@ -4311,7 +4311,7 @@ def test_dissectGrmManyFiles(infile, outfile):
     > dissect_test.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(test_dissectGrmManyFiles,
@@ -4339,7 +4339,7 @@ def dissectPCA(infile, outfile):
     > dissect_test.log
     '''
 
-    P.run()
+    P.run(statement)
 
 # ----------------------------------------------------------------------------------------#
 # ----------------------------------------------------------------------------------------#

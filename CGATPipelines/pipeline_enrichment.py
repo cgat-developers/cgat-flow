@@ -312,7 +312,7 @@ import numpy as np
 from textwrap import wrap
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -412,7 +412,7 @@ def runGsea(infile, outfile):
                    mkdir $dir && cd $dir &&
                    xvfb-run cgat runGSEA -f ../%(infile)s -g %(geneset)s -m %(min_size)s -x %(max_size)s
                    -s %(seed)s -n %(no)s -d %(p_no)s -l %(l_no)s'''
-    P.run()
+    P.run(statement)
 
 ##########################################################################
 #                 Enrichment analysis (ORA)
@@ -515,7 +515,7 @@ def buildStandardBackground(infiles, outfile):
     are omitted later, during enrichment testing for that source.
     '''
     statement = "cut -f1 %s | sort | uniq > %s" % (" ".join(infiles), outfile)
-    P.run()
+    P.run(statement)
 
 
 @active_if(PARAMS['analysis_ora'] == 1)
@@ -595,10 +595,10 @@ def makeCytoscapeInputs(infiles, outfile):
     statement = """
     awk -F "\\t" '{printf("%%%%s\\t%%%%s\\t%%%%s\\t%%%%s\\t+1\\n",\
     $1, $12, $8, $9)}' %(infile)s > %(T)s""" % locals()
-    P.run()
+    P.run(statement)
     typ = infile.split("_")[-3]
     keep = [line.strip() for line in
-            IOTools.openFile(PARAMS['cytoscape_%s' % typ]).readlines()]
+            IOTools.open_file(PARAMS['cytoscape_%s' % typ]).readlines()]
     tab = pd.read_csv(T, sep="\t")
     tab = tab[tab['term_id'].isin(keep)]
     tab.columns = ['ID', 'Description', 'pvalue', 'padj', 'Phenotype']

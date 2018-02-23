@@ -15,7 +15,7 @@ from CGATCore import Pipeline as P
 ############################################################
 ############################################################
 # Pipeline configuration
-P.getParameters(["%s.ini" % __file__[:-len(".py")], "pipeline.ini"])
+P.get_parameters(["%s.ini" % __file__[:-len(".py")], "pipeline.ini"])
 PARAMS = P.PARAMS
 
 ############################################################
@@ -30,7 +30,7 @@ def exportIntervalsAsBed(database, query, outfile):
     cc = dbhandle.cursor()
     cc.execute(query)
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = IOTools.open_file(outfile, "w")
     for result in cc:
         contig, start, end, interval_id, score = result
         outs.write("%s\t%i\t%i\t%s\t%s\n" %
@@ -81,7 +81,7 @@ def BedFileVenn(infiles, outfile):
         | awk 'BEGIN { OFS="\\t"; } {$4=++a; print;}'
         > %%(outfile)s 
         ''' % (infiles[0], infiles[1])
-            P.run()
+            P.run(statement)
 
     else:
 
@@ -94,7 +94,7 @@ def BedFileVenn(infiles, outfile):
             return
 
         statement = '''mergeBed -i %(fn)s > %(tmpfile)s'''
-        P.run()
+        P.run(statement)
 
         for fn in infiles[1:]:
             if IOTools.isEmpty(infiles[0]):
@@ -103,13 +103,13 @@ def BedFileVenn(infiles, outfile):
                 return
 
             statement = '''mergeBed -i %(fn)s | intersectBed -u -a %(tmpfile)s -b stdin > %(tmpfile)s.tmp; mv %(tmpfile)s.tmp %(tmpfile)s'''
-            P.run()
+            P.run(statement)
 
         statement = '''cat %(tmpfile)s
         | cut -f 1,2,3,4,5 
         | awk 'BEGIN { OFS="\\t"; } {$4=++a; print;}'
         > %(outfile)s '''
-        P.run()
+        P.run(statement)
 
         os.unlink(tmpfile)
 
@@ -136,7 +136,7 @@ def makeIntervalCorrelation(infiles, outfile, field, reference):
             ix.add(contig, start, end, peakval)
         idx.append(ix)
         tracks.append(track)
-    outs = IOTools.openFile(outfile, "w")
+    outs = IOTools.open_file(outfile, "w")
     outs.write("contig\tstart\tend\tid\t" + "\t".join(tracks) + "\n")
 
     for bed in Bed.iterator(infile=open(reference, "r")):

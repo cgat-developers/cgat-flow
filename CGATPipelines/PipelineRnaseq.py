@@ -114,7 +114,7 @@ def parse_table(sample, outfile_raw, outfile, columnname):
     %(grep)s -v '^#' %(outfile_raw)s |
     cut -f1,%(column_ix)s | awk 'NR>1' | gzip >> %(outfile)s;
     ''' % locals()
-    P.run()
+    P.run(statement)
 
 
 def estimateSleuthMemory(bootstraps, samples, transcripts):
@@ -139,7 +139,7 @@ def estimateSleuthMemory(bootstraps, samples, transcripts):
 def findColumnPosition(infile, column):
     ''' find the position in the header of the specified column
     The returned value is one-based (e.g for bash cut)'''
-    with IOTools.openFile(infile, "r") as inf:
+    with IOTools.open_file(infile, "r") as inf:
         while True:
             header = inf.readline()
             if not header.startswith("#"):
@@ -312,7 +312,7 @@ class FeatureCountsQuantifier(Quantifier):
                         rm -rf %(tmpdir)s; checkpoint;
                         gzip -f %(outfile_raw)s
         '''
-        P.run()
+        P.run(statement)
 
         # parse output to extract counts
         parse_table(self.sample, outfile_raw + ".gz",
@@ -378,7 +378,7 @@ class Gtf2tableQuantifier(Quantifier):
         gzip -f %(outfile_raw)s
         '''
 
-        P.run()
+        P.run(statement)
         # parse output to extract counts
         parse_table(self.sample, outfile_raw + ".gz", outfile, 'counted_all')
 
@@ -437,7 +437,7 @@ class KallistoQuantifier(AF_Quantifier):
 
         statement = m.build((fastqfile,), outfile)
 
-        P.run()
+        P.run(statement)
 
         outfile_readable = outfile + readable_suffix
 
@@ -466,7 +466,7 @@ class SailfishQuantifier(AF_Quantifier):
 
         statement = m.build((fastqfile,), outfile)
 
-        P.run()
+        P.run(statement)
 
         # parse the output to extract the counts
         parse_table(self.sample, outfile,
@@ -496,7 +496,7 @@ class SalmonQuantifier(AF_Quantifier):
 
         statement = m.build((fastqfile,), outfile)
 
-        P.run()
+        P.run(statement)
 
         # parse the output to extract the counts
         parse_table(self.sample, outfile,
@@ -509,7 +509,7 @@ class SalmonQuantifier(AF_Quantifier):
 def makeExpressionSummaryPlots(counts_inf, design_inf, logfile):
     ''' use the plotting methods for Counts object to make summary plots'''
 
-    with IOTools.openFile(logfile, "w") as log:
+    with IOTools.open_file(logfile, "w") as log:
 
         plot_prefix = P.snip(logfile, ".log")
         log.write("1")
@@ -638,7 +638,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
     counter = E.Counter()
 
     # write summary table
-    outf = IOTools.openFile(outfile + ".removed.tsv.gz", "w")
+    outf = IOTools.open_file(outfile + ".removed.tsv.gz", "w")
     outf.write("gene_id\tnoverlap\tsection\n")
     for gene_id, r in remove_genes.items():
         for s in r:
@@ -650,7 +650,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
 
     # filter gtf file
     tmpfile = P.getTempFile(".")
-    inf = GTF.iterator(IOTools.openFile(infile))
+    inf = GTF.iterator(IOTools.open_file(infile))
 
     genes_input, genes_output = set(), set()
 
@@ -664,7 +664,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
     tmpfile.close()
     tmpfilename = tmpfile.name
 
-    outf = IOTools.openFile(outfile + ".summary.tsv.gz", "w")
+    outf = IOTools.open_file(outfile + ".summary.tsv.gz", "w")
     outf.write("category\ttranscripts\n")
     for x, y in counter.items():
         outf.write("%s\t%i\n" % (x, y))
@@ -707,7 +707,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
         | gzip > %(outfile)s
         '''
 
-    P.run()
+    P.run(statement)
 
     os.unlink(tmpfilename)
 
@@ -793,7 +793,7 @@ def runCufflinks(gtffile, bamfile, outfile, job_threads=1):
     rm -rf %(tmpdir)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def loadCufflinks(infile, outfile):
@@ -899,7 +899,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
              statement,
              "rm -r %(tmpfilename)s"])
 
-    P.run()
+    P.run(statement)
 
 
 def mergeAndLoadStringTie(infiles, track_regex, outfile):
@@ -1016,7 +1016,7 @@ def mergeCufflinksFPKM(infiles, outfile, genesets,
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def runFeatureCounts(annotations_file,
@@ -1090,7 +1090,7 @@ def runFeatureCounts(annotations_file,
                     rm -rf %(tmpdir)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def buildExpressionStats(
@@ -1125,7 +1125,7 @@ def buildExpressionStats(
 
     keys_status = "OK", "NOTEST", "FAIL", "NOCALL"
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("\t".join(
         ("design",
          "geneset",
@@ -1307,7 +1307,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     # Jethro - load tables of sample specific cuffdiff fpkm values into csvdb
     # IMS: First read in lookup table for CuffDiff/Pipeline sample name
     # conversion
-    inf = IOTools.openFile(os.path.join(indir, "read_groups.info.gz"))
+    inf = IOTools.open_file(os.path.join(indir, "read_groups.info.gz"))
     inf.readline()
     sample_lookup = {}
 
@@ -1328,8 +1328,8 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
         tablename = prefix + "_" + level + "sample_fpkms"
 
         tmpf = P.getTempFilename(".")
-        inf = IOTools.openFile(os.path.join(indir, fn)).readlines()
-        outf = IOTools.openFile(tmpf, "w")
+        inf = IOTools.open_file(os.path.join(indir, fn)).readlines()
+        outf = IOTools.open_file(tmpf, "w")
 
         samples = []
         genes = {}
@@ -1441,7 +1441,7 @@ def parseCuffdiff(infile, min_fpkm=1.0):
 
     results = []
 
-    for line in IOTools.openFile(infile):
+    for line in IOTools.open_file(infile):
         if line.startswith("test_id"):
             continue
         data = CuffdiffResult._make(line[:-1].split("\t"))
@@ -1573,7 +1573,7 @@ def runCuffdiff(bamfiles,
     checkpoint;
     date >> %(outfile)s.log;
     '''
-    P.run()
+    P.run(statement)
 
     results = parseCuffdiff(os.path.join(outdir, "gene_exp.diff.gz"))
 
@@ -1664,7 +1664,7 @@ def buildUTRExtension(infile, outfile):
 
     # read gene coordinates
     geneinfos = {}
-    for x in CSV.DictReader(IOTools.openFile(infile), dialect='excel-tab'):
+    for x in CSV.DictReader(IOTools.open_file(infile), dialect='excel-tab'):
         contig, strand, start, end = x['contig'], x[
             'strand'], int(x['start']), int(x['end'])
         geneinfos[x['gene_id']] = (contig, strand,
@@ -1902,7 +1902,7 @@ def buildUTRExtension(infile, outfile):
 
     E.info("fitting: %s" % str(counter))
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
 
     outf.write("\t".join(
         ["gene_id", "contig", "strand", "status5", "status3"] +

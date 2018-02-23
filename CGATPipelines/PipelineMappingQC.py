@@ -20,7 +20,7 @@ PICARD_MEMORY = "9G"
 
 def getNumReadsFromReadsFile(infile):
     '''get number of reads from a .nreads file.'''
-    with IOTools.openFile(infile) as inf:
+    with IOTools.open_file(infile) as inf:
         line = inf.readline()
         if not line.startswith("nreads"):
             raise ValueError(
@@ -62,7 +62,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPicardAlignmentStats(infile, outfile, genome_file):
@@ -101,7 +101,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPicardDuplicationStats(infile, outfile):
@@ -148,7 +148,7 @@ def buildPicardDuplicationStats(infile, outfile):
     OUTPUT=/dev/null
     VALIDATION_STRINGENCY=SILENT
     '''
-    P.run()
+    P.run(statement)
 
     if ".gsnap.bam" in infile:
         os.unlink(tmpfile_name)
@@ -191,7 +191,7 @@ def buildPicardDuplicateStats(infile, outfile):
     VALIDATION_STRINGENCY=SILENT;
     '''
     statement += '''samtools index %(outfile)s ;'''
-    P.run()
+    P.run(statement)
 
 
 def buildPicardCoverageStats(infile, outfile, baits, regions):
@@ -226,7 +226,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
     INPUT=%(infile)s
     OUTPUT=%(outfile)s
     VALIDATION_STRINGENCY=LENIENT''' % locals()
-    P.run()
+    P.run(statement)
 
 
 def buildPicardGCStats(infile, outfile, genome_file):
@@ -263,7 +263,7 @@ def buildPicardGCStats(infile, outfile, genome_file):
     SUMMARY_OUTPUT=%(outfile)s.summary
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def loadPicardMetrics(infiles, outfile, suffix,
@@ -305,7 +305,7 @@ def loadPicardMetrics(infiles, outfile, suffix,
             E.warn("File %s missing" % filename)
             continue
 
-        lines = IOTools.openFile(filename, "r").readlines()
+        lines = IOTools.open_file(filename, "r").readlines()
 
         # extract metrics part
         rx_start = re.compile("## METRICS CLASS")
@@ -407,7 +407,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
 
     to_cluster = False
 
-    P.run()
+    P.run(statement)
 
 
 def loadPicardAlignmentStats(infiles, outfile):
@@ -567,7 +567,7 @@ def buildBAMStats(infile, outfile):
     --output-filename-pattern=%(outfile)s.%%s
     < %(infile)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def loadBAMStats(infiles, outfile):
@@ -604,7 +604,7 @@ def loadBAMStats(infiles, outfile):
 
     to_cluster = False
 
-    P.run()
+    P.run(statement)
 
     for suffix in ("nm", "nh"):
         E.info("loading bam stats - %s" % suffix)
@@ -626,7 +626,7 @@ def loadBAMStats(infiles, outfile):
 
         to_cluster = False
 
-        P.run()
+        P.run(statement)
 
     # load mapping qualities, there are two columns per row
     # 'all_reads' and 'filtered_reads'
@@ -652,7 +652,7 @@ def loadBAMStats(infiles, outfile):
 
         to_cluster = False
 
-        P.run()
+        P.run(statement)
 
 
 def buildPicardRnaSeqMetrics(infiles, strand, outfile):
@@ -688,7 +688,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
     STRAND=%(strand)s
     VALIDATION_STRINGENCY=SILENT
     '''
-    P.run()
+    P.run(statement)
 
 
 def loadPicardRnaSeqMetrics(infiles, outfiles):

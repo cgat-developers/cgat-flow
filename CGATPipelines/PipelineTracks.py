@@ -313,7 +313,7 @@ class Sample(object):
         '''return sample as valid R label'''
         return R_SEPARATOR.join(map(to_aggregate, list(self.data.values())))
 
-    def asList(self):
+    def as_list(self):
         '''return sample as a tuple'''
         return list(map(to_aggregate, list(self.data.values())))
 

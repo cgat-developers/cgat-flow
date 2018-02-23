@@ -100,7 +100,7 @@ import CGATCore.IOTools as IOTools
 import pandas as pd
 
 
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -167,7 +167,7 @@ def GetAndTranslateAllGenes(outfile):
                             species=PARAMS['entrez_host'], submit=True)
 
     # Make output gene list
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     for gene in genesymbols:
         outf.write("%s\n" % gene)
     outf.close()

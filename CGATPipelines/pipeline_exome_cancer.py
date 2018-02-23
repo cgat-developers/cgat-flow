@@ -177,7 +177,7 @@ def connect():
 
 
 #########################################################################
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"],
@@ -206,9 +206,9 @@ def loadManualAnnotations(infile, outfile):
 
     annotation = P.snip(infile, "_annotations.tsv")
 
-    with IOTools.openFile(tmp, "w") as outf:
+    with IOTools.open_file(tmp, "w") as outf:
         outf.write("%s\tgene_id\n" % annotation)
-        with IOTools.openFile(infile, "r") as inf:
+        with IOTools.open_file(infile, "r") as inf:
             for line in inf:
                 outf.write("%s\t%s" % (annotation, line))
 
@@ -245,7 +245,7 @@ def mapReads(infile, outfile):
 
     statement = m.build((infile,), outfile)
     print(statement)
-    P.run()
+    P.run(statement)
 
 
 @merge(mapReads, "picard_duplicate_stats.load")
@@ -290,7 +290,7 @@ def buildCoverageStats(infile, outfile):
                 > %(modified_baits)s; checkpoint ;
                 rm -rf %(infile)s_temp_baits.bed %(infile)s_temp_header.txt
                 '''
-    P.run()
+    P.run(statement)
 
     PipelineMappingQC.buildPicardCoverageStats(
         infile, outfile, modified_baits, modified_baits)
@@ -403,7 +403,7 @@ def mergeSampleBams(infile, outfile):
                     checkpoint ;'''
     statement += '''rm -rf %(tmpdir_gatk)s ;
                     checkpoint ; '''
-    P.run()
+    P.run(statement)
     IOTools.zapFile(infile)
     IOTools.zapFile(infile_tumor)
 
@@ -442,7 +442,7 @@ def splitMergedRealigned(infile, outfile):
                    -r %(track_tumor)s > %(outfile_tumor)s; checkpoint ;
                    samtools index %(outfile)s;
                    samtools index %(outfile_tumor)s; checkpoint;'''
-    P.run()
+    P.run(statement)
     IOTools.zapFile(infile)
 
 
@@ -521,7 +521,7 @@ def indexControlVariants(infile, outfile):
     statement = '''cut -f1-8 %(infile)s > %(outfile)s;
                    bgzip -f %(outfile)s;
                    tabix -f %(outfile)s.gz'''
-    P.run()
+    P.run(statement)
 
 
 # paramaterise vcf intersection (number of req. observations - currently 1)
@@ -536,7 +536,7 @@ def mergeControlVariants(infiles, outfile):
     statement = '''module load bio/vcftools/0.1.08a;
                    vcf-isec -o -n +1 %(infiles)s
                    > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("variants"), callControlVariants)
@@ -683,7 +683,7 @@ def subsetControlBam(infile, outfiles):
         n += 1
         statement = '''samtools view -s %(fraction)s -b %(infile)s
                      > %(outfile)s'''
-        P.run()
+        P.run(statement)
 
 
 @transform(subsetControlBam,
@@ -691,7 +691,7 @@ def subsetControlBam(infile, outfiles):
            ".bam.bai")
 def indexSubsets(infile, outfile):
     statement = '''samtools index %(infile)s'''
-    P.run()
+    P.run(statement)
 
 
 @follows(indexSubsets)
@@ -741,7 +741,7 @@ def runMutectOnDownsampled(infiles, outfile):
 def listOfBAMs(infiles, outfile):
     '''generates a file containing a list of BAMs for each patient,
        for use in variant calling'''
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         for infile in infiles:
             infile_tumour = infile.replace(
                 PARAMS["sample_control"], PARAMS["sample_tumour"])
@@ -763,7 +763,7 @@ def annotateVariantsSNPeff(infile, outfile):
     statement = '''java -Xmx4G -jar /ifs/apps/bio/snpEff-3.3-dev/snpEff.jar
                    -c %(config)s -v %(snpeff_genome)s -o gatk
                    %(infile)s > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @transform(indelCaller,
@@ -780,7 +780,7 @@ def annotateVariantsINDELsSNPeff(infile, outfile):
     statement = '''java -Xmx4G -jar /ifs/apps/bio/snpEff-3.3-dev/snpEff.jar
                    -c %(config)s -v %(snpeff_genome)s -o gatk
                    %(infile)s > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 #########################################################################
@@ -815,7 +815,7 @@ def variantAnnotator(infiles, outfile):
                    -A MappingQualityRankSumTest
                    -A ReadPosRankSumTest
                    -A AlleleBalanceBySample'''
-    P.run()
+    P.run(statement)
 
 
 @follows(annotateVariantsINDELsSNPeff, listOfBAMs)
@@ -842,7 +842,7 @@ def variantAnnotatorIndels(infiles, outfile):
                    -A ReadPosRankSumTest
                    -A AlleleBalanceBySample
                    -A RMSMappingQuality'''
-    P.run()
+    P.run(statement)
 
 
 ######################################################################
@@ -873,7 +873,7 @@ def variantRecalibrator(infile, outfile):
                    -recalFile %(outfile)s
                    -tranchesFile variants/%(track)s.tranches
                    -rscriptFile variants/%(track)s.plots.R'''
-    P.run()
+    P.run(statement)
 
 ##############################################################################
 # Filter SNPs and INDELs
@@ -893,7 +893,7 @@ def filterIndels(infile, outfile):
                      RC<%(filter_indel_rc)s &
                      IC<%(filter_indel_rc)s) "
                    > %(outfile)s '''
-    P.run()
+    P.run(statement)
 
 
 @transform(variantAnnotator,
@@ -953,7 +953,7 @@ def snpvcfToTable(infile, outfile):
                    -F SNPEFF_TRANSCRIPT_ID -F SNPEFF_EXON_ID
                    -GF GT -GF AD -GF SS -GF FA -GF AB -GF DP
                    -o %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @transform(filterIndels,
@@ -976,7 +976,7 @@ def indelvcfToTable(infile, outfile):
                    -F QSI -F QSI_NT -F RC -F RU -F SGT
                    -GF DP -GF DP2 -GF DP50 -GF SUBDP50 -GF TAR -GF TIR -GF TOR
                    -o %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @transform([snpvcfToTable,
@@ -1006,14 +1006,14 @@ def loadVariantAnnotation(infile, outfile):
 #    if variant is within a gene of interest as defined in the ini
 #    file'''
 #
-#    geneList = P.asList(PARAMS["annotation_genes_of_interest"])
+#    geneList = P.as_list(PARAMS["annotation_genes_of_interest"])
 #    expression = '\'||SNPEFF_GENE_NAME==\''.join(geneList)
 #    statement = '''GenomeAnalysisTK -T VariantFiltration
 #    -R %%(bwa_index_dir)s/%%(genome)s.fa
 #    --variant %(infile)s
 #    --filterExpression "SNPEFF_GENE_NAME=='%(expression)s'"
 #    --filterName "GENE_OF_INTEREST" -o %(outfile)s''' % locals()
-#    P.run()
+#    P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -1031,7 +1031,7 @@ def buildVCFstats(infile, outfile):
     to_cluster = USECLUSTER
     statement = '''vcf-stats %(infile)s
                    > %(outfile)s 2>>%(outfile)s.log;'''
-    P.run()
+    P.run(statement)
 
 
 @merge(buildVCFstats, "vcf_stats.load")
@@ -1047,7 +1047,7 @@ def loadVCFstats(infiles, outfile):
                     cgat csv2db %(csv2db_options)s
                     --allow-empty-file --add-index=track --table=vcf_stats
                     >> %(outfile)s; '''
-    P.run()
+    P.run(statement)
 
 #########################################################################
 
@@ -1073,7 +1073,7 @@ def loadMutectFilteringSummary(infile, outfile):
                    cgat csv2db
                    --table %(tablename)s --retry --ignore-empty
                    > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 #########################################################################
 #########################################################################

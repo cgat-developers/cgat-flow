@@ -38,7 +38,7 @@ The basic usage inside a pipeline task is as such::
         # build the command line statement
         statement = m.build((infile,), outfile)
 
-        P.run()
+        P.run(statement)
 
 When implementing a tool, avoid specifying algorithmic options as
 class variables. Instead use an option string that can be set in
@@ -205,7 +205,7 @@ def mergeAndFilterGTF(infile, outfile, logfile,
 
     c = E.Counter()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
 
     E.info("filtering by contig and removing long introns")
     contigs = set(IndexedFasta.IndexedFasta(genome).getContigs())
@@ -223,16 +223,16 @@ def mergeAndFilterGTF(infile, outfile, logfile,
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.openFile(rna_file, "r")))
+                GTF.iterator(IOTools.open_file(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.openFile(logfile, "w")
+    logf = IOTools.open_file(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
     for all_exons in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(infile))):
+            GTF.iterator(IOTools.open_file(infile))):
 
         c.input += 1
 
@@ -371,7 +371,7 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
          <( %(cat)s %(infile)s )
     >& %(outfile)s.log
     '''
-    P.run()
+    P.run(statement)
 
     #################################################
     E.info("resetting gene_id and transcript_id")
@@ -379,9 +379,9 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.openFile(tmpfile2, "w")
+    outf = IOTools.open_file(tmpfile2, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.openFile(tmpfile1 + ".combined.gtf")
+    inf = IOTools.open_file(tmpfile1 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -553,7 +553,7 @@ class SequenceCollectionProcessor(object):
 
             elif infile.endswith(".remote"):
                 files = []
-                for line in IOTools.openFile(infile):
+                for line in IOTools.open_file(infile):
                     repo, acc = line.strip().split("\t")[:2]
                     if repo == "SRA":
                         statement.append(Sra.prefetch(acc))
@@ -763,7 +763,7 @@ class SequenceCollectionProcessor(object):
 
             elif infile.endswith(".fastq.gz"):
                 format = Fastq.guessFormat(
-                    IOTools.openFile(infile, "r"), raises=False)
+                    IOTools.open_file(infile, "r"), raises=False)
                 if 'sanger' not in format and self.convert:
                     statement.append("""gunzip < %(infile)s
                     | cgat fastq2fastq
@@ -852,7 +852,7 @@ class SequenceCollectionProcessor(object):
                         "'%s' for '%s'" % (infile2, infile))
 
                 format = Fastq.guessFormat(
-                    IOTools.openFile(infile), raises=False)
+                    IOTools.open_file(infile), raises=False)
 
                 if 'sanger' not in format and qual_format != 'phred64':
                     statement.append("""gunzip < %(infile)s
@@ -1087,7 +1087,7 @@ class FastQc(Mapper):
 
         # read in file and split into adaptor/sequence
         adaptor_dict = {}
-        with IOTools.openFile(contaminants, "r") as ofile:
+        with IOTools.open_file(contaminants, "r") as ofile:
             for line in ofile.readlines():
                 if line[0] == '#':
                     pass
@@ -1100,7 +1100,7 @@ class FastQc(Mapper):
 
         # get temporary file name
         outfile = P.getTempFilename(shared=True)
-        with IOTools.openFile(outfile, "w") as wfile:
+        with IOTools.open_file(outfile, "w") as wfile:
             for key, value in list(adaptor_dict.items()):
                 wfile.write("%s\t%s\n" % (key, value))
         wfile.close()
@@ -1639,7 +1639,7 @@ class BWA(Mapper):
         Returns
         -------
         statement: str
-            statement to pass to P.run() to run post processing.
+            statement to pass to P.run(statement) to run post processing.
         '''
 
         # note, this postprocess method is inherited by multiple mappers
@@ -2266,7 +2266,7 @@ class Tophat(Mapper):
         Returns
         -------
         statement: str
-            statement to pass to P.run() to run post processing.
+            statement to pass to P.run(statement) to run post processing.
         '''
 
         track = P.snip(outfile, ".bam")
@@ -2318,7 +2318,7 @@ class Tophat2(Tophat):
         Returns
         -------
         statement: str
-            statement to pass to P.run() to run post processing.
+            statement to pass to P.run(statement) to run post processing.
         '''
 
         # get tophat statement
@@ -2621,7 +2621,7 @@ class Hisat(Mapper):
         Returns
         -------
         statement: str
-            statement to pass to P.run() to run post processing.
+            statement to pass to P.run(statement) to run post processing.
         '''
 
         track = os.path.basename(outfile)
@@ -3441,7 +3441,7 @@ def splitGeneSet(infile):
     outfile = None
     outprefix = P.snip(infile, ".gtf.gz")
 
-    for line in IOTools.openFile(infile):
+    for line in IOTools.open_file(infile):
 
         this = line.split("\t")[0]
 
@@ -3453,7 +3453,7 @@ def splitGeneSet(infile):
             if outfile is not None:
                 outfile.close()
 
-            outfile = IOTools.openFile("%s.%s.gtf.gz" % (outprefix, this), "w")
+            outfile = IOTools.open_file("%s.%s.gtf.gz" % (outprefix, this), "w")
             outfile.write(line)
 
 

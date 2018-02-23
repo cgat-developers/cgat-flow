@@ -146,7 +146,7 @@ def getRepeatsFromUCSC(dbhandle,
 
     statement = " ".join(statement)
 
-    P.run()
+    P.run(statement)
 
     os.unlink(tmpfilename)
 
@@ -193,7 +193,7 @@ def getRefSeqFromUCSC(dbhandle, outfile, remove_duplicates=False):
     ORDER by chrom, cdsStart
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
 
     cc = dbhandle.execute(statement)
 
@@ -281,7 +281,7 @@ def getCpGIslandsFromUCSC(dbhandle, outfile):
     E.debug("executing sql statement: %s" % sql)
     try:
         cc = dbhandle.execute(sql)
-        outfile = IOTools.openFile(outfile, "w")
+        outfile = IOTools.open_file(outfile, "w")
         for data in cc.fetchall():
             outfile.write("\t".join(map(str, data)) + "\n")
         outfile.close()

@@ -117,7 +117,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     > %(outdir)s/%(designfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def rmats2sashimi(infile, designfile, FDR, outfile):
@@ -175,4 +175,4 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     > %(outfile)s/%(event)s.log
     ''' % locals()
 
-    P.run()
+    P.run(statement)

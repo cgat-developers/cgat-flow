@@ -219,7 +219,7 @@ import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 import CGATPipelines.PipelineWindows as PipelineWindows
 
 # Pipeline configuration
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"],
@@ -230,9 +230,9 @@ PARAMS = P.PARAMS
 
 # Add parameters from the annotation pipeline, but
 # only the interface
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -256,7 +256,7 @@ else:
 
 
 # Global flags
-MAPPERS = P.asList(PARAMS["mappers"])
+MAPPERS = P.as_list(PARAMS["mappers"])
 SPLICED_MAPPING = ("tophat" in MAPPERS or
                    "gsnap" in MAPPERS or
                    "star" in MAPPERS or
@@ -374,7 +374,7 @@ def identifyProteinCodingGenes(outfile):
     FROM annotations.%(table)s
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -394,7 +394,7 @@ def buildRefFlat(infile, outfile):
     paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
     os.unlink(tmpflat)
 
 
@@ -436,7 +436,7 @@ def buildCodingGeneSet(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -503,7 +503,7 @@ def buildIntronGeneModels(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @P.add_doc(PipelineGeneset.loadTranscript2Gene)
@@ -547,7 +547,7 @@ def buildCodingExons(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -586,7 +586,7 @@ def buildReferenceTranscriptome(infile, outfile):
     checkpoint;
     samtools faidx %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     dest = P.snip(os.path.abspath(gtf_file), ".gtf") + ".gff"
     if not os.path.exists(dest):
@@ -599,20 +599,20 @@ def buildReferenceTranscriptome(infile, outfile):
         statement = '''
         bowtie-build -f %(outfile)s %(prefix)s >> %(outfile)s.log 2>&1
         '''
-        P.run()
+        P.run(statement)
 
         # build color space index - disabled
         # statement = '''
         # bowtie-build -C -f %(outfile)s %(prefix)s_cs
         # >> %(outfile)s.log 2>&1
         # '''
-        # P.run()
+        # P.run(statement)
 
     if 'tophat2' in MAPPERS:
         statement = '''
         bowtie2-build -f %(outfile)s %(prefix)s >> %(outfile)s.log 2>&1
         '''
-        P.run()
+        P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -639,10 +639,10 @@ def buildJunctions(infile, outfile):
 
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     njunctions = 0
     for gffs in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(infile, "r"))):
+            GTF.iterator(IOTools.open_file(infile, "r"))):
 
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
@@ -668,7 +668,7 @@ def buildJunctions(infile, outfile):
     statement = '''mv %(outfile)s %(outfile)s.tmp;
                    cat < %(outfile)s.tmp | sort | uniq > %(outfile)s;
                    rm -f %(outfile)s.tmp; '''
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -696,7 +696,7 @@ def buildGSNAPSpliceSites(infile, outfile):
     > %(outfile)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -736,7 +736,7 @@ def countReads(infile, outfile):
     '''Count number of reads in input files.'''
     m = PipelineMapping.Counter()
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -853,7 +853,7 @@ def mapReadsWithTophat(infiles, outfile):
             " --transcriptome-index=%s -n 2" % prefix
 
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -968,7 +968,7 @@ def mapReadsWithTophat2(infiles, outfile):
             " --transcriptome-index=%s -n 2" % prefix
 
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 ############################################################
 ############################################################
@@ -1051,7 +1051,7 @@ def mapReadsWithHisat(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 ############################################################
 ############################################################
@@ -1104,7 +1104,7 @@ def buildTophatStats(infiles, outfile):
 
         raise ValueError("pattern '%s' not found %s" % (pattern, lines))
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("\t".join(("track",
                           "reads_in",
                           "reads_removed",
@@ -1247,7 +1247,7 @@ def mapReadsWithGSNAP(infiles, outfile):
             " --use-splicing=%(infile_splices)s " % locals()
 
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -1308,7 +1308,7 @@ def mapReadsWithSTAR(infile, outfile):
         strip_sequence=PARAMS["strip_sequence"])
 
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @active_if(SPLICED_MAPPING)
@@ -1333,7 +1333,7 @@ def buildSTARStats(infiles, outfile):
         if not os.path.exists(fn):
             raise ValueError("incomplete run: %s" % infile)
 
-        for line in IOTools.openFile(fn):
+        for line in IOTools.open_file(fn):
             if "|" not in line:
                 continue
             header, value = line.split("|")
@@ -1341,7 +1341,7 @@ def buildSTARStats(infiles, outfile):
             data[header.strip()].append(value.strip())
 
     keys = list(data.keys())
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     outf.write("track\t%s\n" % "\t".join(keys))
     for x, infile in enumerate(infiles):
         track = P.snip(os.path.basename(infile), ".bam")
@@ -1432,7 +1432,7 @@ def mapReadsWithBowtieAgainstTranscriptome(infiles, outfile):
     # IMS: moved reporting options to ini
     # bowtie_options = "%s --best --strata -a" % PARAMS["bowtie_transcriptome_options"]
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("bowtie.dir"))
@@ -1495,7 +1495,7 @@ def mapReadsWithBowtie(infiles, outfile):
         strip_sequence=PARAMS["strip_sequence"])
     infile, reffile = infiles
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("bowtie2.dir"))
@@ -1554,7 +1554,7 @@ def mapReadsWithBowtie2(infiles, outfile):
         strip_sequence=PARAMS["strip_sequence"])
     infile, reffile = infiles
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("bwa.dir"))
@@ -1640,7 +1640,7 @@ def mapReadsWithBWA(infile, outfile):
         raise ValueError("bwa algorithm '%s' not known" % algorithm)
 
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("stampy.dir"))
@@ -1689,7 +1689,7 @@ def mapReadsWithStampy(infile, outfile):
 
     m = PipelineMapping.Stampy(strip_sequence=PARAMS["strip_sequence"])
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 ###################################################################
 ###################################################################
@@ -1762,7 +1762,7 @@ def mapReadsWithButter(infile, outfile):
         set_nh=PARAMS["butter_set_nh"])
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 ###################################################################
 ###################################################################
@@ -1829,7 +1829,7 @@ def mapReadsWithShortstack(infile, outfile):
         strip_sequence=PARAMS["strip_sequence"])
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 ###################################################################
 ###################################################################
@@ -1854,7 +1854,7 @@ mapToMappingTargets = {'tophat': (mapReadsWithTophat, loadTophatStats),
                        'hisat': (mapReadsWithHisat,)
                        }
 
-for x in P.asList(PARAMS["mappers"]):
+for x in P.as_list(PARAMS["mappers"]):
     MAPPINGTARGETS.extend(mapToMappingTargets[x])
 
 
@@ -1905,7 +1905,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         checkpoint;
         samtools index %(outfile)s
         '''
-        P.run()
+        P.run(statement)
 
     MAPPINGTARGETS = MAPPINGTARGETS + [mergeBAMFiles]
 
@@ -1932,14 +1932,14 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         nreads = 0
         for infile in infiles:
-            with IOTools.openFile(infile, "r") as inf:
+            with IOTools.open_file(infile, "r") as inf:
                 for line in inf:
                     if not line.startswith("nreads"):
                         continue
                     E.info("%s" % line[:-1])
                     nreads += int(line[:-1].split("\t")[1])
 
-        outf = IOTools.openFile(outfile, "w")
+        outf = IOTools.open_file(outfile, "w")
         outf.write("nreads\t%i\n" % nreads)
         outf.close()
 
@@ -1974,7 +1974,7 @@ def loadReadCounts(infiles, outfile):
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
         track = P.snip(infile, ".nreads")
-        lines = IOTools.openFile(infile).readlines()
+        lines = IOTools.open_file(infile).readlines()
         nreads = int(lines[0][:-1].split("\t")[1])
         outf.write("%s\t%i\n" % (track, nreads))
     outf.close()
@@ -2042,7 +2042,7 @@ def buildBigWig(infile, outfile):
         %(infile)s
         %(outfile)s
         > %(outfile)s.log'''
-    P.run()
+    P.run(statement)
 
 
 @merge(buildBigWig,
@@ -2083,7 +2083,7 @@ def loadBigWigStats(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(MAPPINGTARGETS,
@@ -2111,7 +2111,7 @@ def buildBed(infile, outfile):
     > %(outfile)s;
     tabix -p bed %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @merge(buildBigWig, "igv_sample_information.tsv")
@@ -2126,7 +2126,7 @@ def buildIGVSampleInformation(infiles, outfile):
        Output filename in :term:`tsv` format
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     first = True
     for fn in infiles:
         fn = os.path.basename(fn)
@@ -2161,7 +2161,7 @@ def renderMultiqc(infile):
     statement = '''LANG=en_GB.UTF-8 multiqc . -f;
                    mv multiqc_report.html MultiQC_report.dir/'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(renderMultiqc)

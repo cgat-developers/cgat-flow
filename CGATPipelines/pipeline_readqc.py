@@ -134,7 +134,7 @@ import CGATPipelines.PipelinePreprocess as PipelinePreprocess
 import CGATCore.IOTools as IOTools
 
 # load options from the config file
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -217,7 +217,7 @@ if PARAMS.get("preprocessors", None):
             cat %(tempfile)s %(infiles)s | fastx_collapser > %(outfile)s;
             rm -f %(tempfile)s
             """
-            P.run()
+            P.run(statement)
 
     else:
         @follows(mkdir("fasta.dir"))
@@ -266,7 +266,7 @@ if PARAMS.get("preprocessors", None):
             threads=PARAMS["threads"],
             qual_format=PARAMS['qual_format'])
 
-        for tool in P.asList(PARAMS["preprocessors"]):
+        for tool in P.as_list(PARAMS["preprocessors"]):
 
             if tool == "fastx_trimmer":
                 m.add(PipelinePreprocess.FastxTrimmer(
@@ -308,7 +308,7 @@ if PARAMS.get("preprocessors", None):
                 raise NotImplementedError("tool '%s' not implemented" % tool)
 
         statement = m.build((infile,), "processed.dir/trimmed-", track)
-        P.run()
+        P.run(statement)
 
 else:
     @follows(mkdir("processed.dir"))
@@ -333,7 +333,7 @@ def reconcileReads(infile, outfile):
             --output-filename-pattern=%(outfile)s.fastq.%%s.gz
             %(in1)s %(in2)s"""
 
-        P.run()
+        P.run(statement)
 
 
 @follows(reconcileReads)
@@ -366,7 +366,7 @@ def runFastqc(infiles, outfile):
                                   "reconciled.dir/trimmed")
 
     statement = m.build((infiles,), outfile)
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -410,7 +410,7 @@ def runFastqScreen(infiles, outfile):
 
     # Create fastq_screen config file in temp directory
     # using parameters from Pipeline.ini
-    with IOTools.openFile(os.path.join(tempdir, "fastq_screen.conf"),
+    with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
                           "w") as f:
         for i, k in list(PARAMS.items()):
             if i.startswith("fastq_screen_database"):
@@ -418,7 +418,7 @@ def runFastqScreen(infiles, outfile):
 
     m = PipelineMapping.FastqScreen()
     statement = m.build((infiles,), outfile)
-    P.run()
+    P.run(statement)
     shutil.rmtree(tempdir)
     P.touch(outfile)
 
@@ -466,7 +466,7 @@ def combineExperimentLevelReadQualities(infiles, outfile):
                  "  --regex-filename='.+/(.+)_per_sequence_quality.tsv' "
                  "%(infiles)s"
                  "> %(outfile)s")
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -500,7 +500,7 @@ def renderMultiqc(infile):
     statement = '''LANG=en_GB.UTF-8 multiqc . -f;
                    mv multiqc_report.html MultiQC_report.dir/'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(renderMultiqc)

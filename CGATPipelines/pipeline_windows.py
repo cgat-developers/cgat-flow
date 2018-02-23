@@ -128,7 +128,7 @@ from rpy2.robjects import r as R
 #########################################################################
 #########################################################################
 # load options from the config file
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"],
@@ -137,9 +137,9 @@ P.getParameters(
 
 PARAMS = P.PARAMS
 
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True))
 
@@ -150,7 +150,7 @@ PARAMS.update(P.peekParameters(
 # load all tracks - exclude input/control tracks
 Sample = PipelineTracks.AutoSample
 
-METHODS = P.asList(PARAMS["methods"])
+METHODS = P.as_list(PARAMS["methods"])
 
 
 def connect():
@@ -277,7 +277,7 @@ def buildBackgroundWindows(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 #########################################################################
 #########################################################################
@@ -307,7 +307,7 @@ def mergeBackgroundWindows(infiles, outfile):
         # write a dummy file with a dummy chromosome
         # an empty background file would otherwise cause
         # errors downstream in bedtools intersect
-        outf = IOTools.openFile(outfile, "w")
+        outf = IOTools.open_file(outfile, "w")
         outf.write("chrXXXX\t1\t2\n")
         outf.close()
         return
@@ -326,7 +326,7 @@ def mergeBackgroundWindows(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(os.path.join(PARAMS["annotations_dir"],
@@ -360,7 +360,7 @@ def buildCpGAnnotation(infiles, outfile):
     | gzip
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -415,7 +415,7 @@ def buildCoverageBed(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(buildCoverageBed, suffix(".bed.gz"), ".tsv.gz")
@@ -448,7 +448,7 @@ def buildCpGComposition(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @merge(buildCoverageBed, "tags.dir/genomic.covered.tsv.gz")
@@ -503,7 +503,7 @@ def buildReferenceCpGComposition(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     # | awk '$1 !~ /%(tiling_remove_contigs)s/'
     # | awk '$1 == "contig" || $17 < 0.5'
@@ -531,7 +531,7 @@ def histogramCpGComposition(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @merge(histogramCpGComposition, "pcpg_in_coveredregions.load")
@@ -615,7 +615,7 @@ def buildCpGCoverage(infiles, outfile):
     | gzip
     > %(outfile)s
      '''
-    P.run()
+    P.run(statement)
 
 
 @merge(buildCpGCoverage, "cpg_coverage_by_reads.load")
@@ -721,7 +721,7 @@ def buildWindows(infiles, outfile):
         > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildWindows,
@@ -750,7 +750,7 @@ def buildWindowStats(infile, outfile):
                    --output-filename-pattern=%(outfile)s.%%s.tsv
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -798,7 +798,7 @@ def buildWindowComposition(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(buildWindows,
@@ -832,7 +832,7 @@ def buildBigBed(infile, outfile):
     bedToBigBed %(tmpfile)s %(contig_sizes)s %(outfile)s;
     rm -f %(tmpfile)s
     '''
-    P.run()
+    P.run(statement)
 
     try:
         os.unlink(tmpfile)
@@ -1045,13 +1045,13 @@ def getInput(track):
     fn = fn.lower()
 
     if "input_%s" % fn in PARAMS:
-        input_files.extend(P.asList(PARAMS["input_%s" % fn]))
+        input_files.extend(P.as_list(PARAMS["input_%s" % fn]))
     elif P.CONFIG.has_section("input"):
         for pattern, value in P.CONFIG.items("input"):
             if "%" in pattern:
                 pattern = re.sub("%", "\S+", pattern)
             if re.search(pattern, fn):
-                input_files.extend(P.asList(value))
+                input_files.extend(P.as_list(value))
     input_files = [re.sub('[^0-9a-zA-Z]+', '_', i) for i in input_files]
     return input_files
 
@@ -1186,7 +1186,7 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
 
     dataframe = numpy.log2(dataframe)
 
-    dataframe.to_csv(IOTools.openFile(outfile, "w"),
+    dataframe.to_csv(IOTools.open_file(outfile, "w"),
                      sep="\t", index_label="Window")
 
 
@@ -1233,7 +1233,7 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
 
     dataframe = numpy.log2(dataframe)
 
-    dataframe.to_csv(IOTools.openFile(outfile, "w"),
+    dataframe.to_csv(IOTools.open_file(outfile, "w"),
                      sep="\t", index=False)
 
 
@@ -1280,7 +1280,7 @@ def summarizeAllWindowsTagCounts(infile, outfile):
     --output-filename-pattern=%(prefix)s_
     --log=%(outfile)s.log
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @transform("design*.tsv",
@@ -1312,7 +1312,7 @@ def summarizeWindowsTagCounts(infiles, outfile):
     --output-filename-pattern=%(prefix)s_
     --log=%(outfile)s.log
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("dump.dir"))
@@ -1346,7 +1346,7 @@ def dumpWindowsTagCounts(infiles, outfile):
               --log=%(outfile)s.log
               > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1407,7 +1407,7 @@ def normalizeBed(infile, outfile):
     statement = '''cat %(tmpfile)s |
                    gzip > %(outfile)s; rm -f %(tmpfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 # @P.add_doc(PipelineWindows.enrichmentVsInput)
@@ -1443,7 +1443,7 @@ def enrichVsInput(infile, outfile):
 
     statement = '''cat %(tmpfile)s |  gzip > %(outfile)s; rm -f %(tmpfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("bigwig.dir"), normalizeBed)
@@ -1471,7 +1471,7 @@ def convertBed2BigWig(infile, outfile):
                    checkpoint ;
                    rm -f %(tmpfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("images.dir"), convertBed2BigWig)
@@ -1495,7 +1495,7 @@ def plotHilbertCurves(infile, outfile):
                           --images-dir=images.dir
                           %(infile)s'''
 
-    P.run()
+    P.run(statement)
 
     P.touch(outfile)
 
@@ -1779,7 +1779,7 @@ def buildSpikeIns(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 # @P.add_doc(PipelineWindows.runDE)
@@ -1985,7 +1985,7 @@ def computeWindowComposition(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -2037,7 +2037,7 @@ def outputGWASFiles(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(DIFFTARGETS,
@@ -2076,7 +2076,7 @@ def mergeDMRWindows(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 # @P.add_doc(PipelineWindows.buildSpikeResults)
@@ -2230,7 +2230,7 @@ def outputTopWindows(infile, outfiles):
     | bgzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     outfile = outfiles[1]
 
@@ -2242,7 +2242,7 @@ def outputTopWindows(infile, outfiles):
     | bgzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(mergeDMRWindows,
@@ -2272,7 +2272,7 @@ def buildDMRWindowStats(infile, outfile):
                    --output-filename-pattern=%(outfile)s.%%s.tsv
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 # @P.add_doc(PipelineWindows.buildDMRStats)
@@ -2340,7 +2340,7 @@ def loadDMRStats(infiles, outfile):
 #         > %(outfile)s
 #         '''
 
-#     P.run()
+#     P.run(statement)
 
 
 @transform(mergeDMRWindows, regex("(.*)\.(.*).merged.gz"), r"\1_\2.bed.gz")
@@ -2357,9 +2357,9 @@ def buildMRBed(infile, outfile):
         filename of :term:`bed6` file to write methylated regions
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     c = E.Counter()
-    for row in csv.DictReader(IOTools.openFile(infile),
+    for row in csv.DictReader(IOTools.open_file(infile),
                               dialect="excel-tab"):
         c.input += 1
 
@@ -2410,7 +2410,7 @@ def buildOverlapByMethod(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("overlaps.dir"), mergeDMRWindows)
@@ -2448,7 +2448,7 @@ def buildOverlapWithinMethod(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -2735,7 +2735,7 @@ def buildTranscriptProfiles(infiles, outfile):
                       %(bedfile)s -
                    > %(outfile)s
                 '''
-    P.run()
+    P.run(statement)
 
 
 @follows(loadTagContextOverlap, loadSummarizedContextStats)

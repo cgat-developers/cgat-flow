@@ -116,7 +116,7 @@ def annotateGenome(infile, outfile,
     | gzip
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 
 def annotateGeneStructure(infile, outfile,
@@ -184,7 +184,7 @@ def annotateGeneStructure(infile, outfile,
     | gzip
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 
 def buildFlatGeneSet(infile, outfile):
@@ -229,7 +229,7 @@ def buildFlatGeneSet(infile, outfile):
     | gzip
     > %(outfile)s
         """
-    P.run()
+    P.run(statement)
 
 
 def buildProteinCodingGenes(infile, outfile):
@@ -293,7 +293,7 @@ def buildProteinCodingGenes(infile, outfile):
     | gzip
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 
 def loadGeneInformation(infile, outfile, only_proteincoding=False):
@@ -346,7 +346,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
@@ -397,10 +397,10 @@ def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
 
     table = P.toTable(outfile)
 
-    gtf_file = IOTools.openFile(geneset_gtf, "rb")
+    gtf_file = IOTools.open_file(geneset_gtf, "rb")
     gtf_iterator = GTF.transcript_iterator(GTF.iterator(gtf_file))
 
-    ensembl_file = IOTools.openFile(ensembl_gtf, "rb")
+    ensembl_file = IOTools.open_file(ensembl_gtf, "rb")
     ensembl_iterator = GTF.transcript_iterator(GTF.iterator(ensembl_file))
 
     # parse the two gtfs, creating keys from the GTF entries
@@ -554,7 +554,7 @@ def loadTranscriptInformation(infile, outfile,
     | %(pipeline_scriptsdir)s/hsort 1 | uniq
     | %(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def buildCDNAFasta(infile, outfile):
@@ -581,7 +581,7 @@ def buildCDNAFasta(infile, outfile):
     > %(dbname)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPeptideFasta(infile, outfile):
@@ -608,7 +608,7 @@ def buildPeptideFasta(infile, outfile):
     > %(dbname)s.log
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def loadPeptideSequences(infile, outfile):
@@ -646,7 +646,7 @@ def loadPeptideSequences(infile, outfile):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildCDSFasta(infiles, outfile):
@@ -679,7 +679,7 @@ def buildCDSFasta(infiles, outfile):
     %(dbname)s --force-output -
     > %(dbname)s.log
     '''
-    P.run()
+    P.run(statement)
 
     tmpfile = P.getTempFile(".")
 
@@ -709,7 +709,7 @@ def buildCDSFasta(infiles, outfile):
     > %(dbname)s.log
     '''
 
-    P.run()
+    P.run(statement)
     os.unlink(tmpfilename)
 
 
@@ -747,7 +747,7 @@ def loadGeneStats(infile, outfile):
           --counter=composition-na
     | %(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def buildExons(infile, outfile):
@@ -772,7 +772,7 @@ def buildExons(infile, outfile):
     --log=%(outfile)s.log
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildCodingExons(infile, outfile):
@@ -801,7 +801,7 @@ def buildCodingExons(infile, outfile):
     --log=%(outfile)s.log
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildNonCodingExons(infile, outfile):
@@ -830,7 +830,7 @@ def buildNonCodingExons(infile, outfile):
     --log=%(outfile)s.log
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildLincRNAExons(infile, outfile):
@@ -859,7 +859,7 @@ def buildLincRNAExons(infile, outfile):
     --log=%(outfile)s.log
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildCDS(infile, outfile):
@@ -890,7 +890,7 @@ def buildCDS(infile, outfile):
     --log=%(outfile)s.log
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def loadTranscripts(infile, outfile):
@@ -917,7 +917,7 @@ def loadTranscripts(infile, outfile):
     | cgat gtf2tsv
     | %(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def loadGeneCoordinates(infile, outfile):
@@ -939,7 +939,7 @@ def loadGeneCoordinates(infile, outfile):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def loadTranscript2Gene(infile, outfile):
@@ -962,7 +962,7 @@ def loadTranscript2Gene(infile, outfile):
     | cgat gtf2tsv --output-map=transcript2gene -v 0
     | %(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def loadTranscriptStats(infile, outfile):
@@ -1000,7 +1000,7 @@ def loadTranscriptStats(infile, outfile):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def loadProteinStats(infile, outfile):
@@ -1047,7 +1047,7 @@ def loadProteinStats(infile, outfile):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPromotorRegions(infile, outfile, promotor_size=1000):
@@ -1080,7 +1080,7 @@ def buildPromotorRegions(infile, outfile, promotor_size=1000):
     | gzip
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 
 def buildTSSRegions(infile, outfile):
@@ -1128,7 +1128,7 @@ def buildOverlapWithEnsembl(infile, outfile, filename_bed):
             - %(filename_bed)s
         > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def compareGeneSets(infiles, outfile):
@@ -1152,7 +1152,7 @@ def compareGeneSets(infiles, outfile):
         %(infiles)s
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 def buildPseudogenes(infiles, outfile, dbhandle):
@@ -1193,7 +1193,7 @@ def buildPseudogenes(infiles, outfile, dbhandle):
         |awk '$2 ~ /pseudogene/'
         | gzip
         > %(outfile)s"""
-        P.run()
+        P.run(statement)
         return
 
     tmpfile1 = P.getTempFilename(shared=True)
@@ -1209,7 +1209,7 @@ def buildPseudogenes(infiles, outfile, dbhandle):
     > %(tmpfile1)s
     '''
 
-    P.run()
+    P.run(statement)
 
     if IOTools.isEmpty(tmpfile1):
         E.warn("no pseudogenes found")
@@ -1236,11 +1236,11 @@ def buildPseudogenes(infiles, outfile, dbhandle):
     | gzip > %(outfile)s.links.gz
     '''
 
-    P.run()
+    P.run(statement)
 
     os.unlink(tmpfile1)
 
-    inf = IOTools.openFile("%s.links.gz" % outfile)
+    inf = IOTools.open_file("%s.links.gz" % outfile)
     best_matches = {}
     for line in inf:
         peptide_id, transcript_id, score = line[:-1].split("\t")
@@ -1272,8 +1272,8 @@ def buildPseudogenes(infiles, outfile, dbhandle):
 
     c = E.Counter()
 
-    outf = IOTools.openFile(outfile, "w")
-    inf = GTF.iterator(IOTools.openFile(infile_gtf))
+    outf = IOTools.open_file(outfile, "w")
+    inf = GTF.iterator(IOTools.open_file(infile_gtf))
     for gtf in inf:
         c.input += 1
         if gtf.transcript_id not in all_pseudos:
@@ -1322,7 +1322,7 @@ def buildNUMTs(infile, outfile):
     > %(tmpfile_mito)s
     '''
 
-    P.run()
+    P.run(statement)
 
     if IOTools.isEmpty(tmpfile_mito):
         E.warn("mitochondrial genome empty.")
@@ -1357,11 +1357,11 @@ def buildNUMTs(infile, outfile):
     | gzip > %(outfile)s.links.gz
     '''
 
-    P.run()
+    P.run(statement)
 
     # convert to gtf
-    inf = IOTools.openFile("%s.links.gz" % outfile)
-    outf = IOTools.openFile(outfile, "w")
+    inf = IOTools.open_file("%s.links.gz" % outfile)
+    outf = IOTools.open_file(outfile, "w")
 
     min_score = PARAMS["numts_score"]
 
@@ -1436,7 +1436,7 @@ def sortGTF(infile, outfile, order="contig+gene"):
     --method=sort --sort-order=%(order)s --log=%(outfile)s.log
     | %(compress)s > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
@@ -1470,7 +1470,7 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
     outfile_bed, outfile_tsv = outfiles
 
     gene2region = {}
-    for gtf in GTF.iterator(IOTools.openFile(gtffile, "r")):
+    for gtf in GTF.iterator(IOTools.open_file(gtffile, "r")):
         gid = gtf.gene_id.split(":")
         for g in gid:
             gene2region[g] = (gtf.contig, gtf.start, gtf.end, gtf.strand)
@@ -1498,9 +1498,9 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
     statement = '''sort -k1,1 -k2,2n  < %(tmpfname)s | uniq
     | gzip > %(outfile_bed)s'''
 
-    P.run()
+    P.run(statement)
 
-    outf = IOTools.openFile(outfile_tsv, "w")
+    outf = IOTools.open_file(outfile_tsv, "w")
     outf.write("term\tdescription\n")
     for term, description in term2description.items():
         outf.write("%s\t%s\n" % (term, description))
@@ -1564,7 +1564,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_0
     """
-    P.run()
+    P.run(statement)
 
     # rna
     statement = '''
@@ -1574,7 +1574,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_1'''
-    P.run()
+    P.run(statement)
 
     # add aggregate intervals for repeats
     statement = '''
@@ -1585,7 +1585,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_2'''
-    P.run()
+    P.run(statement)
 
     # add aggregate intervals for rna
     statement = '''
@@ -1596,7 +1596,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_3 '''
-    P.run()
+    P.run(statement)
 
     # add ribosomal protein coding genes
     goids = ("GO:0003735", )
@@ -1617,7 +1617,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_4
     '''
-    P.run()
+    P.run(statement)
 
     # CpG islands
     statement = '''
@@ -1625,7 +1625,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | awk '{printf("%%s\\t%%i\\t%%i\\tcpgisland\\n", $1,$2,$3 )}'
     > %(tmpfile)s_5
     '''
-    P.run()
+    P.run(statement)
 
     # sort and merge
     # remove strand information as bedtools
@@ -1638,7 +1638,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     for x in tmpfiles:
         os.unlink(x)

@@ -86,14 +86,14 @@ such as pipeline_readqc.py, pipeline_mapping.py and pipeline_bamstats.py you
 can run the task `lite` as follows
 ::
 
-   python /path/to/directory/pipeline_genesets.py make lite -v 5
+   python /path/to/directory/genesets make lite -v 5
 
 To run the full set of annotations produced in this pipeline (which will be
 used for some our our downstream pipelines such as pipeline_intervals.py)
 you can run the `full` task:
 ::
 
-   python /path/to/directory/pipeline_genesets.py make full -v 5
+   python /path/to/directory/genesets make full -v 5
 
 
 The pipeline can be run as any other CGAT pipeline, but as its purpose
@@ -114,9 +114,9 @@ results to other pipelines. The interface is defined in the file
 The ini file of pipeline annotations can be loaded into the parameter
 dictionary of your own pipeline::
 
-    PARAMS.update(P.peekParameters(
+    PARAMS.update(P.peek_parameters(
          PARAMS["annotations_dir"],
-         "pipeline_genesets.py",
+         "genesets",
          prefix="annotations_"),
          update_interface=True)
 
@@ -337,7 +337,7 @@ import CGATPipelines.PipelineGO as PipelineGO
 ###################################################
 # Pipeline configuration
 ###################################################
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
@@ -425,7 +425,7 @@ def buildContigBed(infile, outfile):
     '''
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs = IOTools.openFile(outfile, "w")
+    outs = IOTools.open_file(outfile, "w")
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
         outs.write("%s\t%i\t%i\n" % (contig, 0, size))
@@ -463,8 +463,8 @@ def buildUngappedContigBed(infile, outfiles):
 
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs_nogap = IOTools.openFile(outfiles[0], "w")
-    outs_gap = IOTools.openFile(outfiles[1], "w")
+    outs_nogap = IOTools.open_file(outfiles[0], "w")
+    outs_gap = IOTools.open_file(outfiles[1], "w")
     min_gap_size = PARAMS["assembly_gaps_min_size"]
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
@@ -536,12 +536,12 @@ def buildCpGBed(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
     statement = '''
     tabix -p bed %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 ###################################################################
 # ENSEMBL gene set
@@ -595,7 +595,7 @@ def buildUCSCGeneSet(infile, outfile):
 
     statement = " ".join(statement)
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildUCSCGeneSet,
@@ -777,7 +777,7 @@ def loadTranscripts(infile, outfile):
     | cgat gtf2tsv
     | %(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @P.add_doc(PipelineGtfsubset.buildFlatGeneSet)
@@ -807,7 +807,7 @@ def buildRefFlat(infile, outfile):
     paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
     os.unlink(tmpflat)
 
 
@@ -843,7 +843,7 @@ def buildTranscriptRegions(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s """
-    P.run()
+    P.run(statement)
 
 
 @transform((buildCodingExonTranscript,
@@ -876,7 +876,7 @@ def buildGeneRegions(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s """
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("geneset.dir"))
@@ -915,7 +915,7 @@ def buildTranscriptTSS(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s """
-    P.run()
+    P.run(statement)
 
 
 @transform((buildCodingExonTranscript,
@@ -963,7 +963,7 @@ def buildGeneTSSInterval(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s """
-    P.run()
+    P.run(statement)
 
 
 @transform((buildCodingExonTranscript,
@@ -1001,7 +1001,7 @@ def buildTranscriptTTS(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s """
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("geneset.dir"))
@@ -1039,7 +1039,7 @@ def buildGeneTSS(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s"""
-    P.run()
+    P.run(statement)
 
 
 @transform((buildCodingExonTranscript,
@@ -1075,7 +1075,7 @@ def buildGeneTTS(infile, outfile):
     --log=%(outfile)s.log
     | gzip
     > %(outfile)s"""
-    P.run()
+    P.run(statement)
 
 
 @transform(buildGeneRegions,
@@ -1101,7 +1101,7 @@ def buildIntergenicRegions(infiles, outfile):
     | complementBed -i stdin -g %(contigs)s
     | gzip
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 @P.add_doc(PipelineGtfsubset.loadGeneInformation)
@@ -1138,7 +1138,7 @@ def identifyProteinCodingGenes(outfile):
     FROM gene_info
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -1150,7 +1150,7 @@ def buildUtrGeneSet(infile, outfile):
 
     statement = "zcat %(infile)s | grep 'utr' | gzip > %(outfile)s"
 
-    P.run()
+    P.run(statement)
 
 
 @transform(buildFlatGeneSet,
@@ -1210,7 +1210,7 @@ def buildIntronGeneModels(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 # Next need to add identifyProteinCodingGenes, buildIntronGeneModels
 # aim is to generate the intron gtf here for use in bamstats
@@ -1227,7 +1227,7 @@ def importRNAAnnotationFromUCSC(outfile):
     """
     PipelineGtfsubset.getRepeatDataFromUCSC(
         dbhandle=connectToUCSC(),
-        repclasses=P.asList(PARAMS["ucsc_rnatypes"]),
+        repclasses=P.as_list(PARAMS["ucsc_rnatypes"]),
         outfile=outfile,
         remove_contigs_regex=PARAMS["ncbi_remove_contigs"])
 
@@ -1240,7 +1240,7 @@ def importRepeatsFromUCSC(outfile):
     """
     PipelineGtfsubset.getRepeatDataFromUCSC(
         dbhandle=connectToUCSC(),
-        repclasses=P.asList(PARAMS["ucsc_repeattypes"]),
+        repclasses=P.as_list(PARAMS["ucsc_repeattypes"]),
         outfile=outfile)
 
 
@@ -1274,7 +1274,7 @@ def loadRepeats(infile, outfile):
     | cut -f1,2,3,4
     | %(load_statement)s
     > %(outfile)s"""
-    P.run()
+    P.run(statement)
 
 
 #######################################################
@@ -1353,7 +1353,7 @@ def loadmiRNATranscripts(infile, outfile):
     | cut -f3,12
     |%(load_statement)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 ###############################################################
 # Ontologies
@@ -1472,7 +1472,7 @@ def buildGeneTerritories(infile, outfile):
     | gzip
     > %(outfile)s '''
 
-    P.run()
+    P.run(statement)
 
 
 @P.add_doc(PipelineGeneset.buildGenomicFunctionalAnnotation)

@@ -201,16 +201,16 @@ import json
 ###################################################
 
 # load options from the config file
-P.getParameters(
+P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
 
 PARAMS = P.PARAMS
 
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_genesets.py",
+    "genesets",
     prefix="annotations_",
     update_interface=True,
     restrict_interface=True))
@@ -298,7 +298,7 @@ def countReads(infile, outfile):
     '''Count number of reads in input files.'''
     m = PipelineMapping.Counter()
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
 
 ###################################################################
 # build geneset
@@ -390,7 +390,7 @@ def identifyProteinCodingGenes(outfile):
     FROM annotations.%(table)s
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -433,7 +433,7 @@ def buildCodingGeneSet(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @follows(mkdir("geneset.dir"))
@@ -468,7 +468,7 @@ def buildCodingExons(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(buildCodingGeneSet, suffix(".gtf.gz"), ".junctions")
@@ -490,10 +490,10 @@ def buildJunctions(infile, outfile):
 
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = IOTools.open_file(outfile, "w")
     njunctions = 0
     for gffs in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(infile, "r"))):
+            GTF.iterator(IOTools.open_file(infile, "r"))):
 
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
@@ -519,7 +519,7 @@ def buildJunctions(infile, outfile):
     statement = '''mv %(outfile)s %(outfile)s.tmp;
                    cat < %(outfile)s.tmp | sort | uniq > %(outfile)s;
                    rm -f %(outfile)s.tmp; '''
-    P.run()
+    P.run(statement)
 
 
 @transform(buildCodingGeneSet,
@@ -540,7 +540,7 @@ def buildTranscriptFasta(infile, outfile):
     %(dbname)s --force-output -
     > %(dbname)s.log
     '''
-    P.run()
+    P.run(statement)
 
 
 @transform(buildCodingGeneSet,
@@ -556,7 +556,7 @@ def buildTranscriptGeneMap(infile, outfile):
     --output-only-attributes
     | cgat csv_cut transcript_id gene_id
     > %(outfile)s"""
-    P.run()
+    P.run(statement)
 
 ###################################################################
 # subset fastqs
@@ -573,7 +573,7 @@ def subsetSequenceData(infile, outfile):
     ignore_errors = True
     m = PipelineMapping.SubsetHead(limit=PARAMS["sample_size"])
     statement = m.build((infile,), outfile)
-    P.run()
+    P.run(statement)
     P.touch(outfile)
 
 
@@ -585,7 +585,7 @@ def identifyHighestDepth(infiles, outfile):
 
     highest_depth = 0
     for count_inf in infiles:
-        for line in IOTools.openFile(count_inf, "r"):
+        for line in IOTools.open_file(count_inf, "r"):
             if not line.startswith("nreads"):
                 continue
             nreads = int(line[:-1].split("\t")[1])
@@ -635,7 +635,7 @@ def subsetRange(infile, outfiles):
     infile_prefix = P.snip(os.path.basename(infile), ".sentinel")
     nreads_inf = "nreads.dir/%s.nreads" % infile_prefix
 
-    for line in IOTools.openFile(nreads_inf, "r"):
+    for line in IOTools.open_file(nreads_inf, "r"):
         if not line.startswith("nreads"):
             continue
         nreads = int(line[:-1].split("\t")[1])
@@ -658,7 +658,7 @@ def subsetRange(infile, outfiles):
     m = PipelineMapping.SubsetHeads(limits=limits)
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
     P.touch(outfile)
 
@@ -750,7 +750,7 @@ def mapReadsWithHisat(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 
 ###################################################################
@@ -812,7 +812,7 @@ def buildBAMStats(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @P.add_doc(PipelineMappingQC.loadBAMStats)
@@ -874,7 +874,7 @@ def buildBedContext(outfile):
         ON GI.gene_id=GTF.gene_id
         WHERE GI.gene_biotype == "protein_coding"''']
 
-    with IOTools.openFile(tmp_bed_sorted_filename, "w") as tmp_bed_sorted:
+    with IOTools.open_file(tmp_bed_sorted_filename, "w") as tmp_bed_sorted:
         for sql_statement in sql_statements:
             state = dbh.execute(sql_statement)
             for line in state:
@@ -886,7 +886,7 @@ def buildBedContext(outfile):
     | bgzip
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
     os.unlink(tmp_bed_sorted_filename)
 
@@ -933,7 +933,7 @@ def indexForSailfish(infile, outfile):
     statement = '''
     sailfish index --transcripts=%(infile)s
     --out=%(outfile)s '''
-    P.run()
+    P.run(statement)
 
 
 @transform(SEQUENCEFILES,
@@ -959,7 +959,7 @@ def runSailfish(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 
 @split(runSailfish,
@@ -985,7 +985,7 @@ def mergeSailfishResults(infiles, outfiles):
     | gzip
     > %(outfile_transcripts)s
     """
-    P.run()
+    P.run(statement)
 
     s_infiles = " ".join(
         [re.sub("quant.sf", "quant.genes.sf", x) for x in infiles])
@@ -1004,7 +1004,7 @@ def mergeSailfishResults(infiles, outfiles):
     | gzip
     > %(outfile_genes)s
     """
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1036,7 +1036,7 @@ def buildRefFlat(infile, outfile):
     paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
     os.unlink(tmpflat)
 
 
@@ -1096,7 +1096,7 @@ def runSailfishSaturation(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 
 @jobs_limit(1, "R")
@@ -1296,7 +1296,7 @@ def buildTranscriptProfiles(infiles, outfile):
     > %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 @merge(buildTranscriptProfiles,
@@ -1323,7 +1323,7 @@ def buildExperimentTable(infiles, outfile):
         project_id = P.getProjectId()
     except ValueError:
         project_id = "unknown"
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("id\tname\tproject_id\tdirectory\ttitle\n")
         outf.write("\t".join(
             ("1",
@@ -1337,7 +1337,7 @@ def buildExperimentTable(infiles, outfile):
        "samples.tsv")
 def buildSamplesTable(infiles, outfile):
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("id\texperiment_id\tsample_name\n")
 
         for sample_id, filename in enumerate(sorted(infiles)):
@@ -1360,7 +1360,7 @@ def buildFactorTable(infiles, outfile):
 
     sampleID2sampleName = {}
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with IOTools.open_file(outfile, "w") as outf:
         outf.write("sample_id\tfactor\tfactor_value\n")
 
         for sample_id, filename in enumerate(sorted(infiles)):
@@ -1385,7 +1385,7 @@ def buildFactorTable(infiles, outfile):
                                   PARAMS["genome"])) + "\n")
 
         if os.path.exists("additional_factors.tsv"):
-            with IOTools.openFile("additional_factors.tsv", "r") as inf:
+            with IOTools.open_file("additional_factors.tsv", "r") as inf:
                 header = next(inf)
                 header = header.strip().split("\t")
                 additional_factors = header[1:]
@@ -1434,7 +1434,7 @@ def characteriseTranscripts(infile, outfile):
     --split-fasta-identifier --section=na,dn,length -v 0
     | gzip > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 @transform(characteriseTranscripts,
@@ -1728,7 +1728,7 @@ def indexForSalmon(infile, outfile):
     statement = '''
     salmon index -t %(infile)s
     -i %(outfile)s '''
-    P.run()
+    P.run(statement)
 
 
 @transform(SEQUENCEFILES,
@@ -1751,7 +1751,7 @@ def runSalmon(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run()
+    P.run(statement)
 
 
 @merge(runSalmon, "strandedness.tsv")

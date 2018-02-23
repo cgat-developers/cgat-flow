@@ -36,7 +36,7 @@ import pandas as pd
 # load CGAT specific modules
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGATCore.Pipeline as P
 
 PICARD_MEMORY = "9G"
@@ -44,7 +44,7 @@ PICARD_MEMORY = "9G"
 
 def getNumReadsFromReadsFile(infile):
     '''get number of reads from a .nreads file.'''
-    with IOTools.openFile(infile) as inf:
+    with IOTools.open_file(infile) as inf:
         line = inf.readline()
         if not line.startswith("nreads"):
             raise ValueError(
@@ -73,7 +73,7 @@ def getStrandSpecificity(infile, outfile, iterations):
     The relative position of read1 and read2 needs to be determined including
     orientation relative to each other.
     '''
-    outfile = IOTools.openFile(outfile, "w")
+    outfile = IOTools.open_file(outfile, "w")
     samfile = pysam.Samfile(infile)
 
     n = 0
@@ -203,7 +203,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def addPseudoSequenceQuality(infile, outfile):
@@ -222,12 +222,12 @@ def addPseudoSequenceQuality(infile, outfile):
     | cgat bam2bam -v 0
     --method=set-sequence > %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
     statement = '''samtools index %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def copyBamFile(infile, outfile):
@@ -244,12 +244,12 @@ def copyBamFile(infile, outfile):
     statement = '''ln -s ../%(infile)s
     %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
     statement = '''samtools index %(outfile)s
     '''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPicardAlignmentStats(infile, outfile, genome_file):
@@ -281,7 +281,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def buildPicardDuplicationStats(infile, outfile):
@@ -326,7 +326,7 @@ def buildPicardDuplicationStats(infile, outfile):
     OUTPUT=/dev/null
     VALIDATION_STRINGENCY=SILENT
     '''
-    P.run()
+    P.run(statement)
 
     if ".gsnap.bam" in infile:
         os.unlink(tmpfile_name)
@@ -365,7 +365,7 @@ def buildPicardDuplicateStats(infile, outfile):
     VALIDATION_STRINGENCY=SILENT;
     '''
     statement += '''samtools index %(outfile)s ;'''
-    P.run()
+    P.run(statement)
 
 
 def buildPicardCoverageStats(infile, outfile, baits, regions):
@@ -397,7 +397,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
     INPUT=%(infile)s
     OUTPUT=%(outfile)s
     VALIDATION_STRINGENCY=LENIENT''' % locals()
-    P.run()
+    P.run(statement)
 
 
 def buildPicardGCStats(infile, outfile, genome_file):
@@ -431,7 +431,7 @@ def buildPicardGCStats(infile, outfile, genome_file):
     SUMMARY_OUTPUT=%(outfile)s.summary
     >& %(outfile)s'''
 
-    P.run()
+    P.run(statement)
 
 
 def defineBedFeatures(infile, outfile):
@@ -457,9 +457,9 @@ def defineBedFeatures(infile, outfile):
                     '-Deu': 'repeats'}
 
     '''Read genomic context file'''
-    infile = IOTools.openFile(infile)
+    infile = IOTools.open_file(infile)
     '''Create processed genomic context file'''
-    outfile = IOTools.openFile(outfile, "w")
+    outfile = IOTools.open_file(outfile, "w")
     '''Start processing of genomic context file'''
     for line in infile:
         line_copy = line.split("\t")
@@ -535,12 +535,12 @@ def summarizeTagsWithinContext(tagfile,
     > %(tmpfile)s_0
     '''
 
-    P.run()
+    P.run(statement)
 
     statement = '''
     printf "intergenic\\t" >> %(tmpfile)s_1'''
 
-    P.run()
+    P.run(statement)
 
     statement = '''
     bedtools intersect -a %(tagfile)s
@@ -549,14 +549,14 @@ def summarizeTagsWithinContext(tagfile,
     | xargs printf
     >> %(tmpfile)s_1
     '''
-    P.run()
+    P.run(statement)
 
     files = " ".join(tmpfiles)
     statement = '''
     sort --merge  %(files)s
     | gzip > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     for x in tmpfiles:
         os.unlink(x)
@@ -695,7 +695,7 @@ def loadCountReads(infiles, outfile,
             E.warn("File %s missing" % filename)
             continue
 
-        lines = IOTools.openFile(filename, "r").readlines()
+        lines = IOTools.open_file(filename, "r").readlines()
 
         for line in lines:
             count = line.split("\t")[1]
@@ -748,7 +748,7 @@ def loadPicardMetrics(infiles, outfile, suffix,
             E.warn("File %s missing" % filename)
             continue
 
-        lines = IOTools.openFile(filename, "r").readlines()
+        lines = IOTools.open_file(filename, "r").readlines()
 
         # extract metrics part
         rx_start = re.compile("## METRICS CLASS")
@@ -847,7 +847,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
     >> %(outfile)s
     """
 
-    P.run()
+    P.run(statement)
 
 
 def loadPicardAlignmentStats(infiles, outfile):
@@ -998,7 +998,7 @@ def buildBAMStats(infile, outfile):
     --output-filename-pattern=%(outfile)s.%%s
     < %(infile)s
     > %(outfile)s'''
-    P.run()
+    P.run(statement)
 
 
 def loadBAMStats(infiles, outfile):
@@ -1031,7 +1031,7 @@ def loadBAMStats(infiles, outfile):
     | cgat table2table --transpose
     | %(load_statement)s
     > %(outfile)s"""
-    P.run()
+    P.run(statement)
 
     for suffix in ("nm", "nh"):
         E.info("loading bam stats - %s" % suffix)
@@ -1050,7 +1050,7 @@ def loadBAMStats(infiles, outfile):
         | perl -p -e "s/bin/%(suffix)s/"
         | %(load_statement)s
         >> %(outfile)s """
-        P.run()
+        P.run(statement)
 
     # load mapping qualities, there are two columns per row
     # 'all_reads' and 'filtered_reads'
@@ -1073,7 +1073,7 @@ def loadBAMStats(infiles, outfile):
         | perl -p -e "s/bin/%(suffix)s/"
         | %(load_statement)s
         >> %(outfile)s """
-        P.run()
+        P.run(statement)
 
 
 def buildPicardRnaSeqMetrics(infiles, strand, outfile):
@@ -1105,7 +1105,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
     STRAND=%(strand)s
     VALIDATION_STRINGENCY=SILENT
     '''
-    P.run()
+    P.run(statement)
 
 
 def loadPicardRnaSeqMetrics(infiles, outfiles):
@@ -1248,7 +1248,7 @@ def loadSummarizedContextStats(infiles,
     | %(load_statement)s
     > %(outfile)s
     """
-    P.run()
+    P.run(statement)
 
 # dont know if this is used anymore
 
@@ -1314,16 +1314,16 @@ def mergeAndFilterGTF(infile, outfile, logfile,
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.openFile(rna_file, "r")))
+                GTF.iterator(IOTools.open_file(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.openFile(logfile, "w")
+    logf = IOTools.open_file(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
     for all_exons in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(infile))):
+            GTF.iterator(IOTools.open_file(infile))):
 
         c.input += 1
 
@@ -1455,7 +1455,7 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
          <( gunzip < %(infile)s )
     > %(outfile)s.log
     '''
-    P.run()
+    P.run(statement)
 
     #################################################
     E.info("resetting gene_id and transcript_id")
@@ -1463,9 +1463,9 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.openFile(tmpfile2, "w")
+    outf = IOTools.open_file(tmpfile2, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.openFile(tmpfile1 + ".combined.gtf")
+    inf = IOTools.open_file(tmpfile1 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -1545,4 +1545,4 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
     STRAND=%(strand)s
     VALIDATION_STRINGENCY=SILENT
     '''
-    P.run()
+    P.run(statement)

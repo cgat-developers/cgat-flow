@@ -9,7 +9,8 @@ Reference
 
 import CGATCore.Experiment as E
 import os
-import MySQLdb
+# TODO: remove dependency
+# import MySQLdb
 import pysam
 import CGATCore.IOTools as IOTools
 import CGAT.GTF as GTF
@@ -20,7 +21,7 @@ class SubsetGTF():
 
     def __init__(self, infile, *args, **kwargs):
 
-        self.gtf = GTF.iterator(IOTools.openFile(infile, "r"))
+        self.gtf = GTF.iterator(IOTools.open_file(infile, "r"))
 
     def makeLineDict(self, line):
         D = line.asDict()
@@ -40,7 +41,7 @@ class SubsetGTF():
 
         '''
 
-        with IOTools.openFile(outfile, "w") as outf:
+        with IOTools.open_file(outfile, "w") as outf:
             for line in self.gtf:
                 D = self.makeLineDict(line)
                 if len(filteritem) == 1:
@@ -68,7 +69,7 @@ class SubsetGTF():
 class SubsetGFF3():
 
     def __init__(self, infile, *args, **kwargs):
-        self.gff = pysam.tabix_iterator(IOTools.openFile(infile),
+        self.gff = pysam.tabix_iterator(IOTools.open_file(infile),
                                         parser=pysam.asGFF3())
 
     def makeLineDict(self, line):
@@ -85,7 +86,7 @@ class SubsetGFF3():
 
     def filterGFF3(self, outfile, filteroption, filteritem):
 
-        with IOTools.openFile(outfile, "w") as outf:
+        with IOTools.open_file(outfile, "w") as outf:
             for line in self.gff:
                 D = self.makeLineDict(line)
                 if D[filteroption] == filteritem[0]:
@@ -197,7 +198,7 @@ def getRepeatDataFromUCSC(dbhandle,
 
     statement = " ".join(statement)
 
-    P.run()
+    P.run(statement)
 
     os.unlink(tmpfilename)
 
@@ -248,7 +249,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_0
     """
-    P.run()
+    P.run(statement)
 
     # rna
     statement = '''
@@ -258,7 +259,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_1'''
-    P.run()
+    P.run(statement)
 
     # utr
     statement = '''zcat %(utr_gtf)s
@@ -267,7 +268,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_2'''
-    P.run()
+    P.run(statement)
 
     # intron
     statement = '''zcat %(intron_gtf)s
@@ -276,7 +277,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | cgat bed2bed --method=merge --merge-by-name
     --merge-distance=%(distance)i --log=%(outfile)s.log
     > %(tmpfile)s_3'''
-    P.run()
+    P.run(statement)
 
     # sort and merge
     # remove strand information as bedtools
@@ -289,7 +290,7 @@ def buildGenomicContext(infiles, outfile, distance=10):
     | gzip
     > %(outfile)s
     '''
-    P.run()
+    P.run(statement)
 
     for x in tmpfiles:
         os.unlink(x)
@@ -334,7 +335,7 @@ def buildFlatGeneSet(infile, outfile):
     | gzip
     > %(outfile)s
         """
-    P.run()
+    P.run(statement)
 
 
 def loadGeneInformation(infile, outfile, only_proteincoding=False):
@@ -384,4 +385,4 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run()
+    P.run(statement)

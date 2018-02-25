@@ -55,7 +55,7 @@ Requirements
 import os
 import random
 import itertools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGATCore.Experiment as E
 import CGAT.Expression as Expression
 from CGATCore import Pipeline as P

@@ -51,7 +51,7 @@ from rpy2.robjects import r as R
 import rpy2.robjects as ro
 import rpy2.rinterface as ri
 
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGAT.Counts as Counts
 import CGATCore.Database as Database
 import CGAT.Expression as Expression
@@ -833,7 +833,7 @@ def loadCufflinks(infile, outfile):
            "--ignore-column=nearest_ref_id "
            "--rename-column=tracking_id:transcript_id")
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 def quantifyWithStringTie(gtffile, bamfile, outdir):
@@ -1258,7 +1258,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     indir = infile + ".dir"
 
     if not os.path.exists(indir):
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # E.info( "building cummeRbund database" )
@@ -2074,4 +2074,4 @@ def plotGeneLevelReadExtension(infile, outfile):
         R('''myplot(lscaled, utrs)''')
         R['dev.off']()
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)

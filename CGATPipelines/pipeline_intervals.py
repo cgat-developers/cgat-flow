@@ -284,7 +284,7 @@ def getAssociatedBAMFiles(track):
             for ff in P.as_list(PARAMS["bams_%s" % fn.lower()]):
                 bamfiles.extend(glob.glob(ff))
         else:
-            for pattern, value in P.CONFIG.items("bams"):
+            for pattern, value in P.get_param_section("bams"):
                 if "%" in pattern:
                     p = re.sub("%", "\S+", pattern.lower())
                     if re.search(p, fn.lower()):
@@ -294,7 +294,7 @@ def getAssociatedBAMFiles(track):
     if "offsets_%s" % fn.lower() in PARAMS:
         offsets = list(map(int, P.as_list(PARAMS["offsets_%s" % fn.lower()])))
     else:
-        for pattern, value in P.CONFIG.items("offsets"):
+        for pattern, value in P.get_param_section("offsets"):
             if "%" in pattern:
                 p = re.sub("%", "\S+", pattern)
                 if re.search(p, fn):
@@ -358,8 +358,8 @@ def buildProcessingSummary(infiles, outfile):
     for infile in infiles:
         before = os.path.join(
             'preprocess.dir',
-            getNumLines(os.path.basename(infile)))
-        after = getNumLines(infile)
+            get_num_lines(os.path.basename(infile)))
+        after = get_num_lines(infile)
         outf.write("%s\t%i\t%i\n" % (
             P.snip(os.path.basename(infile), ".bed.gz"),
             before,
@@ -378,7 +378,7 @@ def indexIntervals(infile, outfile):
 
     # patch for Jenkins - make sure file exists. Some files
     # seem to appear with a lag.
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
     statement = '''zcat %(infile)s
     | sort -k1,1 -k2,2n
@@ -801,8 +801,8 @@ def buildTranscriptsByIntervalsProfiles(infile, outfile):
         E.info("%s: associated bamfiles = %s" % (track, bamfiles))
     else:
         E.warn("%s: no bamfiles associated - target skipped" % (track))
-        P.touch(outfile)
-        P.touch(outfile[:-len(".tsv.gz")] + ".geneprofile.counts.tsv.gz")
+        IOTools.touch_file(outfile)
+        IOTools.touch_file(outfile[:-len(".tsv.gz")] + ".geneprofile.counts.tsv.gz")
         return
 
     if len(bamfiles) > 1:
@@ -840,7 +840,7 @@ def loadByIntervalProfiles(infile, outfile):
     if os.path.exists(countsfile):
         P.load(countsfile, outfile, "--add-index=gene_id --allow-empty-file")
     else:
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
 
 
 @follows(loadIntervals)
@@ -864,7 +864,7 @@ def buildPeakShapeTable(infile, outfile):
         E.info("%s: associated bamfiles = %s" % (track, bamfiles))
     else:
         E.warn("%s: no bamfiles associated - target skipped" % (track))
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     if len(bamfiles) > 1:
@@ -973,7 +973,7 @@ def exportMotifSequences(infile, outfile):
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
 
 
 ############################################################
@@ -1042,7 +1042,7 @@ def loadMemeSummary(infiles, outfile):
     outf.write("track\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if IOTools.is_empty(infile):
             continue
         motif = P.snip(infile, ".meme")
         outf.write("%s\n" % motif)
@@ -1084,7 +1084,7 @@ def loadMotifInformation(infiles, outfile):
     outf.write("motif\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if IOTools.is_empty(infile):
             continue
         motif = P.snip(infile, ".motif")
         outf.write("%s\n" % motif)
@@ -1121,7 +1121,7 @@ def loadTomTom(infile, outfile):
 
     if not os.path.exists(xml_file):
         E.warn("no tomtom output - skipped loading ")
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # get the motif name from the xml file
@@ -1596,7 +1596,7 @@ def summarizeGAT(infiles, outfile):
         with IOTools.open_file(outfile + "." + column + ".gz", "w") as outf:
             IOTools.write_matrix(outf, matrix, row_headers, col_headers)
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(loadGAT, summarizeGAT)
@@ -1829,7 +1829,7 @@ def annotate_intervals():
 
 #     Database.executewait( dbhandle, statement )
 
-#     P.touch( outfile )
+#     IOTools.touch_file( outfile )
 
 # ###################################################################
 # ###################################################################

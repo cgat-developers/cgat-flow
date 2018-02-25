@@ -348,7 +348,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
     P.run(statement)
 
 
-@follows(run_reports)
+# @follows(run_reports)
 @transform(run_tests,
            suffix(".log"),
            ".md5")

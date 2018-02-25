@@ -5,7 +5,7 @@ import itertools
 import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import pandas as pd
 import pysam
 import numpy as np

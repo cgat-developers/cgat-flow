@@ -1769,7 +1769,7 @@ def splitRegionsFile(infile, outfile):
     '''
 
     P.run(statement)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(splitRegionsFile)
@@ -1998,7 +1998,7 @@ def splitTargetVariants(infile, outfile):
     '''
 
     P.run(statement)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(splitTargetVariants)
@@ -3355,7 +3355,7 @@ def splitGwasRegions(infile, outfile):
     '''
 
     P.run(statement)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(tabixIndexLd,
@@ -3383,7 +3383,7 @@ def splitConditionalRegions(infile, outfile):
     '''
 
     P.run(statement)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(splitGwasRegions,

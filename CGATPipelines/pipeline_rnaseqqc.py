@@ -574,7 +574,7 @@ def subsetSequenceData(infile, outfile):
     m = PipelineMapping.SubsetHead(limit=PARAMS["sample_size"])
     statement = m.build((infile,), outfile)
     P.run(statement)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(mkdir("fastq.dir"))
@@ -623,7 +623,7 @@ def identifyHighestDepth(infiles, outfile):
     forcesymlink("%s.nreads" % highest_depth_sample,
                  "nreads.dir/highest_depth_sample.nreads")
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @split(identifyHighestDepth,
@@ -660,7 +660,7 @@ def subsetRange(infile, outfiles):
 
     P.run(statement)
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(subsetSequenceData)
@@ -1243,7 +1243,7 @@ def plotSailfishSaturation(infiles, outfile):
 
     ''' % locals())
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 ###################################################################
@@ -1645,7 +1645,7 @@ def plotTopGenesHeatmap(outfile):
         plotHeatmap(pandas2ri.py2ri(intersection_pivot),
                     pandas2ri.py2ri(factors_df))
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 ###################################################################
@@ -1711,7 +1711,7 @@ def plotExpression(outfile):
 
         plotDistribution(pandas2ri.py2ri(full_df))
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 ###################################################################
 # Run Salmon To Autodetect Strandedness

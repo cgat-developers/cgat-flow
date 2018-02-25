@@ -212,7 +212,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 import CGAT.GTF as GTF
 import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGATPipelines.PipelineGeneset as PipelineGeneset
 import CGATPipelines.PipelineMapping as PipelineMapping
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC

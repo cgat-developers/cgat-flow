@@ -287,7 +287,7 @@ def getCpGIslandsFromUCSC(dbhandle, outfile):
         outfile.close()
     except Exception:
         E.warn("Failed to connect to table %s. %s is empty" % (table, outfile))
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
 
 
 def readUCSCFile(infile):

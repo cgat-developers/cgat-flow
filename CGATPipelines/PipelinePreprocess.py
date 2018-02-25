@@ -102,7 +102,7 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
             E.warn("No table found for {}".format(t))
 
     if len(found_contaminants) == 0:
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # read contaminants from existing file

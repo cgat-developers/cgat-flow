@@ -72,8 +72,8 @@ def BedFileVenn(infiles, outfile):
 
     elif len(infiles) == 2:
 
-        if IOTools.isEmpty(infiles[0]) or IOTools.isEmpty(infiles[1]):
-            P.touch(outfile)
+        if IOTools.is_empty(infiles[0]) or IOTools.isEmpty(infiles[1]):
+            IOTools.touch_file(outfile)
         else:
             statement = '''
         intersectBed -u -a %s -b %s 
@@ -89,16 +89,16 @@ def BedFileVenn(infiles, outfile):
 
         # need to merge incrementally
         fn = infiles[0]
-        if IOTools.isEmpty(infiles[0]):
-            P.touch(outfile)
+        if IOTools.is_empty(infiles[0]):
+            IOTools.touch_file(outfile)
             return
 
         statement = '''mergeBed -i %(fn)s > %(tmpfile)s'''
         P.run(statement)
 
         for fn in infiles[1:]:
-            if IOTools.isEmpty(infiles[0]):
-                P.touch(outfile)
+            if IOTools.is_empty(infiles[0]):
+                IOTools.touch_file(outfile)
                 os.unlink(tmpfile)
                 return
 

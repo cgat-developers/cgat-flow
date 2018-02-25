@@ -12,7 +12,7 @@ import os
 import re
 import pandas
 import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 from CGATCore import Pipeline as P
 
 PICARD_MEMORY = "9G"
@@ -51,7 +51,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectInsertSizeMetrics
@@ -84,7 +84,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # Picard seems to have problem if quality information is missing
@@ -124,7 +124,7 @@ def buildPicardDuplicationStats(infile, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # currently, MarkDuplicates cannot handle split alignments from gsnap
@@ -180,7 +180,7 @@ def buildPicardDuplicateStats(infile, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s MarkDuplicates
@@ -217,7 +217,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CalculateHsMetrics
@@ -251,7 +251,7 @@ def buildPicardGCStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts) CollectGcBiasMetrics
@@ -677,7 +677,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectRnaSeqMetrics

@@ -23,7 +23,7 @@ import numpy.ma as ma
 import itertools
 import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGATCore.IOTools as IOTools
 import CGAT.Expression as Expression
 import CGAT.Bed as Bed
@@ -986,7 +986,7 @@ def plotDETagStats(infile, composition_file, outfile):
         additional_columns=("CpG_density",
                             "length"))
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @P.cluster_runnable
@@ -1032,7 +1032,7 @@ def buildSpikeResults(infile, outfile):
 
     if not os.path.exists(spikefile):
         E.warn('no spike data: %s' % spikefile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     ########################################

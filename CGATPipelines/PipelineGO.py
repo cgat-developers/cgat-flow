@@ -456,7 +456,7 @@ def runGOFromDatabase(outfile,
     bg = set([x[0] for x in cc.execute(statement_bg).fetchall()])
 
     if len(fg) == 0:
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     fg_file = os.path.join(outdir, "foreground")
@@ -486,7 +486,7 @@ def loadGO(infile, outfile, tablename):
     indir = infile + ".dir"
 
     if not os.path.exists(indir):
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     load_statement = P.build_load_statement(

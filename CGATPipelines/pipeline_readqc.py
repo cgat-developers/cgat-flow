@@ -225,7 +225,7 @@ if PARAMS.get("preprocessors", None):
                    regex(SEQUENCEFILES_REGEX),
                    r"fasta.dir/\1.fasta")
         def aggregateAdaptors(infile, outfile):
-            P.touch(outfile)
+            IOTools.touch_file(outfile)
 
     @follows(mkdir("processed.dir"),
              aggregateAdaptors)
@@ -384,7 +384,7 @@ def loadFastqc(infile, outfile):
                               username=PARAMS["database_username"],
                               password=PARAMS["database_password"],
                               port=PARAMS["database_port"])
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(mkdir(PARAMS["exportdir"]),
@@ -411,7 +411,7 @@ def runFastqScreen(infiles, outfile):
     # Create fastq_screen config file in temp directory
     # using parameters from Pipeline.ini
     with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
-                          "w") as f:
+                           "w") as f:
         for i, k in list(PARAMS.items()):
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
@@ -420,7 +420,7 @@ def runFastqScreen(infiles, outfile):
     statement = m.build((infiles,), outfile)
     P.run(statement)
     shutil.rmtree(tempdir)
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @merge(runFastqc, "status_summary.tsv.gz")

@@ -1211,10 +1211,10 @@ def buildPseudogenes(infiles, outfile, dbhandle):
 
     P.run(statement)
 
-    if IOTools.isEmpty(tmpfile1):
+    if IOTools.is_empty(tmpfile1):
         E.warn("no pseudogenes found")
         os.unlink(tmpfile1)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     model = "protein2dna"
@@ -1301,7 +1301,7 @@ def buildNUMTs(infile, outfile):
     '''
     if not PARAMS["numts_mitochrom"]:
         E.info("skipping numts creation")
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     fasta = IndexedFasta.IndexedFasta(
@@ -1309,7 +1309,7 @@ def buildNUMTs(infile, outfile):
 
     if PARAMS["numts_mitochrom"] not in fasta:
         E.warn("mitochondrial genome %s not found" % PARAMS["numts_mitochrom"])
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     tmpfile_mito = P.get_temp_filename(".")
@@ -1324,10 +1324,10 @@ def buildNUMTs(infile, outfile):
 
     P.run(statement)
 
-    if IOTools.isEmpty(tmpfile_mito):
+    if IOTools.is_empty(tmpfile_mito):
         E.warn("mitochondrial genome empty.")
         os.unlink(tmpfile_mito)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     format = ("qi", "qS", "qab", "qae",

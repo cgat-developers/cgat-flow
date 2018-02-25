@@ -390,7 +390,7 @@ def exportMotifDiscoverySequences(infile, outfile):
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
 
 
 @follows(mkdir("motifs"))
@@ -456,7 +456,7 @@ def loadMemeSummary(infiles, outfile):
     outf.write("track\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if IOTools.is_empty(infile):
             continue
         motif = P.snip(infile, ".meme")
         outf.write("%s\n" % motif)
@@ -531,7 +531,7 @@ def buildDiscoverySequences(infile, outfile, npeaks, width, masker):
 
     if nseq == 0:
         E.warn("%s: no sequences in foreground" % outfile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
 
 
 @follows(loadIntervals, mkdir("discovery.dir"))
@@ -559,7 +559,7 @@ def buildBackgroundSequences(infile, outfile, npeaks, width, masker):
 
     if nseq == 0:
         E.warn("%s: no sequences in background" % outfile_background)
-        # P.touch( outfile )
+        # IOTools.touch_file( outfile )
 
 
 @transform(buildBackgroundSequences,
@@ -658,7 +658,7 @@ def loadMemeChipSummary(infiles, outfile):
     outf.write("track\tnpeaks\twidth\tmasking\tpath\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if IOTools.is_empty(infile):
             continue
         fn = P.snip(os.path.basename(infile), ".memechip")
 
@@ -703,7 +703,7 @@ def loadMotifInformation(infiles, outfile):
     outf.write("motif\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if IOTools.is_empty(infile):
             continue
         motif = P.snip(infile, ".motif")
         outf.write("%s\n" % motif)
@@ -733,7 +733,7 @@ def loadTomTom(infile, outfile):
 
     if not os.path.exists(xml_file):
         E.warn("no tomtom output - skipped loading ")
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     # get the motif name from the xml file

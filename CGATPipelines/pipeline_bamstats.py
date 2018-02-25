@@ -535,7 +535,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
     job_memory = "4G"
 
     if "transcriptome.dir" in infile:
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''

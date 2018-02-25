@@ -20,11 +20,12 @@
 #sqlalchemy
 #sqlite
 
-## Modules that are specific pipeline associated
-
-# bamstats
+# Bioinformatic tools
+# bwa
+# gat
 # multiqc
 # picard
+
 
 # pipeline_geneset
 #httplib2

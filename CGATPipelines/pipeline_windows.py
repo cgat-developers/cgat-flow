@@ -1046,8 +1046,8 @@ def getInput(track):
 
     if "input_%s" % fn in PARAMS:
         input_files.extend(P.as_list(PARAMS["input_%s" % fn]))
-    elif P.CONFIG.has_section("input"):
-        for pattern, value in P.CONFIG.items("input"):
+    else:
+        for pattern, value in P.get_param_section("input"):
             if "%" in pattern:
                 pattern = re.sub("%", "\S+", pattern)
             if re.search(pattern, fn):
@@ -1497,7 +1497,7 @@ def plotHilbertCurves(infile, outfile):
 
     P.run(statement)
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 def loadMethylationData(infile, design_file):
@@ -1648,7 +1648,7 @@ def loadDESeq(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 # @P.add_doc(PipelineWindows.runDE)
@@ -1742,7 +1742,7 @@ def loadDESeq2(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 @follows(mkdir("spike.dir"))
@@ -1865,7 +1865,7 @@ def loadEdgeR(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 # @P.add_doc(PipelineWindows.outputRegionsOfInterest)

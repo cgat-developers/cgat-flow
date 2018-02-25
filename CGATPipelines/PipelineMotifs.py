@@ -636,7 +636,7 @@ def runBioProspector(infiles, outfile, dbhandle):
 
     if nseq == 0:
         E.warn("%s: no sequences - bioprospector skipped" % track)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
     else:
         statement = '''
         BioProspector -i %(tmpfasta)s %(bioprospector_options)s -o %(outfile)s > %(outfile)s.log
@@ -720,8 +720,8 @@ def runMAST(infiles, outfile):
 
     controlfile, dbfile, motiffiles = infiles
 
-    if IOTools.isEmpty(dbfile):
-        P.touch(outfile)
+    if IOTools.is_empty(dbfile):
+        IOTools.touch_file(outfile)
         return
 
     if not os.path.exists(controlfile):
@@ -736,7 +736,7 @@ def runMAST(infiles, outfile):
     tmpfile = P.get_temp_filename(".")
 
     for motiffile in motiffiles:
-        if IOTools.isEmpty(motiffile):
+        if IOTools.is_empty(motiffile):
             L.info("skipping empty motif file %s" % motiffile)
             continue
 
@@ -899,7 +899,7 @@ def runMEME(track, outfile, dbhandle):
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
     else:
         statement = '''
         meme %(tmpfasta)s -dna -revcomp -mod %(meme_model)s -nmotifs %(meme_nmotifs)s -oc %(tmpdir)s -maxsize %(meme_max_size)s %(meme_options)s > %(outfile)s.log
@@ -928,7 +928,7 @@ def runMEMEOnSequences(infile, outfile):
     nseqs = int(FastaIterator.count(infile))
     if nseqs == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     target_path = os.path.join(
@@ -959,9 +959,9 @@ def runTomTom(infile, outfile):
     target_path = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "tomtom", outfile)
 
-    if IOTools.isEmpty(infile):
+    if IOTools.is_empty(infile):
         E.warn("input is empty - no computation performed")
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     statement = '''

@@ -60,7 +60,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 import CGAT.IndexedGenome as IndexedGenome
 import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
+import CGAT.BamTools.bamtools as BamTools
 import CGAT.Bed as Bed
 import CGAT.WrapperMACS as WrapperMACS
 
@@ -1037,7 +1037,7 @@ def bedGraphToBigwig(infile, contigsfile, outfile,
 
     P.run(statement)
 
-    if os.path.exists(outfile) and not IOTools.isEmpty(outfile):
+    if os.path.exists(outfile) and not IOTools.is_empty(outfile):
         os.remove(infile)
 
 
@@ -1286,7 +1286,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
 
     if not os.path.exists(filename_bed):
         E.warn("could not find %s" % filename_bed)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     exportdir = os.path.join(PARAMS['exportdir'], 'macs')
@@ -1488,7 +1488,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
 
     if not os.path.exists(filename_bed):
         E.warn("could not find %s" % filename_bed)
-        P.touch(outfile)
+        IOTools.touch_file(outfile)
         return
 
     exportdir = os.path.join(PARAMS['exportdir'], 'macs2')
@@ -1698,7 +1698,7 @@ def loadZinba(infile, outfile, bamfile,
     #######################################################################
     if not os.path.exists(infilename):
         E.warn("could not find %s" % infilename)
-    elif IOTools.isEmpty(infile):
+    elif IOTools.is_empty(infile):
         E.warn("no data in %s" % infilename)
     else:
 
@@ -2007,7 +2007,7 @@ def runPeakRanger(infile, outfile, controlfile):
     P.run(statement)
 
     # usually there is no output
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 def loadPeakRanger(infile, outfile, bamfile, controlfile=None, table_suffix="peaks"):
@@ -2171,7 +2171,7 @@ def runPeakRangerCCAT(infile, outfile, controlfile):
     P.run(statement)
 
     # usually there is no output
-    P.touch(outfile)
+    IOTools.touch_file(outfile)
 
 
 def runSPP(infile, outfile, controlfile):

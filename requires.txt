@@ -17,26 +17,26 @@
 # rpy2>=2.6
 
 # not part of CGATCore?
-sqlalchemy
-sqlite
+#sqlalchemy
+#sqlite
 
 ## Modules that are specific pipeline associated
 
 # bamstats
-multiqc
-picard
+# multiqc
+# picard
 
 # pipeline_geneset
-httplib2
-intermine
-toposort
-mygene
+#httplib2
+#intermine
+#toposort
+#mygene
 
 # pipeline_exome
-beautifulsoup4
+#beautifulsoup4
 
 # pipeline_peakcalling and pipeline_rnaseqqc
-seaborn
+#seaborn
 
 # # note: does not install as a requirement, but directly via pip is ok
 # # pyBigWig>=0.3.3

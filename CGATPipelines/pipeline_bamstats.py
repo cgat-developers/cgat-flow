@@ -808,9 +808,11 @@ def renderJupyterReport():
 def renderMultiqc(infile):
     '''build mulitqc report'''
 
-    statement = '''LANG=en_GB.UTF-8 multiqc . -f;
-                   mv multiqc_report.html MultiQC_report.dir/'''
-
+    statement = (
+        "export LC_ALL=en_GB.UTF-8 && "
+        "export LANG=en_GB.UTF-8 && "
+        "multiqc . -f && "
+        "mv multiqc_report.html MultiQC_report.dir/")
     P.run(statement)
 
 

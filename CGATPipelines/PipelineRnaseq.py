@@ -267,7 +267,7 @@ class FeatureCountsQuantifier(Quantifier):
         else:
             raise ValueError("level must be gene_id or transcript_id!")
 
-        tmpdir = P.getTempDir()
+        tmpdir = P.get_temp_dir()
 
         # need to unzip the annotations for featureCounts
         annotations_tmp = os.path.join(tmpdir,
@@ -760,7 +760,7 @@ def runCufflinks(gtffile, bamfile, outfile, job_threads=1):
 
     track = os.path.basename(P.snip(gtffile, ".gtf.gz"))
 
-    tmpdir = P.getTempDir()
+    tmpdir = P.get_temp_dir()
 
     gtffile = os.path.abspath(gtffile)
     bamfile = os.path.abspath(bamfile)
@@ -1049,7 +1049,7 @@ def runFeatureCounts(annotations_file,
 
     # featureCounts cannot handle gzipped in or out files
     outfile = P.snip(outfile, ".gz")
-    tmpdir = P.getTempDir()
+    tmpdir = P.get_temp_dir()
     annotations_tmp = os.path.join(tmpdir,
                                    'geneset.gtf')
     bam_tmp = os.path.join(tmpdir,

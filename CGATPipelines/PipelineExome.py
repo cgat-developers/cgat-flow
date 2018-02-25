@@ -49,7 +49,7 @@ def GATKReadGroups(infile, outfile, genome,
 
     if track == 'unknown':
         track = P.snip(os.path.basename(infile), ".bam")
-    tmpdir_gatk = P.getTempDir('.')
+    tmpdir_gatk = P.get_temp_dir('.')
     job_options = getGATKOptions()
     job_threads = 3
 
@@ -113,7 +113,7 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
     '''Recalibrates base quality scores using GATK'''
 
     track = P.snip(os.path.basename(infile), ".bam")
-    tmpdir_gatk = P.getTempDir('.')
+    tmpdir_gatk = P.get_temp_dir('.')
     job_options = getGATKOptions()
     job_threads = 3
 

@@ -732,7 +732,7 @@ def runMAST(infiles, outfile):
     if os.path.exists(outfile):
         os.remove(outfile)
 
-    tmpdir = P.getTempDir(".")
+    tmpdir = P.get_temp_dir(".")
     tmpfile = P.get_temp_filename(".")
 
     for motiffile in motiffiles:
@@ -884,7 +884,7 @@ def runMEME(track, outfile, dbhandle):
     fasta = IndexedFasta.IndexedFasta(
         os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
 
-    tmpdir = P.getTempDir(".")
+    tmpdir = P.get_temp_dir(".")
     tmpfasta = os.path.join(tmpdir, "in.fa")
 
     nseq = writeSequencesForIntervals(
@@ -933,7 +933,7 @@ def runMEMEOnSequences(infile, outfile):
 
     target_path = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "meme", outfile)
-    tmpdir = P.getTempDir(".")
+    tmpdir = P.get_temp_dir(".")
 
     statement = '''
     meme %(infile)s -dna -revcomp
@@ -953,7 +953,7 @@ def runMEMEOnSequences(infile, outfile):
 def runTomTom(infile, outfile):
     '''compare ab-initio motifs against tomtom.'''
 
-    tmpdir = P.getTempDir(".")
+    tmpdir = P.get_temp_dir(".")
     databases = " ".join(P.as_list(PARAMS["tomtom_databases"]))
 
     target_path = os.path.join(

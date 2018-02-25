@@ -512,7 +512,7 @@ class SequenceCollectionProcessor(object):
 
         assert len(infiles) > 0, "no input files for processing"
 
-        tmpdir_fastq = P.getTempDir(shared=True)
+        tmpdir_fastq = P.get_temp_dir(shared=True)
 
         # create temporary directory again for nodes
         statement = ["mkdir -p %s" % tmpdir_fastq]
@@ -622,7 +622,7 @@ class SequenceCollectionProcessor(object):
 
             elif infile.endswith(".sra"):
                 # sneak preview to determine if paired end or single end
-                outdir = P.getTempDir()
+                outdir = P.get_temp_dir()
                 f, format, datatype = Sra.peek(infile)
                 E.info("sra file contains the following files: %s" % f)
 

@@ -2475,7 +2475,7 @@ def removeEmptyBins(infile, outfile):
 
 
 def createBroadPeakBedgraphFile(infiles, outfile, params):
-    tmpdir = P.getTempDir("/scratch")
+    tmpdir = P.get_temp_dir("/scratch")
     E.info("Creating tempdir: %s" % tmpdir)
     sample_bed = P.get_temp_filename(tmpdir)
     sample_bedgraph = P.get_temp_filename(tmpdir)

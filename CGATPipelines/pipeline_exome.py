@@ -314,7 +314,7 @@ def GATKReadGroups(infile, outfile):
     '''
 
     track = re.sub(r'-\w+-\w+\.bam', '', os.path.basename(infile))
-    tmpdir_gatk = P.getTempDir('.')
+    tmpdir_gatk = P.get_temp_dir('.')
     job_options = getGATKOptions()
     job_threads = PARAMS["gatk_threads"]
     library = PARAMS["readgroup_library"]

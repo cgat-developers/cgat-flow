@@ -320,7 +320,7 @@ def GATKpreprocessing(infile, outfile):
 
     to_cluster = USECLUSTER
     track = P.snip(os.path.basename(infile), ".bam")
-    tmpdir_gatk = P.getTempDir()
+    tmpdir_gatk = P.get_temp_dir()
     job_memory = PARAMS["gatk_memory"]
 
     genome = "%s/%s.fa" % (PARAMS["bwa_index_dir"],
@@ -355,7 +355,7 @@ def mergeSampleBams(infile, outfile):
     to_cluster = USECLUSTER
     job_memory = PARAMS["gatk_memory"]
 
-    tmpdir_gatk = P.getTempDir(shared=True)
+    tmpdir_gatk = P.get_temp_dir(shared=True)
 
     outfile_tumor = outfile.replace(
         PARAMS["sample_control"], PARAMS["sample_tumour"])
@@ -454,7 +454,7 @@ def runPicardOnRealigned(infile, outfile):
     to_cluster = USECLUSTER
     job_memory = PARAMS["gatk_memory"]
 
-    tmpdir_gatk = P.getTempDir()
+    tmpdir_gatk = P.get_temp_dir()
 
     outfile_tumor = outfile.replace(
         PARAMS["sample_control"], PARAMS["sample_tumour"])

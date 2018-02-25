@@ -397,7 +397,7 @@ def runFastqScreen(infiles, outfile):
     '''run FastqScreen on input files.'''
 
     # variables required for statement built by FastqScreen()
-    tempdir = P.getTempDir(".")
+    tempdir = P.get_temp_dir(".")
     outdir = os.path.join(PARAMS["exportdir"], "fastq_screen")
 
     # configure job_threads with fastq_screen_options from PARAMS

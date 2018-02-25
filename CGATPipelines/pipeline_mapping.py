@@ -1744,7 +1744,7 @@ def mapReadsWithButter(infile, outfile):
 
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
-        outdir = P.getTempDir()
+        outdir = P.get_temp_dir()
         f = Sra.sneak(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
@@ -1812,7 +1812,7 @@ def mapReadsWithShortstack(infile, outfile):
 
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
-        outdir = P.getTempDir()
+        outdir = P.get_temp_dir()
         f = Sra.sneak(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
@@ -2158,9 +2158,11 @@ def full():
 def renderMultiqc(infile):
     '''build mulitqc report'''
 
-    statement = '''LANG=en_GB.UTF-8 multiqc . -f;
-                   mv multiqc_report.html MultiQC_report.dir/'''
-
+    statement = (
+        "export LC_ALL=en_GB.UTF-8 && "
+        "export LANG=en_GB.UTF-8 && "
+        "multiqc . -f && "
+        "mv multiqc_report.html MultiQC_report.dir/")
     P.run(statement)
 
 

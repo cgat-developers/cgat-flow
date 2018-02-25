@@ -190,7 +190,7 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
         if self.save:
             self.outdir = "processed.dir"
         else:
-            self.outdir = P.getTempDir(shared=True)
+            self.outdir = P.get_temp_dir(shared=True)
 
         self.processors = []
         self.qual_format = qual_format

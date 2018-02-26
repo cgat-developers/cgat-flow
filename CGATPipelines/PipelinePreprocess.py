@@ -291,9 +291,9 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
         assert cmd_process.strip().endswith(";")
         assert cmd_clean.strip().endswith(";")
 
-        statement = " ; ".join((cmd_preprocess,
-                                cmd_process,
-                                cmd_clean))
+        statement = " ".join((cmd_preprocess,
+                              cmd_process,
+                              cmd_clean))
         return statement
 
 

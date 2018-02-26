@@ -837,7 +837,7 @@ def mapReadsWithTophat(infiles, outfile):
         job_memory = PARAMS["tophat_memory"]
 
     m = PipelineMapping.Tophat(
-        executable=P.substituteParameters(**locals())["tophat_executable"],
+        executable=P.substitute_parameters(**locals())["tophat_executable"],
         strip_sequence=PARAMS["strip_sequence"],
         tool_options=PARAMS["tophat_options"])
     infile, reffile, transcriptfile = infiles
@@ -951,7 +951,7 @@ def mapReadsWithTophat2(infiles, outfile):
         job_memory = PARAMS["tophat2_memory"]
 
     m = PipelineMapping.Tophat2(
-        executable=P.substituteParameters(**locals())["tophat2_executable"],
+        executable=P.substitute_parameters(**locals())["tophat2_executable"],
         strip_sequence=PARAMS["strip_sequence"],
         tool_options=PARAMS["tophat2_options"])
 
@@ -1042,7 +1042,7 @@ def mapReadsWithHisat(infiles, outfile):
     job_memory = PARAMS["hisat_memory"]
 
     m = PipelineMapping.Hisat(
-        executable=P.substituteParameters(**locals())["hisat_executable"],
+        executable=P.substitute_parameters(**locals())["hisat_executable"],
         strip_sequence=PARAMS["strip_sequence"],
         stranded=PARAMS["strandness"])
 
@@ -1238,7 +1238,7 @@ def mapReadsWithGSNAP(infiles, outfile):
     gsnap_mapping_genome = PARAMS["gsnap_genome"] or PARAMS["genome"]
 
     m = PipelineMapping.GSNAP(
-        executable=P.substituteParameters(**locals())["gsnap_executable"],
+        executable=P.substitute_parameters(**locals())["gsnap_executable"],
         strip_sequence=PARAMS["strip_sequence"])
 
     if PARAMS["gsnap_include_known_splice_sites"]:
@@ -1303,7 +1303,7 @@ def mapReadsWithSTAR(infile, outfile):
     star_mapping_genome = PARAMS["star_genome"] or PARAMS["genome"]
 
     m = PipelineMapping.STAR(
-        executable=P.substituteParameters(**locals())["star_executable"],
+        executable=P.substitute_parameters(**locals())["star_executable"],
         strip_sequence=PARAMS["strip_sequence"])
 
     statement = m.build((infile,), outfile)
@@ -1424,7 +1424,7 @@ def mapReadsWithBowtieAgainstTranscriptome(infiles, outfile):
     # reads would be filtered out).
     job_threads = PARAMS["bowtie_threads"]
     m = PipelineMapping.BowtieTranscripts(
-        executable=P.substituteParameters(**locals())["bowtie_executable"],
+        executable=P.substitute_parameters(**locals())["bowtie_executable"],
         strip_sequence=PARAMS["strip_sequence"])
     infile, reffile = infiles
     prefix = P.snip(reffile, ".fa")
@@ -1489,8 +1489,8 @@ def mapReadsWithBowtie(infiles, outfile):
     job_memory = PARAMS["bowtie_memory"]
 
     m = PipelineMapping.Bowtie(
-        executable=P.substituteParameters(**locals())["bowtie_executable"],
-        tool_options=P.substituteParameters(**locals())["bowtie_options"],
+        executable=P.substitute_parameters(**locals())["bowtie_executable"],
+        tool_options=P.substitute_parameters(**locals())["bowtie_options"],
         strip_sequence=PARAMS["strip_sequence"])
     infile, reffile = infiles
     statement = m.build((infile,), outfile)
@@ -1548,8 +1548,8 @@ def mapReadsWithBowtie2(infiles, outfile):
     job_memory = PARAMS["bowtie2_memory"]
 
     m = PipelineMapping.Bowtie2(
-        executable=P.substituteParameters(**locals())["bowtie2_executable"],
-        tool_options=P.substituteParameters(**locals())["bowtie2_options"],
+        executable=P.substitute_parameters(**locals())["bowtie2_executable"],
+        tool_options=P.substitute_parameters(**locals())["bowtie2_options"],
         strip_sequence=PARAMS["strip_sequence"])
     infile, reffile = infiles
     statement = m.build((infile,), outfile)

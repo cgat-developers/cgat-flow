@@ -739,7 +739,7 @@ def mapReadsWithHisat(infiles, outfile):
     job_memory = PARAMS["hisat_memory"]
 
     m = PipelineMapping.Hisat(
-        executable=P.substituteParameters(
+        executable=P.substitute_parameters(
             **locals())["hisat_executable"],
         strip_sequence=PARAMS["strip_sequence"])
 

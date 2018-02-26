@@ -368,7 +368,7 @@ def exportMotifDiscoverySequences(infile, outfile):
     track = P.snip(infile, "_intervals.load")
     dbhandle = connect()
 
-    p = P.substituteParameters(**locals())
+    p = P.substitute_parameters(**locals())
     nseq = PipelineMotifs.writeSequencesForIntervals(
         track,
         outfile,

@@ -20,24 +20,29 @@
 #sqlalchemy
 #sqlite
 
-# Bioinformatic tools
+# Bioinformatic tools required to get the tests pass
 # bwa
 # gat
 # multiqc
 # picard
+# ucsc-gtftogenepred
+# fastqc
+# bowtie
+# bowtie2
+# trimmomatic
+# sra-tools
 
-
-# pipeline_geneset
-#httplib2
-#intermine
-#toposort
-#mygene
+# pipeline_geneset special packages
+# httplib2
+# intermine
+# toposort
+# mygene
 
 # pipeline_exome
-#beautifulsoup4
+# beautifulsoup4
 
 # pipeline_peakcalling and pipeline_rnaseqqc
-#seaborn
+# seaborn
 
 # # note: does not install as a requirement, but directly via pip is ok
 # # pyBigWig>=0.3.3

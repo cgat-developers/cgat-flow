@@ -32,7 +32,7 @@ The basic usage inside a pipeline task is as such::
 
         # initialize the Tool
         m = PipelineMapping.Hisat(
-             executable=P.substituteParameters(**locals())["hisat_executable"],
+             executable=P.substitute_parameters(**locals())["hisat_executable"],
              strip_sequence=PARAMS["strip_sequence"])
 
         # build the command line statement
@@ -905,7 +905,7 @@ class SequenceCollectionProcessor(object):
         self.tmpdir_fastq = tmpdir_fastq
 
         assert len(fastqfiles) > 0, "no fastq files for mapping"
-        return " ; ".join(statement) + ";", fastqfiles
+        return (" ; ".join(statement) + ";", fastqfiles)
 
 
 class Mapper(SequenceCollectionProcessor):
@@ -1026,10 +1026,10 @@ class Mapper(SequenceCollectionProcessor):
             assert cmd_clean.strip().endswith(";"),\
                 "missing ';' at end of command %s" % cmd_clean.strip()
 
-        statement = " ; ".join((cmd_preprocess,
-                                cmd_mapper,
-                                cmd_postprocess,
-                                cmd_clean))
+        statement = " ".join((cmd_preprocess,
+                              cmd_mapper,
+                              cmd_postprocess,
+                              cmd_clean))
 
         return statement
 

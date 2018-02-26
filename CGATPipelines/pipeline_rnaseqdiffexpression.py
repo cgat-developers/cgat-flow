@@ -459,7 +459,6 @@ def buildReferenceTranscriptome(infile, outfile):
     cgat gff2fasta
     --is-gtf --genome-file=%(genome_file)s --fold-at=60 -v 0
     --log=%(outfile)s.log > %(outfile)s;
-    checkpoint;
     samtools faidx %(outfile)s
     '''
 
@@ -522,7 +521,7 @@ def buildSalmonIndex(infile, outfile):
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
-    rm -rf %(outfile)s; checkpoint;
+    rm -rf %(outfile)s;
     salmon index %(salmon_index_options)s -t %(infile)s -i %(outfile)s
     -k %(salmon_kmer)s
     '''
@@ -557,7 +556,7 @@ def buildSailfishIndex(infile, outfile):
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
-    rm -rf %(outfile)s; checkpoint;
+    rm -rf %(outfile)s;
     sailfish index --transcripts=%(infile)s --out=%(outfile)s
     --kmerSize=%(sailfish_kmer)s
     %(sailfish_index_options)s

@@ -1468,7 +1468,6 @@ def convertBed2BigWig(infile, outfile):
 
     statement = '''zcat %(infile)s | sort -k 1,1 -k 2,2n > %(tmpfile)s;
                    bedGraphToBigWig %(tmpfile)s %(contig_file)s %(outfile)s;
-                   checkpoint ;
                    rm -f %(tmpfile)s'''
 
     P.run(statement)

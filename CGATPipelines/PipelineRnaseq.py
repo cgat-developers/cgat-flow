@@ -285,7 +285,7 @@ class FeatureCountsQuantifier(Quantifier):
             paired_processing = \
                 """samtools
                 sort -@ %(job_threads)i -n -o %(bam_tmp)s %(bamfile)s;
-                checkpoint; """ % locals()
+                """ % locals()
             bamfile = bam_tmp
         else:
             paired_options = ""
@@ -299,7 +299,6 @@ class FeatureCountsQuantifier(Quantifier):
 
         statement = '''mkdir %(tmpdir)s;
                        zcat %(annotations)s > %(annotations_tmp)s;
-                       checkpoint;
                        %(paired_processing)s
                        featureCounts %(options)s
                                      -T %(job_threads)i
@@ -309,7 +308,7 @@ class FeatureCountsQuantifier(Quantifier):
                                      -o %(outfile_raw)s -g %(level)s
                                      %(bamfile)s
                         >& %(outfile)s.log;
-                        rm -rf %(tmpdir)s; checkpoint;
+                        rm -rf %(tmpdir)s;
                         gzip -f %(outfile_raw)s
         '''
         P.run(statement)
@@ -374,7 +373,7 @@ class Gtf2tableQuantifier(Quantifier):
               --min-mapping-quality=%(counting_min_mapping_quality)i
               --multi-mapping-method=ignore
               --log=%(outfile_raw)s.log
-        > %(outfile_raw)s; checkpoint;
+        > %(outfile_raw)s;
         gzip -f %(outfile_raw)s
         '''
 
@@ -893,7 +892,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
                 PARAMS["annotations_interface_contigs_bed"]))
 
         bamfile = " ".join(bamfile)
-        statement = "; checkpoint ;".join(
+        statement = " ; ".join(
             ["mkdir %(tmpfilename)s",
              s,
              statement,
@@ -1065,7 +1064,7 @@ def runFeatureCounts(annotations_file,
         paired_processing = \
             """samtools
             sort -@ %(job_threads)i -n -o %(bam_tmp)s %(bamfile)s;
-            checkpoint; """ % locals()
+            """ % locals()
         bamfile = bam_tmp
     else:
         paired_options = ""
@@ -1074,7 +1073,6 @@ def runFeatureCounts(annotations_file,
     # AH: what is the -b option doing?
     statement = '''mkdir %(tmpdir)s;
                    zcat %(annotations_file)s > %(annotations_tmp)s;
-                   checkpoint;
                    %(paired_processing)s
                    featureCounts %(options)s
                                  -T %(job_threads)i
@@ -1084,9 +1082,7 @@ def runFeatureCounts(annotations_file,
                                  -o %(outfile)s
                                  %(bamfile)s
                     >& %(outfile)s.log;
-                    checkpoint;
                     gzip -f %(outfile)s;
-                    checkpoint;
                     rm -rf %(tmpdir)s
     '''
 
@@ -1546,7 +1542,6 @@ def runCuffdiff(bamfiles,
 
     extra_options = " ".join(extra_options)
 
-    # IMS added a checkpoint to catch cuffdiff errors
     # AH: removed log messages about BAM record error
     # These cause logfiles to grow several Gigs and are
     # frequent for BAM files not created by tophat.
@@ -1568,9 +1563,7 @@ def runCuffdiff(bamfiles,
     2>&1
     | grep -v 'BAM record error'
     >> %(outfile)s.log;
-    checkpoint;
     gzip -f %(outdir)s/*;
-    checkpoint;
     date >> %(outfile)s.log;
     '''
     P.run(statement)

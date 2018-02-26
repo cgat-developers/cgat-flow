@@ -147,7 +147,7 @@ def convertReadsToIntervals(bamfile,
 
     statement.append("tabix -p bed %(bedfile)s")
     statement.append("rm -rf %(tmpdir)s")
-    statement = " ; checkpoint; ".join(statement)
+    statement = " ; ".join(statement)
     P.run(statement)
 
 
@@ -872,7 +872,6 @@ def runMEDIPSDMR(design_file, outfile):
             --fdr-threshold=%(medips_fdr)f
             --log=%(outfile)s.log
             > %(outfile)s.log2;
-            checkpoint;
             zcat %(outfile)s_%(pair1)s_vs_%(pair2)s_data.tsv.gz
             | cgat runMEDIPS
             --treatment=%(pair1)s

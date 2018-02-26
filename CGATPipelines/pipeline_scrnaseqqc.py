@@ -523,7 +523,6 @@ def buildFeatureCounts(infiles, outfile):
     job_memory = "2G"
 
     statement = '''
-    checkpoint;
     featureCounts %(featurecounts_options)s
     -T %(featurecounts_threads)s
     -s %(featurecounts_strand)s
@@ -531,7 +530,6 @@ def buildFeatureCounts(infiles, outfile):
     -o %(outfile)s
     %(infile)s
     > %(outfile)s.log;
-    checkpoint;
     gzip %(outfile)s
     '''
 

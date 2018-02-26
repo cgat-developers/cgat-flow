@@ -58,10 +58,10 @@ def GATKReadGroups(infile, outfile, genome,
                     OUTPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
                     REFERENCE=%(genome)s
                     ALLOW_INCOMPLETE_DICT_CONCORDANCE=true
-                    VALIDATION_STRINGENCY=SILENT ; checkpoint ;''' % locals()
+                    VALIDATION_STRINGENCY=SILENT ;''' % locals()
 
     statement += '''samtools index %(tmpdir_gatk)s/%(track)s.reordered.bam ;
-                    checkpoint ;''' % locals()
+                 ''' % locals()
 
     statement += '''picard AddOrReplaceReadGroups
                     INPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
@@ -70,10 +70,10 @@ def GATKReadGroups(infile, outfile, genome,
                     RGPL=%(platform)s
                     RGPU=%(platform_unit)s
                     RGSM=%(track)s
-                    VALIDATION_STRINGENCY=SILENT ; checkpoint ;''' % locals()
+                    VALIDATION_STRINGENCY=SILENT ;''' % locals()
 
     statement += '''samtools index %(outfile)s ;
-                    checkpoint ;''' % locals()
+                 ''' % locals()
     statement += '''rm -rf %(tmpdir_gatk)s ;''' % locals()
 
     P.run(statement)
@@ -125,14 +125,14 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
                     -ip %(padding)s
                     -I %(infile)s
                     --knownSites %(dbsnp)s %(solid_options)s ;
-                    checkpoint ;''' % locals()
+                    ''' % locals()
 
     statement += '''GenomeAnalysisTK
                     -T PrintReads -o %(outfile)s
                     -BQSR %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -I %(infile)s ;
-                    checkpoint ;''' % locals()
+                    ''' % locals()
 
     statement += '''rm -rf %(tmpdir_gatk)s ;''' % locals()
     P.run(statement)
@@ -239,7 +239,7 @@ def strelkaINDELCaller(infile_control, infile_tumor, outfile, genome, config,
     /ifs/apps/bio/strelka-1.0.14/bin/configureStrelkaWorkflow.pl
     --normal=%(infile_control)s  --tumor=%(infile_tumor)s
     --ref=%(genome)s  --config=%(config)s  --output-dir=%(outdir)s;
-    checkpoint ; make -j %(job_threads)s -C %(outdir)s''' % locals()
+    make -j %(job_threads)s -C %(outdir)s''' % locals()
 
     P.run(statement)
 

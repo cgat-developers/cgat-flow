@@ -838,7 +838,6 @@ def runMACS(infile, outfile,
     dir = os.path.dirname(outfile)
     statement = '''
     cd %(dir)s;
-    checkpoint;
     macs
     -t %(infile)s
     --diag
@@ -865,7 +864,6 @@ def runMACS(infile, outfile,
                        < %(outfile)s_%(suffix)s
                        | bgzip > %(outfile)s_%(suffix)s.gz;
                        tabix -f -p bed %(outfile)s_%(suffix)s.gz;
-                       checkpoint;
                        rm -f %(outfile)s_%(suffix)s
                     '''
         P.run(statement)
@@ -1021,12 +1019,9 @@ def bedGraphToBigwig(infile, contigsfile, outfile,
 
     if sort_bedGraph:
         statement = '''sorted_bdg=`mktemp -p %(local_tmpdir)s`;
-                           checkpoint;
                            sort -k1,1 -k2,2n %(infile)s > $sorted_bdg;
-                           checkpoint;
                            bedGraphToBigWig $sorted_bdg
                                             %(contigsfile)s %(outfile)s;
-                           checkpoint;
                            rm $sorted_bdg;
                         '''
 
@@ -1147,7 +1142,6 @@ def runMACS2(infile, outfile,
                    < %(outfile)s_%(suffix)s
                    | bgzip > %(outfile)s_%(suffix)s.gz;
                    tabix -f -b 2 -e 3 -S 27 %(outfile)s_%(suffix)s.gz;
-                   checkpoint;
                    rm -f %(outfile)s_%(suffix)s
                 '''
     P.run(statement)

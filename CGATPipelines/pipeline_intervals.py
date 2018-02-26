@@ -539,7 +539,7 @@ def prepareGTFsByOverlapWithIntervals(infile, outfiles):
     geneset = PARAMS["annotations_interface_geneset_all_gtf"]
     tss = PARAMS["annotations_interface_geneset_coding_gene_tss_bed"]
 
-    # do not checkpoint, as some files might be empty
+    # some files might be empty in this statement
     statement = '''
     intersectBed -u -a %(geneset)s -b %(track)s.bed.gz
     | cgat gff2bed --is-gtf -v 0

@@ -287,7 +287,7 @@ def buildCoverageStats(infile, outfile):
                 awk -F '\\t' 'BEGIN { OFS="\\t" } {print $1,$2,$3,"+",$4;}'
                 > %(infile)s_temp_baits.bed;
                 cat  %(infile)s_temp_header.txt %(infile)s_temp_baits.bed
-                > %(modified_baits)s; checkpoint ;
+                > %(modified_baits)s;
                 rm -rf %(infile)s_temp_baits.bed %(infile)s_temp_header.txt
                 '''
     P.run(statement)
@@ -384,25 +384,20 @@ def mergeSampleBams(infile, outfile):
                     RGLB=%(library)s RGPL=%(platform)s
                     RGPU=%(platform_unit)s RGSM=%(track)s
                     ID=%(track)s
-                    VALIDATION_STRINGENCY=SILENT ;
-                    checkpoint ;'''
+                    VALIDATION_STRINGENCY=SILENT ;'''
     statement += '''picard AddOrReplaceReadGroups
                     INPUT=%(infile_tumor)s
                     OUTPUT=%(tmpdir_gatk)s/%(infile_tumor_base)s
                     RGLB=%(library)s RGPL=%(platform)s
                     RGPU=%(platform_unit)s RGSM=%(track_tumor)s
                     ID=%(track_tumor)s
-                    VALIDATION_STRINGENCY=SILENT ;
-                    checkpoint ;'''
+                    VALIDATION_STRINGENCY=SILENT ;'''
     statement += '''samtools merge -rf
                     %(outfile)s
                     %(tmpdir_gatk)s/%(infile_base)s
-                    %(tmpdir_gatk)s/%(infile_tumor_base)s
-                    ; checkpoint ;'''
-    statement += '''samtools index %(outfile)s ;
-                    checkpoint ;'''
-    statement += '''rm -rf %(tmpdir_gatk)s ;
-                    checkpoint ; '''
+                    %(tmpdir_gatk)s/%(infile_tumor_base)s;'''
+    statement += "samtools index %(outfile)s; "
+    statement += "rm -rf %(tmpdir_gatk)s ;"
     P.run(statement)
     IOTools.zapFile(infile)
     IOTools.zapFile(infile_tumor)
@@ -439,9 +434,9 @@ def splitMergedRealigned(infile, outfile):
     statement = '''samtools view -hb %(infile)s
                    -r %(track)s > %(outfile)s;
                    samtools view -hb %(infile)s
-                   -r %(track_tumor)s > %(outfile_tumor)s; checkpoint ;
+                   -r %(track_tumor)s > %(outfile_tumor)s;
                    samtools index %(outfile)s;
-                   samtools index %(outfile_tumor)s; checkpoint;'''
+                   samtools index %(outfile_tumor)s;'''
     P.run(statement)
     IOTools.zapFile(infile)
 

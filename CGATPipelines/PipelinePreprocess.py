@@ -202,7 +202,7 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
     def cleanup(self):
         '''return statement to clean up temporary files after processing.'''
         if self.save:
-            statement = 'checkpoint;'
+            statement = ''
         else:
             statement = 'rm -rf %s;' % self.outdir
         statement += '''rm -rf %s;''' % (self.tmpdir_fastq)
@@ -284,16 +284,16 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
                         --guess-format=illumina-1.8
                         > %(fn)s.summary""")
 
-        cmd_process = " checkpoint; ".join(cmd_processors)
+        cmd_process = " ; ".join(cmd_processors)
         cmd_clean = self.cleanup()
 
         assert cmd_preprocess.strip().endswith(";")
         assert cmd_process.strip().endswith(";")
         assert cmd_clean.strip().endswith(";")
 
-        statement = " checkpoint; ".join((cmd_preprocess,
-                                          cmd_process,
-                                          cmd_clean))
+        statement = " ; ".join((cmd_preprocess,
+                                cmd_process,
+                                cmd_clean))
         return statement
 
 
@@ -475,7 +475,6 @@ class Trimmomatic(ProcessTool):
             %(outfile2)s %(output_prefix)s.2.unpaired
             %(processing_options)s
             2>> %(output_prefix)s.log;
-            checkpoint;
             gzip %(output_prefix)s.*.unpaired;
             ''' % locals()
 
@@ -509,7 +508,7 @@ class FastxTrimmer(ProcessTool):
             | gzip > %(outfile)s
             ;''' % locals())
 
-        return " checkpoint; ".join(cmds)
+        return " ; ".join(cmds)
 
 
 class Cutadapt(ProcessTool):
@@ -574,7 +573,7 @@ class Cutadapt(ProcessTool):
                 if untrimmed:
                     cmds.append("gzip %s;" % outfile_untrimmed)
 
-        return " checkpoint; ".join(cmds)
+        return " ".join(cmds)
 
 
 class Reconcile(ProcessTool):
@@ -631,9 +630,7 @@ class Flash(ProcessTool):
         -o %(track)s
         -d %(outdir)s
         >& %(output_prefix)s-flash.log;
-        checkpoint;
         gzip %(outdir)s/*;
-        checkpoint;
         mv %(outdir)s/%(track)s.extendedFrags.fastq.gz %(outfile)s;
         ''' % locals()
 
@@ -663,7 +660,7 @@ class Flash(ProcessTool):
             > summary.dir/%(infile_base2)s.summary
             ;''' % locals()
         else:
-            postprocess_cmd = "checkpoint ;"
+            postprocess_cmd = ""
 
         return postprocess_cmd
 
@@ -686,7 +683,7 @@ class ReverseComplement(ProcessTool):
             | gzip > %(outfile)s;
             ''' % locals())
 
-        return " checkpoint; ".join(cmds)
+        return " ".join(cmds)
 
 
 class Pandaseq(ProcessTool):
@@ -720,9 +717,7 @@ class Pandaseq(ProcessTool):
         -F
         -G %(output_prefix)s-pandaseq.log.bgz;
         >& %(output_prefix)s-pandaseq.log;
-        checkpoint;
         gzip %(outdir)s/*;
-        checkpoint;
         ''' % locals()
 
         return cmd

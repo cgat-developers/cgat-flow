@@ -2289,7 +2289,7 @@ def plotLdExcludedEpistasis(infile, outfile):
 #     out_pattern = ".".join(outfile.split(".")[:-2])
 
 #     statement = '''
-#     R CMD Rserve --vanilla; checkpoint;
+#     R CMD Rserve --vanilla;
 #     cgat geno2assoc
 #     --program=plink2
 #     --input-file-format=plink_binary
@@ -2600,7 +2600,7 @@ def testUnadjustedEpistasis(infiles, outfile):
 #     out_pattern = ".".join(outfile.split(".")[:-2])
 
 #     statement = '''
-#     R CMD Rserve --vanilla; checkpoint;
+#     R CMD Rserve --vanilla;
 #     cgat geno2assoc
 #     --program=plink2
 #     --input-file-format=plink_binary
@@ -3436,7 +3436,7 @@ def plotLocusZoom(infile, outfile):
     job_memory = "4G"
 
     statement = '''
-    cd  locuszoom.dir/; checkpoint;
+    cd locuszoom.dir &&
     locuszoom
     --metal %(inpath)s
     --pvalcol P
@@ -3449,7 +3449,6 @@ def plotLocusZoom(infile, outfile):
     --refsnp %(snp)s
     --prefix %(outpattern)s
     > %(outpattern)s.log;
-    cd ../ ;
     '''
 
     P.run(statement)

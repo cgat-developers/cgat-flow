@@ -636,7 +636,6 @@ def buildBigWig(infile, outfile):
     > %(tmpfile)s;
     sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s;
     bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
-    checkpoint;
     rm -f %(tmpfile)s
     '''
     P.run(statement)

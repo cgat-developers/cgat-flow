@@ -583,7 +583,6 @@ def buildReferenceTranscriptome(infile, outfile):
     zcat %(infile)s
     | awk '$3 == "exon"' > %(gtf_file)s;
     gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s;
-    checkpoint;
     samtools faidx %(outfile)s
     '''
     P.run(statement)
@@ -1902,7 +1901,6 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         infiles = " ".join(infiles)
         statement = '''
         samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log;
-        checkpoint;
         samtools index %(outfile)s
         '''
         P.run(statement)
@@ -2028,9 +2026,7 @@ def buildBigWig(infile, outfile):
         -split
         -scale %(scale)f
         > %(tmpfile)s;
-        checkpoint;
         bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
-        checkpoint;
         rm -f %(tmpfile)s
         '''
     else:

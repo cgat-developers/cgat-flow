@@ -1190,7 +1190,7 @@ class Peakcaller(object):
             prepareIDR_cmd = ""
 
         loadDatatoDatabase = ""
-        full_cmd = " checkpoint ;".join((
+        full_cmd = " ".join((
             peaks_cmd, compress_cmd, postprocess_cmd, prepareIDR_cmd,
             loadDatatoDatabase))
 
@@ -1352,25 +1352,19 @@ class Macs2Peakcaller(Peakcaller):
         bedGraphToBigWig K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bdg
         assembly.dir/contigs.tsv
         K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bw;
-        checkpoint;
         rm -rf K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bdg;
-        checkpoint;
 
         bedGraphToBigWig K9-13-2_filtered_pseudo_2.macs2_control_lambda.bdg
         assembly.dir/contigs.tsv
         K9-13-2_filtered_pseudo_2.macs2_control_lambda.bw;
-        checkpoint;
         rm -rf K9-13-2_filtered_pseudo_2.macs2_control_lambda.bdg;
-        checkpoint;
 
         grep -v "^$" < K9-13-2_filtered_pseudo_2.macs2_peaks.xls |
         bgzip > K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz;
         x=$(zgrep "[#|log]" K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz |
         wc -l);
         tabix -f -b 2 -e 3 -S $x K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz;
-        checkpoint;
         rm -f K9-13-2_filtered_pseudo_2.macs2_peaks.xls;
-        checkpoint;
 
         Output files from the callPeaks step are compressed as follows:
         .macs2_treat_pileup.bdg > .macs2_treat_pileup.bw
@@ -1410,13 +1404,13 @@ class Macs2Peakcaller(Peakcaller):
         statement.append('''
         sort -k1,1 -k2,2n %(outfile)s_treat_pileup.bdg > %(temp)s;
         bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_treat_pileup.bw ;
-        checkpoint ; rm -rf %(outfile)s_treat_pileup.bdg; rm -rf %(temp)s;''' % locals())
+        rm -rf %(outfile)s_treat_pileup.bdg; rm -rf %(temp)s;''' % locals())
 
         temp = P.get_temp_filename('.')
         statement.append('''
         sort -k1,1 -k2,2n %(outfile)s_control_lambda.bdg > %(temp)s;
         bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_control_lambda.bw ;
-        checkpoint ; rm -rf %(outfile)s_control_lambda.bdg; rm -rf %(temp)s;''' % locals())
+        rm -rf %(outfile)s_control_lambda.bdg; rm -rf %(temp)s;''' % locals())
 
         # index and compress peak file
         suffix = 'peaks.xls'
@@ -1425,9 +1419,9 @@ class Macs2Peakcaller(Peakcaller):
             | bgzip > %(outfile)s_%(suffix)s.gz;
             x=$(zgrep "[#|log]" %(outfile)s_%(suffix)s.gz | wc -l);
             tabix -f -b 2 -e 3 -S $x %(outfile)s_%(suffix)s.gz;
-             checkpoint; rm -f %(outfile)s_%(suffix)s;''' % locals())
+            rm -f %(outfile)s_%(suffix)s;''' % locals())
 
-        return " checkpoint ;".join(statement)
+        return " ".join(statement)
 
     def postProcessPeaks(self, infile, outfile, controlfile, insertsizefile):
         '''

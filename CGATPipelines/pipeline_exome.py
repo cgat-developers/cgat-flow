@@ -406,7 +406,7 @@ def mergeBAMs(infiles, outfile):
     statement = '''picard MergeSamFiles
                    INPUT=%(inputfiles)s
                    OUTPUT=%(outfile)s
-                   ASSUME_SORTED=true; checkpoint; '''
+                   ASSUME_SORTED=true; '''
     statement += '''samtools index %(outfile)s ;''' % locals()
     P.run(statement)
 

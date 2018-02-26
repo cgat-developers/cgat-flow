@@ -163,7 +163,6 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     statement = '''cat
     %(infile)s|grep -v NA|
     awk '$20 < %(FDR)s' > %(infile)s_sig.txt;
-    checkpoint;
     rmats2sashimiplot
     --b1 %(group1)s
     --b2 %(group2)s

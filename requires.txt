@@ -31,6 +31,11 @@
 # bowtie2
 # trimmomatic
 # sra-tools
+# fastq-screen
+
+# Note: uninstall conda perl
+# pipeline_windows
+# r-ggplot
 
 # pipeline_geneset special packages
 # httplib2

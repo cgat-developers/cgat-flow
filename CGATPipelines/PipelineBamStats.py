@@ -39,7 +39,7 @@ import CGATCore.IOTools as IOTools
 import CGAT.BamTools.bamtools as BamTools
 import CGATCore.Pipeline as P
 
-PICARD_MEMORY = "9G"
+PICARD_MEMORY = "12G"
 
 
 def getNumReadsFromReadsFile(infile):
@@ -185,7 +185,6 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     genome_file : string
         Filename with genomic sequence.
     '''
-
     job_memory = PICARD_MEMORY
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
@@ -203,7 +202,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run(statement)
+    P.run(statement, job_memory=PICARD_MEMORY)
 
 
 def addPseudoSequenceQuality(infile, outfile):

@@ -268,12 +268,10 @@ def loadSamples(infile, outfile):
 def mapReads(infiles, outfile):
     '''Map reads to the genome using BWA-MEM (output=SAM), convert to BAM,
     sort and index BAM file'''
-    job_options = "-l mem_free=8G"
-    job_threads = PARAMS["bwa_threads"]
     track = P.snip(os.path.basename(outfile), ".bam")
     m = PipelineMapping.BWAMEM(remove_unique=PARAMS["bwa_remove_non_unique"])
     statement = m.build((infiles,), outfile)
-    P.run(statement)
+    P.run(statement, job_memory="8G", job_threads=PARAMS["bwa_threads"])
 
 ###############################################################################
 ###############################################################################

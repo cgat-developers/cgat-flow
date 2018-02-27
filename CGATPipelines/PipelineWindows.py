@@ -69,7 +69,6 @@ def convertReadsToIntervals(bamfile,
     is_paired = BamTools.isPaired(bamfile)
     current_file = bamfile
     tmpdir = P.get_temp_filename()
-    os.unlink(tmpdir)
     statement = ["mkdir %(tmpdir)s"]
     nfiles = 0
 
@@ -92,6 +91,7 @@ def convertReadsToIntervals(bamfile,
         --method=filter
         --filter-method=unique,mapped
         --log=%%(bedfile)s.nonunique.log
+        2> %%(bedfile)s.nonunique.err
         > %(next_file)s ''' % locals())
 
         nfiles += 1
@@ -112,7 +112,7 @@ def convertReadsToIntervals(bamfile,
             METRICS_FILE=%(bedfile)s.duplicate_metrics
             REMOVE_DUPLICATES=TRUE
             VALIDATION_STRINGENCY=SILENT
-            2>> %%(bedfile)s.markdup.log ''' % locals())
+            >& %%(bedfile)s.markdup.log ''' % locals())
 
         nfiles += 1
         current_file = next_file
@@ -125,10 +125,12 @@ def convertReadsToIntervals(bamfile,
               --max-insert-size=%(filtering_max_insert_size)i
               --log=%(bedfile)s.bam2bed.log
               -
+            2> %(bedfile)s.bam2bed.err
             | cgat bed2bed
               --method=sanitize-genome
               --genome-file=%(genome_dir)s/%(genome)s
               --log=%(bedfile)s.sanitize.log
+            2> %(bedfile)s.sanitize.err
             | cut -f 1,2,3,4
             | sort -k1,1 -k2,2n
             | bgzip > %(bedfile)s''')
@@ -137,18 +139,20 @@ def convertReadsToIntervals(bamfile,
             | cgat bam2bed
               --log=%(bedfile)s.bam2bed.log
               -
+            2> %(bedfile)s.bam2bed.err
             | cgat bed2bed
               --method=sanitize-genome
               --genome-file=%(genome_dir)s/%(genome)s
               --log=%(bedfile)s.sanitize.log
+            2> %(bedfile)s.sanitize.err
             | cut -f 1,2,3,4
             | sort -k1,1 -k2,2n
             | bgzip > %(bedfile)s''')
 
-    statement.append("tabix -p bed %(bedfile)s")
+    statement.append("tabix -p bed %(bedfile)s >& %(bedfile)s.tabix.log")
     statement.append("rm -rf %(tmpdir)s")
     statement = " ; ".join(statement)
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 def countTags(infile, outfile):

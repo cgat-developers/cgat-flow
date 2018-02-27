@@ -312,7 +312,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
 
     if suffixes is None or len(suffixes) == 0:
         E.info("No metrics computed for {}".format(outfile))
-        IOTools.touchFile(outfile)
+        IOTools.touch_file(outfile)
         return
 
     track = P.snip(infile, ".log")
@@ -340,7 +340,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
         -not -regex '.*\/report.*'
         -not -regex '.*\/_.*'
         \( %(regex_pattern)s \)
-        -exec %(pipeline_scriptsdir)s/cgat_file_apply.sh {} %(metric)s \;
+        -exec %(scriptsdir)s/cgat_file_apply.sh {} %(metric)s \;
         | perl -p -e "s/ +/\\t/g"
         | sort -k1,1
         > %(outfile)s'''
@@ -379,7 +379,8 @@ def buildLineCounts(infile, outfile):
         infile,
         outfile,
         metric="wc -l",
-        suffixes=P.as_list(P.as_list(PARAMS.get('%s_regex_linecount' % track, ""))))
+        suffixes=P.as_list(P.as_list(
+            PARAMS.get('%s_regex_linecount' % track, ""))))
 
 
 @transform(run_tests,
@@ -408,7 +409,7 @@ def mergeFileStatistics(infiles, outfile):
     infiles = " ".join(sorted(infiles))
 
     statement = '''
-    %(pipeline_scriptsdir)s/merge_testing_output.sh
+    %(scriptsdir)s/merge_testing_output.sh
     %(infiles)s
     > %(outfile)s'''
     P.run(statement)
@@ -644,6 +645,12 @@ def main(argv=None):
     workflow_options.append("-p {}".format(P.get_params()["cluster"]["num_jobs"]))
     
     P.get_params()["workflow_options"] == "".join(workflow_options)
+    # manually set location of test scripts - this needs to be better organized
+    # 1. make scripts live alongside pipeline_testing.py
+    # 2. make scripts available via cgatflow CLI
+    # 3. include scripts in pipeline_testing
+    P.get_params()["scriptsdir"] = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "scripts")
     P.main(argv)
 
 

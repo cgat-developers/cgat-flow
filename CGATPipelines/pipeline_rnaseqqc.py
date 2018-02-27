@@ -1319,10 +1319,8 @@ def loadTranscriptProfiles(infiles, outfile):
 def buildExperimentTable(infiles, outfile):
 
     d = os.getcwd()
-    try:
-        project_id = P.getProjectId()
-    except ValueError:
-        project_id = "unknown"
+    # TODO: read from config file
+    project_id = "unknown"
     with IOTools.open_file(outfile, "w") as outf:
         outf.write("id\tname\tproject_id\tdirectory\ttitle\n")
         outf.write("\t".join(

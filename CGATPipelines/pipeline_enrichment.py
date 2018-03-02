@@ -408,11 +408,16 @@ def runGsea(infile, outfile):
     p_no = PARAMS['stats_gsea_display_num']
     l_no = PARAMS['stats_gsea_ngeneset']
 
-    statement = '''dir=$(basename %(infile)s .processed | awk '{split($0,a,"/"); print a[1]}') &&
-                   mkdir $dir && cd $dir &&
-                   xvfb-run cgat runGSEA -f ../%(infile)s -g %(geneset)s -m %(min_size)s -x %(max_size)s
-                   -s %(seed)s -n %(no)s -d %(p_no)s -l %(l_no)s'''
-    P.run(statement)
+    resultsdir, output_fn = os.path.split(outfile)
+
+    statement = ("cd {resultsdir} && "
+                 "xvfb-run "
+                 "cgat runGSEA "
+                 "-f ../{infile} -g {geneset} -m {min_size} -x {max_size} "
+                 "-s {seed} -n {no} -d {p_no} -l {l_no} "
+                 ">& {output_fn}.log ".format(**locals()))
+    # ignore xvfb-run error
+    P.run(statement, ignore_errors=True)
 
 ##########################################################################
 #                 Enrichment analysis (ORA)

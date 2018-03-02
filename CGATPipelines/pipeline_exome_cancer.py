@@ -295,7 +295,7 @@ def buildCoverageStats(infile, outfile):
     PipelineMappingQC.buildPicardCoverageStats(
         infile, outfile, modified_baits, modified_baits)
 
-    IOTools.zapFile(modified_baits)
+    IOTools.zap_file(modified_baits)
 
 
 @follows(buildCoverageStats)
@@ -337,12 +337,12 @@ def GATKpreprocessing(infile, outfile):
     PipelineExome.GATKIndelRealign(outfile1, outfile2, genome,
                                    PARAMS["gatk_threads"])
 
-    IOTools.zapFile(outfile1)
+    IOTools.zap_file(outfile1)
 
     PipelineExome.GATKBaseRecal(outfile2, outfile, genome,
                                 PARAMS["gatk_dbsnp"],
                                 PARAMS["gatk_solid_options"])
-    IOTools.zapFile(outfile2)
+    IOTools.zap_file(outfile2)
 
 
 @transform(GATKpreprocessing,
@@ -399,8 +399,8 @@ def mergeSampleBams(infile, outfile):
     statement += "samtools index %(outfile)s; "
     statement += "rm -rf %(tmpdir_gatk)s ;"
     P.run(statement)
-    IOTools.zapFile(infile)
-    IOTools.zapFile(infile_tumor)
+    IOTools.zap_file(infile)
+    IOTools.zap_file(infile_tumor)
 
 
 @transform(mergeSampleBams,
@@ -415,7 +415,7 @@ def realignMatchedSample(infile, outfile):
 
     PipelineExome.GATKIndelRealign(infile, outfile, genome)
 
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 
 @transform(realignMatchedSample,
@@ -438,7 +438,7 @@ def splitMergedRealigned(infile, outfile):
                    samtools index %(outfile)s;
                    samtools index %(outfile_tumor)s;'''
     P.run(statement)
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 
 @transform(splitMergedRealigned,

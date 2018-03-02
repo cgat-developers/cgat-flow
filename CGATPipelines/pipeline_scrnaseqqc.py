@@ -625,11 +625,7 @@ def getContextStats(outfile):
     cgat extract_stats
     --task=extract_table
     --log=%(outfile)s.log
-    --database=%(mapping_db)s
-    --database-backend=%(database_backend)s
-    --database-hostname=%(database_host)s
-    --database-username=%(database_username)s
-    --database-port=3306
+    --database-url=%(mapping_database_url)s
     --table-name=%(mapping_context_stats)s
     > %(outfile)s
     '''
@@ -648,11 +644,7 @@ def getAlignmentStats(outfile):
     cgat extract_stats
     --task=extract_table
     --log=%(outfile)s.log
-    --database-port=3306
-    --database=%(mapping_db)s
-    --database-backend=%(database_backend)s
-    --database-hostname=%(database_host)s
-    --database-username=%(database_username)s
+    --database-url=%(mapping_database_url)s
     --table-name=%(mapping_alignment_stats)s
     > %(outfile)s
     '''
@@ -671,11 +663,7 @@ def getPicardAlignStats(outfile):
     cgat extract_stats
     --log=%(outfile)s.log
     --task=extract_table
-    --database-port=3306
-    --database-backend=%(database_backend)s
-    --database-hostname=%(database_host)s
-    --database-username=%(database_username)s
-    --database=%(mapping_db)s
+    --database-url=%(mapping_database_url)s
     --table-name=%(mapping_picard_alignments)s
     > %(outfile)s
     '''
@@ -695,11 +683,7 @@ if PARAMS['paired']:
         cgat extract_stats
         --log=%(outfile)s.log
         --task=extract_table
-        --database-port=3306
-        --database-backend=%(database_backend)s
-        --database-hostname=%(database_host)s
-        --database-username=%(database_username)s
-        --database=%(mapping_db)s
+        --database-url=%(mapping_database_url)s
         --table-name=%(mapping_picard_inserts)s
         > %(outfile)s
         '''
@@ -722,11 +706,7 @@ def getDuplicationStats(outfile):
     cgat extract_stats
     --log=%(outfile)s.log
     --task=extract_table
-    --database-port=3306
-    --database-backend=%(database_backend)s
-    --database-hostname=%(database_host)s
-    --database-username=%(database_username)s
-    --database=%(mapping_db)s
+    --database-url=%(mapping_database_url)s
     --table-name=%(mapping_picard_dups)s
     > %(outfile)s
     '''
@@ -745,18 +725,13 @@ def getCoverageStats(outfile):
     5'/3' coverages
     '''
 
-    statement = '''
-    cgat extract_stats
-    --task=extract_table
-    --log=%(outfile)s.log
-    --database-port=3306
-    --database-backend=%(database_backend)s
-    --database-hostname=%(database_host)s
-    --database-username=%(database_username)s
-    --database=%(mapping_db)s
-    --table-name=%(mapping_picard_dups)s
-    > %(outfile)s
-    '''
+    statement = (
+        "cgat extract_stats "
+        "--task=extract_table "
+        "--log={outfile}.log "
+        "--database-url=%(mapping_database_url)s "
+        "--table-name=%(mapping_picard_dups)s "
+        "> %(outfile)s")
 
     P.run(statement)
 

@@ -32,10 +32,29 @@
 # trimmomatic
 # sra-tools
 # fastq-screen
+# blast (for dustmasker)
+# meme
+# star
+# subread
+# gatk
+
+# sailfish
+# salmon
+# kallisto
+# cufflinks
+# hisat2
 
 # Note: uninstall conda perl
 # pipeline_windows
-# r-ggplot
+# r-ggplot2
+
+# genesets
+# bioconductor-hpar
+
+# bioconductor-deseq
+# bioconductor-deseq2
+# bioconductor-edger
+# r-gmd
 
 # pipeline_geneset special packages
 # httplib2

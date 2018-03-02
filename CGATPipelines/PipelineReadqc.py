@@ -91,12 +91,7 @@ def collectFastQCSections(infiles, section, datadir):
 
 
 def loadFastqc(filename,
-               backend="sqlite",
-               database="csvdb",
-               host="",
-               username="",
-               password="",
-               port=3306):
+               database_url):
     '''load FASTQC statistics into database.
 
     Each section will be uploaded to its own table.
@@ -105,29 +100,17 @@ def loadFastqc(filename,
     ----------
     filename : string
         Filename with FASTQC data
-    backend : string
-        Database backend. Only this is required for an sqlite database.
-    host : string
-        Database host name
-    username : string
-        Database user name
-    password : string
-        Database password
-    port : int
-        Database server port.
+    database_url : string
+        Database backend.
     '''
 
     parser = CSV2DB.buildParser()
     (options, args) = parser.parse_args([])
 
-    options.database_backend = backend
-    options.database_host = host
-    options.database_name = database
-    options.database_username = username
-    options.database_password = password
-    options.database_port = port
+    options.database_url = database_url
+    options.database_schema = None
     options.allow_empty = True
-
+    
     for fn in glob.glob(filename):
         prefix = os.path.basename(os.path.dirname(fn))
         results = []
@@ -137,7 +120,6 @@ def loadFastqc(filename,
             # do not collect basic stats, see loadFastQCSummary
             if name == "Basic Statistics":
                 continue
-
             options.tablename = prefix + "_" + re.sub(" ", "_", name)
 
             inf = StringIO("\n".join([header] + data) + "\n")

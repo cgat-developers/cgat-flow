@@ -972,8 +972,8 @@ def summarizeMACS2FDR(infiles, outfile):
         maximum q-value used for filtering
         DS: not yet implemented as a parameter
     '''
-    # PARAMS accessed here - should be passed as paprmeter to function
-    fdr_threshold = PARAMS["macs2_max_qvalue"]  # numpy.arange( 0, 1.05, 0.05 )
+    # P.get_params() accessed here - should be passed as paprmeter to function
+    fdr_threshold = P.get_params()["macs2_max_qvalue"]  # numpy.arange( 0, 1.05, 0.05 )
 
     outf = IOTools.open_file(outfile, "w")
     outf.write("track\t%s\n" % str(fdr_threshold))
@@ -1096,7 +1096,7 @@ def runMACS2(infile, outfile,
     # --bdg --SPMR: ask macs to create a bed-graph file with
     # fragment pileup per million reads
 
-    # macs2_options accesses PARAMS directly - should be passed  explicitly
+    # macs2_options accesses P.get_params() directly - should be passed  explicitly
     statement = '''
     macs2 callpeak
     %(format_options)s
@@ -1181,7 +1181,7 @@ def runZinba(infile,
 
     E.info("zinba: running action %s" % (action))
 
-    job_threads = PARAMS["zinba_threads"]
+    job_threads = P.get_params()["zinba_threads"]
     job_memory = "32G"
 
     # TODO: use closest size or build mapability file
@@ -1191,10 +1191,10 @@ def runZinba(infile,
     tag_size = 50
     fragment_size = 200
 
-    mappability_dir = os.path.join(PARAMS["zinba_mappability_dir"],
-                                   PARAMS["genome"],
+    mappability_dir = os.path.join(P.get_params()["zinba_mappability_dir"],
+                                   P.get_params()["genome"],
                                    "%i" % tag_size,
-                                   "%i" % PARAMS[
+                                   "%i" % P.get_params()[
                                        "zinba_alignability_threshold"],
                                    "%i" % fragment_size)
 
@@ -1202,8 +1202,8 @@ def runZinba(infile,
         raise OSError(
             "mappability not found, expected to be at %s" % mappability_dir)
 
-    bit_file = os.path.join(PARAMS["zinba_index_dir"],
-                            PARAMS["genome"]) + ".2bit"
+    bit_file = os.path.join(P.get_params()["zinba_index_dir"],
+                            P.get_params()["genome"]) + ".2bit"
     if not os.path.exists(bit_file):
         raise OSError("2bit file not found, expected to be at %s" % bit_file)
 
@@ -1283,7 +1283,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
         IOTools.touch_file(outfile)
         return
 
-    exportdir = os.path.join(PARAMS['exportdir'], 'macs')
+    exportdir = os.path.join(P.get_params()['exportdir'], 'macs')
     try:
         os.mkdir(exportdir)
     except OSError:
@@ -1302,9 +1302,9 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
     ###############################################################
     # filter peaks
     # DS thresholds should be passed explicityly to function
-    max_qvalue = float(PARAMS["macs_max_qvalue"])
+    max_qvalue = float(P.get_params()["macs_max_qvalue"])
     # min, as it is -10log10
-    min_pvalue = float(PARAMS["macs_min_pvalue"])
+    min_pvalue = float(P.get_params()["macs_min_pvalue"])
 
     outtemp = P.get_temp_file(".")
     tmpfilename = outtemp.name
@@ -1485,7 +1485,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
         IOTools.touch_file(outfile)
         return
 
-    exportdir = os.path.join(PARAMS['exportdir'], 'macs2')
+    exportdir = os.path.join(P.get_params()['exportdir'], 'macs2')
     try:
         os.makedirs(exportdir)
     except OSError:
@@ -1503,9 +1503,9 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
     ###############################################################
     # filter peaks - this isn't needed...
     # DS threshols shoul dbe passed explicitly
-    max_qvalue = float(PARAMS["macs_max_qvalue"])
+    max_qvalue = float(P.get_params()["macs_max_qvalue"])
     # min, as it is -10log10
-    min_pvalue = float(PARAMS["macs_min_pvalue"])
+    min_pvalue = float(P.get_params()["macs_min_pvalue"])
 
     outtemp = P.get_temp_file(".")
     tmpfilename = outtemp.name
@@ -1793,11 +1793,11 @@ def runSICER(infile,
     outfile = os.path.basename(outfile)
 
     if mode == "narrow":
-        window_size = PARAMS["sicer_narrow_window_size"]
-        gap_size = PARAMS["sicer_narrow_gap_size"]
+        window_size = P.get_params()["sicer_narrow_window_size"]
+        gap_size = P.get_params()["sicer_narrow_gap_size"]
     elif mode == "broad":
-        window_size = PARAMS["sicer_broad_window_size"]
-        gap_size = PARAMS["sicer_broad_gap_size"]
+        window_size = P.get_params()["sicer_broad_window_size"]
+        gap_size = P.get_params()["sicer_broad_gap_size"]
     else:
         raise ValueError("SICER mode unrecognised")
 
@@ -1841,9 +1841,9 @@ def loadSICER(infile, outfile, bamfile, controlfile=None, mode="narrow",
     # build filename of input bedfile
     track = P.snip(os.path.basename(infile), ".sicer")
     sicerdir = infile + ".dir"
-    window = PARAMS["sicer_" + mode + "_window_size"]
-    gap = PARAMS["sicer_" + mode + "_gap_size"]
-    fdr = "%8.6f" % PARAMS["sicer_fdr_threshold"]
+    window = P.get_params()["sicer_" + mode + "_window_size"]
+    gap = P.get_params()["sicer_" + mode + "_gap_size"]
+    fdr = "%8.6f" % P.get_params()["sicer_fdr_threshold"]
     offset = fragment_size
 
     # taking the file islands-summary-FDR, which contains
@@ -2007,7 +2007,7 @@ def runPeakRanger(infile, outfile, controlfile):
 def loadPeakRanger(infile, outfile, bamfile, controlfile=None, table_suffix="peaks"):
     '''load peakranger results.'''
 
-    offset = PARAMS["peakranger_extension_length"] // 2
+    offset = P.get_params()["peakranger_extension_length"] // 2
 
     if controlfile:
         control = "--control-bam-file=%(controlfile)s --control-offset=%(offset)i" % locals()
@@ -2171,7 +2171,7 @@ def runPeakRangerCCAT(infile, outfile, controlfile):
 def runSPP(infile, outfile, controlfile):
     '''run spp for peak detection.'''
 
-    job_threads = PARAMS["spp_threads"]
+    job_threads = P.get_params()["spp_threads"]
     assert controlfile is not None, "spp requires a control"
 
     statement = '''
@@ -2331,7 +2331,7 @@ def estimateSPPQualityMetrics(infile, track, controlfile, outfile):
     P.run(statement)
 
     if os.path.exists(track + ".pdf"):
-        dest = os.path.join(PARAMS["exportdir"], "quality", track + ".pdf")
+        dest = os.path.join(P.get_params()["exportdir"], "quality", track + ".pdf")
         if os.path.exists(dest):
             os.unlink(dest)
         shutil.move(track + ".pdf", dest)
@@ -2608,7 +2608,7 @@ def makeIntervalCorrelation(infiles, outfile, field, reference):
     '''compute correlation of interval properties between sets
     '''
 
-    dbhandle = sqlite3.connect(PARAMS["database_name"])
+    dbhandle = sqlite3.connect(P.get_params()["database_name"])
 
     tracks, idx = [], []
     for infile in infiles:
@@ -2743,7 +2743,7 @@ def loadIntervalsFromBed(bedfile, track, outfile,
     avgval, contig, disttostart, end, genelist, length, peakcenter, peakval, position, start, interval_id, ncpgs, ngenes, npeaks, nprobes, npromoters = \
         0, "", 0, 0, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
-    mlength = int(PARAMS["calling_merge_min_interval_length"])
+    mlength = int(P.get_params()["calling_merge_min_interval_length"])
 
     c = E.Counter()
 

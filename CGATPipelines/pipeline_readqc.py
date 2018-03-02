@@ -134,11 +134,10 @@ import CGATPipelines.PipelinePreprocess as PipelinePreprocess
 import CGATCore.IOTools as IOTools
 
 # load options from the config file
-P.get_parameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
      "pipeline.ini"])
-PARAMS = P.PARAMS
 
 # define input files and preprocessing steps
 # list of acceptable input formats
@@ -376,14 +375,8 @@ def loadFastqc(infile, outfile):
     track = P.snip(infile, ".fastqc")
     filename = os.path.join(
         PARAMS["exportdir"], "fastqc", track + "*_fastqc", "fastqc_data.txt")
-
     PipelineReadqc.loadFastqc(filename,
-                              backend=PARAMS["database_backend"],
-                              database=PARAMS["database_name"],
-                              host=PARAMS["database_host"],
-                              username=PARAMS["database_username"],
-                              password=PARAMS["database_password"],
-                              port=PARAMS["database_port"])
+                              database_url=PARAMS["database"]["url"])
     IOTools.touch_file(outfile)
 
 

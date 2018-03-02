@@ -55,9 +55,6 @@ import CGAT.Bed as Bed
 # import CGAT.Bioprospector as Bioprospector
 import CGAT.FastaIterator as FastaIterator
 
-# Set from importing module
-PARAMS = {}
-
 
 def filterMotifsFromMEME(infile, outfile, selected):
     '''select motifs from a MEME file and save into outfile
@@ -121,7 +118,7 @@ def exportSequencesFromBedFile(infile, outfile, masker=None, mode="intervals"):
     track = P.snip(infile, ".bed.gz")
 
     fasta = IndexedFasta.IndexedFasta(
-        os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
+        os.path.join(P.get_params()["genome_dir"], P.get_params()["genome"]))
     outs = IOTools.open_file(outfile, "w")
 
     ids, seqs = [], []
@@ -202,9 +199,7 @@ def writeSequencesForIntervals(track,
     '''
 
     fasta = IndexedFasta.IndexedFasta(
-        os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
-
-    cc = dbhandle.cursor()
+        os.path.join(P.get_params()["genome_dir"], P.get_params()["genome"]))
 
     if order == "peakval":
         orderby = " ORDER BY peakval DESC"
@@ -219,7 +214,7 @@ def writeSequencesForIntervals(track,
                        FROM %(tablename)s 
                        ''' % locals() + orderby
 
-    cc.execute(statement)
+    cc = dbhandle.execute(statement)
     data = cc.fetchall()
     cc.close()
 
@@ -239,7 +234,7 @@ def writeSequencesForIntervals(track,
     L.info("writeSequencesForIntervals %s: masker=%s" % (track, str(masker)))
 
     fasta = IndexedFasta.IndexedFasta(
-        os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
+        os.path.join(P.get_params()["genome_dir"], P.get_params()["genome"]))
 
     # modify the ranges
     if shift:
@@ -580,10 +575,10 @@ def loadMAST(infile, outfile):
 
             if "l" not in controls[id]:
                 controls[id]["l"] = (
-                    float(PARAMS["mast_evalue"]), 1, 0, 0, 0, 0)
+                    float(P.get_params()["mast_evalue"]), 1, 0, 0, 0, 0)
             if "r" not in controls[id]:
                 controls[id]["r"] = (
-                    float(PARAMS["mast_evalue"]), 1, 0, 0, 0, 0)
+                    float(P.get_params()["mast_evalue"]), 1, 0, 0, 0, 0)
 
             min_evalue = min(controls[id]["l"][0], controls[id]["r"][0])
             min_pvalue = min(controls[id]["l"][1], controls[id]["r"][1])
@@ -632,7 +627,7 @@ def runBioProspector(infiles, outfile, dbhandle):
         dbhandle,
         full=True,
         masker="dust",
-        proportion=PARAMS["bioprospector_proportion"])
+        proportion=P.get_params()["bioprospector_proportion"])
 
     if nseq == 0:
         E.warn("%s: no sequences - bioprospector skipped" % track)
@@ -650,7 +645,7 @@ def loadBioProspector(infile, outfile):
     '''load results from bioprospector.'''
 
     target_path = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "bioprospector")
+        os.path.abspath(P.get_params()["exportdir"]), "bioprospector")
 
     try:
         os.makedirs(target_path)
@@ -719,8 +714,9 @@ def runMAST(infiles, outfile):
     # job_options = "-l mem_free=8000M"
 
     controlfile, dbfile, motiffiles = infiles
+    
 
-    if IOTools.is_empty(dbfile):
+    if IOTools.is_empty(dbfile) or len(motiffiles) == 0:
         IOTools.touch_file(outfile)
         return
 
@@ -767,8 +763,7 @@ def runMAST(infiles, outfile):
         '''
         P.run(statement)
 
-    statement = "gzip < %(tmpfile)s > %(outfile)s"
-    P.run(statement)
+    P.run("gzip < %(tmpfile)s > %(outfile)s")
 
     shutil.rmtree(tmpdir)
     os.unlink(tmpfile)
@@ -794,7 +789,7 @@ def runGLAM2(infile, outfile, dbhandle):
     to_cluster = True
 
     target_path = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "glam2", outfile)
+        os.path.abspath(P.get_params()["exportdir"]), "glam2", outfile)
     track = infile[:-len(".fasta")]
 
     tmpdir = tempfile.mkdtemp()
@@ -805,10 +800,10 @@ def runGLAM2(infile, outfile, dbhandle):
         dbhandle,
         full=False,
         halfwidth=int(
-            PARAMS["meme_halfwidth"]),
+            P.get_params()["meme_halfwidth"]),
         maxsize=int(
-            PARAMS["meme_max_size"]),
-        proportion=PARAMS["meme_proportion"])
+            P.get_params()["meme_max_size"]),
+        proportion=P.get_params()["meme_proportion"])
 
     min_sequences = int(nseq / 10.0)
     statement = '''
@@ -879,10 +874,10 @@ def runMEME(track, outfile, dbhandle):
     # job_options = "-l mem_free=8000M"
 
     target_path = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "meme", outfile)
+        os.path.abspath(P.get_params()["exportdir"]), "meme", outfile)
 
     fasta = IndexedFasta.IndexedFasta(
-        os.path.join(PARAMS["genome_dir"], PARAMS["genome"]))
+        os.path.join(P.get_params()["genome_dir"], P.get_params()["genome"]))
 
     tmpdir = P.get_temp_dir(".")
     tmpfasta = os.path.join(tmpdir, "in.fa")
@@ -891,11 +886,11 @@ def runMEME(track, outfile, dbhandle):
         track, tmpfasta,
         dbhandle,
         full=False,
-        masker=P.as_list(PARAMS['motifs_masker']),
-        halfwidth=int(PARAMS["meme_halfwidth"]),
-        maxsize=int(PARAMS["meme_max_size"]),
-        proportion=PARAMS["meme_proportion"],
-        min_sequences=PARAMS["meme_min_sequences"])
+        masker=P.as_list(P.get_params()['motifs_masker']),
+        halfwidth=int(P.get_params()["meme_halfwidth"]),
+        maxsize=int(P.get_params()["meme_max_size"]),
+        proportion=P.get_params()["meme_proportion"],
+        min_sequences=P.get_params()["meme_min_sequences"])
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
@@ -932,7 +927,7 @@ def runMEMEOnSequences(infile, outfile):
         return
 
     target_path = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "meme", outfile)
+        os.path.abspath(P.get_params()["exportdir"]), "meme", outfile)
     tmpdir = P.get_temp_dir(".")
 
     statement = '''
@@ -954,10 +949,10 @@ def runTomTom(infile, outfile):
     '''compare ab-initio motifs against tomtom.'''
 
     tmpdir = P.get_temp_dir(".")
-    databases = " ".join(P.as_list(PARAMS["tomtom_databases"]))
+    databases = " ".join(P.as_list(P.get_params()["tomtom_databases"]))
 
     target_path = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "tomtom", outfile)
+        os.path.abspath(P.get_params()["exportdir"]), "tomtom", outfile)
 
     if IOTools.is_empty(infile):
         E.warn("input is empty - no computation performed")

@@ -68,7 +68,7 @@ Assembly report:
         From the database tab select assembly and add your genome into the
         search bar i.e. hg19.
         Then click the link "Download the full sequence report"
-        Add it to the folder where the pipeline will be ran, the file is
+        Add it to the folder where the pipeline will be running, the file is
         for hg38 is called "GRCh38.p10_assembly_report.txt".
 
 miRbase GFF3:
@@ -330,7 +330,6 @@ import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
 import CGATCore.Pipeline as P
 import CGATPipelines.PipelineGtfsubset as PipelineGtfsubset
-import CGATPipelines.PipelineUCSC as PipelineUCSC
 import CGATPipelines.PipelineGeneset as PipelineGeneset
 import CGATPipelines.PipelineGO as PipelineGO
 
@@ -595,7 +594,7 @@ def buildUCSCGeneSet(infile, outfile):
 
     statement = " ".join(statement)
 
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 @transform(buildUCSCGeneSet,

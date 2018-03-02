@@ -130,7 +130,7 @@ def getRepeatsFromUCSC(dbhandle,
     tmpfilename = tmpfile.name
 
     statement = ['''cat %(tmpfilename)s
-    | %(pipeline_scriptsdir)s/gff_sort pos
+    | sort -t$'\\t' -k1,1 -k4,4n
     | cgat gff2gff
     --method=sanitize
     --sanitize-method=genome

@@ -545,7 +545,7 @@ def outputRegionsOfInterest(design_file, counts_file, outfile,
     job_memory = "64G"
 
     design = Expression.readDesignFile(design_file)
-
+    
     # remove tracks not included in the design
     design = dict([(x, y) for x, y in list(design.items()) if y.include])
     # define the two groups
@@ -650,24 +650,33 @@ def runDE(design_file,
     prefix = IOTools.snip(os.path.basename(outfile))
     E.info(prefix)
 
+    # --bashrc=%(pipeline_scriptsdir)s/bashrc.cgat
+
     # the post-processing strips away the warning,
     # renames the qvalue column to old_qvalue
     # and adds a new qvalue column after recomputing
     # over all windows.
     statement += '''
     | cgat randomize_lines --keep-header=1
-    | %(cmd-farm)s
+    | python -m CGATCore.Pipeline.farm
+    --method=multiprocessing
+    --cluster-options="-l mem_free=16G"
+    --cluster-queue=%(cluster_queue)s
+    --cluster-num-jobs=%(cluster_num_jobs)i
+    --cluster-priority=%(cluster_priority)i
+    --cluster-queue-manager=%(cluster_queue_manager)s
+    --cluster-memory-resource=%(cluster_memory_resource)s
+    --cluster-memory-default=%(cluster_memory_default)s
     --input-header
     --output-header
     --split-at-lines=200000
-    --cluster-options="-l mem_free=16G"
     --log=%(outfile)s.log
     --output-filename-pattern=%(outdir)s/%%s
     --subdirs
     --output-regex-header="^test_id"
     "cgat runExpression
               --method=%(method)s
-              --tags-tsv-file=-
+              --tags-tsv-file=%%STDIN%%
               --design-tsv-file=%(design_file)s
               --output-filename-pattern=%%DIR%%%(prefix)s_
               --deseq-fit-type=%(deseq_fit_type)s
@@ -681,7 +690,7 @@ def runDE(design_file,
               --filter-percentile-rowsums=%(tags_filter_percentile_rowsums)i
               --log=%(outfile)s.log
               --fdr=%(edger_fdr)f
-              --deseq2-plot=0"
+              --deseq2-plot=0 "
     | perl -p -e "s/qvalue/old_qvalue/"
     | cgat table2table
     --log=%(outfile)s.log

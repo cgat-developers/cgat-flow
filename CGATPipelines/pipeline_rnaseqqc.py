@@ -256,29 +256,6 @@ SEQUENCEFILES_REGEX = regex(
 ###################################################################
 
 
-def connect():
-    '''connect to database.
-
-    This method also attaches to helper databases.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-
-    if not os.path.exists(PARAMS["annotations_database"]):
-        raise ValueError(
-            "can't find database '%s'" %
-            PARAMS["annotations_database"])
-
-    statement = '''ATTACH DATABASE '%s' as annotations''' % \
-                (PARAMS["annotations_database"])
-
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
-
-
 def findSuffixedFile(prefix, suffixes):
     for check_suffix in suffixes:
         check_infile = prefix + check_suffix
@@ -382,7 +359,7 @@ def identifyProteinCodingGenes(outfile):
 
     '''
 
-    dbh = connect()
+    dbh = P.connect()
 
     table = os.path.basename(PARAMS["annotations_interface_table_gene_info"])
 
@@ -433,7 +410,7 @@ def buildCodingGeneSet(infiles, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 @follows(mkdir("geneset.dir"))
@@ -848,7 +825,7 @@ def loadContextStats(infiles, outfile):
 def buildBedContext(outfile):
     ''' Generate a bed file that can be passed into buildAltContextStats '''
 
-    dbh = connect()
+    dbh = P.connect()
 
     tmp_bed_sorted_filename = P.get_temp_filename(shared=True)
 
@@ -931,9 +908,8 @@ def indexForSailfish(infile, outfile):
     '''create a sailfish index'''
 
     statement = '''
-    sailfish index --transcripts=%(infile)s
-    --out=%(outfile)s '''
-    P.run(statement)
+    sailfish index --transcripts=%(infile)s --out=%(outfile)s >& %(outfile)s.log'''
+    P.run(statement, job_memory="16G")
 
 
 @transform(SEQUENCEFILES,
@@ -1325,7 +1301,7 @@ def buildExperimentTable(infiles, outfile):
         outf.write("id\tname\tproject_id\tdirectory\ttitle\n")
         outf.write("\t".join(
             ("1",
-             P.getProjectName(),
+             "unknown",
              project_id,
              d,
              PARAMS.get("title", ""))) + "\n")
@@ -1549,7 +1525,7 @@ def plotTopGenesHeatmap(outfile):
     ON A.sample_id = B.id
     '''
 
-    dbh = connect()
+    dbh = P.connect()
 
     exp_df = pd.read_sql(exp_select_cmd, dbh)
 
@@ -1662,14 +1638,14 @@ def plotExpression(outfile):
     # "Data values must be of type string or None."
     # See RnaseqqcReport.ExpressionDistribution tracker
 
-    dbh = connect()
+    dbh = P.connect()
 
     statement = """
     SELECT sample_id, transcript_id, TPM
     FROM sailfish_transcripts"""
 
     df = pd.read_sql(statement, dbh)
-
+    
     df['logTPM'] = df['TPM'].apply(lambda x: np.log2(x + 0.1))
 
     factors = dbh.execute("SELECT DISTINCT factor FROM factors")
@@ -1724,9 +1700,8 @@ def indexForSalmon(infile, outfile):
     '''create a salmon index'''
 
     statement = '''
-    salmon index -t %(infile)s
-    -i %(outfile)s '''
-    P.run(statement)
+    salmon index -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
+    P.run(statement, job_memory="8G")
 
 
 @transform(SEQUENCEFILES,
@@ -1749,7 +1724,7 @@ def runSalmon(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 @merge(runSalmon, "strandedness.tsv")
@@ -1817,7 +1792,7 @@ def plotStrandednessSalmon(infile, outfile):
     patches = []
     for c in colors[0:len(tab)]:
         patches.append(mpatches.Patch(color=c))
-    l = f.legend(labels=tab['sample'], handles=patches, loc=1)
+    l = f.legend(labels=list(tab['sample']), handles=patches, loc=1)
     f.suptitle('Strandedness Estimates')
     f.savefig(outfile)
 

@@ -15,11 +15,6 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 import sqlite3
 
-try:
-    PARAMS = P.get_parameters()
-except IOError:
-    pass
-
 
 def outputSegments(outfile,
                    intervals,
@@ -308,7 +303,7 @@ def buildGeneSetAnnotations(infiles, outfile, slice):
     else:
         where = "is_%(slice)s" % locals()
 
-    dbhandle = sqlite3.connect(PARAMS["database_name"])
+    dbhandle = sqlite3.connect(P.get_params()["database_name"])
 
     subsets = []
 
@@ -473,7 +468,7 @@ def genericImportAnnotator(infiles, outfile, table, workspace, slice, subset, fd
     --table=%(table)s
     < %(tmpfilename2)s > %(outfile)s'''
 
-    P.run(**dict(list(locals().items()) + list(PARAMS.items())))
+    P.run(**dict(list(locals().items()) + list(P.get_params().items())))
     os.unlink(tmpfilename)
     os.unlink(tmpfilename2)
 
@@ -546,7 +541,7 @@ def buildAnnotatorSegmentsROI(tmpdir, roi_class, outfile, overlap=None):
     tmpsegments = os.path.join(tmpdir, "segments")
     to_cluster = True
 
-    dbhandle = sqlite3.connect(PARAMS["database_name"])
+    dbhandle = sqlite3.connect(P.get_params()["database_name"])
 
     if overlap:
         statement = '''
@@ -629,7 +624,7 @@ def makeAnnotatorArchitecture(infile, outfile,
                               workspaces=("mappable", "genomic"),
                               **kwargs):
     '''check statistical overlap between intervals and and other genomic features
-    defined in the file PARAMS["annotations"].
+    defined in the file P.get_params()["annotations"].
 
     Annotator is run with the following parameters:
 
@@ -637,8 +632,8 @@ def makeAnnotatorArchitecture(infile, outfile,
 
       2 Annotations:
 
-         1 genomic architecture (PARAMS["annotation"])
-         2 promotors (PARAMS["promotors"])
+         1 genomic architecture (P.get_params()["annotation"])
+         2 promotors (P.get_params()["promotors"])
 
       3 Workspace: the full genome
     '''

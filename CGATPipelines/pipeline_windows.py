@@ -153,22 +153,6 @@ Sample = PipelineTracks.AutoSample
 METHODS = P.as_list(PARAMS["methods"])
 
 
-def connect():
-    '''connect to database.
-
-    This method also attaches to helper databases.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-    statement = '''ATTACH DATABASE '%s' as annotations''' %\
-                (PARAMS["annotations_database"])
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
-
-
 # @P.add_doc(PipelineWindows.convertReadsToIntervals)
 @follows(mkdir("tags.dir"))
 @transform('*.bam',
@@ -1112,50 +1096,24 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
 
     '''
 
-    # get all data
-    # don't use the database! only 10,000 windows are
-    # loaded!!
-    dbh = connect()
-    cc = dbh.cursor()
-    cc.execute("SELECT * FROM windows_counts")
-    # data = cc.fetchall()
+    data = pandas.read_table(infile,
+                             sep="\t",
+                             index_col=0)
 
-    # transpose, remove interval_id column
-    # data = list(zip(*data))
-    if infile.split(".")[-1] == "gz":
-        compression = "gzip"
-    else:
-        compression = None
-
-    data = pandas.read_table(infile, sep="\t",
-                             compression=compression,
-                             index_col=0, header=0)
-
-    new_columns = [x.replace("-", "_", 3) for x in data.columns]
-    data.columns = new_columns
-    columns = [x[0] for x in cc.description]
-    # columns = [data.columns]
-    E.warn(columns)
+    data.columns = [x.replace("-", "_", 3) for x in data.columns]
+    columns = data.columns
+    E.debug("column names: {}".format(columns))
     map_track2input = mapTrack2Input(columns)
     take_tracks = [y for x, y in enumerate(columns) if y in map_track2input]
-    E.warn([y for x, y in enumerate(columns) if y in map_track2input])
+    E.debug([y for x, y in enumerate(columns) if y in map_track2input])
     take_input = [y for x, y in enumerate(
         columns) if y in list(map_track2input.values()) and y is not None]
 
-    # build data frame
-    E.warn(take_tracks)
-    E.warn(take_input)
-    # dataframe = pandas.DataFrame(
-    #    dict([(columns[x], data[x]) for x in take_tracks]))
     dataframe = data[[x for x in take_tracks]]
     dataframe = dataframe.astype('float64')
-    # dataframe_input = pandas.DataFrame(
-    #   dict([(columns[x], data[x]) for x in take_input]))
     dataframe_input = data[[q for q in take_input]]
 
     E.warn(dataframe.index)
-    # raise ValueError("break here")
-    # add pseudocounts
     pseudocount = 1
     for column in dataframe.columns:
         dataframe[column] += pseudocount
@@ -1170,16 +1128,14 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
     for column in dataframe.columns:
         i = map_track2input[column]
         if i is not None:
-            ratios[column] = dataframe_input[
-                i].median() / dataframe[column].median()
+            ratios[column] = dataframe_input[i].median() / dataframe[column].median()
         else:
             ratios[column] = None
 
     for column in dataframe.columns:
         if ratios[column] is not None:
             # normalize by input
-            dataframe[column] *= ratios[column] / \
-                dataframe_input[map_track2input[column]]
+            dataframe[column] *= ratios[column] / dataframe_input[map_track2input[column]]
         else:
             # normalize by median
             dataframe[column] /= dataframe[column].median()
@@ -1208,20 +1164,11 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
     '''
 
     # get all data
-    dbh = connect()
-    cc = dbh.cursor()
-    cc.execute("SELECT * FROM windows_counts")
-    data = cc.fetchall()
+    dbhandle = P.connect()
+    data = pandas.read_sql("SELECT * FROM windows_counts", dbhandle)
 
-    # transpose, remove interval_id column
-    data = list(zip(*data))
-    columns = [x[0] for x in cc.description]
-
-    take_tracks = [x for x, y in enumerate(columns) if y != "interval_id"]
-    # build data frame
-    dataframe = pandas.DataFrame(
-        dict([(columns[x], data[x]) for x in take_tracks]))
-    dataframe = dataframe.astype('float64')
+    # remove interval_id column
+    dataframe = data.drop(["interval_id"], axis=1).astype('float64')
 
     # add pseudocounts
     pseudocount = 1
@@ -2032,7 +1979,7 @@ def outputGWASFiles(infile, outfile):
     | awk 'BEGIN {printf("chr\\tpos\\tsnp\\tpvalue\\n")}
     !/^test_id/ {split($1,a,":");
     printf("%%s\\t%%i\\t%%s\\t%%s\\n", a[1], a[2], $1, $8)}'
-    | %(pipeline_scriptsdir)s/hsort 1 -k1,1 -k2,2n
+    | (read h; echo \"$h\"; sort -k1,1 -k2,2n )
     > %(outfile)s
     '''
 

@@ -46,18 +46,14 @@ def createGOFromENSEMBL(infile, outfile):
 
     """
 
-    job_memory = "5G"
     statement = '''
     cgat runGO
     --filename-dump=%(outfile)s
-    --database-host=%(go_host)s
-    --database-user=anonymous
-    --database-name=%(go_database)s
-    --database-port=%(go_port)i
+    --database-url=mysql://anonymous@%(go_host)s:%(go_port)i/%(go_database)s
     > %(outfile)s.log
     '''
 
-    P.run(statement)
+    P.run(statement, job_memory="5G")
 
 
 def createGOFromGeneOntology(infile, outfile):
@@ -84,7 +80,7 @@ def createGOFromGeneOntology(infile, outfile):
     filename = os.path.join(os.path.dirname(outfile), "geneontology.goa.gz")
     if not os.path.exists(filename):
         statement = '''
-    wget -O %(filename)s http://cvsweb.geneontology.org/cgi-bin/cvsweb.cgi/go/gene-associations/%(go_geneontology_file)s?rev=HEAD
+        wget -O %(filename)s http://cvsweb.geneontology.org/cgi-bin/cvsweb.cgi/go/gene-associations/%(go_geneontology_file)s?rev=HEAD
     '''
 
         P.run(statement)

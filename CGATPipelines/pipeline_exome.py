@@ -322,7 +322,7 @@ def GATKReadGroups(infile, outfile):
     PipelineExome.GATKReadGroups(infile, outfile, genome,
                                  library, platform,
                                  platform_unit, track)
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################
@@ -336,7 +336,7 @@ def GATKReadGroups(infile, outfile):
 def RemoveDuplicatesLane(infile, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
     PipelineMappingQC.buildPicardDuplicateStats(infile, outfile)
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 ###############################################################################
 
@@ -361,7 +361,7 @@ def GATKIndelRealignLane(infile, outfile):
     padding = PARAMS["roi_padding"]
     PipelineExome.GATKIndelRealign(infile, outfile, genome, intervals, padding,
                                    threads)
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 ###############################################################################
 
@@ -384,7 +384,7 @@ def GATKBaseRecal(infile, outfile):
     else:
         PipelineExome.GATKBaseRecal(infile, outfile, genome, intervals,
                                     padding, dbsnp, solid_options)
-    IOTools.zapFile(infile)
+    IOTools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################
@@ -398,18 +398,19 @@ def GATKBaseRecal(infile, outfile):
 def mergeBAMs(infiles, outfile):
     '''merges BAMs for a single sample over multiple lanes'''
     inputfiles = " INPUT=".join(infiles)
-    outf = open(outfile + ".count", "w")
+    outf = IOTools.open_file(outfile + ".count", "w")
     outf.write(str(len(infiles)))
     outf.close()
-    statement = '''picard MergeSamFiles
-                   INPUT=%(inputfiles)s
-                   OUTPUT=%(outfile)s
-                   ASSUME_SORTED=true; '''
-    statement += '''samtools index %(outfile)s ;''' % locals()
-    P.run(statement)
+    statement = ("picard MergeSamFiles "
+                 "INPUT=%(inputfiles)s "
+                 "OUTPUT=%(outfile)s "
+                 "ASSUME_SORTED=true "
+                 ">& %(outfile)s.log && "
+                 "samtools index %(outfile)s " % locals())
+    P.run(statement, job_memory="8G")
 
     for inputfile in infiles:
-        IOTools.zapFile(inputfile)
+        IOTools.zap_file(inputfile)
 
 ###############################################################################
 ###############################################################################
@@ -430,7 +431,7 @@ def RemoveDuplicatesSample(infiles, outfile):
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
-        IOTools.zapFile(infile)
+        IOTools.zap_file(infile)
 
 
 ###############################################################################
@@ -466,7 +467,7 @@ def GATKIndelRealignSample(infiles, outfile):
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
-#    IOTools.zapFile(infile)
+#    IOTools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################

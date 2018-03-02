@@ -7,14 +7,13 @@ Reference
 
 """
 
-import CGATCore.Experiment as E
 import os
-# TODO: remove dependency
-# import MySQLdb
 import pysam
+import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
 import CGAT.GTF as GTF
 import CGATCore.Pipeline as P
+import CGATCore.Database as Database
 
 
 class SubsetGTF():
@@ -113,11 +112,7 @@ def connectToUCSC(host="genome-mysql.cse.ucsc.edu",
     Database handle
 
     """
-    dbhandle = MySQLdb.Connect(host=host,
-                               user=user)
-
-    cc = dbhandle.cursor()
-    cc.execute("USE %s " % database)
+    dbhandle = Database.connect(url="mysql://{user}@{host}/{database}".format(**locals()))
 
     return dbhandle
 
@@ -146,8 +141,7 @@ def getRepeatDataFromUCSC(dbhandle,
        expression given.
 
     '''
-    cc = dbhandle.cursor()
-    cc.execute("SHOW TABLES LIKE '%rmsk'")
+    cc = dbhandle.execute("SHOW TABLES LIKE '%%rmsk'")
     tables = [x[0] for x in cc.fetchall()]
     if len(tables) == 0:
         raise ValueError("could not find any `rmsk` tables")
@@ -157,7 +151,6 @@ def getRepeatDataFromUCSC(dbhandle,
 
     for table in tables:
 
-        cc = dbhandle.cursor()
         sql = """SELECT genoName, 'repeat', 'exon', genoStart+1, genoEnd,
         '.', strand, '.',
         CONCAT('class \\"', repClass, '\\"; family \\"',
@@ -172,7 +165,7 @@ def getRepeatDataFromUCSC(dbhandle,
         sql = sql % locals()
 
         E.debug("executing sql statement: %s" % sql)
-        cc.execute(sql)
+        cc = dbhandle.execute(sql)
         for data in cc.fetchall():
             tmpfile.write("\t".join(map(str, data)) + "\n")
 
@@ -182,7 +175,7 @@ def getRepeatDataFromUCSC(dbhandle,
     tmpfilename = tmpfile.name
 
     statement = ['''cat %(tmpfilename)s
-    | %(pipeline_scriptsdir)s/gff_sort pos
+    | sort -t$'\\t' -k1,1 -k4,4n
     | cgat gff2gff
     --method=sanitize
     --sanitize-method=genome
@@ -378,9 +371,9 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     --method=sort --sort-order=gene+transcript
     | cgat gtf2tsv
     --attributes-as-columns --output-only-attributes -v 0
-    | python %(toolsdir)s/csv_cut.py
+    | cgat csv-cut
     --remove exon_id transcript_id transcript_name protein_id exon_number
-    | %(pipeline_scriptsdir)s/hsort 1
+    | (read h; echo "$h"; sort )
     | uniq
     | %(load_statement)s
     > %(outfile)s'''

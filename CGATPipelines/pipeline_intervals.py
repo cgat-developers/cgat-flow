@@ -166,7 +166,6 @@ import shutil
 import re
 import glob
 import os
-import sqlite3
 import pysam
 import numpy
 import xml.etree.ElementTree
@@ -209,9 +208,6 @@ PARAMS.update(P.peek_parameters(
     "genesets",
     prefix="annotations_",
     update_interface=True))
-
-PipelineIntervals.PARAMS = PARAMS
-PipelineMotifs.PARAMS = PARAMS
 
 ###################################################################
 ###################################################################
@@ -309,22 +305,6 @@ def getAssociatedBAMFiles(track):
                              str(bamfiles), str(offsets)))
 
     return bamfiles, offsets
-
-
-def connect():
-    '''connect to database.
-
-    This method also attaches to helper databases.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-    statement = '''ATTACH DATABASE '%s' as annotations''' % (
-        PARAMS["annotations_database"])
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
 
 
 @transform('preprocess.dir/*.bed.gz',
@@ -510,11 +490,10 @@ def exportPeakLocations(infile, outfile):
     '''export peak locations
     '''
 
-    dbh = connect()
+    dbh = P.connect()
     outf = IOTools.open_file(outfile, "w")
-    cc = dbh.cursor()
     table = P.toTable(infile)
-    for x in cc.execute(
+    for x in dbh.execute(
             """SELECT contig, peakcenter, peakcenter+1, interval_id, peakval
             FROM %(table)s """ % locals()):
         outf.write("\t".join(map(str, x)) + "\n")
@@ -956,7 +935,7 @@ def exportMotifSequences(infile, outfile):
 
     '''
     track = os.path.basename(P.snip(infile, "_intervals.load"))
-    dbhandle = connect()
+    dbhandle = P.connect()
 
     p = P.substitute_parameters(**locals())
     nseq = PipelineMotifs.writeSequencesForIntervals(
@@ -1213,11 +1192,10 @@ def exportMotifLocations(infiles, outfile):
     Overlapping motif matches in different tracks will be merged.
     '''
 
-    dbh = connect()
-    cc = dbh.cursor()
+    dbh = P.connect()
 
     motifs = [x[0]
-              for x in cc.execute("SELECT motif FROM motif_info").fetchall()]
+              for x in dbh.execute("SELECT motif FROM motif_info").fetchall()]
 
     for motif in motifs:
 
@@ -1226,7 +1204,7 @@ def exportMotifLocations(infiles, outfile):
         for infile in infiles:
             table = P.toTable(infile)
             track = P.snip(table, "_mast")
-            for x in cc.execute(
+            for x in dbh.execute(
                     """SELECT contig, start, end, '%(track)s', evalue
                     FROM %(table)s WHERE motif = '%(motif)s' AND
                     start IS NOT NULL""" % locals()):
@@ -1745,102 +1723,6 @@ def annotate_withreads():
          loadContextStats)
 def annotate_intervals():
     pass
-
-# @follows( mapping,
-#           buildIntervals,
-#           loadReadCoverageTable,
-#           buildReadProfileOfTranscripts)
-# def intervals():
-#     '''compute binding intervals.'''
-#     pass
-
-# @follows( exportBigwig, viewIntervals, viewBigwig )
-# def export():
-#     '''export files.'''
-#     pass
-
-# @follows( buildReferenceMotifs,
-#           exportMotifSequences,
-#           runMEME,
-#           runTomTom, loadTomTom,
-#           runBioProspector )
-# runGLAM2,
-# def discover_motifs():
-#     '''run motif discovery.'''
-#     pass
-
-# @follows( filterMotifs,
-#           exportMotifControlSequences,
-#           loadMotifSequenceComposition,
-#           loadMotifInformation,
-#           runMAST, loadMAST )
-# runGLAM2SCAN, loadGLAM2SCAN )
-# def detect_motifs():
-#     '''run motif detection.'''
-#     pass
-
-# @follows( loadCorrelation,
-#           loadOverlap,
-#           reproducibility)
-# def correlation():
-#     '''run the correlation targets.'''
-#     pass
-
-# @follows( annotateIntervals, loadAnnotations,
-#           annotateTSS, loadTSS,
-#           annotateRepeats, loadRepeats,
-# annotateTSSIntervalAssociations, loadTSSIntervalAssociations,
-# annotateTSSIntervalDistance, loadTSSIntervalDistance,
-#           buildIntervalCounts, loadIntervalCounts )
-# def annotation():
-#     '''run the annotation targets.'''
-#     pass
-
-# ###################################################################
-# ###################################################################
-# ###################################################################
-# export targets
-# ###################################################################
-# @merge( intervals,  "view_mapping.load" )
-# def createViewMapping( infile, outfile ):
-#     '''create view in database for alignment stats.
-
-#     This view aggregates all information on a per-track basis.
-
-#     The table is built from the following tracks:
-
-#     bam_stats: .call
-#     '''
-
-#     tablename = P.toTable( outfile )
-
-# can not create views across multiple database, so use table
-#     view_type = "TABLE"
-
-#     dbhandle = connect()
-#     Database.executewait( dbhandle, "DROP %(view_type)s IF EXISTS %(tablename)s" % locals() )
-
-#     statement = '''
-#     CREATE %(view_type)s %(tablename)s AS
-#     SELECT SUBSTR( b.track, 1, LENGTH(b.track) - LENGTH( '.genome')) AS track, *
-#     FROM bam_stats AS b
-#     WHERE b.track LIKE "%%.genome"
-#     ''' % locals()
-
-#     Database.executewait( dbhandle, statement )
-
-#     IOTools.touch_file( outfile )
-
-# ###################################################################
-# ###################################################################
-# ###################################################################
-# @follows( createViewMapping )
-# def views():
-#     pass
-
-###################################################################
-###################################################################
-###################################################################
 
 
 @follows(annotate_intervals,

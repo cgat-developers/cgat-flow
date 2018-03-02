@@ -91,8 +91,11 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     # or there is no sequence/quality information within the bam file.
     # Thus, add it explicitly.
     statement = '''cat %(infile)s
-    | cgat bam2bam -v 0
-    --method=set-sequence --output-sam
+    | cgat bam2bam
+    -v 0
+    --method=set-sequence
+    --output-sam
+    --log={outfile}s.bam2bam.log
     | picard %(picard_opts)s CollectMultipleMetrics
     INPUT=/dev/stdin
     REFERENCE_SEQUENCE=%(genome_file)s
@@ -195,7 +198,7 @@ def buildPicardDuplicateStats(infile, outfile):
 
 
 def buildPicardCoverageStats(infile, outfile, baits, regions):
-    '''run picard:CalculateHSMetrics
+    '''run picard:CollectHSMetrics
 
     Generate coverage statistics for regions of interest from a bed
     file using Picard.
@@ -220,7 +223,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
         IOTools.touch_file(outfile)
         return
 
-    statement = '''picard %(picard_opts)s CalculateHsMetrics
+    statement = '''picard %(picard_opts)s CollectHsMetrics
     BAIT_INTERVALS=%(baits)s
     TARGET_INTERVALS=%(regions)s
     INPUT=%(infile)s

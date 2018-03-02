@@ -267,13 +267,11 @@ class FeatureCountsQuantifier(Quantifier):
         else:
             raise ValueError("level must be gene_id or transcript_id!")
 
-        tmpdir = P.get_temp_dir()
+        tmpdir = P.get_temp_dir(clear=True)
 
         # need to unzip the annotations for featureCounts
-        annotations_tmp = os.path.join(tmpdir,
-                                       'geneset.gtf')
-        bam_tmp = os.path.join(tmpdir,
-                               os.path.basename(bamfile))
+        annotations_tmp = os.path.join(tmpdir, 'geneset.gtf')
+        bam_tmp = os.path.join(tmpdir, os.path.basename(bamfile))
 
         # -p -B specifies count fragments rather than reads, and both
         # reads must map to the feature
@@ -678,7 +676,8 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
 
     if merge:
         statement = '''
-        %(pipeline_scriptsdir)s/gff_sort pos < %(tmpfilename)s
+        sort -t$'\\t' -k1,1 -k4,4n
+        < %(tmpfilename)s
         | cgat gtf2gtf
             --method=unset-genes --pattern-identifier="NONC%%06i"
             --log=%(outfile)s.log
@@ -697,12 +696,13 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
             --method=renumber-transcripts
             --pattern-identifier="NONC%%06i"
             --log=%(outfile)s.log
-        | %(pipeline_scriptsdir)s/gff_sort genepos
+        | sort -t$'\\t' -k1,1 -k9,9 -k4,4n
         | gzip > %(outfile)s
         '''
     else:
         statement = '''
-        %(pipeline_scriptsdir)s/gff_sort pos < %(tmpfilename)s
+        sort -t$'\\t' -k1,1 -k4,4n
+        < %(tmpfilename)s
         | gzip > %(outfile)s
         '''
 
@@ -1011,7 +1011,7 @@ def mergeCufflinksFPKM(infiles, outfile, genesets,
         --header-names=%(headers)s
         --take=FPKM fpkm.dir/%(prefix)s_*.%(tracking)s.gz
     | perl -p -e "s/tracking_id/%(identifier)s/"
-    | %(pipeline_scriptsdir)s/hsort 1
+    | (read h; echo \"$h\"; sort ) "
     | gzip
     > %(outfile)s
     '''

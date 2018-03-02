@@ -265,12 +265,12 @@ def run_test(infile, outfile):
 
     if len(pipeline_targets) == 1:
         statement = template_statement % pipeline_targets[0]
-        P.run(statement, ignore_errors=True)
+        P.run(statement, ignore_errors=True, job_memory="unlimited")
     else:
         statements = []
         for pipeline_target in pipeline_targets:
             statements.append(template_statement % pipeline_target)
-        P.run(statement, ignore_errors=True)
+        P.run(statement, ignore_errors=True, job_memory="unlimited")
 
 
 # @follows(setupTests)
@@ -447,7 +447,7 @@ def compareCheckSums(infiles, outfile):
         logfiles = glob.glob(track + "*.log")
         job_finished = True
         for logfile in logfiles:
-            is_complete = IOTools.isComplete(logfile)
+            is_complete = IOTools.is_complete(logfile)
             E.debug("logcheck: {} = {}".format(logfile, is_complete))
             job_finished = job_finished and is_complete
 

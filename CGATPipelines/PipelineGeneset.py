@@ -339,9 +339,9 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     --method=sort --sort-order=gene+transcript
     | cgat gtf2tsv
     --attributes-as-columns --output-only-attributes -v 0
-    | python %(toolsdir)s/csv_cut.py
+    | cgat csv-cut
     --remove exon_id transcript_id transcript_name protein_id exon_number
-    | %(pipeline_scriptsdir)s/hsort 1
+    | (read h; echo \"$h\"; sort ) "
     | uniq
     | %(load_statement)s
     > %(outfile)s'''
@@ -550,8 +550,9 @@ def loadTranscriptInformation(infile, outfile,
     --method=sort --sort-order=gene+transcript
     | cgat gtf2tsv
     --attributes-as-columns --output-only-attributes -v 0
-    | python %(toolsdir)s/csv_cut.py --remove exon_id exon_number
-    | %(pipeline_scriptsdir)s/hsort 1 | uniq
+    | cgat csv-cut --remove exon_id exon_number
+    | (read h; echo \"$h\"; sort ) "
+    | uniq
     | %(load_statement)s
     > %(outfile)s'''
     P.run(statement)
@@ -1436,7 +1437,7 @@ def sortGTF(infile, outfile, order="contig+gene"):
     --method=sort --sort-order=%(order)s --log=%(outfile)s.log
     | %(compress)s > %(outfile)s'''
 
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):

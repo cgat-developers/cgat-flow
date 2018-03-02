@@ -318,12 +318,13 @@ def buildPicardDuplicationStats(infile, outfile):
         statement = ""
         data_source = infile
 
-    statement += '''picard %(picard_opts)s MarkDuplicates
+    statement += ''' picard %(picard_opts)s MarkDuplicates
     INPUT=%(data_source)s
     ASSUME_SORTED=true
     METRICS_FILE=%(outfile)s
     OUTPUT=/dev/null
     VALIDATION_STRINGENCY=SILENT
+    >& %(outfile)s.log
     '''
     P.run(statement)
 
@@ -361,14 +362,14 @@ def buildPicardDuplicateStats(infile, outfile):
     ASSUME_SORTED=true
     METRICS_FILE=%(outfile)s.duplicate_metrics
     OUTPUT=%(outfile)s
-    VALIDATION_STRINGENCY=SILENT;
-    '''
-    statement += '''samtools index %(outfile)s ;'''
+    VALIDATION_STRINGENCY=SILENT
+    >& %(outfile)s.log &&
+    samtools index %(outfile)s'''
     P.run(statement)
 
 
 def buildPicardCoverageStats(infile, outfile, baits, regions):
-    '''run picard:CalculateHSMetrics
+    '''run picard:CollectHSMetrics
     Generate coverage statistics for regions of interest from a bed
     file using Picard.
     Arguments
@@ -390,7 +391,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
         IOTools.touch_file(outfile)
         return
 
-    statement = '''picard %(picard_opts)s CalculateHsMetrics
+    statement = '''picard %(picard_opts)s CollectHsMetrics
     BAIT_INTERVALS=%(baits)s
     TARGET_INTERVALS=%(regions)s
     INPUT=%(infile)s

@@ -119,7 +119,7 @@ def main(argv=sys.argv):
         pipeline_type="full",
     )
 
-    (options, args) = E.Start(parser)
+    (options, args) = E.start(parser)
 
     if not options.name:
         raise ValueError("please provide a pipeline name")
@@ -150,7 +150,7 @@ def main(argv=sys.argv):
     rx_template = re.compile("@template@")
     rx_reportdir = re.compile("@reportdir@")
 
-    srcdir = P.CGATPIPELINES_PIPELINE_DIR
+    srcdir = os.path.dirname(__file__)
 
     def copy(src, dst, name):
 
@@ -250,7 +250,7 @@ The source code for the pipeline is in %(destination_dir)s/src.
 
 """ % locals())
 
-    E.Stop()
+    E.stop()
 
 
 if __name__ == "__main__":

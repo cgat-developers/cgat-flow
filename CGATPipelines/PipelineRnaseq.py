@@ -276,7 +276,7 @@ class FeatureCountsQuantifier(Quantifier):
         # -p -B specifies count fragments rather than reads, and both
         # reads must map to the feature
         # for legacy reasons look at feature_counts_paired
-        if BamTools.isPaired(bamfile):
+        if BamTools.is_paired(bamfile):
             # select paired end mode, additional options
             paired_options = "-p -B"
             # sort by read name
@@ -345,7 +345,7 @@ class Gtf2tableQuantifier(Quantifier):
         else:
             raise ValueError("level must be gene_id or transcript_id!")
 
-        if BamTools.isPaired(bamfile):
+        if BamTools.is_paired(bamfile):
             counter = 'readpair-counts'
         else:
             counter = 'read-counts'
@@ -1057,7 +1057,7 @@ def runFeatureCounts(annotations_file,
     # -p -B specifies count fragments rather than reads, and both
     # reads must map to the feature
     # for legacy reasons look at feature_counts_paired
-    if BamTools.isPaired(bamfile):
+    if BamTools.is_paired(bamfile):
         # select paired end mode, additional options
         paired_options = "-p -B"
         # sort by read name

@@ -255,7 +255,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
         OUTPUT=%(outT)s.bam \
         METRICS_FILE=/dev/null \
         VALIDATION_STRINGENCY=SILENT \
-        2> %(log)s; rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+        >& %(log)s; rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
 
         statement += trackFilters("duplicates", outT, tabout)
         statement = statement.replace("\n", "")
@@ -380,18 +380,17 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
 @cluster_runnable
 def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
                contigs_to_remove, keep_intermediates=False):
-    '''
-    Builds a statement which applies various filters to bam files.
+    '''Builds a statement which applies various filters to bam files.
 
     The file is sorted then filters are applied.
 
-    The appendPicardFilters, appendSamtoolsFilters and appendBlacklistFilter
-    functions above will add fragments to this statement to
-    carry out the filtering steps.
+    The appendPicardFilters, appendSamtoolsFilters and
+    appendBlacklistFilter functions above will add fragments to this
+    statement to carry out the filtering steps.
 
-    The filtered bam file is then indexed.
-    Read counts after each filtering step are logged in infile_counts.tsv using
-    the trackFilters function.
+    The filtered bam file is then indexed.  Read counts after each
+    filtering step are logged in infile_counts.tsv using the
+    trackFilters function.
 
     Example Statement:
     samtools sort K9-13-2.bam -o ctmp87pq2s.bam;
@@ -453,9 +452,11 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
 
         statement += trackFilters("none", inT, tabout)
 
-        statement, inT = appendPicardFilters(statement, inT, tabout, filters, pe,
+        statement, inT = appendPicardFilters(statement, inT,
+                                             tabout, filters, pe,
                                              bamout)
-        statement, inT = appendSamtoolsFilters(statement, inT, tabout, filters,
+        statement, inT = appendSamtoolsFilters(statement, inT,
+                                               tabout, filters,
                                                qual, pe)
 
         # get statement for filtering contigs
@@ -487,12 +488,12 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
                         rm -f %(inT)s;
                         samtools index %(bamout)s""" % locals()
 
-        statement = statement.replace("\n", "")
+        statement = statement.replace("\n", "\n")
 
         if int(keep_intermediates) == 1:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
-        P.run(statement)
+        P.run(statement, job_memory="8G")
 
     # reformats the read counts into a table
     inf = [line.strip() for line in open(tabout).readlines()]
@@ -785,68 +786,64 @@ def makePseudoBams(infile, outfiles, pe, randomseed, filters):
         names. Anything else in this list is ignored by this function.
     '''
 
+    tmp_bam_filename = P.get_temp_filename(".") + ".bam"
+    statement = "samtools sort -n %(infile)s -o %(tmp_bam_filename)s" % locals()
+    P.run(statement)
+
     # read bam file
-    bamfile = pysam.AlignmentFile(infile, "rb")
-    T = P.get_temp_filename(".")
-    # sort
-    # pysam.sort("-n", infile, T, catch_stdout=False)
-    os.system("""samtools sort -n %(infile)s -o %(T)s.bam""" % locals())
+    with pysam.AlignmentFile(infile, "rb") as bamfile:
+        with pysam.AlignmentFile(tmp_bam_filename, "rb") as sorted_bamfile:
 
-    sorted_bamfile = pysam.AlignmentFile("%s.bam" % T, "rb")
+            # for single end, count the reads, for paired end, halve
+            # number of reads then generate a random list of 0s and 1s of
+            # this length 0 = go to pseudo bam 0, 1 = go to pseudo bam 1
+            bamlength = bamfile.count()
+            if pe is True:
+                countreads = bamlength // 2
+            else:
+                countreads = bamlength
+            randomgen = np.random.RandomState()
+            randomgen.seed(randomseed)
+            intlist = randomgen.random_integers(0, 1, countreads)
+            outs = [pysam.AlignmentFile(outfiles[0], "wb", template=bamfile),
+                    pysam.AlignmentFile(outfiles[1], "wb", template=bamfile)]
+            j = 0
+            i = 0
+            k = 0
 
-    # for single end, count the reads, for paired end, halve number of reads
-    # then generate a random list of 0s and 1s of this length
-    # 0 = go to pseudo bam 0, 1 = go to pseudo bam 1
-    bamlength = bamfile.count()
-    if pe is True:
-        countreads = bamlength // 2
-    else:
-        countreads = bamlength
-    randomgen = np.random.RandomState()
-    randomgen.seed(randomseed)
-    intlist = randomgen.random_integers(0, 1, countreads)
-    outs = [pysam.AlignmentFile(outfiles[0], "wb", template=bamfile),
-            pysam.AlignmentFile(outfiles[1], "wb", template=bamfile)]
-    j = 0
-    i = 0
-    k = 0
-
-    # send reads to replicates according to the integers in intlist
-    dest = outfiles[i]
-    if pe is True:
-        for read in sorted_bamfile:
-            # if j is even
-            if j % 2 == 0:
-                # take item i from intlist
-                destint = intlist[i]
-                # sends to output bam file 0 or 1
-                dest = outs[destint]
-                i += 1
-            dest.write(read)
-            j += 1
-    else:
-        for read in sorted_bamfile:
-            destint = intlist[k]
-            dest = outs[destint]
-            dest.write(read)
-            k += 1
+            # send reads to replicates according to the integers in intlist
+            dest = outfiles[i]
+            if pe is True:
+                for read in sorted_bamfile:
+                    # if j is even
+                    if j % 2 == 0:
+                        # take item i from intlist
+                        destint = intlist[i]
+                        # sends to output bam file 0 or 1
+                        dest = outs[destint]
+                        i += 1
+                    dest.write(read)
+                    j += 1
+            else:
+                for read in sorted_bamfile:
+                    destint = intlist[k]
+                    dest = outs[destint]
+                    dest.write(read)
+                    k += 1
 
     outs[0].close()
     outs[1].close()
-    os.remove(T)
-    os.remove("%s.bam" % T)
+    os.unlink(tmp_bam_filename)
     lens = []
+
+    # sort output
+    for outf in outfiles:
+        sortIndex(outf)
 
     # check that there are twice as many reads as read names for a paired
     # end bam file and check the lengths of the files
     for outf in outfiles:
-        T = P.get_temp_filename(".")
-        os.system("""samtools sort %(outf)s -o %(T)s.bam;
-        samtools index %(T)s.bam""" % locals())
-#      pysam.sort(outf, T, catch_stdout=False)
-#      pysam.index("%s.bam" % T, catch_stdout=False)
-
-        bamfile = pysam.AlignmentFile("%s.bam" % T, "rb")
+        bamfile = pysam.AlignmentFile(outf, "rb")
         all = []
         for nam in bamfile:
             all.append(nam.qname)
@@ -865,9 +862,6 @@ def makePseudoBams(infile, outfiles, pe, randomseed, filters):
                 """ % locals()
 
         lens.append(bamfile.count())
-        os.remove(T)
-        shutil.move("%s.bam" % T, outf)
-        shutil.move("%s.bam.bai" % T, "%s.bai" % outf)
 
     E.info("Bamfile 1 length %i, Bamfile 2 length %i" % (lens[0], lens[1]))
 
@@ -919,22 +913,19 @@ def mergeSortIndex(bamfiles, out):
 
     '''
     infiles = " ".join(bamfiles)
-    T1 = P.get_temp_filename(".")
-    T2 = P.get_temp_filename(".")
-    statement = """samtools merge %(T1)s.bam %(infiles)s;
-    samtools sort %(T1)s.bam -o %(T2)s.bam;
-    samtools index %(T2)s.bam;
-    mv %(T2)s.bam %(out)s;
-    mv %(T2)s.bam.bai %(out)s.bai""" % locals()
+    T1 = P.get_temp_filename()
+    statement = (
+        "samtools merge %(T1)s.bam %(infiles)s && "
+        "samtools sort %(T1)s.bam -o %(out)s.bam && "
+        "samtools index %(out)s.bam && "
+        "rm -f %(T1)s.bam" % locals())
     P.run(statement)
-    os.remove("%s.bam" % T1)
-    os.remove(T1)
-    os.remove(T2)
 
 
 def sortIndex(bamfile):
     '''
-    Sorts and indexes a bam file.
+    Sorts and indexes a bam file in-place.
+
     Generates and runs a command line statement.
 
     Example Statement:
@@ -951,15 +942,14 @@ def sortIndex(bamfile):
         path to bam file to sort and index
 
     '''
-    T1 = P.get_temp_filename(".")
+    temp_fn = P.get_temp_filename()
     bamfile = P.snip(bamfile)
     statement = """
-    samtools sort %(bamfile)s.bam -o %(T1)s.bam;
-    samtools index %(T1)s.bam;
-    mv %(T1)s.bam %(bamfile)s.bam;
-    mv %(T1)s.bam.bai %(bamfile)s.bam.bai""" % locals()
+    samtools sort %(bamfile)s.bam -o %(temp_fn)s.bam &&
+    samtools index %(temp_fn)s.bam &&
+    mv %(temp_fn)s.bam %(bamfile)s.bam &&
+    mv %(temp_fn)s.bam.bai %(bamfile)s.bam.bai""" % locals()
     P.run(statement)
-    os.remove(T1)
 
 
 def makeBamLink(currentname, newname):
@@ -1190,11 +1180,9 @@ class Peakcaller(object):
             prepareIDR_cmd = ""
 
         loadDatatoDatabase = ""
-        full_cmd = " ".join((
-            peaks_cmd, compress_cmd, postprocess_cmd, prepareIDR_cmd,
-            loadDatatoDatabase))
-
-        return full_cmd
+        parts = [x for x in [peaks_cmd, compress_cmd, postprocess_cmd,
+                             prepareIDR_cmd, loadDatatoDatabase] if x.strip()]
+        return " && ".join(parts)
 
     def summarise(self, infile):
         '''
@@ -1249,7 +1237,7 @@ class Macs2Peakcaller(Peakcaller):
         --broad --broad-cutoff 0.1
         --control IDR_inputs.dir/K9-IN-1_filtered.bam --tsize 75
         >& K9-13-2_filtered_pseudo_2.macs2;
-        mv K9-13-2_filtered_pseudo_2.macs2 K9-13-2_filtered_pseudo_2.macs2_log;
+        mv K9-13-2_filtered_pseudo_2.macs2 K9-13-2_filtered_pseudo_2.macs2.log;
 
         Output files have the same stem but various suffixes.  Details are
         here: https://github.com/taoliu/MACS
@@ -1307,7 +1295,7 @@ class Macs2Peakcaller(Peakcaller):
         if self.paired_end and self.force_single_end:
                 format_options = '--format=BAM'
         elif self.paired_end:
-            if not BamTools.isPaired(infile):
+            if not BamTools.is_paired(infile):
                 raise ValueError(
                     "paired end has been specified but "
                     "BAM is not paired %" % infile)
@@ -1322,11 +1310,7 @@ class Macs2Peakcaller(Peakcaller):
         # CG put brackets () around conda call and macs statement to run this
         # portion of the statement in subshell with specific conda env
 
-        # configure conda environment
-        conda_env = P.getCondaEnvironment(conda_env)
-
         statement = '''
-        (%(conda_env)s &&
         macs2 callpeak
         %(format_options)s
         --treatment %(infile)s
@@ -1335,8 +1319,7 @@ class Macs2Peakcaller(Peakcaller):
         --bdg
         --SPMR
         %(options)s
-        >& %(outfile)s) &&
-        mv %(outfile)s %(outfile)s_log &&
+        >& %(outfile)s.log
         ''' % locals()
 
         return outfile, statement
@@ -1391,8 +1374,8 @@ class Macs2Peakcaller(Peakcaller):
         bedfile = outfile + "_summits.bed"
         if broad_peak == 0:
             statement.append('''
-            bgzip -f %(bedfile)s;
-            tabix -f -p bed %(bedfile)s.gz;
+            bgzip -f %(bedfile)s &&
+            tabix -f -p bed %(bedfile)s.gz
             ''' % locals())
         else:
             statement.append("")
@@ -1402,26 +1385,28 @@ class Macs2Peakcaller(Peakcaller):
         # compressing only saves 60%
         temp = P.get_temp_filename('.')
         statement.append('''
-        sort -k1,1 -k2,2n %(outfile)s_treat_pileup.bdg > %(temp)s;
-        bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_treat_pileup.bw ;
-        rm -rf %(outfile)s_treat_pileup.bdg; rm -rf %(temp)s;''' % locals())
+        sort -k1,1 -k2,2n %(outfile)s_treat_pileup.bdg > %(temp)s &&
+        bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_treat_pileup.bw &&
+        rm -rf %(outfile)s_treat_pileup.bdg &&
+        rm -rf %(temp)s''' % locals())
 
         temp = P.get_temp_filename('.')
         statement.append('''
-        sort -k1,1 -k2,2n %(outfile)s_control_lambda.bdg > %(temp)s;
-        bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_control_lambda.bw ;
-        rm -rf %(outfile)s_control_lambda.bdg; rm -rf %(temp)s;''' % locals())
+        sort -k1,1 -k2,2n %(outfile)s_control_lambda.bdg > %(temp)s &&
+        bedGraphToBigWig %(temp)s %(contigsfile)s %(outfile)s_control_lambda.bw  &&
+        rm -rf %(outfile)s_control_lambda.bdg &&
+        rm -rf %(temp)s''' % locals())
 
         # index and compress peak file
         suffix = 'peaks.xls'
         statement.append(
             '''grep -v "^$" < %(outfile)s_%(suffix)s
-            | bgzip > %(outfile)s_%(suffix)s.gz;
-            x=$(zgrep "[#|log]" %(outfile)s_%(suffix)s.gz | wc -l);
-            tabix -f -b 2 -e 3 -S $x %(outfile)s_%(suffix)s.gz;
-            rm -f %(outfile)s_%(suffix)s;''' % locals())
+            | bgzip > %(outfile)s_%(suffix)s.gz &&
+            x=$(zgrep "[#|log]" %(outfile)s_%(suffix)s.gz | wc -l) &&
+            tabix -f -b 2 -e 3 -S $x %(outfile)s_%(suffix)s.gz &&
+            rm -f %(outfile)s_%(suffix)s''' % locals())
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
     def postProcessPeaks(self, infile, outfile, controlfile, insertsizefile):
         '''
@@ -1520,7 +1505,7 @@ class Macs2Peakcaller(Peakcaller):
         --output-all-fields
         --output-bed-headers=%(peaks_headers)s
         --log=%(outfile)s.log
-        > %(outfile)s ;
+        > %(outfile)s
         ''' % locals()
 
         # check masc2 running mode
@@ -1545,7 +1530,7 @@ class Macs2Peakcaller(Peakcaller):
             --output-all-fields
             --output-bed-headers=%(broad_headers)s
             --log=%(outfile)s.log
-            > %(outfile_broadpeaks)s;
+            > %(outfile_broadpeaks)s
             ''' % locals()
 
         # if not broad, will generate subpeaks
@@ -1570,7 +1555,7 @@ class Macs2Peakcaller(Peakcaller):
             --output-all-fields
             --output-bed-headers=%(subpeaks_headers)s
             --log=%(outfile)s.log
-            > %(outfile_subpeaks)s ;''' % locals()
+            > %(outfile_subpeaks)s''' % locals()
 
         return statement
 
@@ -1604,9 +1589,10 @@ class Macs2Peakcaller(Peakcaller):
         tmpfile = P.get_temp_filename()
         col = idrcol
         statement += '''sort -k%(col)igr,%(col)igr %(narrowpeaks)s
-        > %(tmpfile)s;
-        head -%(idrc)s %(tmpfile)s > %(idrout)s;
-        rm -rf %(tmpfile)s;''' % locals()
+        > %(tmpfile)s &&
+        head -%(idrc)s %(tmpfile)s > %(idrout)s &&
+        rm -rf %(tmpfile)s
+        ''' % locals()
         return statement
 
     def summarise(self, infile):
@@ -1628,7 +1614,7 @@ class Macs2Peakcaller(Peakcaller):
             path to peakcalling output file (.macs2 file)
         '''
 
-        infile = "%s_log" % infile
+        infile = "%s.log" % infile
         outfile = "%s.table" % infile
 
         map_targets = [
@@ -1660,7 +1646,7 @@ class Macs2Peakcaller(Peakcaller):
                         results[x].append(s.groups()[0])
                         break
 
-        row = [P.snip(os.path.basename(infile), ".macs2_log")]
+        row = [P.snip(os.path.basename(infile), ".macs2.log")]
         for key in keys:
             val = results[key]
             if len(val) == 0:
@@ -1671,7 +1657,7 @@ class Macs2Peakcaller(Peakcaller):
             row.append(v)
 
         peaks = IOTools.open_file(
-            infile.replace(".macs2_log",
+            infile.replace(".macs2.log",
                            ".macs2_peaks.xls.gz")).readlines()
         npeaks = 0
         for line in peaks:
@@ -1799,7 +1785,7 @@ class SicerPeakcaller(Peakcaller):
         except OSError:
             pass
 
-        if BamTools.isPaired(infile):
+        if BamTools.is_paired(infile):
             # output strand as well
             minfragsize = self.minfragsize
             maxfragsize = self.maxfragsize
@@ -1857,7 +1843,7 @@ class SicerPeakcaller(Peakcaller):
             >& ../%(outfile)s''' % locals())
 
         statement.append('rm -f foreground.bed background.bed')
-        statement = '; '.join(statement)
+        statement = ' && '.join(statement)
 
         return outfile, statement
 
@@ -1950,7 +1936,7 @@ class SicerPeakcaller(Peakcaller):
         keys = [x[1] for x in map_targets]
 
         # build headers
-        outfile = "%s_log.table" % infile
+        outfile = "%s.log.table" % infile
         outs = IOTools.open_file(outfile, "w")
 
         headers = []
@@ -2281,7 +2267,7 @@ def buildIDRStatement(infile1, infile2, outfile,
                              %(options)s
                             --verbose 2>>%(log)s
                          """ % locals())
-    statement = "; ".join(statement)
+    statement = " && ".join(statement)
     return statement
 
 

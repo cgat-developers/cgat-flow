@@ -110,7 +110,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     ''' % locals()
 
     # if Paired End Reads
-    if BamTools.isPaired(design.samples[0]+".bam"):
+    if BamTools.is_paired(design.samples[0]+".bam"):
         statement += '''-t paired''' % locals()
 
     statement += '''

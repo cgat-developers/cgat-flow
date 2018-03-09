@@ -267,7 +267,7 @@ def countDEXSeq(infiles, outfile):
 
     infile, gfffile = infiles
     ps = PYTHONSCRIPTSDIR
-    if BamTools.isPaired(infile):
+    if BamTools.is_paired(infile):
         paired = "yes"
     else:
         paired = "no"

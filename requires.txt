@@ -37,6 +37,7 @@
 # star
 # subread
 # gatk
+# snpeff
 
 # sailfish
 # salmon
@@ -61,6 +62,9 @@
 # intermine
 # toposort
 # mygene
+
+# peakcalling
+# ucsc-bedgraphtobigwig
 
 # pipeline_exome
 # beautifulsoup4

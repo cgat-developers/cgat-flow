@@ -82,7 +82,7 @@ def main(argv=None):
                         dest_directory=".")
 
     # add common options (-h/--help, ...) and parse command line
-    (options, args) = E.Start(parser, argv=argv)
+    (options, args) = E.start(parser, argv=argv)
 
     # read a map of input files to links with sanity checks
     map_filename2link = {}
@@ -151,7 +151,7 @@ def main(argv=None):
 
     E.info(counter)
     # write footer and output benchmark information
-    E.Stop()
+    E.stop()
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

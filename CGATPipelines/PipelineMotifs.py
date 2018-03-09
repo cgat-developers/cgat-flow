@@ -1,14 +1,10 @@
 '''
-pipeline_vitaminD_motifs.py - 
+pipeline_vitaminD_motifs.py -
 ======================================================
 
 
 Purpose
 -------
-
-.. todo::
-   
-   describe purpose of the script.
 
 Usage
 -----
@@ -111,7 +107,7 @@ def maskSequences(sequences, masker=None):
 
 
 def exportSequencesFromBedFile(infile, outfile, masker=None, mode="intervals"):
-    '''export sequences for intervals in :term:`bed`-formatted *infile* 
+    '''export sequences for intervals in :term:`bed`-formatted *infile*
     to :term:`fasta` formatted *outfile*
     '''
 
@@ -210,9 +206,9 @@ def writeSequencesForIntervals(track,
             "Unknown value passed as order parameter, check your ini file")
 
     tablename = "%s_intervals" % P.tablequote(track)
-    statement = '''SELECT contig, start, end, interval_id, peakcenter 
-                       FROM %(tablename)s 
-                       ''' % locals() + orderby
+    statement = '''SELECT contig, start, end, interval_id, peakcenter
+    FROM %(tablename)s
+    ''' % locals() + orderby
 
     cc = dbhandle.execute(statement)
     data = cc.fetchall()
@@ -714,7 +710,6 @@ def runMAST(infiles, outfile):
     # job_options = "-l mem_free=8000M"
 
     controlfile, dbfile, motiffiles = infiles
-    
 
     if IOTools.is_empty(dbfile) or len(motiffiles) == 0:
         IOTools.touch_file(outfile)
@@ -775,16 +770,16 @@ def runMAST(infiles, outfile):
 def runGLAM2(infile, outfile, dbhandle):
     '''run glam2 on all intervals and motifs.
 
-    In order to increase the signal/noise ratio,
-    MEME is not run on all intervals but only the 
-    top 10% of intervals (peakval) are used. 
-    Also, only the segment of 200 bp around the peak
-    is used and not the complete interval.
+    In order to increase the signal/noise ratio, MEME is not run on
+    all intervals but only the top 10% of intervals (peakval) are
+    used.  Also, only the segment of 200 bp around the peak is used
+    and not the complete interval.
 
     * Softmasked sequence is converted to hardmasked
       sequence to avoid the detection of spurious motifs.
 
     * Sequence is run through dustmasker
+
     '''
     to_cluster = True
 
@@ -829,8 +824,8 @@ def collectMEMEResults(tmpdir, target_path, outfile):
     '''collect output from a MEME run in tmpdir
     and copy all over to target_path
 
-    convert images output by MEME (.eps files) to 
-    .png files.'''
+    convert images output by MEME (.eps files) to .png files.
+    '''
 
     # copy over results
     try:
@@ -907,16 +902,16 @@ def runMEME(track, outfile, dbhandle):
 def runMEMEOnSequences(infile, outfile):
     '''run MEME to find motifs.
 
-    In order to increase the signal/noise ratio,
-    MEME is not run on all intervals but only the 
-    top 10% of intervals (peakval) are used. 
-    Also, only the segment of 200 bp around the peak
-    is used and not the complete interval.
+    In order to increase the signal/noise ratio, MEME is not run on
+    all intervals but only the top 10% of intervals (peakval) are
+    used.  Also, only the segment of 200 bp around the peak is used
+    and not the complete interval.
 
     * Softmasked sequence is converted to hardmasked
       sequence to avoid the detection of spurious motifs.
 
     * Sequence is run through dustmasker
+
     '''
     # job_options = "-l mem_free=8000M"
 

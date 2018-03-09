@@ -358,7 +358,6 @@ def identifyProteinCodingGenes(outfile):
        :term:`PARAMS`. Database table name for gene information
 
     '''
-
     dbh = P.connect()
 
     table = os.path.basename(PARAMS["annotations_interface_table_gene_info"])

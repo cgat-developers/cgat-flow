@@ -245,7 +245,7 @@ import CGATCore.IOTools as IOTools
 from CGATCore import Pipeline as P
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 import CGATPipelines.PipelinePeakcalling as PipelinePeakcalling
-import CGAT.BamTools as Bamtools
+import CGAT.BamTools.bamtools as Bamtools
 import CGATCore.Database as DB
 import pandas as pd
 import numpy as np
@@ -323,7 +323,7 @@ else:
 # Check if reads are paired end
 ########################################################################
 
-if CHIPBAMS and Bamtools.isPaired(CHIPBAMS[0]) is True:
+if CHIPBAMS and Bamtools.is_paired(CHIPBAMS[0]) is True:
     PARAMS['paired_end'] = True
 else:
     PARAMS['paired_end'] = False
@@ -998,7 +998,7 @@ def callMacs2peaks(infiles, outfile):
                                  PARAMS['macs2_idrcol'],
                                  PARAMS['macs2_broad_peak'],
                                  PARAMS['conda_py2'])
-    P.run(statement)
+    P.run(statement, job_condaenv="macs2")
     peakcaller.summarise(outfile)
 
 
@@ -1171,7 +1171,7 @@ for x in P.as_list(PARAMS['peakcalling_peakcallers']):
 def summarisePeakCalling(infiles, outfile):
     bigtab = pd.DataFrame()
     for i in infiles:
-        i = "%s_log.table" % i
+        i = "%s.log.table" % i
         tab = pd.read_csv(i, sep="\t")
         bigtab = bigtab.append(tab)
     bigtab.to_csv(outfile, sep="\t", index=False)

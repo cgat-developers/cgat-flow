@@ -66,7 +66,7 @@ def convertReadsToIntervals(bamfile,
     '''
     track = P.snip(bedfile, ".bed.gz")
 
-    is_paired = BamTools.isPaired(bamfile)
+    is_paired = BamTools.is_paired(bamfile)
     current_file = bamfile
     tmpdir = P.get_temp_filename()
     statement = ["mkdir %(tmpdir)s"]

@@ -247,7 +247,6 @@ def run_test(infile, outfile):
     '''
 
     track = P.snip(outfile, ".log")
-
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     pipeline_targets = P.as_list(PARAMS.get("%s_target" % track, "full"))

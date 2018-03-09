@@ -1088,7 +1088,7 @@ def runMACS2(infile, outfile,
 
     # format bam needs to be set explicitely, autodetection does not
     # work. Use paired end mode to detect tag size
-    if not force_single_end and BamTools.isPaired(infile):
+    if not force_single_end and BamTools.is_paired(infile):
         format_options = '--format=BAMPE'
     else:
         format_options = '--format=BAM'
@@ -1777,7 +1777,7 @@ def runSICER(infile,
     except OSError:
         pass
 
-    if BamTools.isPaired(infile):
+    if BamTools.is_paired(infile):
         # output strand as well
         statement = ['''cat %(infile)s
         | cgat bam2bed

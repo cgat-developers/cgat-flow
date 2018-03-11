@@ -687,7 +687,7 @@ def filteringReport(counter, logfile):
     logfile.close()
 
 
-def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
+def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
     '''
     Predicts fragment size for a bam file and writes it to a table.
 
@@ -723,13 +723,9 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
         mean, std, n = BamTools.estimateInsertSizeDistribution(
             infile, int(nalignments))
     else:
-        # configure conda environment
-        conda_env = P.getCondaEnvironment(conda_env)
-
         logfile = "%s.log" % P.snip(outfile)
         mode = "SE"
         statement = '''
-        %(conda_env)s &&
         macs2 predictd
         --format BAM
         --ifile %(infile)s
@@ -738,7 +734,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts, conda_env):
         %(insert_macs2opts)s
         >& %(logfile)s
         '''
-        P.run(statement)
+        P.run(statement, job_condaenv="macs2")
 
         with IOTools.open_file(logfile) as inf:
             lines = inf.readlines()
@@ -916,8 +912,8 @@ def mergeSortIndex(bamfiles, out):
     T1 = P.get_temp_filename()
     statement = (
         "samtools merge %(T1)s.bam %(infiles)s && "
-        "samtools sort %(T1)s.bam -o %(out)s.bam && "
-        "samtools index %(out)s.bam && "
+        "samtools sort %(T1)s.bam -o %(out)s && "
+        "samtools index %(out)s && "
         "rm -f %(T1)s.bam" % locals())
     P.run(statement)
 
@@ -942,13 +938,12 @@ def sortIndex(bamfile):
         path to bam file to sort and index
 
     '''
-    temp_fn = P.get_temp_filename()
-    bamfile = P.snip(bamfile)
+    temp_fn = P.get_temp_filename() + ".bam"
     statement = """
-    samtools sort %(bamfile)s.bam -o %(temp_fn)s.bam &&
-    samtools index %(temp_fn)s.bam &&
-    mv %(temp_fn)s.bam %(bamfile)s.bam &&
-    mv %(temp_fn)s.bam.bai %(bamfile)s.bam.bai""" % locals()
+    samtools sort %(bamfile)s -o %(temp_fn)s &&
+    samtools index %(temp_fn)s &&
+    mv %(temp_fn)s %(bamfile)s &&
+    mv %(temp_fn)s.bai %(bamfile)s.bai""" % locals()
     P.run(statement)
 
 
@@ -1131,7 +1126,7 @@ class Peakcaller(object):
 
     def build(self, infile, outfile, contigsfile=None, controlfile=None,
               insertsizef=None, idr=0, idrc=0, idrsuffix=None, idrcol=None,
-              broad_peak=None, conda_env=None):
+              broad_peak=None):
         '''
         Runs the above functions and uses these to build a complete command
         line statement to run the peakcaller and process its output.
@@ -1166,8 +1161,8 @@ class Peakcaller(object):
 
         peaks_outfile, peaks_cmd = self.callPeaks(infile,
                                                   outfile,
-                                                  controlfile,
-                                                  conda_env)
+                                                  controlfile)
+
         compress_cmd = self.compressOutput(
             infile, outfile, contigsfile, controlfile, broad_peak=broad_peak)
         postprocess_cmd = self.postProcessPeaks(
@@ -1225,7 +1220,7 @@ class Macs2Peakcaller(Peakcaller):
         self.tagsize = tagsize
         self.force_single_end = force_single_end
 
-    def callPeaks(self, infile,  outfile, controlfile=None, conda_env=None):
+    def callPeaks(self, infile,  outfile, controlfile=None):
         '''
         Build command line statement fragment to call peaks with macs2.
 
@@ -1307,9 +1302,6 @@ class Macs2Peakcaller(Peakcaller):
         # --bdg --SPMR: ask macs to create a bed-graph file with
         # fragment pileup per million reads
 
-        # CG put brackets () around conda call and macs statement to run this
-        # portion of the statement in subshell with specific conda env
-
         statement = '''
         macs2 callpeak
         %(format_options)s
@@ -1377,8 +1369,6 @@ class Macs2Peakcaller(Peakcaller):
             bgzip -f %(bedfile)s &&
             tabix -f -p bed %(bedfile)s.gz
             ''' % locals())
-        else:
-            statement.append("")
 
         # convert normalized bed graph to bigwig
         # saves 75% of space
@@ -1406,7 +1396,7 @@ class Macs2Peakcaller(Peakcaller):
             tabix -f -b 2 -e 3 -S $x %(outfile)s_%(suffix)s.gz &&
             rm -f %(outfile)s_%(suffix)s''' % locals())
 
-        return " && ".join(statement)
+        return " && ".join([x for x in statement if x.strip()])
 
     def postProcessPeaks(self, infile, outfile, controlfile, insertsizefile):
         '''
@@ -1714,7 +1704,7 @@ class SicerPeakcaller(Peakcaller):
         self.minfragsize = minfragsize
         self.maxfragsize = maxfragsize
 
-    def callPeaks(self, infile, outfile, controlfile=None, conda_env=None):
+    def callPeaks(self, infile, outfile, controlfile=None):
         '''
         Build command line statement fragment to call peaks with sicer.
 
@@ -1803,9 +1793,6 @@ class SicerPeakcaller(Peakcaller):
 
         outfile = os.path.basename(outfile)
 
-        # configure conda environment
-        conda_env = P.getCondaEnvironment(conda_env)
-
         window_size = self.window_size
         gap_size = self.gap_size
         effective_genome_fraction = self.effective_genome_fraction
@@ -1819,7 +1806,7 @@ class SicerPeakcaller(Peakcaller):
                 'bamToBed -i %(controlfile)s \
                 > %(workdir)s/control.bed' % locals())
             statement.append("cd %(workdir)s" % locals())
-            statement.append('''%(conda_env)s &&
+            statement.append('''
             SICER.sh . foreground.bed control.bed \
             . %(genome)s
             %(redundancy_threshold)s
@@ -1832,7 +1819,7 @@ class SicerPeakcaller(Peakcaller):
 
         else:
             statement.append('cd%(workdir)s')
-            statement.append('''%(conda_env)s &&
+            statement.append('''
             SICER-rb.sh .foreground.bed . %(genome)s
             %(redundancy_threshold)s
             %(window_size)s
@@ -2046,7 +2033,6 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
     #                 replicates
     # notpseudo_reps - peaks from original bam files for individual replicates
     # notpseudo_pooled - peaks from original bam files pooled across replicates
-
     for f in infiles:
         if "pseudo" in f and "pooled" in f:
             pseudo_pooled.append(f)
@@ -2057,11 +2043,16 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
         else:
             notpseudo_reps.append(f)
 
+    E.debug("pseudo_pooled: {}".format(pseudo_pooled))
+    E.debug("pseudo_reps: {}".format(pseudo_reps))
+    E.debug("notpseudo_pooled: {}".format(notpseudo_pooled))
+    E.debug("notpseudo_reps: {}".format(notpseudo_reps))
+            
     # The "oracle peaks" file is the notpseudo_pooled file for each condition
     # and tissue combination
     oracledict = dict()
-    # This loop finds the appropriate oracle peak list for the pseudo_pooled
-    # pairs and stores this in a dictionary
+    # This loop finds the appropriate oracle peak list for the
+    # pseudo_pooled pairs and stores this in a dictionary
     cr_pairs = df['Condition'] + "_" + df['Tissue']
     for cr in cr_pairs:
         for npp in notpseudo_pooled:
@@ -2069,18 +2060,16 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
             if npp1.startswith(cr):
                 oracledict[cr] = npp
 
-    # This loop finds the appropriate oracle peak list for the pseudo_reps
-    # and pseudo_pooled pairs and stores this in the dictionary
-
-    i = 0
-    for bam in df['bamReads']:
+    # This loop finds the appropriate oracle peak list for the
+    # pseudo_reps and pseudo_pooled pairs and stores this in the
+    # dictionary
+    for i, bam in enumerate(df['bamReads']):
         bam = P.snip(bam)
         cr = cr_pairs[i]
         for npp in notpseudo_pooled:
             npp1 = npp.split("/")[-1]
             if npp1.startswith(cr):
                 oracledict[bam] = npp
-        i += 1
 
     pseudo_reps = np.array(sorted(list(set(pseudo_reps))))
     pseudo_pooled = np.array(sorted(list(set(pseudo_pooled))))
@@ -2170,13 +2159,12 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
     pairs = pseudoreppairs_rows + pseudopooledpairs_rows + reppairs_rows
 
     # Write all the table rows to the output file
-    out = IOTools.open_file(outfile, "w")
-    out.write(
-        "file1\tfile2\tIDR_comparison_type\tOracle_Peak_File\tCondition\tTissue\n")
-    for p in pairs:
-        out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % p)
-
-    out.close()
+    with IOTools.open_file(outfile, "w") as outf:
+        outf.write(
+            "file1\tfile2\tIDR_comparison_type\tOracle_Peak_File\t"
+            "Condition\tTissue\n")
+        for p in pairs:
+            outf.write("\t".join(map(str, p)) + "\n")
 
 
 def buildIDRStatement(infile1, infile2, outfile,

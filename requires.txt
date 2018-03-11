@@ -45,6 +45,10 @@
 # cufflinks
 # hisat2
 
+# idr
+# macs2: separate env: py27
+# sicer: separate env: py26
+
 # Note: uninstall conda perl
 # pipeline_windows
 # r-ggplot2

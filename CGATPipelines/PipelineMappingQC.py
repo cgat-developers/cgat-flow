@@ -95,7 +95,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     -v 0
     --method=set-sequence
     --output-sam
-    --log={outfile}s.bam2bam.log
+    --log=%(outfile)s.bam2bam.log
     | picard %(picard_opts)s CollectMultipleMetrics
     INPUT=/dev/stdin
     REFERENCE_SEQUENCE=%(genome_file)s

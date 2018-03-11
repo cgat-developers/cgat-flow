@@ -233,7 +233,8 @@ Code
 """
 
 # load modules
-from ruffus import *
+from ruffus import transform, regex, active_if, follows, mkdir, jobs_limit, \
+    suffix, merge, add_inputs, originate, split, subdivide
 from ruffus.combinatorics import *
 import sys
 import os
@@ -332,37 +333,16 @@ else:
 ########################################################################
 # Set template notebooks dir
 ########################################################################
-
-
 if PARAMS['notebook_template_dir'] == '':
-    PARAMS['notebook_template_dir'] = '/'.join([PARAMS['pipelinedir'],
-                                                'pipeline_docs/pipeline_peakcalling/notebooks'])
-
-#########################################################################
-# Connect to database
-#########################################################################
-
-
-def connect():
-    '''connect to database.
-    This method also attaches to helper databases.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-    statement = '''ATTACH DATABASE '%s' as annotations''' %\
-                (PARAMS["annotations_database"])
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
+    PARAMS['notebook_template_dir'] = '/'.join(
+        [PARAMS['pipelinedir'],
+         'pipeline_docs/pipeline_peakcalling/notebooks'])
 
 
 ###########################################################################
 # start of pipelined tasks
 # 1) Preprocessing Steps - Filter bam files & generate bam stats
 ###########################################################################
-
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform("design.tsv", suffix(".tsv"), ".load")
 def loadDesignTable(infile, outfile):
@@ -765,6 +745,7 @@ if int(PARAMS['IDR_run']) == 1:
                                                ","),
                                            submit=True)
 else:
+    # when not not running IDR
     @follows(mkdir('peakcalling_bams.dir'))
     @transform(filterChipBAMs, regex("filtered_bams.dir/(.*)_filtered.bam"),
                r'peakcalling_bams.dir/\1.bam')
@@ -776,9 +757,9 @@ else:
         PipelinePeakcalling.makeBamLink(infile[0], outfile)
 
 
-# These three functions gather and parse the input (control) bam files into the
-# IDR_inputs.dir directory prior to IDR analysis.
-# The method used to do this depends on the IDR_poolinputs parameter
+# These three functions gather and parse the input (control) bam files
+# into the IDR_inputs.dir directory prior to IDR analysis.  The method
+# used to do this depends on the IDR_poolinputs parameter
 
 if PARAMS['IDR_poolinputs'] == "none":
     @active_if(PARAMS['input'] != 0)
@@ -800,10 +781,11 @@ elif PARAMS['IDR_poolinputs'] == "all":
     @follows(mkdir('IDR_inputs.dir'))
     @merge(filterInputBAMs, "IDR_inputs.dir/pooled_all.bam")
     def makeIDRInputBams(infiles, outfile):
-        '''
-        When all inputs are to be pooled and used as a control against all
+        '''When all inputs are to be pooled and used as a control against all
         samples, a single merged bam is generated from the output of
-        the filterInputBAMs step above in the IDR_inputs.dir directory.
+        the filterInputBAMs step above in the IDR_inputs.dir
+        directory.
+
         '''
         infiles = [i[0] for i in infiles]
         PipelinePeakcalling.mergeSortIndex(infiles, outfile)
@@ -814,15 +796,17 @@ elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
     @follows(mkdir('IDR_inputs.dir'))
     @split(filterInputBAMs, r'IDR_inputs.dir/*.bam')
     def makeIDRInputBams(infiles, outfiles):
-        '''
-        When IDR is going to be performed, inputs which are pooled by tissue
-        and condition are automatically generated as these are always required.
+        '''When IDR is going to be performed, inputs which are pooled by
+        tissue and condition are automatically generated as these are
+        always required.
 
-        This function pools tissues and conditions when IDR is switched
-        off if inputs pooled by condition are requested.
+        This function pools tissues and conditions when IDR is
+        switched off if inputs pooled by condition are requested.
 
-        The appropriate outputs from filterInputBAMs are identified and
-        merged into a single BAM stored in the IDR_inputs.dir directory.
+        The appropriate outputs from filterInputBAMs are identified
+        and merged into a single BAM stored in the IDR_inputs.dir
+        directory.
+
         '''
         outs = set(inputD.values())
         for out in outs:
@@ -861,14 +845,15 @@ elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] == 1:
          makePseudoBams)
 @originate("peakcalling_bams_and_inputs.tsv")
 def makeBamInputTable(outfile):
-    '''
-    Generates a tab delimited file - peakcalling_bams_and_inputs.tsv
+    '''Generates a tab delimited file - peakcalling_bams_and_inputs.tsv
     which links each filtered bam file in the peakcalling_bams.dir
     directory to the appropriate input in the IDR_inputs.dir
     directory.
-    Uses the dictionary inputD generated as a global variable based
-    on the user-specified design table plus pooled input files generated
+
+    Uses the dictionary inputD generated as a global variable based on
+    the user-specified design table plus pooled input files generated
     above.
+
     '''
     ks = inputD.keys()
     out = IOTools.open_file(outfile, "w")
@@ -909,8 +894,7 @@ def estimateInsertSize(infile, outfile):
                                            outfile,
                                            PARAMS['paired_end'],
                                            PARAMS['insert_alignments'],
-                                           PARAMS['insert_macs2opts'],
-                                           PARAMS['conda_py2'])
+                                           PARAMS['insert_macs2opts'])
 
 
 @merge(estimateInsertSize, "insert_sizes.tsv")
@@ -996,8 +980,8 @@ def callMacs2peaks(infiles, outfile):
                                  PARAMS['macs2_idrkeeppeaks'],
                                  PARAMS['macs2_idrsuffix'],
                                  PARAMS['macs2_idrcol'],
-                                 PARAMS['macs2_broad_peak'],
-                                 PARAMS['conda_py2'])
+                                 PARAMS['macs2_broad_peak'])
+
     P.run(statement, job_condaenv="macs2")
     peakcaller.summarise(outfile)
 
@@ -1068,10 +1052,9 @@ def callNarrowerPeaksWithSicer(infiles, outfile):
                                  idr=PARAMS['IDR_run'],
                                  idrc=PARAMS['sicer_idrkeeppeaks'],
                                  idrcol=PARAMS['sicer_idrcol'],
-                                 broad_peak=0,
-                                 conda_env=PARAMS['conda_sicer'])
+                                 broad_peak=0)
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sicer")
     peakcaller.summarise(outfile, mode="narrow")
 
 
@@ -1141,10 +1124,9 @@ def callBroaderPeaksWithSicer(infiles, outfile):
                                  idr=PARAMS['IDR_run'],
                                  idrc=PARAMS['sicer_idrkeeppeaks'],
                                  idrcol=PARAMS['sicer_idrcol'],
-                                 broad_peak=1,
-                                 conda_env=PARAMS['conda_sicer'])
+                                 broad_peak=1)
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sicer")
     peakcaller.summarise(outfile, mode="broad")
 
 
@@ -1241,10 +1223,12 @@ def makeIDRPairs(infiles, outfile):
     table detailing the file pairings for IDR
     analysis
     '''
-    useoracle = PARAMS['IDR_useoracle']
-    PipelinePeakcalling.makePairsForIDR(infiles, outfile,
-                                        PARAMS['IDR_useoracle'],
-                                        df, submit=True)
+    PipelinePeakcalling.makePairsForIDR(
+        infiles,
+        outfile,
+        PARAMS['IDR_useoracle'],
+        df,
+        submit=True)
 
 
 @active_if(IDR_ON)
@@ -1284,13 +1268,13 @@ def splitForIDR(infile, outfiles):
 @active_if(IDR_ON)
 @transform(splitForIDR, suffix(".dummy"), ".tsv")
 def runIDR(infile, outfile):
-    ''' takes the  "IDR_pairs.tsv" detailing the files to be compared
+    '''takes the  "IDR_pairs.tsv" detailing the files to be compared
     for IDR and uses this to run IDR analysis for the approriate files
 
     IDR_options = string from pipeline ini file detailing IDR options
-    Different IDR comparisions (e.g. selfconistency, pooledconsistency or
-    replicate consistancy might require different IDR thresholds) these can be
-    set in the pipeline.ini file in the IDR section
+    Different IDR comparisions (e.g. selfconistency, pooledconsistency
+    or replicate consistancy might require different IDR thresholds)
+    these can be set in the pipeline.ini file in the IDR section
 
     Oracle files = oracle peakset - see IDR analysis for details of what this
     means?
@@ -1349,24 +1333,25 @@ def runIDR(infile, outfile):
 @transform(runIDR, suffix(".tsv"), ["_filtered.tsv",
                                     "_table.tsv"])
 def filterIDR(infile, outfiles):
-    '''
-    Take the IDR output, which is in ENCODE narrowPeaks format if the input
-    is narrowPeaks, gtf or bed and ENCODE broadPeaks format if the input is
-    broadPeaks.
-    Input is filtered based on whether it passes the soft IDR thresholds
-    provided in the pipeline.ini.  Peaks which pass this threshold
-    with have a score in the "globalIDR" column which is greater
-    than -log10(soft_threshold) where soft_threshold is the soft threshold
-    provided in the pipeline.ini.
+    '''Take the IDR output, which is in ENCODE narrowPeaks format if the
+    input is narrowPeaks, gtf or bed and ENCODE broadPeaks format if
+    the input is broadPeaks.  Input is filtered based on whether it
+    passes the soft IDR thresholds provided in the pipeline.ini.
+    Peaks which pass this threshold with have a score in the
+    "globalIDR" column which is greater than -log10(soft_threshold)
+    where soft_threshold is the soft threshold provided in the
+    pipeline.ini.
+
     Column headings are added and output is sorted by signalValue.
 
-    outfile name is split and looked up in database to find the appropriate
-    threshold type to set the filtering threshold
+    outfile name is split and looked up in database to find the
+    appropriate threshold type to set the filtering threshold
 
-    NOTE CG MAY2017 - There is a bug in the IDR output file which means filtering
-    on the threshold score does not give you the same number that is output by
-    IDR itself- this code is the closest to get to it until they push the fix it
-    only really effects a few peaks so its not really something to worry about
+    NOTE CG MAY2017 - There is a bug in the IDR output file which
+    means filtering on the threshold score does not give you the same
+    number that is output by IDR itself- this code is the closest to
+    get to it until they push the fix it only really effects a few
+    peaks so its not really something to worry about
 
     '''
     IDRdata = pd.read_csv(infile, sep="\t", header=None)
@@ -1378,9 +1363,8 @@ def filterIDR(infile, outfiles):
     file1 = 'peaks_for_IDR.dir/%s.IDRpeaks' % x[0]
     file2 = 'peaks_for_IDR.dir/%s.IDRpeaks' % x[1]
 
-    conn = sqlite3.connect(PARAMS['database_name'])
-    c = conn.cursor()
-    x = c.execute(
+    dbh = P.connect()
+    x = dbh.execute(
         "SELECT IDR_comparison_type FROM IDR_pairs WHERE file1 = '%s' AND file2 = '%s'" % (file1, file2))
     x = x.fetchall()
 

@@ -38,7 +38,6 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.imgmath',
               'sphinx.ext.ifconfig',
               'sphinx.ext.inheritance_diagram',
-              'sphinxcontrib.programoutput',
               'sphinx.ext.intersphinx',
               'sphinx.ext.napoleon',
               'CGATReport.report_directive']

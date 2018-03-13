@@ -6,7 +6,7 @@ channels:
 - defaults
 
 dependencies:
-- sphinxcontrib-programoutput=0.8
+- sphinxcontrib-programoutput
 - sphinxcontrib=1.0
 - coreutils=8.25
 - gevent=1.1rc4

@@ -6,6 +6,7 @@ channels:
 - defaults
 
 dependencies:
+- cgat-report
 - sphinxcontrib-programoutput
 - sphinxcontrib=1.0
 - coreutils=8.25

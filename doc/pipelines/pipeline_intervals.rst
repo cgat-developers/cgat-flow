@@ -2,7 +2,7 @@
 .. figure:: ../images/pipeline_intervals.svg
 
 
-.. automodule:: pipeline_intervals
+.. automodule:: CGATPipelines.pipeline_intervals
    :members:
    :show-inheritance:
 

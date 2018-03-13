@@ -2,7 +2,7 @@
 .. figure:: ../images/pipeline_peakcalling.svg
 
 
-.. automodule:: pipeline_peakcalling
+.. automodule:: CGATPipelines.pipeline_peakcalling
    :members:
    :show-inheritance:
 

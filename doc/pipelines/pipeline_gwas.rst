@@ -2,6 +2,6 @@
 .. figure:: ../images/pipeline_gwas.svg
 
 
-.. automodule:: pipeline_gwas
+.. automodule:: CGATPipelines.pipeline_gwas
    :members:
    :show-inheritance:

@@ -2,7 +2,7 @@
 
 .. image:: ../images/pipeline_readqc.svg
 
-.. automodule:: pipeline_readqc
+.. automodule:: CGATPipelines.pipeline_readqc
    :members:
    :show-inheritance:
 

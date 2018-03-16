@@ -217,13 +217,14 @@ def setupTests(infile, outfile):
     # run pipeline config
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
-    statement = '''
-    (cd %(track)s.dir;
-    cgatflow %(pipeline_name)s
-    %(pipeline_options)s
-    %(workflow_options)s
-    config) >& %(outfile)s.log
-    '''
+    statement = (
+        "(cd %(track)s.dir; "
+        "cgatflow %(pipeline_name)s "
+        "%(pipeline_options)s "
+        "%(workflow_options)s "
+        "config "
+        ">2 %(outfile)s.stderr "
+        "> %(outfile)s.log)")
     P.run(statement)
 
     # obtain data - should overwrite pipeline.ini file
@@ -260,7 +261,9 @@ def run_test(infile, outfile):
         "(cd %%(track)s.dir; "
         "cgatflow %%(pipeline_name)s "
         "%%(pipeline_options)s "
-        "%%(workflow_options)s make %s) 1> %%(outfile)s 2> %%(outfile)s.stderr ")
+        "%%(workflow_options)s make %s) "
+        "1> %%(outfile)s "
+        "2> %%(outfile)s.stderr")
 
     if len(pipeline_targets) == 1:
         statement = template_statement % pipeline_targets[0]

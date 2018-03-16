@@ -137,7 +137,7 @@ fi # if travis install
 CONDA_INSTALL_DIR=$CGAT_HOME/conda-install
 
 # set conda environment name
-[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-p"
+[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-f"
 
 } # get_cgat_env
 
@@ -177,7 +177,6 @@ echo " PYTHONPATH: "$PYTHONPATH
 [[ ! $INSTALL_TEST ]] && echo " RELEASE: "$RELEASE
 echo " CODE_DOWNLOAD_TYPE: "$CODE_DOWNLOAD_TYPE
 echo " INSTALL_IDE: "$INSTALL_IDE
-echo " CGAT_DASHBOARD: "$CGAT_DASHBOARD
 echo " CLUSTER: "$CLUSTER
 echo
 
@@ -270,7 +269,6 @@ curl -o env-scripts.yml -O https://raw.githubusercontent.com/cgat-developers/cga
 
 curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
-[[ ${CGAT_DASHBOARD} -eq 0 ]] && sed -i'' -e '/pika/d' env-pipelines.yml
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
 
 conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-pipelines.yml
@@ -835,17 +833,17 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
 help_message() {
 echo
 echo " This script uses Conda to install cgat-flow. To proceed, please type:"
-echo " ./install-CGAT-tools.sh --devel --no-dashboard [--location </full/path/to/folder/without/trailing/slash>]"
+echo " ./install-CGAT-tools.sh --devel [--location </full/path/to/folder/without/trailing/slash>]"
 echo
 echo " The default install folder will be: $HOME/cgat-install"
 echo
 echo " It is also possible to install/test a specific branch of the code on GitHub:"
-echo " ./install-CGAT-tools.sh --devel --no-dashboard --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
+echo " ./install-CGAT-tools.sh --devel --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
 echo
 echo " This will create an isolated Conda environment with both the pipelines and the scripts from:"
 echo " https://github.com/cgat-developers/cgat-apps"
 echo
-echo " The default name of the newly created conda environment is cgat-p, but you can change it with:"
+echo " The default name of the newly created conda environment is cgat-f, but you can change it with:"
 echo " --env-name name"
 echo
 echo " The code is downloaded in zip format by default. If you want to get a git clone, use:"
@@ -916,10 +914,6 @@ CONDA_INSTALL_ENV=
 # 0 = no (default)
 # 1 = yes
 INSTALL_IDE=0
-# Is the dashboard available?
-# 0 = no
-# 1 = yes (default)
-CGAT_DASHBOARD=1
 # Use cluster?
 # 0 = no
 # 1 = yes (default)
@@ -1019,11 +1013,6 @@ case $key in
 
     --ide)
     INSTALL_IDE=1
-    shift
-    ;;
-
-    --no-dashboard)
-    CGAT_DASHBOARD=0
     shift
     ;;
 

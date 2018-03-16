@@ -1,7 +1,7 @@
 
 # This environment will include Python 2 dependencies that we want to keep
 
-name: cgat-py2
+name: cgat-fy2
 
 channels:
 - bioconda

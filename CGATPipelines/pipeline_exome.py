@@ -161,8 +161,10 @@ Code
 """
 
 # load modules
-from ruffus import *
-from ruffus.combinatorics import *
+from ruffus import transform, mkdir, follows, merge, regex, suffix, \
+    jobs_limit, files, collate, add_inputs, formatter, \
+    active_if
+from ruffus.combinatorics import permutations
 import sys
 import os
 import csv
@@ -690,11 +692,13 @@ def annotateVariantsSNPeff(infile, outfile):
     job_threads = PARAMS["annotation_threads"]
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
-    statement = '''snpEff eff
-                   -c %(config)s
-                   -v %(snpeff_genome)s
-                   -o gatk %(infile)s > %(outfile)s''' % locals()
-    P.run(statement)
+    statement = (
+        "snpEff -Xms1g -Xmx2g "
+        "eff "
+        "-c %(config)s "
+        "-v %(snpeff_genome)s "
+        "-o gatk %(infile)s > %(outfile)s" % locals())
+    P.run(statement, job_memory="4G")
 
 ###############################################################################
 

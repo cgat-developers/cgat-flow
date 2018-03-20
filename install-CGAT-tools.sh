@@ -92,13 +92,13 @@ if [[ $TRAVIS_INSTALL ]] ; then
 
    CGAT_HOME=$TRAVIS_BUILD_DIR
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-nosetests.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="scripts-nosetests.yml"
+   CONDA_INSTALL_TYPE_SCRIPTS="apps-nosetests.yml"
 
 elif [[ $JENKINS_INSTALL ]] ; then
 
    CGAT_HOME=$WORKSPACE
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="scripts-devel.yml"
+   CONDA_INSTALL_TYPE_SCRIPTS="apps-devel.yml"
 
 else
 
@@ -108,10 +108,10 @@ else
 
    if [[ $INSTALL_PRODUCTION ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-production.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="scripts-production.yml"
+      CONDA_INSTALL_TYPE_SCRIPTS="apps-production.yml"
    elif [[ $INSTALL_DEVEL ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="scripts-devel.yml"
+      CONDA_INSTALL_TYPE_SCRIPTS="apps-devel.yml"
    elif [[ $INSTALL_TEST ]] || [[ $INSTALL_UPDATE ]] ; then
       if [[ -d $CGAT_HOME/conda-install ]] ; then
          AUX=`find $CGAT_HOME/conda-install/envs/cgat-* -maxdepth 0`
@@ -404,10 +404,10 @@ install_extra_deps() {
 log "install extra deps"
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/apps-extra.yml
 
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file scripts-extra.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
 if [[ ${INSTALL_IDE} -eq 1 ]] ; then
    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml

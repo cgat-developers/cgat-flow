@@ -92,13 +92,15 @@ if [[ $TRAVIS_INSTALL ]] ; then
 
    CGAT_HOME=$TRAVIS_BUILD_DIR
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-nosetests.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="apps-nosetests.yml"
+   CONDA_INSTALL_TYPE_APPS="apps-nosetests.yml"
+   CONDA_INSTALL_TYPE_CORE="core-production.yml"
 
 elif [[ $JENKINS_INSTALL ]] ; then
 
    CGAT_HOME=$WORKSPACE
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="apps-devel.yml"
+   CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
+   CONDA_INSTALL_TYPE_CORE="core-production.yml"
 
 else
 
@@ -108,10 +110,12 @@ else
 
    if [[ $INSTALL_PRODUCTION ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-production.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="apps-production.yml"
+      CONDA_INSTALL_TYPE_APPS="apps-production.yml"
+      CONDA_INSTALL_TYPE_CORE="core-production.yml"
    elif [[ $INSTALL_DEVEL ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="apps-devel.yml"
+      CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
+      CONDA_INSTALL_TYPE_CORE="core-devel.yml"
    elif [[ $INSTALL_TEST ]] || [[ $INSTALL_UPDATE ]] ; then
       if [[ -d $CGAT_HOME/conda-install ]] ; then
          AUX=`find $CGAT_HOME/conda-install/envs/cgat-* -maxdepth 0`
@@ -167,12 +171,13 @@ echo " LIBRARY_PATH: "$LIBRARY_PATH
 echo " LD_LIBRARY_PATH: "$LD_LIBRARY_PATH
 echo " CGAT_HOME: "$CGAT_HOME
 echo " CONDA_INSTALL_DIR: "$CONDA_INSTALL_DIR
-echo " CONDA_INSTALL_TYPE_SCRIPTS: "$CONDA_INSTALL_TYPE_SCRIPTS
+echo " CONDA_INSTALL_TYPE_CORE:"$CONDA_INSTALL_TYPE_CORE
+echo " CONDA_INSTALL_TYPE_APPS: "$CONDA_INSTALL_TYPE_APPS
 echo " CONDA_INSTALL_TYPE_PIPELINES: "$CONDA_INSTALL_TYPE_PIPELINES
 echo " CONDA_INSTALL_ENV: "$CONDA_INSTALL_ENV
 echo " PYTHONPATH: "$PYTHONPATH
 [[ ! $INSTALL_TEST ]] && echo " PIPELINES_BRANCH: "$PIPELINES_BRANCH
-[[ ! $INSTALL_TEST ]] && echo " SCRIPTS_BRANCH: "$SCRIPTS_BRANCH
+[[ ! $INSTALL_TEST ]] && echo " APPS_BRANCH: "$APPS_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " CORE_BRANCH: "$CORE_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " RELEASE: "$RELEASE
 echo " CODE_DOWNLOAD_TYPE: "$CODE_DOWNLOAD_TYPE
@@ -265,22 +270,20 @@ log "installing conda CGAT environment"
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
 
-curl -o env-scripts.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
+curl -o env-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
+
+curl -o env-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
 curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
 
 conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-pipelines.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-scripts.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-apps.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-core.yml
 
 # activate cgat environment
 source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
-
-# bx-python is not py3 yet
-pip install 'bx-python==0.7.3'
-# no conda package available
-pip install quicksect
 
 log "installing CGAT code into conda environment"
 # if installation is 'devel' (outside of travis), checkout latest version from github
@@ -404,7 +407,7 @@ install_extra_deps() {
 log "install extra deps"
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/apps-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
 
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
@@ -449,21 +452,21 @@ else
 
    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
       # get the latest version from Git Hub in zip format
-      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$SCRIPTS_BRANCH.zip
-      unzip $SCRIPTS_BRANCH.zip
-      rm $SCRIPTS_BRANCH.zip
+      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$APPS_BRANCH.zip
+      unzip $APPS_BRANCH.zip
+      rm $APPS_BRANCH.zip
       if [[ ${RELEASE} ]] ; then
-         NEW_NAME=`echo $SCRIPTS_BRANCH | sed 's/^v//g'`
+         NEW_NAME=`echo $APPS_BRANCH | sed 's/^v//g'`
          mv cgat-apps-$NEW_NAME/ cgat-apps/
       else
-         mv cgat-apps-$SCRIPTS_BRANCH/ cgat-apps/
+         mv cgat-apps-$APPS_BRANCH/ cgat-apps/
       fi
    elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH https://github.com/cgat-developers/cgat-apps.git
+      git clone --branch=$APPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
    elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH git@github.com:cgat-developers/cgat-apps.git
+      git clone --branch=$APPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
    else
       report_error " Unknown download type for CGAT code... "
    fi
@@ -762,7 +765,7 @@ test_git_ssh() {
 test_mix_branch_release() {
    # don't mix branch and release options together
    if [[ $RELEASE ]] ; then
-      if [[ "$PIPELINES_BRANCH" != "master" ]] || [[ $SCRIPTS_BRANCH != "master" ]] ; then
+      if [[ "$PIPELINES_BRANCH" != "master" ]] || [[ $APPS_BRANCH != "master" ]] ; then
          echo
          echo " You cannot mix git branches and releases for the installation."
          echo
@@ -903,11 +906,12 @@ CGAT_HOME=$HOME/cgat-install
 CODE_DOWNLOAD_TYPE=0
 # which github branch to use (default: master)
 PIPELINES_BRANCH="master"
-SCRIPTS_BRANCH="master"
+APPS_BRANCH="master"
 CORE_BRANCH="master"
 # type of installation
 CONDA_INSTALL_TYPE_PIPELINES=
-CONDA_INSTALL_TYPE_SCRIPTS=
+CONDA_INSTALL_TYPE_APPS=
+CONDA_INSTALL_TYPE_CORE=
 # rename conda environment
 CONDA_INSTALL_ENV=
 # install additional IDEs?
@@ -1000,7 +1004,7 @@ case $key in
     ;;
 
     --scripts-branch)
-    SCRIPTS_BRANCH="$2"
+    APPS_BRANCH="$2"
     test_mix_branch_release
     shift 2
     ;;
@@ -1026,7 +1030,7 @@ case $key in
     test_mix_branch_release
     test_release
     PIPELINES_BRANCH="$2"
-    SCRIPTS_BRANCH="$2"
+    APPS_BRANCH="$2"
     shift 2
     ;;
 

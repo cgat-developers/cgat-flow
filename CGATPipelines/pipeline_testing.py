@@ -185,7 +185,7 @@ def setupPrerequisites(infile, outfile):
     These are tar-balls that are unpacked, but not run.
     '''
 
-    to_cluster = False
+    #to_cluster = False
     track = P.snip(outfile, ".tgz")
 
     # obtain data - should overwrite pipeline.ini file
@@ -204,7 +204,7 @@ def setupTests(infile, outfile):
     This method creates a directory in which a test will be run
     and downloads test data with configuration files.
     '''
-    to_cluster = False
+    #to_cluster = False
 
     track = P.snip(outfile, ".tgz")
 
@@ -254,7 +254,7 @@ def run_test(infile, outfile):
     # do not run on cluster, mirror
     # that a pipeline is started from
     # the head node
-    to_cluster = False
+    #to_cluster = False
 
     template_statement = (
         "(cd %%(track)s.dir; "
@@ -572,7 +572,7 @@ def loadComparison(infile, outfile):
            "_results.load")
 def loadResults(infile, outfile):
     '''load comparison data into database.'''
-    P.load(infile, outfile, options="--add-index=file")
+    P.load(infile, outfile, options="--add-index=filename")
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -581,7 +581,7 @@ def loadResults(infile, outfile):
            "_reference.load")
 def loadReference(infile, outfile):
     '''load comparison data into database.'''
-    P.load(infile, outfile, options="--add-index=file")
+    P.load(infile, outfile, options="--add-index=filename")
 
 
 @follows(run_tests)

@@ -2149,9 +2149,6 @@ class Tophat(Mapper):
 
         executable = self.executable
 
-        statement = P.getCondaEnvironment(PARAMS['conda_py2'])
-        statement.append(" && ")
-
         num_files = [len(x) for x in infiles]
 
         if max(num_files) != min(num_files):
@@ -2397,9 +2394,6 @@ class TopHat_fusion(Mapper):
             index_prefix = "%(bowtie_index_dir)s/%(genome)s"
 
         data_options = " ".join(data_options)
-
-        statement = P.getCondaEnvironment(PARAMS['conda_py2'])
-        statement.append(" && ")
 
         if nfiles == 1:
             infiles = ",".join([x[0] for x in infiles])

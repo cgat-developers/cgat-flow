@@ -10,7 +10,8 @@ channels:
 - defaults
 
 dependencies:
+- mysqlclient
 - cutadapt
 - blast
 - bashlex
-- pandoc
+- pandoc=1.19.2

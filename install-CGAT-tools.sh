@@ -425,9 +425,14 @@ install_py2_deps() {
 
 log "install Python 2 deps"
 
-curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-macs2.yml
 
-conda env update --quiet --file pipelines-py2.yml
+conda env update --quiet --file pipelines-macs2.yml
+
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-tophat2.yml
+
+conda env update --quiet --file pipelines-tophat2.yml
+
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
 

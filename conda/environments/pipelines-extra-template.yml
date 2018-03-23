@@ -15,3 +15,5 @@ dependencies:
 - blast
 - bashlex
 - pandoc=1.19.2
+# conda env upgrade updates
+- gmap=2017.05.08 # https://github.com/ContinuumIO/anaconda-issues/issues/704

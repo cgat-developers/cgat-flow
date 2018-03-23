@@ -814,7 +814,7 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
       echo " Please have a look at valid releases here: "
       echo " https://github.com/cgat-developers/cgat-flow/releases"
       echo
-      echo " An example of valid release is: --release v0.3.1"
+      echo " An example of valid release is: --release v0.4.0"
       report_error " Please use a valid release and try again."
    fi
       
@@ -822,16 +822,16 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
    # check scripts
    curl --output /dev/null \
       --silent --head --fail \
-      https://raw.githubusercontent.com/cgat-developers/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
+      https://raw.githubusercontent.com/cgat-developers/cgat-apps/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
       
    if [[ ${RELEASE_SCRIPTS} -ne 0 ]] ; then
       echo
       echo " The release number provided for the scripts does not exist: ${RELEASE}"
       echo
       echo " Please have a look at valid releases here: "
-      echo " https://github.com/cgat-developers/releases"
+      echo " https://github.com/cgat-developers/cgat-apps/releases"
       echo
-      echo " An example of valid release is: --release v0.3.1"
+      echo " An example of valid release is: --release v0.4.0"
       report_error " Please use a valid release and try again."
    fi
 }

@@ -598,8 +598,8 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    log "starting tests"
    # run nosetests
    if [[ $TEST_ALL ]] ; then
-      log "test_import.py" && nosetests -v tests/test_import.py && \
       log "test_style.py" && nosetests -v tests/test_style.py && \
+      log "test_import.py" && nosetests -v tests/test_import.py && \
       echo -e "restrict:\n    manifest:\n" > tests/_test_commandline.yaml && \
       log "test_commandline" && nosetests -v tests/test_commandline.py && \
       log "test_scripts" && nosetests -v tests/test_scripts.py ;

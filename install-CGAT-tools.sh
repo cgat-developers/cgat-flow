@@ -595,11 +595,6 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    sed -i'' -e 's/install_requires=install_requires,//g' setup.py
    python setup.py develop
 
-   which python
-   which R
-   which nosetests
-   env
-
    log "starting tests"
    # run nosetests
    if [[ $TEST_ALL ]] ; then

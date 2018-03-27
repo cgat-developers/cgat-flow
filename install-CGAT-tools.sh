@@ -257,7 +257,7 @@ log "downloading miniconda"
 curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
-bash Miniconda.sh -b -p $CONDA_INSTALL_DIR
+bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
 source ${CONDA_INSTALL_DIR}/bin/activate
 hash -r
 

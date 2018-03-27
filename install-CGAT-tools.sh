@@ -231,11 +231,15 @@ MINICONDA=
 
 if [[ `uname` == "Linux" ]] ; then
 
-   MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+   # Conda 4.4 breaks everything again!
+   #MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+   MINICONDA="Miniconda3-4.3.31-Linux-x86_64.sh"
 
 elif [[ `uname` == "Darwin" ]] ; then
 
-   MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+   # Conda 4.4 breaks everything again!
+   #MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+   MINICONDA="Miniconda3-4.3.31-MacOSX-x86_64.sh"
 
 else
 
@@ -250,9 +254,7 @@ fi
 
 log "downloading miniconda"
 # download and install conda
-# curl -O https://repo.continuum.io/miniconda/${MINICONDA}
-# Conda 4.4 breaks everything again
-curl -o Miniconda.sh -O https://repo.continuum.io/miniconda/Miniconda3-4.3.31-Linux-x86_64.sh
+curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
 bash Miniconda.sh -b -p $CONDA_INSTALL_DIR
@@ -592,7 +594,11 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    log "install CGAT code into conda environment"
    [[ $TRAVIS_INSTALL  ]] && cd $CGAT_HOME
    [[ $JENKINS_INSTALL ]] && cd $CGAT_HOME/CGATPipelines
-   sed -i'' -e 's/install_requires=install_requires,//g' setup.py
+
+   # Python preparation
+   sed -i'' -e 's/CGATScripts/scripts/g' setup.py
+   sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+   sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
    python setup.py develop
 
    log "starting tests"
@@ -626,8 +632,10 @@ else
       # make sure you are in the CGAT_HOME/cgat-flow folder
       cd $CGAT_HOME/cgat-flow
 
-      # python preparation
-      sed -i'' -e 's/install_requires=install_requires,//g' setup.py
+      # Python preparation
+      sed -i'' -e 's/CGATScripts/scripts/g' setup.py
+      sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+      sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
       python setup.py develop
       OUTPUT_DIR=`pwd`
 

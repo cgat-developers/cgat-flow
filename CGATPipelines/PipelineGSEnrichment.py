@@ -28,14 +28,13 @@ def getUnmapped(params):
     to find out which output files to create
     '''
     unmapped = dict()
-    for p in params:
-        if "_".join(p.split("_")[0:2]) == "annotation_flatfiles":
-            L = [x.strip() for x in params[p].split("-")]
-            for l in L:
-                l = l.split(" ")
-                if l[0] == "p":
-                    pref = l[1]
-                    unmapped[pref] = params[p]
+    for p in params.get("annotation_flatfiles", None):
+        L = [x.strip() for x in params["annotation_flatfiles"][p].split("-")]
+        for l in L:
+            l = l.split(" ")
+            if l[0] == "p":
+                pref = l[1]
+                unmapped[pref] = params["annotation_flatfiles"][p]
     return unmapped
 
 

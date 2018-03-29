@@ -814,7 +814,7 @@ def buildRefFlat(infile, outfile):
             buildNonCodingExonTranscript,
             buildLincRNAExonTranscript),
            regex('.*geneset_(.*)_exons.gtf.gz'),
-           r'geneset.dir/\1_transript_region.bed.gz')
+           r'geneset.dir/\1_transcript_region.bed.gz')
 def buildTranscriptRegions(infile, outfile):
     """
     export a table of seleno cysteine transcripts.
@@ -969,7 +969,7 @@ def buildGeneTSSInterval(infile, outfile):
             buildNonCodingExonTranscript,
             buildLincRNAExonTranscript),
            regex('.*geneset_(.*)_exons.gtf.gz'),
-           r'geneset.dir/\1_transript_tts.bed.gz')
+           r'geneset.dir/\1_transcript_tts.bed.gz')
 def buildTranscriptTTS(infile, outfile):
     """build a :term:`bed` file with transcription termination sites.
 

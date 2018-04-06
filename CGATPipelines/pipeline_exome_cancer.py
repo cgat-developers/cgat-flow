@@ -1033,7 +1033,7 @@ def buildVCFstats(infile, outfile):
 def loadVCFstats(infiles, outfile):
     '''Import variant statistics into SQLite'''
     filenames = " ".join(infiles)
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     csv2db_options = PARAMS["csv2db_options"]
     E.info("Loading vcf stats...")
     statement = '''cgat vcfstats2db
@@ -1063,7 +1063,7 @@ def loadMutectFilteringSummary(infile, outfile):
     '''Load mutect extended output into database'''
 
     dbh = connect()
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s |
                    cgat csv2db
                    --table %(tablename)s --retry --ignore-empty

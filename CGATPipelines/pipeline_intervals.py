@@ -492,7 +492,7 @@ def exportPeakLocations(infile, outfile):
 
     dbh = P.connect()
     outf = IOTools.open_file(outfile, "w")
-    table = P.toTable(infile)
+    table = P.to_table(infile)
     for x in dbh.execute(
             """SELECT contig, peakcenter, peakcenter+1, interval_id, peakval
             FROM %(table)s """ % locals()):
@@ -1040,7 +1040,7 @@ def loadMotifSequenceComposition(infile, outfile):
     '''compute sequence composition of sequences used for ab-initio search.'''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile))
+        P.to_table(outfile))
 
     statement = '''
     cgat fasta2table
@@ -1092,7 +1092,7 @@ def runTomTom(infile, outfile):
 def loadTomTom(infile, outfile):
     '''load tomtom results'''
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     resultsdir = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "tomtom", infile)
@@ -1202,7 +1202,7 @@ def exportMotifLocations(infiles, outfile):
         tmpf = P.get_temp_file(".")
 
         for infile in infiles:
-            table = P.toTable(infile)
+            table = P.to_table(infile)
             track = P.snip(table, "_mast")
             for x in dbh.execute(
                     """SELECT contig, start, end, '%(track)s', evalue

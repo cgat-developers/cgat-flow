@@ -1,5 +1,5 @@
 """===========================
-Pipeline template
+Single Cell RNASeq QC
 ===========================
 
 Overview
@@ -65,8 +65,9 @@ Code
 ====
 
 """
-from ruffus import *
-from ruffus.combinatorics import *
+from ruffus import follows, transform, regex, suffix, mkdir, originate, \
+    add_inputs, collate, jobs_limit, formatter
+from ruffus.combinatorics import product
 import sys
 import os
 import glob

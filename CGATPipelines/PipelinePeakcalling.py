@@ -1861,7 +1861,7 @@ class SicerPeakcaller(Peakcaller):
             control = "--control-bam-file=%(controlfile)s\
             --control-offset=%(offset)i" % locals()
 
-        tablename = P.toTable(outfile) + "_regions"
+        tablename = P.to_table(outfile) + "_regions"
         load_statement = P.build_load_statement(
             tablename,
             options="--add-index=contig,start "

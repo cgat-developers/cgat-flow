@@ -292,7 +292,7 @@ def loadIntervals(infile, outfile):
     bamfile = bamfiles[0]
     offset = offsets[0]
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     statement = '''zcat %(bedfile)s
                 | awk '{printf("%%s\\t%%i\\t%%i\\t%%i\\n", $1,$2,$3,++a)}'
@@ -336,7 +336,7 @@ def exportPeakLocations(infile, outfile):
     dbh = connect()
     outf = IOTools.open_file(outfile, "w")
     cc = dbh.cursor()
-    table = P.toTable(infile)
+    table = P.to_table(infile)
     for x in cc.execute("""SELECT contig, peakcenter,
     peakcenter+1, interval_id, peakval
     FROM %(table)s """ % locals()):
@@ -679,7 +679,7 @@ def loadMemeChipSummary(infiles, outfile):
 def loadMotifSequenceComposition(infile, outfile):
     '''compute sequence composition of sequences used for ab-initio search.'''
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     statement = '''
     cgat fasta2table
@@ -725,7 +725,7 @@ def runTomTom(infile, outfile):
 def loadTomTom(infile, outfile):
     '''load tomtom results'''
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     resultsdir = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "tomtom", infile)
@@ -816,7 +816,7 @@ def exportMotifLocations(infiles, outfile):
         tmpf = P.get_temp_file(".")
 
         for infile in infiles:
-            table = P.toTable(infile)
+            table = P.to_table(infile)
             track = P.snip(table, "_mast")
             for x in cc.execute(
                     """SELECT contig, start, end, '%(track)s', evalue

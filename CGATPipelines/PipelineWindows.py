@@ -1150,7 +1150,7 @@ def buildSpikeResults(infile, outfile):
 
     # upload into table
     method = P.snip(os.path.dirname(outfile), ".dir")
-    tablename = P.toTable(
+    tablename = P.to_table(
         P.snip(outfile, "power.gz") + method + ".spike.load")
 
     P.load(tmpfile_name,
@@ -1261,7 +1261,7 @@ def loadSummarizedContextStats(infiles,
     filenames = " ".join(infiles)
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=track")
 
     statement = """cgat combine_tables

@@ -705,7 +705,7 @@ def loadExonValidation(infiles, outfile):
 
     suffix = ".exon.validation.tsv.gz"
 
-    P.mergeAndLoad(infiles, outfile, suffix=suffix)
+    P.merge_and_load(infiles, outfile, suffix=suffix)
     for infile in infiles:
         track = P.snip(infile, suffix)
         o = "%s_overrun.load" % track

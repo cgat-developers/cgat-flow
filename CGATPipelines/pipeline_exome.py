@@ -215,7 +215,7 @@ def loadROI(infile, outfile):
     '''Import regions of interest bed file into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
     header = "chr,start,stop,feature"
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -233,7 +233,7 @@ def loadROI(infile, outfile):
 def loadROI2Gene(infile, outfile):
     '''Import genes mapping to regions of interest bed file into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -250,7 +250,7 @@ def loadROI2Gene(infile, outfile):
 def loadSamples(infile, outfile):
     '''Import sample information into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -2007,7 +2007,7 @@ def loadVCFstats(infiles, outfile):
     '''Import variant statistics into SQLite'''
     scriptsdir = PARAMS["general_scriptsdir"]
     filenames = " ".join(infiles)
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     E.info("Loading vcf stats...")
     statement = '''cgat vcfstats2db %(filenames)s >>
                    %(outfile)s; '''

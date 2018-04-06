@@ -349,7 +349,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     '''
 
     job_memory = "4G"
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf

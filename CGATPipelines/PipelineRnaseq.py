@@ -901,7 +901,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
     P.run(statement)
 
 
-def mergeAndLoadStringTie(infiles, track_regex, outfile):
+def merge_and_loadStringTie(infiles, track_regex, outfile):
     '''Load stringtie quantitation from multiple tracks into a set
     of database tables. 
 
@@ -962,7 +962,7 @@ def mergeAndLoadStringTie(infiles, track_regex, outfile):
                    tablename=tablename)
             continue
             
-        P.concatenateAndLoad(infile, outfile,
+        P.concatenate_and_load(infile, outfile,
                              regex_filename=track_regex,
                              tablename=tablename,
                              options="--quick -i %s" % indexs,
@@ -1250,7 +1250,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
 
     '''
 
-    prefix = P.toTable(outfile)
+    prefix = P.to_table(outfile)
     indir = infile + ".dir"
 
     if not os.path.exists(indir):

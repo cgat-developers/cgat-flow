@@ -766,7 +766,7 @@ def loadTranscripts(infile, outfile):
 
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id "
         "--allow-empty-file ")
@@ -1263,7 +1263,7 @@ def loadRepeats(infile, outfile):
 
     """
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=class "
         "--header-names=contig,start,stop,class")
 
@@ -1341,7 +1341,7 @@ def loadmiRNATranscripts(infile, outfile):
 
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--allow-empty-file "
         "--header-names=feature,Name")
 

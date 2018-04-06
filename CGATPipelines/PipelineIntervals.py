@@ -1369,7 +1369,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
         control = ""
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile) + "_peaks",
+        P.to_table(outfile) + "_peaks",
         options="--add-index=contig,start "
         "--add-index=interval_id "
         "--allow-empty-file")
@@ -1400,7 +1400,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
             "SummitPosition"))
 
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_summits",
+            P.to_table(outfile) + "_summits",
             options="--add-index=contig,start "
             "--add-index=interval_id "
             "--allow-empty-file")
@@ -1427,7 +1427,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
     if os.path.exists(filename_diag):
 
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_diagnostics",
+            P.to_table(outfile) + "_diagnostics",
             options="--map=fc:str")
 
         statement = '''
@@ -1569,7 +1569,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
         control = ""
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile) + "_peaks",
+        P.to_table(outfile) + "_peaks",
         options="--add-index=contig,start "
         "--add-index=interval_id "
         "--allow-empty-file")
@@ -1600,7 +1600,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
             "SummitPosition"))
 
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_summits",
+            P.to_table(outfile) + "_summits",
             options="--add-index=contig,start "
             "--add-index=interval_id "
             "--allow-empty-file")
@@ -1631,7 +1631,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
             "Height"))
 
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_regions",
+            P.to_table(outfile) + "_regions",
             options="--add-index=contig,start "
             "--add-index=interval_id "
             "--allow-empty-file")
@@ -1710,7 +1710,7 @@ def loadZinba(infile, outfile, bamfile,
 
         # Steve - Guessing these are actually "peak calls"
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_peaks",
+            P.to_table(outfile) + "_peaks",
             options="--add-index=contig,start "
             "--add-index=interval_id "
             "--allow-empty-file")
@@ -1737,7 +1737,7 @@ def loadZinba(infile, outfile, bamfile,
         P.run(statement)
 
         load_statement = P.build_load_statement(
-            P.toTable(outfile) + "_summits",
+            P.to_table(outfile) + "_summits",
             options="--add-index=contig,start "
             "--add-index=interval_id "
             "--allow-empty-file")
@@ -1859,7 +1859,7 @@ def loadSICER(infile, outfile, bamfile, controlfile=None, mode="narrow",
     if controlfile:
         control = "--control-bam-file=%(controlfile)s --control-offset=%(offset)i" % locals()
 
-    tablename = P.toTable(outfile) + "_regions"
+    tablename = P.to_table(outfile) + "_regions"
     load_statement = P.build_load_statement(
         tablename,
         options="--add-index=contig,start "
@@ -2021,7 +2021,7 @@ def loadPeakRanger(infile, outfile, bamfile, controlfile=None, table_suffix="pea
     # to detect regions arising from more diffuse binding events.
     bedfile = infile + "_region.bed"
     headers = "contig,start,end,interval_id,qvalue,strand"
-    tablename = P.toTable(outfile) + "_" + table_suffix
+    tablename = P.to_table(outfile) + "_" + table_suffix
 
     load_statement = P.build_load_statement(
         tablename,
@@ -2044,7 +2044,7 @@ def loadPeakRanger(infile, outfile, bamfile, controlfile=None, table_suffix="pea
 
     bedfile = infile + "_summit.bed"
     headers = "contig,start,end,interval_id,qvalue,strand"
-    tablename = P.toTable(outfile) + "_summits"
+    tablename = P.to_table(outfile) + "_summits"
     load_statement = P.build_load_statement(
         tablename,
         options="--add-index=contig,start "
@@ -2208,7 +2208,7 @@ def loadSPP(infile, outfile, bamfile, controlfile=None):
     #
     # bedfile = infile + ".broadpeak.txt"
     # headers="contig,start,end,interval_id"
-    # tablename = P.toTable( outfile ) + "_regions"
+    # tablename = P.to_table( outfile ) + "_regions"
     # statement = '''
     #            awk '{printf("%%s\\t%%i\\t%%i\\t%%s\\n", $1,$2,$3,++a);}'
     #            < %(bedfile)s
@@ -2231,7 +2231,7 @@ def loadSPP(infile, outfile, bamfile, controlfile=None):
 
     bedfile = infile + ".narrowpeak.txt"
     headers = "contig,start,end,interval_id,peakval1,qvalue,peakpos"
-    tablename = P.toTable(outfile) + "_peaks"
+    tablename = P.to_table(outfile) + "_peaks"
     load_statement = P.build_load_statement(
         tablename,
         options="--add-index=contig,start "
@@ -2256,7 +2256,7 @@ def loadSPP(infile, outfile, bamfile, controlfile=None):
     #
     # bedfile = infile + ".summits.txt"
     # headers="contig,start,end,interval_id,peakval1,qvalue,peakpos"
-    # tablename = P.toTable( outfile ) + "_peaks"
+    # tablename = P.to_table( outfile ) + "_peaks"
     # statement = '''awk '{printf("%%s\\t%%i\\t%%i\\t%%s\\t%%f\\t%%f\\t%%i\\n", $1,$2,$3,++a,$7,$9,$1+$10);}'
     #            < %(bedfile)s
     #            | cgat bed2table
@@ -2919,7 +2919,7 @@ def loadScripture(infile, outfile, bamfile, controlfile=None):
     bedfile = infile + ".bed.gz"
 
     headers = "contig,start,end,interval_id,score,pvalue,score2,score3,score4"
-    tablename = P.toTable(outfile) + "_peaks"
+    tablename = P.to_table(outfile) + "_peaks"
     load_statement = P.build_load_statement(
         tablename,
         options="--add-index=contig,start "

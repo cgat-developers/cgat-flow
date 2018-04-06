@@ -490,8 +490,11 @@ def full():
 def renderMultiqc(infile):
     '''build mulitqc report'''
 
-    statement = '''LANG=en_GB.UTF-8 multiqc . -f;
-                   mv multiqc_report.html MultiQC_report.dir/'''
+    statement = (
+        "export LANG=en_GB.UTF-8 && "
+        "export LC_ALL=en_GB.UTF-8 && "
+        "multiqc . -f && "
+        "mv multiqc_report.html MultiQC_report.dir/")
 
     P.run(statement)
 

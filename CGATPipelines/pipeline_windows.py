@@ -207,7 +207,7 @@ def loadTagCounts(infiles, outfile):
        outfile: str
            filename of database loading logfile.
        '''
-    P.mergeAndLoad(infiles, outfile, columns=(0, 2),
+    P.merge_and_load(infiles, outfile, columns=(0, 2),
                    suffix=".tsv")
 
 
@@ -532,7 +532,7 @@ def loadCpgCompositionHistogram(infiles, outfile):
         filename for database load logfile
     '''
 
-    P.mergeAndLoad(infiles, outfile,
+    P.merge_and_load(infiles, outfile,
                    regex="/(.*).cpghist.tsv.gz",
                    row_wise=False)
 
@@ -605,7 +605,7 @@ def buildCpGCoverage(infiles, outfile):
 @merge(buildCpGCoverage, "cpg_coverage_by_reads.load")
 def loadCpGCoverage(infiles, outfile):
     '''load cpg coverage data - number of reads covering a CpG.'''
-    P.mergeAndLoad(infiles, outfile,
+    P.merge_and_load(infiles, outfile,
                    regex="/(.*).cpg_coverage.gz",
                    row_wise=False)
 
@@ -2057,7 +2057,7 @@ def loadSpikeResults(infile, outfile):
         filename of database load logfile
     '''
     method = P.snip(os.path.dirname(outfile), '.dir')
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     tablename = '_'.join((tablename, method))
 
     P.load(infile, outfile, options='--add-index=fdr,power --allow-empty-file',
@@ -2256,7 +2256,7 @@ def loadDMRStats(infiles, outfile):
     outfile: str
         filename of database load logfile
     '''
-    P.concatenateAndLoad(infiles, outfile,
+    P.concatenate_and_load(infiles, outfile,
                          missing_value=0,
                          regex_filename=".*\/(.*).stats")
 

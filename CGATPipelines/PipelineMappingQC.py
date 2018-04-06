@@ -287,13 +287,13 @@ def loadPicardMetrics(infiles, outfile, suffix,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
 
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
 
     outf = P.get_temp_file(".")
 
@@ -370,12 +370,12 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
         tablename = tablename.replace("_metrics", "_histogram")
 
     # some files might be missing
@@ -587,7 +587,7 @@ def loadBAMStats(infiles, outfile):
     header = ",".join([P.snip(os.path.basename(x), ".readstats")
                        for x in infiles])
     filenames = " ".join(["<( cut -f 1,2 < %s)" % x for x in infiles])
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     load_statement = P.build_load_statement(
         tablename,

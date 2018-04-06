@@ -2064,7 +2064,7 @@ def loadBigWigStats(infiles, outfile):
                         for x in infiles])
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=track")
 
     statement = '''cgat combine_tables

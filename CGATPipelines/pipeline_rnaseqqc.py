@@ -1286,7 +1286,7 @@ def loadTranscriptProfiles(infiles, outfile):
     infiles = [
         x + ".geneprofileabsolutedistancefromthreeprimeend.matrix.tsv.gz" for x in infiles]
 
-    P.concatenateAndLoad(infiles, outfile, regex_filename=regex)
+    P.concatenate_and_load(infiles, outfile, regex_filename=regex)
 
 
 @merge(SEQUENCEFILES,

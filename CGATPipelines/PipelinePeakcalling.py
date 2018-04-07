@@ -2630,9 +2630,6 @@ def runCHIPQC(infile, outfiles, rdir):
     runCHIPQC_R = R('''
     function(samples, outdir, cwd){
         library("ChIPQC")
-        cwd = "/ifs/projects/katherineb/test_data_peakcalling/test3"
-        print("cwd")
-        print(cwd)
         print("samples")
         print(samples)
         setwd(cwd)

@@ -148,9 +148,9 @@ if FASTQ_DIR == "?!":
 
 FASTQ_FILES = tuple([os.path.join(FASTQ_DIR, suffix_name)
                      for suffix_name in FASTQ_SUFFIXES])
-FASTQ_REGEX = regex(r"%s/(\S+).fastq.1.gz" % FASTQ_DIR)
-FASTQ_PAIR = r"%s/\1.fastq.2.gz" % FASTQ_DIR
-SE_REGEX = regex(r"%s/(\S+).fastq.gz" % FASTQ_DIR)
+FASTQ_REGEX = regex(os.path.join(FASTQ_DIR, r"(\S+).fastq.1.gz"))
+FASTQ_PAIR = os.path.join(FASTQ_DIR, r"\1.fastq.2.gz")
+SE_REGEX = regex(os.path.join(FASTQ_DIR, r"(\S+).fastq.gz"))
 GENESETS = [y for y in glob.glob(os.path.join("reference.dir/*.gtf.gz"))]
 
 
@@ -456,13 +456,13 @@ def loadSailfishCounts(infile, outfile):
 
 BAMDIR = PARAMS['bam_dir']
 BAMFILES = [x for x in glob.glob(os.path.join(BAMDIR, "*.bam"))]
-BAMREGEX = regex(r".*/(.+)_(.+)_(.+).bam$")
+BAMREGEX = regex(r"([^/]+).bam$")
 
 
 @follows(mkdir("dedup.dir"))
 @transform(BAMFILES,
            BAMREGEX,
-           r"dedup.dir/\1_\2_\3.dedup.bam")
+           r"dedup.dir/\1.dedup.bam")
 def dedupBamFiles(infile, outfile):
     '''
     Use Picard MarkDuplicates to remove
@@ -538,9 +538,9 @@ def buildFeatureCounts(infiles, outfile):
 
 
 @collate(buildFeatureCounts,
-         regex("feature_counts.dir/(.+)_(.+)_(.+)_vs_(.+).tsv.gz"),
-         r"feature_counts.dir/\1-\2-feature_counts.tsv.gz")
-def aggregatePlateFeatureCounts(infiles, outfile):
+         regex("feature_counts.dir/(\S+)_vs_(\S+).tsv.gz"),
+         r"feature_counts.dir/\2-feature_counts.tsv.gz")
+def aggregateFeatureCounts(infiles, outfile):
     ''' build a matrix of counts with genes and tracks dimensions.
     '''
 
@@ -553,36 +553,7 @@ def aggregatePlateFeatureCounts(infiles, outfile):
     --columns=1
     --take=7
     --use-file-prefix
-    --regex-filename='(.+)_vs.+.tsv.gz'
-    --log=%(outfile)s.log
-    %(infiles)s
-    | sed 's/Geneid/gene_id/'
-    | sed 's/\-/\./g'
-    | tee %(outfile)s.table.tsv
-    | gzip > %(outfile)s '''
-
-    P.run(statement)
-
-
-@follows(aggregatePlateFeatureCounts)
-@collate(buildFeatureCounts,
-         regex("feature_counts.dir/(.+)_(.+)_(.+)_vs_(.+).tsv.gz"),
-         r"feature_counts.dir/\1-feature_counts.tsv.gz")
-def aggregateAllFeatureCounts(infiles, outfile):
-    ''' build a matrix of counts with genes and tracks dimensions,
-    aggregated over all plates
-    '''
-
-    # Use column 7 as counts. This is a possible source of bugs, the
-    # column position has changed before.
-
-    infiles = " ".join(infiles)
-    statement = '''
-    cgat combine_tables
-    --columns=1
-    --take=7
-    --use-file-prefix
-    --regex-filename='(.+)_vs.+.tsv.gz'
+    --regex-filename='(\S+)_vs_\S+.tsv.gz'
     --log=%(outfile)s.log
     %(infiles)s
     | sed 's/Geneid/gene_id/'
@@ -594,7 +565,7 @@ def aggregateAllFeatureCounts(infiles, outfile):
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(aggregateAllFeatureCounts,
+@transform(aggregateFeatureCounts,
            suffix(".tsv.gz"),
            ".load")
 def loadFeatureCounts(infile, outfile):

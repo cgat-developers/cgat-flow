@@ -55,6 +55,8 @@ def main(argv=None):
             if "," in val:
                 val = "[{}]".format(val)
 
+            if "!?" in val:
+                val = re.sub("!?", "?!", val)
             options.stdout.write("{}{}: {}\n".format(" " * indent, key, val))
     # write footer and output benchmark information.
     E.stop()

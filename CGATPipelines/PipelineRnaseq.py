@@ -205,7 +205,7 @@ class Quantifier(object):
            This is specified in pipeline_ini
            :term:`PARAMS` - library type option.
         kmer: int
-           This is specified in the pipeline.ini
+           This is specified in the pipeline.yml
            :term:`PARAMS` - kmer size for aligment free quant.
         '''
 
@@ -1650,7 +1650,7 @@ def buildUTRExtension(infile, outfile):
     '''
 
     # the bin size , see gtf2table - can be cleaned from column names
-    # or better set as options in .ini file
+    # or better set as options in .yml file
     binsize = 100
     territory_size = 15000
 

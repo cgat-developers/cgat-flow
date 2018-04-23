@@ -81,7 +81,7 @@ with factors separated by ``-``, for example::
    sample1-mRNA-150k-R1-L02.fastq.1.gz
    sample1-mRNA-150k-R1-L02.fastq.2.gz
 
-and then set the ``factors`` variable in :file:`pipeline.ini` to::
+and then set the ``factors`` variable in :file:`pipeline.yml` to::
 
    factors=experiment-source-replicate-lane
 
@@ -202,9 +202,9 @@ import json
 
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 PARAMS = P.PARAMS
 

@@ -188,7 +188,7 @@ import pandas as pd
 
 
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0], "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0], "pipeline.yml"])
 
 PARAMS = P.PARAMS
 INPUT_FORMATS = ("*.fastq.1.gz", "*.fastq.gz", "*.sra", "*.csfasta.gz")
@@ -966,7 +966,7 @@ def annotateVariantsSNPsift():
            r"variants/all_samples.vep.vcf")
 def annotateVariantsVEP(infile, outfile):
     '''
-    Adds annotations as specified in the pipeline.ini using Ensembl
+    Adds annotations as specified in the pipeline.yml using Ensembl
     variant effect predictor (VEP).
     '''
     # infile - VCF
@@ -1275,7 +1275,7 @@ def ancestry():
 def qualityFilterVariants(infile, outfiles):
     '''
     Filter variants based on quality.  Columns to filter on and
-    how they should be filtered can be specified in the pipeline.ini.
+    how they should be filtered can be specified in the pipeline.yml.
     Currently only implemented to filter numeric columns.  "." is assumed
     to mean pass.
     '''
@@ -1292,7 +1292,7 @@ def qualityFilterVariants(infile, outfiles):
 def rarityFilterVariants(infiles, outfiles):
     '''
     Filter out variants which are common in any of the exac or other
-    population datasets as specified in the pipeline.ini.
+    population datasets as specified in the pipeline.yml.
     '''
     infile = infiles[0]
     thresh = PARAMS['filtering_rarethresh']
@@ -1310,7 +1310,7 @@ def damageFilterVariants(infiles, outfiles):
     '''
     Filter variants which have not been assessed as damaging by any
     of the specified tools.
-    Tools and thresholds can be specified in the pipeline.ini.
+    Tools and thresholds can be specified in the pipeline.yml.
 
     Does not account for multiple alt alleles - if any ALT allele has
     been assessed as damaging with any tool the variant is kept,

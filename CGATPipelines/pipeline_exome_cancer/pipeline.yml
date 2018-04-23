@@ -1,0 +1,241 @@
+##########################################################
+##########################################################
+##########################################################
+## Exome cancer pipeline parameters
+##########################################################
+
+
+
+# the genome to use
+genome: human_g1k_v37
+
+web_dir: ../web
+
+report_engine: cgatreport
+
+################################################################
+#
+# Sample naming
+#
+################################################################  
+sample:
+    # Pipeline expects the names to be named SampleID-*-Replicate
+    # where * is either the control or tumour identifier  
+    control: Control
+
+    tumour: Tumour  
+
+    ################################################################
+    #
+    # BWA options
+    #
+    ################################################################  
+bwa:
+
+    # location of BWA indexed genome
+    index_dir: /ifs/mirror/genomes/bwa-0.7.5a
+
+    # threads
+    threads: 12
+
+    # bwa algorithm
+    # options are "aln" or "mem"
+    algorithm: aln
+
+    # aln alignment options
+    # -l 25: seed length 
+    # -k 2: mismatches allowed in seed
+    # -n 10: total mismatches allowed
+    aln_options: -l 25 -k 2 -n 10
+
+    # mem alignment options
+    # -k 25 seed length
+    # -M mark shorter hits as secondary (required for Picard compability)
+    mem_options: -M -k 25
+
+    # BWA alignment parameters
+    remove_non_unique: 1
+
+    samse_options: 
+
+    sampe_options: 
+
+    memory: 2G
+
+readgroup:
+
+    library: Nimblegen_SeqCap_EZ_Exome_v3
+
+    platform: illumina
+
+    platform_unit: 1
+
+    sample: solid
+
+dedup:
+
+    method: picard
+
+    ################################################################
+    #
+    # GATK options
+    #
+    ################################################################
+
+gatk:
+
+    solid_options: 
+
+    hc_options: 
+
+    threads: 6
+
+    dbsnp: /ifs/mirror/genomes/gatk/dbsnp_137.b37.vcf
+
+    hapmap: /ifs/mirror/genomes/gatk/hapmap_3.3.b37.vcf
+
+    omni: /ifs/mirror/genomes/gatk/1000G_omni2.5.b37.vcf
+
+    memory: 4G
+
+    ################################################################
+    #
+    # Mutect options
+    #
+    ################################################################
+mutect:
+
+    memory: 4G
+
+    threads: 2
+
+    # Reference 
+    reference: 
+
+    # Tumor LOD
+    lod: 6.3
+    # default is 6.3
+
+    # COSMIC VCF - known somatic mutations in cancer
+    cosmic: ../backup/GATK/b37_cosmic_v54_120711.vcf
+    #b37_cosmic_v54_120711.vcf
+
+    # dbsnp VCF - known SNP variants
+    dbsnp: 
+    #dbsnp_132_b37.leftAligned.vcf
+
+    # quality threshold
+    quality: 20
+
+    # LOD threshold for strand bias
+    strand_lod: 2
+
+    # maximum total observations of variant in control before rejection 
+    max_alt: 5
+
+    # maximum sum quality threshold for variant in control before rejection
+    max_alt_qual: 100
+
+    # maximum allelic fraction in control before rejection  
+    max_fraction: 0.05  
+
+    ################################################################
+    #
+    # Strelka options
+    #
+    ################################################################
+strelka:
+
+    memory: 2G
+
+    threads: 4  
+
+    config: config.ini
+    ################################################################
+    #
+    # Annotation options
+    #
+    ################################################################
+
+annotation:
+
+    #Config file specifies that the genome must be downloaded into your home directory
+    snpeff_config: /ifs/apps/bio/snpEff-3.3-dev/snpEff.config
+
+    snpeff_genome: GRCh37.68
+
+    snpsift_dbnsfp: /ifs/apps/bio/snpEff-3.1/dbNSFP2.1.txt
+
+    # cancer types for eBio annotation
+    # cancer types must be exactly as specified in:
+    # http://www.cbioportal.org/webservice.do?cmd=getCancerStudies
+    # the cancer type is the second column (name)
+    ebio_cancer_types:   
+
+roi:
+
+    # Intervals of interest for variant calling, formatted according to GATK specifications
+    intervals: /ifs/projects/proj024/data/Nimblegen/SeqCap_EZ_Exome_v3_capture_ucsc.interval_list
+
+
+    # Bait regions of exome capture, formatted according to Picard specifications
+    baits: /ifs/projects/sftp/backup/proj038/sureDesign/S02972011_Regions_removed_chr.bed
+
+
+    # Regions that the capture kit is designed to cover, formatted according to Picard specifications
+    regions: /ifs/projects/sftp/backup/proj038/sureDesign/S02972011_Regions_removed_chr.bed
+
+    # The amount of flanking sequence either side of intervals that you wish GATK to consider in variant calling
+    padding: 100
+
+
+    ################################################################
+    #
+    # NCG cancer genes table
+    #
+    ################################################################
+cancergenes:
+    #table=/ifs/projects/proj038/backup/NCG/cancergenes.tsv
+    table: ?!
+
+    ################################################################
+    #
+    # Filtering options
+    #
+    ################################################################
+filter:
+
+    minimum_tumor_allele: 3
+
+    minimum_tumor_allele_frequency: 0.06
+
+    minimum_normal_depth: 20
+
+    maximum_normal_allele_frequency: 0.0
+
+    minimum_ratio: 3
+
+    indel_nt: 20
+
+    indel_ihp: 12
+
+    indel_rc: 12
+
+    index_ic: 12
+
+    ################################################################
+    #
+    # report options
+    #
+    ################################################################
+report:
+    # number of threads to use to build the documentation
+    threads: 1
+
+    # directory for html documentation
+    html: report/html
+
+    # directory for doctrees
+    doctrees: report/doctrees
+
+

@@ -129,9 +129,9 @@ from rpy2.robjects import r as R
 #########################################################################
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False})
 
@@ -1000,7 +1000,7 @@ def loadWindowsTagCounts(infile, outfile):
 def getInput(track):
     '''return a list of input tracks associated with track.
 
-    Associations can be defined in the .ini file in the section
+    Associations can be defined in the .yml file in the section
     [input]. For example, the following snippet associates track
     track1 with the bamfiles :file:`track1.bam` and :file:`track2.bam`::
 
@@ -1122,7 +1122,7 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
 
     # compute normalization ratios
     # total_input / total_column
-    # MM: note that the input in pipeline.ini needs to be the same
+    # MM: note that the input in pipeline.yml needs to be the same
     # as the dataframe header, not the actual filename
     ratios = {}
     for column in dataframe.columns:

@@ -178,9 +178,9 @@ def connect():
 
 #########################################################################
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False},
     only_import=__name__ != "__main__")
@@ -1077,7 +1077,7 @@ def loadMutectFilteringSummary(infile, outfile):
 
 @originate("eBio_studies.tsv")
 def defineEBioStudies(outfile):
-    ''' For the cancer types specified in pipeline.ini, identify the
+    ''' For the cancer types specified in pipeline.yml, identify the
     relevent studies in eBio '''
 
     cancer_types = PARAMS["annotation_ebio_cancer_types"]

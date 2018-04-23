@@ -130,10 +130,10 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 The sphinxreport report requires a :file:`conf.py` and
-:file:`sphinxreport.ini` file (see :ref:`PipelineReporting`). To start
+:file:`sphinxreport.yml` file (see :ref:`PipelineReporting`). To start
 with, use the files supplied with the Example_ data.
 
 Input
@@ -353,9 +353,9 @@ CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
 
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 PARAMS = P.PARAMS
 PARAMS.update(P.peek_parameters(
@@ -638,7 +638,7 @@ def runFeatureCounts(infiles, outfiles):
 
     featurecounts_threads : int
         :term:`PARAMS` - number of threads to run feature counts. This is
-        specified in pipeline.ini
+        specified in pipeline.yml
 
     featurecounts_strand : int
         :term:`PARAMS`
@@ -1329,7 +1329,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     if PARAMS['sleuth_genewise']:
 
         assert PARAMS['sleuth_gene_biomart'], (
-            "Must provide a biomart (see pipeline.ini)")
+            "Must provide a biomart (see pipeline.yml)")
 
         # gene-wise sleuth seems to be even more memory hungry!
         # Use 2 * transcript memory estimate

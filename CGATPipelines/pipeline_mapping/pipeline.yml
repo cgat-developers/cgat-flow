@@ -1,0 +1,506 @@
+
+# directory where reads are located, specified as:
+# "0" for the current directory "."
+# "1" for the subdirectory "./data.dir".
+# alternative a path may be specified, but this is not recommended.
+input: 0
+
+genome: hg19
+
+# directory where exported data is located
+exportdir: export
+
+# location of indexed genome, needs to be set
+genome_dir: ?!
+
+# scratchdir for data not to be backed up
+scratchdir: /tmp
+
+# a version string
+version: 
+
+# directory for publishing results on the web
+web_dir: ../web
+
+# maximum intron size - transcripts with longer introns
+# will be ignored
+max_intron_size: 2000000
+
+# mappers to run
+# valid mappers are:
+# tophat
+# tophat2
+# bowtie
+# bowtie2
+# bwa
+# star
+# stampy
+# shortstack
+# butter
+# hisat  
+# (bfast)
+# (shrimp)
+mappers: [bwa,tophat2,star]
+
+# Strand Assignment for spliced mapping
+# Using HISAT nomenclature, more detail available at
+# http://www.ccb.jhu.edu/software/hisat/manual.shtml#options
+# under --rna-strandness
+# FR = secondstrand paired-end
+# RF = firststrand paired-end
+# F = secondstrand single-end
+# R = firststrand single-end
+# 
+# Paired-end sequencinng after TruSeq Library Prep is "RF"
+#
+# Default = empty: unstranded
+# Required for all spliced alignment
+strandness: 
+
+# Strip read sequence and quality information.
+# Saves space for rnaseq and chipseq runs, but 
+# sequence and quality information necessary for
+# variant calling
+#
+# Enabled by default
+strip_sequence: 1
+
+# remove non-unique matches in a post-processing step.
+# Many aligners offer this option in the mapping stage
+# If only unique matches are required, it is better to
+# configure the aligner as removing in post-processing
+# adds to processing time.
+remove_non_unique: 0
+
+database:
+    name: csvdb
+    ################################################################
+    ################################################################
+    ################################################################
+    ## Location of annotation database - needs to be set
+    ################################################################
+annotations:
+    #annotations database
+    database: ?!
+
+    # directory with annotation information
+    dir: ?!
+
+    ################################################################
+    ################################################################
+    ################################################################
+    ## Location of python 2 environment
+    ################################################################
+conda:
+
+    py2: cgat-py2
+
+    ################################################################
+    ################################################################
+    ################################################################
+    # options for building geneset
+    ################################################################
+geneset:
+    # set, if ribosomal and other repetetive rna genes should be removed
+    # (note: lincRNA are kept in)
+    remove_repetetive_rna: 1
+
+    # pattern to match for contigs to remove
+    remove_contigs: chrM|chrMT|_random|chrUn|_hap|chrGL|chrHSCHR
+
+    # minimum flanking error for isoform annotation
+    flank: 5000
+
+    ################################################################
+    ################################################################
+    ################################################################
+    ## merging bam files
+    ################################################################
+merge:
+    # input pattern
+    # For example, if your files are called:
+    #    Purkinje-P8-1-R1.star.bam
+    #    Purkinje-P8-2-R1.star.bam
+    #    Purkinje-P8-1-R3.star.bam
+    #    Purkinje-P8-2-R3.star.bam
+    # and you want to create the following files:
+    #    Purkinje-P8-R1.star.bam
+    #    Purkinje-P8-R3.star.bam
+    #
+    # choose the following input and output patterns:
+    #
+    # pattern_input=(.*)-(\d+)-(.*)
+    # pattern_output=\1-\3
+    # Note that the .star.bam will be added by the pipeline. The
+    # pattern must not include this.
+    pattern_input: 
+    pattern_output: 
+
+    ################################################################
+    ################################################################
+    ################################################################
+    ## program options
+    ################################################################
+
+    ################################################################
+    ################################################################
+    ## tophat options
+    ################################################################
+tophat:
+    # tophat executable. An alternative is cgat-tophat, which attempts
+    # to paralleize the segment_junction step
+    executable: tophat
+
+    # default values, but enabling extra search options. Added the
+    # directory containing the bowtie indexed reference transcriptome
+    options: 
+
+    # threads to use
+    threads: 12
+
+    # memory required for tophat jobs - note that this is multiplied by the
+    # number of threads. Thus, 4 threads * 2G = 8G
+    memory: 1.9G
+
+    # --mate-inner-dist parameter for tophat, required for paired-ended runs.
+    # inner distance (in TopHat) = insert length - 2 * read length
+    mate_inner_dist: 60
+
+    # map to reference transcriptome
+    include_reference_transcriptome: 1
+
+
+    ################################################################
+    ################################################################
+    ## tophat2 options
+    ################################################################
+tophat2:
+    # tophat executable. An alternative is cgat-tophat, which attempts
+    # to paralleize the segment_junction step
+    executable: tophat2
+
+    # default values, but enabling extra search options. Added the
+    # directory containing the bowtie indexed reference transcriptome
+    options: --no-coverage-search
+
+    # enable fusion search
+    # note: this will automatically add the options "--fusion-search"
+    # and  "--bowtie1" to speed up the alignment
+    # to parameterise the fusion search add further options above
+    # must also specify a location for the outfile tophatfusion annotations directory
+    fusion: 0
+
+    fusion_annotations_directory: fusion_annotations.dir
+
+    # threads to use
+    threads: 12
+
+    # memory required for tophat jobs - note that this is multiplied by the
+    # number of threads. Thus, 4 threads * 2G = 8G
+    memory: 3.9G
+
+    # --mate-inner-dist parameter for tophat, required for paired-ended runs.
+    # inner distance (in TopHat) = insert length - 2 * read length
+    mate_inner_dist: 60
+
+    # map to reference transcriptome
+    include_reference_transcriptome: 1
+
+
+    ################################################################
+    ################################################################
+    ## hisat options
+    ## NOTE: 'hangs' frequently - check output directory and cluster
+    ## status frequently and delete/kill jobs as necessary
+    ################################################################
+hisat:
+    #hisat executable
+    #note: for hisat2, set executable to hisat2 and index_dir should point to hisat2 indeces
+    executable: hisat
+
+    # default values
+    options: 
+
+    #threads to use
+    threads: 12
+
+    # memory required for hisat jobs - note that this is multiplied by the
+    # number of threads. Thus, 4 threads * 2G = 8G
+    memory: 3.9G
+
+    # directory containing hisat indexes for genomes
+    index_dir: 
+
+    ################################################################
+    ################################################################
+    ## gsnap options
+    ################################################################
+gsnap:
+    # gsnap executable. 
+    executable: gsnap
+
+    # genome name to map to, leave blank to use that given
+    # in the [general] section
+    genome: 
+
+    # options for gsnap. Please see gsnap --help for a full list
+    # of options. There are many.
+    options: 
+
+    # number of threads to use on the node
+    node_threads: 12
+
+    # number of gsnap worker threads (gsnap uses this number + 2)
+    worker_threads: 9
+
+    # map against known splice sites
+    include_known_splice_sites: 1
+
+    # memory required for gsnap, publicatoin suggests 5GB for the human genome,
+    # to calculate total use threads * memory
+    memory: 0.5G
+
+    ################################################################
+    ################################################################
+    ## star options
+    ################################################################
+star:
+    # star executable. 
+    executable: STAR
+
+    # directory with star indices
+    index_dir: /ifs/mirror/genomes/star
+
+    # options to specify different --genomeDir if using sjdb 
+    # see guidelines for generating genomes with a splice junction database
+    # (/ifs/mirror/genomes/star/CGAT-README)
+    # leave blank to use the genome as specified above without junctions.
+    genome: 
+
+    # options for star. Please see the star manual for a list
+    # of options. There are many.
+    # Be careful with specifying any --genomeLoad options other
+    # than the default "NoSharedMemory". Star jobs that fail or are 
+    # killed before finishing do not properly clean up even if
+    # "LoadAndRemove" is specified. This results in memory not being
+    # freed properly causing unrelated jobs to fail unexpectedly with
+    # "out of memory" faults.
+    options: 
+
+    # number of threads to use
+    threads: 12
+
+    # memory required for STAR. The memory requirement depends on
+    # the size of the suffix array. Note that the total memory requirement
+    # is threads * memory. Our nodes/blades have ~23.5GB.
+    # After testing, 1.9 (*12) seems to be the magic number
+    memory: 1.9G
+
+    ################################################################
+    ################################################################
+    ## bowtie options
+    ################################################################
+bowtie:
+    # bowtie executable
+    executable: bowtie
+
+    # directory with bowtie indices
+    index_dir: /ifs/mirror/genomes/bowtie
+
+    # options for mapping with bowtie
+    # note that bowtie two does not accept any of these defaults
+    # !! For paired end mapping note that the default max insert length is 250 !!
+    # !! This can be modified with -X                                          !!
+    options: -v 2 --best --strata -a
+    #for bowtie2:
+    #options=--all
+
+    # options for mapping with bowtie against transcriptome
+    # (reporting options are set automatically)
+    transcriptome_options: -v 2
+
+    # threads to use
+    threads: 12
+
+    # memory required for bowtie jobs - per thread
+    memory: 1.9G
+
+bowtie2:
+    # bowtie executable
+    executable: bowtie2
+
+    # directory with bowtie indices
+    index_dir: /ifs/mirror/genomes/bowtie
+
+    # options for mapping with bowtie2
+    # !! For paired end mapping note that the default max insert length is 250 !!
+    # !! This can be modified with -X                                          !!
+    options: --all
+
+    # threads to use
+    threads: 12
+
+    # memory required for bowtie jobs - per thread
+    memory: 1.9G
+
+    ################################################################
+    ################################################################
+    ################################################################
+    # bwa options
+    ################################################################
+bwa:
+    # number of threads to use
+    threads: 12
+
+    index_dir: /ifs/mirror/genomes/bwa
+
+    # bwa algorithm
+    # options are "aln" or "mem"
+    algorithm: aln
+
+    # aln alignment options
+    # -l 25: seed length 
+    # -k 2: mismatches allowed in seed
+    # -n 10: total mismatches allowed
+    aln_options: -l 25 -k 2 -n 10
+
+    # mem alignment options
+    # -k 25 seed length
+    # -M mark shorter hits as secondary (required for Picard compability)
+    mem_options: -M -k 25
+
+    # includes a Read Group Header
+    read_group_header:   
+
+    # removes reads that return multiple hits
+    remove_non_unique: 
+
+    # sets nh tag
+    set_nh:   
+
+    samse_options: 
+
+    sampe_options: 
+
+    # memory required for bwa jobs - per thread
+    # Note that the mem algorithm requires a large amount of memory.  
+    memory: 1.9G
+
+
+    ################################################################
+    ################################################################
+    ################################################################
+    # stampy options
+    ################################################################
+stampy:
+    # number of threads to use
+    threads: 12
+
+    # directory with stampy indices
+    index_dir: /ifs/mirror/genomes/stampy
+
+    # bwa alignment options
+    # -l 25: seed length 
+    # -k 2: mismatches allowed in seed
+    # -n 10: total mismatches allowed
+    aln_options: -l 25 -k 2 -n 10
+
+    # memory required for stampy jobs - per thread
+    memory: 1.9G
+
+    ################################################################
+    ################################################################
+    ################################################################
+    # butter options
+    ################################################################
+butter:
+
+    # directory with bowtie indices for butter
+    index_dir: /ifs/mirror/genomes/bowtie
+
+    # options for mapping with butter
+    # max_rep=[int] Maximum number of possible alignments
+    # ranmax=[int] maximum number of locations for reads which cannot be placed
+    #              based on read density before read is discarded
+    # mismatches=[0/1] Number of mismatches allowed for a valid alignment  
+    options=max_rep=10 ranmax=1 mismatches: 1
+
+    # threads to use
+    threads: 12
+
+    # memory required for bowtie jobs - per thread
+    memory: 1.9G
+
+    # butter does not output an nh tag which may be required downstream
+    # use this to include an nh tag after alignment  
+    set_nh: 1  
+
+    ################################################################
+    ################################################################
+    ################################################################
+    # shortstack options
+    ################################################################
+shortstack:
+
+    # directory with bowtie indexes for shortstack
+    index_dir: /ifs/mirror/genomes/bowtie
+
+    # options for mapping with shortstack
+    options=--mismatches: 1
+
+    # threads to use
+    threads: 12
+
+    # memory required for bowtie jobs - per thread
+    memory: 1.9G
+
+
+
+    ################################################################
+    # options for bigwig export
+bigwig:
+
+    # bam to bigwig conversion options. See bam2wiggle.py
+    options: 
+
+    ################################################################
+    # options for bigwig export
+bed:
+
+    # bam to bed conversion options. See bam2bed.py
+    options=--bed-format: 3
+
+    ################################################################
+    # options for ucsc track hub creation
+ucsc:
+
+    # regexes to exclude tracks. string separated list
+    # e.g .*butter.*,.*F2-.*
+    exclude: 
+
+    # if you have an ini file to configure the ucsc hub, put it here.
+    # see documentation of Pipeline.Local.publish_tracks function for
+    # how to generate an ini file
+    ini: 
+
+    ################################################################
+    #Aspara ascp highspeed download tool
+    #################################################################
+aspera:
+    bandwidth: 100m
+
+report:
+    # number of threads to use to build the documentation
+    threads: 1
+
+    # directory for html documentation
+    html: report/html
+
+    # directory for doctrees
+    doctrees: report/doctrees
+
+    # prefix for publishing
+    prefix: default
+
+    # report generator to use
+    engine: cgatreport  

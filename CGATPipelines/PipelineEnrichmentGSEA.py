@@ -11,7 +11,7 @@ This pipeline is a wrapper of script runGSEA.py (enrichment analysis
                                                 description is provided
                                                 below.)
 To run this pipeline, one needs to specify required parameteres in
-pipeline.ini file (configuration file).
+pipeline.yml file (configuration file).
 This pipeline entails steps:
 -----------
 First step: Preprocessing of gene list(expression data set)
@@ -25,7 +25,7 @@ First step: Preprocessing of gene list(expression data set)
                          b. The Database is generated using the pipeline pipeline_geneinfo.py.
                             This database is required to run pipeline_enrichment.
             Input gene list is translated into required id type.
-            (Available options are specified in .ini file), sorts
+            (Available options are specified in .yml file), sorts
             the gene list on the basis of provided ranking metric.
             It also removes all duplicate ids and generates report.
             A summary of preprocessing steps of the gene list is provided and lists
@@ -59,7 +59,7 @@ It takes two input files:
             is a collection of annotated gene sets, which can be used for gene
             set enrichment analysis.OR you can create your own gene set in gmt
             or gmx format.
-      3. Rest of the parameters can be specified in to pipeline.ini configuration
+      3. Rest of the parameters can be specified in to pipeline.yml configuration
          file. Every parameter is set to deafult value.
 
 

@@ -42,7 +42,7 @@ The basic usage inside a pipeline task is as such::
 
 When implementing a tool, avoid specifying algorithmic options as
 class variables. Instead use an option string that can be set in
-:file:`pipeline.ini`. The only arguments to a tool constructor should
+:file:`pipeline.yml`. The only arguments to a tool constructor should
 pertain to pipeline integration, such as filenames, index locations,
 threading and in general processing options that change the tools
 input/output, as these need to be tracked by the pipeline.

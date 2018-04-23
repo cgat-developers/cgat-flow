@@ -208,7 +208,7 @@ def loadTagCounts(infiles, outfile):
            filename of database loading logfile.
        '''
     P.merge_and_load(infiles, outfile, columns=(0, 2),
-                   suffix=".tsv")
+                     suffix=".tsv")
 
 
 # @P.add_doc(PipelineMappingQC.loadPicardDuplicateStats)
@@ -533,8 +533,8 @@ def loadCpgCompositionHistogram(infiles, outfile):
     '''
 
     P.merge_and_load(infiles, outfile,
-                   regex="/(.*).cpghist.tsv.gz",
-                   row_wise=False)
+                     regex="/(.*).cpghist.tsv.gz",
+                     row_wise=False)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -606,8 +606,8 @@ def buildCpGCoverage(infiles, outfile):
 def loadCpGCoverage(infiles, outfile):
     '''load cpg coverage data - number of reads covering a CpG.'''
     P.merge_and_load(infiles, outfile,
-                   regex="/(.*).cpg_coverage.gz",
-                   row_wise=False)
+                     regex="/(.*).cpg_coverage.gz",
+                     row_wise=False)
 
 
 @follows(loadCpGCoverage, loadCpGComposition, loadCpGAnnotation)
@@ -2257,8 +2257,8 @@ def loadDMRStats(infiles, outfile):
         filename of database load logfile
     '''
     P.concatenate_and_load(infiles, outfile,
-                         missing_value=0,
-                         regex_filename=".*\/(.*).stats")
+                           missing_value=0,
+                           regex_filename=".*\/(.*).stats")
 
 # @merge( buildDMRBed, "dmr_overlap.tsv.gz" )
 # def computeDMROverlap( infiles, outfile ):

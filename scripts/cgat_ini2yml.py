@@ -1,5 +1,5 @@
 '''
-cgat_ini2yml.py 
+cgat_ini2yml
 =======================================
 
 '''
@@ -36,7 +36,7 @@ def main(argv=None):
         if not line.strip():
             options.stdout.write("\n")
             continue
-        
+
         if line.startswith("["):
             section = re.search("\[(.*)\]", line).groups()[0]
             if section == "general":
@@ -45,10 +45,10 @@ def main(argv=None):
             else:
                 indent = 4
                 options.stdout.write("{}:\n".format(line.strip()[1:-1]))
-                
+
         elif line.startswith("#"):
             options.stdout.write("{}{}".format(" " * indent, line))
-            
+
         elif "=" in line:
             key, val = re.search("(.*)=(.*)", line).groups()
 
@@ -56,10 +56,9 @@ def main(argv=None):
                 val = "[{}]".format(val)
 
             options.stdout.write("{}{}: {}\n".format(" " * indent, key, val))
-                
-        
     # write footer and output benchmark information.
     E.stop()
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

@@ -161,8 +161,8 @@ import os
 import sqlite3
 import CGATCore.IOTools as IOTools
 
-from ruffus import *
-
+from ruffus import transform, merge, mkdir, regex, suffix, follows, add_inputs,\
+    active_if, jobs_limit, originate
 
 import CGATCore.Pipeline as P
 import CGATPipelines.PipelineBamStats as PipelineBamStats
@@ -396,7 +396,8 @@ def processGenomicContext(infile, outfile):
 def buildContextStats(infiles, outfile):
     ''' build mapping context stats '''
     PipelineBamStats.summarizeTagsWithinContext(
-        infiles[0], infiles[1], outfile)
+        infiles[0], infiles[1], outfile,
+        job_memory="8G")
 
 
 @follows(mkdir("IdxStats.dir"))
@@ -748,6 +749,35 @@ def loadStrandSpecificity(infiles, outfile):
     ''' merge strand specificity data into a single table'''
     PipelineBamStats.loadStrandSpecificity(infiles, outfile)
 
+
+@merge((loadBAMStats, loadPicardStats, loadContextStats), "view_mapping.load")
+def createViewMapping(infile, outfile):
+    '''create view in database for alignment stats.
+
+    This view aggregates all information on a per-track basis.
+
+    The table is built from the following tracks:
+
+       context_stats
+       bam_stats
+    '''
+
+    dbh = connect()
+
+    tablename = P.to_table(outfile)
+    view_type = "TABLE"
+    tables = (("bam_stats", "track", ),
+              ("context_stats", "track", ))
+
+    # do not use: ("picard_stats_alignment_summary_metrics", "track"),)
+    # as there are multiple rows per track for paired-ended data.
+
+    P.create_view(dbh, tables, tablename, outfile, view_type)
+
+
+@follows(createViewMapping)
+def views():
+    pass
 
 # ---------------------------------------------------
 # Generic pipeline tasks

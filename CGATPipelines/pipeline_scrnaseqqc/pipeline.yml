@@ -40,11 +40,9 @@ paired: ?!
 # the genome to use (UCSC convention)
 genome: ?!
 
-fastq:
-    dir: ?!
+fastq_dir: ?!
 
-genome:
-    dir: ?!
+genome_dir: ?!
 
 ercc:
     # path to fasta sequence for all spike in transcripts

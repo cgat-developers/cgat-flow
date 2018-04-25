@@ -50,13 +50,22 @@ def main(argv=None):
             options.stdout.write("{}{}".format(" " * indent, line))
 
         elif "=" in line:
-            key, val = re.search("(.*)=(.*)", line).groups()
+            key, val = re.search("([^=]+)=(.*)", line).groups()
+            key = key.strip()
+            val = val.strip()
 
             if "," in val:
                 val = "[{}]".format(val)
 
             if "!?" in val:
                 val = re.sub("!?", "?!", val)
+
+            if val is None:
+                val = ''
+
+            if val == "":
+                val = "''"
+
             options.stdout.write("{}{}: {}\n".format(" " * indent, key, val))
     # write footer and output benchmark information.
     E.stop()

@@ -239,7 +239,6 @@ from ruffus.combinatorics import *
 import sys
 import os
 import math
-import sqlite3
 import shutil
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
@@ -367,8 +366,8 @@ def filterInputBAMs(infile, outfiles):
         reads below a mapping quality (MAPQ) score
         reads overlapping with blacklisted regions specified in bed file.
     '''
-    filters = PARAMS['filters_bamfilters'].split(",")
-    bedfiles = PARAMS['filters_bedfiles'].split(",")
+    filters = P.as_list(PARAMS['filters_bamfilters'])
+    bedfiles = P.as_list(PARAMS['filters_bedfiles'])
     blthresh = PARAMS['filters_blacklistthresh']
     if blthresh != "":
         blthresh = float(blthresh)
@@ -395,8 +394,8 @@ def filterChipBAMs(infile, outfiles):
         reads below a mapping quality (MAPQ) score
         reads overlapping with blacklisted regions specified in bed file.
     '''
-    filters = PARAMS['filters_bamfilters'].split(",")
-    bedfiles = PARAMS['filters_bedfiles'].split(",")
+    filters = P.as_list(PARAMS['filters_bamfilters'])
+    bedfiles = P.as_list(PARAMS['filters_bedfiles'])
     blthresh = PARAMS['filters_blacklistthresh']
     if blthresh != "":
         blthresh = float(blthresh)
@@ -741,8 +740,7 @@ if int(PARAMS['IDR_run']) == 1:
         PipelinePeakcalling.makePseudoBams(infile, pseudos,
                                            PARAMS['paired_end'],
                                            PARAMS['IDR_randomseed'],
-                                           PARAMS['filters_bamfilters'].split(
-                                               ","),
+                                           P.as_list(PARAMS['filters_bamfilters']),
                                            submit=True)
 else:
     # when not not running IDR

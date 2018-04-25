@@ -21,7 +21,7 @@ genome_dir: /ifs/mirror/genomes/plain
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -31,7 +31,7 @@ web_dir: ../web
 # 2. bowtie-macs: map with bowtie and call intervals with macs
 # 3. eland: call intervals with macs from eland formatted formatted file
 # bowtie-macs-replicate
-toolchain: 
+toolchain: ''
 
 # directory in which to save files for export
 exportdir: export
@@ -55,7 +55,7 @@ annotations:
     database: ?!
 
     # directory with annotation information
-    dir: 
+    dir: ''
 
     #######################################################
     #######################################################
@@ -119,7 +119,7 @@ mast:
     evalue: 10000000
 
     # options for mast
-    options: 
+    options: ''
 
     ##########################################################
     ##########################################################
@@ -180,7 +180,7 @@ memechip:
     maxw: 30
 
     # other memechip options
-    options: 
+    options: ''
 
     #10 million is equivalent to 20K 500bp seq
     max_size: 10000000

@@ -9,7 +9,7 @@
 projectname: ?!??!
 
 # The copyright statement to appear in the report
-copyright: 
+copyright: ''
 
 # The short X.Y version to appear in the report
 version: 0.1
@@ -61,7 +61,7 @@ cluster:
 
     # queue to use
     #queue=all.q
-    queue: 
+    queue: ''
 
     # priority of jobs on cluster
     priority: -10

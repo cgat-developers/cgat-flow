@@ -15,7 +15,7 @@ genome_dir: /ifs/mirror/genomes/plain
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 database:
     # database name

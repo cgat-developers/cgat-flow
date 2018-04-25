@@ -583,7 +583,8 @@ def buildUCSCGeneSet(infile, outfile):
         # in quotation marks to avoid confusion with shell special
         # characters such as ( and |
         statement.append(
-            ''' --contig-pattern="%(ncbi_remove_contigs)s" ''')
+            '--contig-pattern="{}"'.format(",".join(
+                PARAMS["ncbi_remove_contigs"])))
 
     statement.append(
         '''

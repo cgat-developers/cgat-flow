@@ -23,7 +23,7 @@ genome_dir: /ifs/mirror/genomes/faidx
 
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -131,7 +131,7 @@ medips:
     extension: 0
 
     # shift
-    shift: 0  
+    shift: 0
 
     # window size of the analysis
     window_size: 500
@@ -158,17 +158,17 @@ tags:
     # filtering options for differential count analysis
 
     # minimum number of total counts per row (window)
-    filter_min_counts_per_row :  1
+    filter_min_counts_per_row: 1
 
     # minimum number of counts per sample
-    filter_min_counts_per_sample :  10
+    filter_min_counts_per_sample: 10
 
     # apply percentile filtering using the total
     # number of counts per row (window) across
     # all samples.
     # 20 removes 20% of the windows with the lowest
     # counts.
-    filter_percentile_rowsums :  20
+    filter_percentile_rowsums: 20
 
     ###################################################
     # filtering options for regions of interest
@@ -177,10 +177,10 @@ tags:
     # sum threshold to another group.
 
     # maximum number of counts per sample in one group
-    filter_roi_max_per_sample :  10
+    filter_roi_max_per_sample: 10
 
     # minimum number of counts of sample sum in other group
-    filter_roi_sum_per_group :  40
+    filter_roi_sum_per_group: 40
 
     # normalization method to chose for normalized counts
     normalization_method: deseq-size-factors
@@ -238,11 +238,11 @@ deseq2:
     filter_percentile_rowsums: 0
 
     # model to pass as DESeq2 design (if empty, defaults to ~ group)
-    model: 
+    model: ''
 
     # contrasts to return during post-hoc pairwise tests
     # if empty, defaults to pairwise combinations of group levels
-    contrasts: 
+    contrasts: ''
 
 
     ############################################################
@@ -268,7 +268,7 @@ gat:
     samples: 10000
 
     # Other command line options for gat
-    options: 
+    options: ''
 
     ############################################################
     ############################################################

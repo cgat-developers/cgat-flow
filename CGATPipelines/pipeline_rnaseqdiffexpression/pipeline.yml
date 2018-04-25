@@ -12,7 +12,7 @@ genome_dir: /ifs/mirror/genomes/faidx
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -110,7 +110,7 @@ kallisto:
     # --bias
     # --rf-stranded (check manual for strandedness details)
     # see https://pachterlab.github.io/kallisto/manual 
-    options: 
+    options: ''
 
     # fragment-length/sd required for single-end reads only
     fragment_length: 180
@@ -141,7 +141,7 @@ salmon:
     # command
     # optional arguments include:
     # --extraSensitive
-    options: 
+    options: ''
 
     # kmer size for salmon library
     kmer: 31
@@ -155,7 +155,7 @@ salmon:
     # options
     # from salmon >= v0.5.0, an index type is required
     # specify one of --type=fmd or --type=quasi
-    index_options=--type: fmd
+    index_options: --type=fmd
 
     threads: 1
 
@@ -178,13 +178,13 @@ sailfish:
     # options
     # optional arguments include:
     # --biasCorrec
-    options: 
+    options: ''
 
     # string to append to the sailfish index command to provide specific
     # options
     # optional arguments for indexing include:
     # --force, --threads N (default=4)
-    index_options: 
+    index_options: ''
 
     # kmer size for sailfish library
     kmer: 31
@@ -330,17 +330,17 @@ sleuth:
     # filtering options for differential count analysis
 
     # minimum number of total counts per row (window)
-    filter_min_counts_per_row :  1
+    filter_min_counts_per_row: 1
 
     # minimum number of counts per sample
-    filter_min_counts_per_sample :  10
+    filter_min_counts_per_sample: 10
 
     # apply percentile filtering using the total
     # number of counts per row (window) across
     # all samples.
     # 20 removes 20% of the windows with the lowest
     # counts.
-    filter_percentile_rowsums :  20
+    filter_percentile_rowsums: 20
 
     ################################################################
     ################################################################

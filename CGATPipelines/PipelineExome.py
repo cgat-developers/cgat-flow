@@ -252,14 +252,13 @@ def variantAnnotator(vcffile, bamlist, outfile, genome,
     job_options = getGATKOptions()
     job_threads = 3
 
-    if annotations != "":
-        if annotations == "--useAllAnnotations":
-            anno = annotations
-        else:
-            anno = annotations.split(",")
-            anno = " -A " + " -A ".join(anno)
+    if "--useAllAnnotations" in annotations:
+        anno = "--useAllAnnotations"
+    elif annotations:
+        anno = " -A " + " -A ".join(annotations)
     else:
         anno = ""
+
     statement = '''GenomeAnalysisTK -T VariantAnnotator
                     -R %(genome)s
                     -I %(bamlist)s

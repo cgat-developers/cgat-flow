@@ -17,7 +17,7 @@ genome_dir: ?!
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -55,7 +55,7 @@ mappers: [bwa,tophat2,star]
 #
 # Default = empty: unstranded
 # Required for all spliced alignment
-strandness: 
+strandness: ''
 
 # Strip read sequence and quality information.
 # Saves space for rnaseq and chipseq runs, but 
@@ -133,8 +133,8 @@ merge:
     # pattern_output=\1-\3
     # Note that the .star.bam will be added by the pipeline. The
     # pattern must not include this.
-    pattern_input: 
-    pattern_output: 
+    pattern_input: ''
+    pattern_output: ''
 
     ################################################################
     ################################################################
@@ -153,7 +153,7 @@ tophat:
 
     # default values, but enabling extra search options. Added the
     # directory containing the bowtie indexed reference transcriptome
-    options: 
+    options: ''
 
     # threads to use
     threads: 12
@@ -219,7 +219,7 @@ hisat:
     executable: hisat
 
     # default values
-    options: 
+    options: ''
 
     #threads to use
     threads: 12
@@ -229,7 +229,7 @@ hisat:
     memory: 3.9G
 
     # directory containing hisat indexes for genomes
-    index_dir: 
+    index_dir: ''
 
     ################################################################
     ################################################################
@@ -241,11 +241,11 @@ gsnap:
 
     # genome name to map to, leave blank to use that given
     # in the [general] section
-    genome: 
+    genome: ''
 
     # options for gsnap. Please see gsnap --help for a full list
     # of options. There are many.
-    options: 
+    options: ''
 
     # number of threads to use on the node
     node_threads: 12
@@ -275,7 +275,7 @@ star:
     # see guidelines for generating genomes with a splice junction database
     # (/ifs/mirror/genomes/star/CGAT-README)
     # leave blank to use the genome as specified above without junctions.
-    genome: 
+    genome: ''
 
     # options for star. Please see the star manual for a list
     # of options. There are many.
@@ -285,7 +285,7 @@ star:
     # "LoadAndRemove" is specified. This results in memory not being
     # freed properly causing unrelated jobs to fail unexpectedly with
     # "out of memory" faults.
-    options: 
+    options: ''
 
     # number of threads to use
     threads: 12
@@ -370,17 +370,17 @@ bwa:
     mem_options: -M -k 25
 
     # includes a Read Group Header
-    read_group_header:   
+    read_group_header: ''
 
     # removes reads that return multiple hits
-    remove_non_unique: 
+    remove_non_unique: ''
 
     # sets nh tag
-    set_nh:   
+    set_nh: ''
 
-    samse_options: 
+    samse_options: ''
 
-    sampe_options: 
+    sampe_options: ''
 
     # memory required for bwa jobs - per thread
     # Note that the mem algorithm requires a large amount of memory.  
@@ -423,7 +423,7 @@ butter:
     # ranmax=[int] maximum number of locations for reads which cannot be placed
     #              based on read density before read is discarded
     # mismatches=[0/1] Number of mismatches allowed for a valid alignment  
-    options=max_rep=10 ranmax=1 mismatches: 1
+    options: max_rep=10 ranmax=1 mismatches=1
 
     # threads to use
     threads: 12
@@ -433,7 +433,7 @@ butter:
 
     # butter does not output an nh tag which may be required downstream
     # use this to include an nh tag after alignment  
-    set_nh: 1  
+    set_nh: 1
 
     ################################################################
     ################################################################
@@ -446,7 +446,7 @@ shortstack:
     index_dir: /ifs/mirror/genomes/bowtie
 
     # options for mapping with shortstack
-    options=--mismatches: 1
+    options: --mismatches=1
 
     # threads to use
     threads: 12
@@ -461,14 +461,14 @@ shortstack:
 bigwig:
 
     # bam to bigwig conversion options. See bam2wiggle.py
-    options: 
+    options: ''
 
     ################################################################
     # options for bigwig export
 bed:
 
     # bam to bed conversion options. See bam2bed.py
-    options=--bed-format: 3
+    options: --bed-format=3
 
     ################################################################
     # options for ucsc track hub creation
@@ -476,12 +476,12 @@ ucsc:
 
     # regexes to exclude tracks. string separated list
     # e.g .*butter.*,.*F2-.*
-    exclude: 
+    exclude: ''
 
     # if you have an ini file to configure the ucsc hub, put it here.
     # see documentation of Pipeline.Local.publish_tracks function for
     # how to generate an ini file
-    ini: 
+    ini: ''
 
     ################################################################
     #Aspara ascp highspeed download tool
@@ -503,4 +503,4 @@ report:
     prefix: default
 
     # report generator to use
-    engine: cgatreport  
+    engine: cgatreport

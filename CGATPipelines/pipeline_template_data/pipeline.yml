@@ -37,7 +37,7 @@ annotations:
     database: ?!
 
     # directory with annotation information
-    dir: 
+    dir: ''
 
     ################################################################
     #

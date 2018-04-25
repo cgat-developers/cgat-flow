@@ -22,7 +22,7 @@ web_dir: ../web
 # flash
 # reversecomplement
 # pandaseq
-preprocessors: 
+preprocessors: ''
 
 # set to 1 to keep all intermediate files
 save: 0
@@ -88,7 +88,7 @@ sickle:
     # -q 20: minimum Phred quality score
     # -l:  length threshold
     # -x: don't trim from 3' end
-    options: -q 20 -l 30 -x 
+    options: -q 20 -l 30 -x
 
 
     ################################################################
@@ -98,7 +98,7 @@ sickle:
 trimmomatic:
     # http://www.usadellab.org/cms/?page=trimmomatic
     #options
-    options: LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36  
+    options: LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
 
     # if adapter removal is required, specify the location of a fasta file
     # containing adapters and define the adapter parameters
@@ -143,7 +143,7 @@ fastx:
 
     # options
     # -f17 trim 17 bases from the 3 prime end
-    trimmer_options: -f17  
+    trimmer_options: -f17
 
     ################################################################
     ################################################################
@@ -156,7 +156,7 @@ flash:
     # -m 15 minimum overlap
     # -r 50 avr. read length
     # -f 300 avr. fragment length
-    options: -m 15 -M 50 -r 50 -f 300  
+    options: -m 15 -M 50 -r 50 -f 300
 
     ################################################################
     ################################################################
@@ -187,7 +187,7 @@ readqc:
     # pandaseq options
     ################################################################
 pandaseq:
-    options: 
+    options: ''
 
     threads: 4
 
@@ -197,7 +197,7 @@ pandaseq:
     # pandaseq options
     ################################################################
 reversecomplement:
-    options: 
+    options: ''
 
     ################################################################
     ################################################################
@@ -244,4 +244,4 @@ report:
     prefix: default
 
     # report generator to use
-    engine: cgatreport    
+    engine: cgatreport

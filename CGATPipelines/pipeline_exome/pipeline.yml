@@ -17,7 +17,7 @@ genome_dir: /ifs/mirror/genomes/gatk
 
 
 # Design table for the experiment, mapping fastq files to samples and phenotypes
-samples: 
+samples: ''
 
 web_dir: ../web
 
@@ -41,13 +41,13 @@ bwa:
     threads: 8
 
     # 
-    remove_non_unique: 
+    remove_non_unique: ''
 
     # BWA alignment parameters
-    mem_options: 
+    mem_options: ''
 
     # BWA end-pairing parameters
-    sampe_options: 
+    sampe_options: ''
 
 readgroup:
 
@@ -77,11 +77,11 @@ gatk:
 
     mills: /ifs/mirror/genomes/gatk/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
 
-    solid_options: 
+    solid_options: ''
 
     hc_options: -A StrandOddsRatio -A DepthPerSampleHC
 
-    genotype_options: 
+    genotype_options: ''
 
     variant_annotations: [AlleleBalance,AlleleBalanceBySample,AlleleCountBySample,BaseCounts,BaseQualityRankSumTest,ChromosomeCounts,ClippingRankSumTest,Coverage,DepthPerAlleleBySample,FisherStrand,GCContent,GenotypeSummaries,HardyWeinberg,HomopolymerRun,LikelihoodRankSumTest,LowMQ,MappingQualityRankSumTest,MappingQualityZero,MappingQualityZeroBySample,NBaseCount,QualByDepth,RMSMappingQuality,ReadPosRankSumTest,SampleList,SpanningDeletions,StrandBiasBySample,StrandOddsRatio,TandemRepeatAnnotator,VariantType]
 
@@ -135,7 +135,7 @@ annotation:
 
     add_genes_of_interest: 0
 
-    genes_of_interest: 
+    genes_of_interest: ''
 
     # vep parameters - see vep docs here
     # http://www.ensembl.org/info/docs/tools/vep/script/vep_options.html
@@ -219,7 +219,7 @@ coverage:
     all_exons: /ifs/mirror/annotations/hg19_ensembl75/geneset_coding_exons.gtf.gz
 
     # comma-separated list of canonical ensembl identifiers for candidate genes of interest
-    candidates: 
+    candidates: ''
 
     # path to r script for generating the coverage plots
     rscript: /ifs/projects/proj024/analysis/GRIN1_coverage/coverage.r
@@ -229,7 +229,7 @@ coverage:
 
 roi:
 
-    bed: 
+    bed: ''
 
     # Regions of interest
     roi: /ifs/projects/proj048/agilent/S04380110_Regions.bed

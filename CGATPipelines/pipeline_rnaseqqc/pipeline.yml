@@ -13,7 +13,7 @@ genome_dir: /ifs/mirror/genomes/index
 genome: hg38
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -22,7 +22,7 @@ web_dir: ../web
 sailfish: 1
 
 # if not using sailfish, need to specify location of transcript abundance table
-abundance_file:   
+abundance_file: ''
 
 # maximum intron size - transcripts with longer introns
 # will be ignored
@@ -45,7 +45,7 @@ factors: ?!??!
 # comma separated list of genes of interest. Currently, only accepts
 # Ensemble IDs
 # genes_of_interest=ENSG00000115524,ENSG00000141510
-genes_of_interest: 
+genes_of_interest: ''
 
 ################################################################
 ################################################################
@@ -69,11 +69,11 @@ sailfish:
 
     # optional arguments include:
     # --biasCorrect
-    options: 
+    options: ''
 
     # optional arguments for indexing include:
     # --force, --threads N (default=4)
-    index_options: 
+    index_options: ''
 
     threads: 1
 
@@ -88,7 +88,7 @@ hisat:
     executable: hisat
 
     # default values
-    options: 
+    options: ''
 
     #threads to use
     threads: 12
@@ -114,7 +114,7 @@ salmon:
     # command
     # optional arguments include:
     # --extraSensitive
-    options: 
+    options: ''
 
     # kmer size for salmon library
     kmer: 31

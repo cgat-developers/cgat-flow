@@ -38,165 +38,165 @@ r_scripts: ?!
 
 data:
     # directory containing data files
-    dir: 
+    dir: ''
 
     # prefix for data set (will run multiple datasets)
     prefix: ukb4882
 
     # format data come in
-    format: 
+    format: ''
 
     # suffix for data format
-    suffix: 
+    suffix: ''
 
     # additional file suffixes for auxillary files,
     # e.g. .sample, .map, etc
-    aux: 
+    aux: ''
 
     # convert data to alternative format
-    convert: 
+    convert: ''
 
     # data containining alternative/additional phenotypes.  This can
     # also serve as a covariates file if it is formatted appropriately
-    phenotypes: 
+    phenotypes: ''
 
     # file containing FID, IID and any covariates to adjust 
     # association analysis for
-    covariate_file: 
+    covariate_file: ''
 
     # unformated phenotypes file containing all phenotypes and
     # covariates
-    pheno_all: 
+    pheno_all: ''
 
     # number of threads to use for file conversion and reformatting
-    threads: 
+    threads: ''
 
     # ID variable column header in phenotypes file
-    id_var: 
+    id_var: ''
 
     # phenotype variable to dichotimise
-    dichot_var: 
+    dichot_var: ''
 
     # value to set as case status, i.e. 1, in dichotimised variable
-    reference_value: 
+    reference_value: ''
 
     # missing/unobserved data values
-    missing_label: 
+    missing_label: ''
 
 reference:
     # directory of reference panel VCF files
-    vcf: 
+    vcf: ''
 
     # demographic/population information for reference
     # panel if mixed ancestry
-    pops: 
+    pops: ''
 
     # which population to select from the reference panel
-    select: 
+    select: ''
 
 phenotype:
     # file containing longitude and lattitude of study cohort locations
-    coord_file: 
+    coord_file: ''
 
     # ID header column in coordinates file
-    id_coords: 
+    id_coords: ''
 
     # lattitude and longitude column headers
-    long: 
-    lat: 
+    long: ''
+    lat: ''
 
     # phenotype to overlay onto map co-ordinates, needs to be the
     # the column header in the phenotype file
-    map_overlay: 
+    map_overlay: ''
 
     # X-labels to map onto phenotype variable values for plotting
     # also applies to phenotype overlaid on a map
-    xlabels: 
-    ylabels: 
-    grouplabels: 
+    xlabels: ''
+    ylabels: ''
+    grouplabels: ''
 
     # if the X variable should be dichotomised, use this as the
     # reference value
-    ref_value: 
+    ref_value: ''
 
     # id column in the phenotype file
-    id_col: 
+    id_col: ''
 
 qc:
     #pseudoautosomal SNPs to ignore
-    pseudo_autosomal: 
+    pseudo_autosomal: ''
 
     # threshold on which to flag individuals as inbred
-    inbreed_threshold: 
+    inbreed_threshold: ''
 
 relationship:
     # cutoff for removing related individuals
-    cutoff: 
+    cutoff: ''
 
 format:
     # which phenotype should be added as the default phenotype
     # can be either a column name or number from the data_phenotypes file
-    pheno: 
+    pheno: ''
 
     # file containing updated gender information
-    gender: 
+    gender: ''
 
     # ethinicity variable header
-    ethnicity_var: 
+    ethnicity_var: ''
 
     # ethnicity label to select
-    ethnicity: 
+    ethnicity: ''
 
 ld:
     # method to use for pruning SNPs by LD, either R2 or VIF
-    prune_method: 
+    prune_method: ''
 
     # step size to advance window by (in number of SNPs)
-    prune_step:  
+    prune_step: ''
 
     # window over which to calculate pairwise LD in kb
-    prune_window: 
+    prune_window: ''
 
     # threshold above which to LD prune snps
-    prune_threshold: 
+    prune_threshold: ''
 
     # directory containing pre-computed LD values from
     # a reference population
-    dir: 
+    dir: ''
 
 grm:
     # genotype filters to apply prior to GRM calculation
-    filt_maf :  
-    filt_max_maf :  
-    filt_chromosome :  
-    filt_extract :  
-    filt_exclude_snps :  
-    filt_autosome :  
+    filt_maf: ''
+    filt_max_maf: ''
+    filt_chromosome: ''
+    filt_extract: ''
+    filt_exclude_snps: ''
+    filt_autosome: ''
 
     # number of threads to use for GRM calculation
-    threads: 
+    threads: ''
 
 pca:
     # calculate PCA from previously calculated GRMs
     # number of PCs to report
-    components: 
+    components: ''
 
     # number of threads to use for PCA
-    threads: 
+    threads: ''
 
     # job memory to use for pca
     memory: 10G
 
     # number of components to plot against each other
-    plot_pcs: 
+    plot_pcs: ''
 
 gwas:
     # file of individuals to keep after QC
-    keep: 
+    keep: ''
 
     # file of individuals to exclude after QC
     # or based on phenotype
-    remove: 
+    remove: ''
 
     # number of threads to use for gwas
     threads: 12
@@ -204,71 +204,71 @@ gwas:
     # a file containing a region of hits for conditional
     # analysis and fine-mapping.
     # format needs to be CHR START END SNP
-    hit_regions: 
+    hit_regions: ''
 
     # file containing n PCs to adjust for in model
-    pca: 
+    pca: ''
 
     # model to use for covariate adjusted gwas
-    model: 
+    model: ''
 
     # if set, gives a comma separated list of either column
     # headers in the covariates file, or the n(+2)th
     # columns
-    covars: 
+    covars: ''
 
     # setting various inclusions thresholds
     # minor allele frequency (maf)
-    maf: 
+    maf: ''
 
     # maximum per person missing
-    mind: 
+    mind: ''
 
     # maximum per SNP missing
-    geno: 
+    geno: ''
 
     # HW disequilibrium p-value (exact)
-    hwe: 
+    hwe: ''
 
     # Subset filtering to be applied
-    filter: 
+    filter: ''
 
 candidate:
     # chromosome to extract SNPs from
-    chromosome: 
+    chromosome: ''
 
     # define the chromosome and region to extract SNPs from
     # e.g. chr3:213420-223880
-    region: 
+    region: ''
 
     # number of threads to use for candidate association
-    threads: 
+    threads: ''
 
     # amount of memory to request for candidate association
     # amount is per thread
-    memory: 
+    memory: ''
 
 conditional:
     # model to use for conditional analysis, linear or logistic
-    model: 
+    model: ''
 
     # either a single variant ID or a file containing a list of variant IDs
-    snps: 
+    snps: ''
 
 epistasis:
     # gwas hits to specifically test against region for epistasis
     hit_region: ?!
     # file containing SNP sets, plink .set format
-    set: 
+    set: ''
 
     # threshold for epistasis significance
-    threshold: 
+    threshold: ''
 
     # threshold for reporting/counting as a significant interaction
-    reporting: 
+    reporting: ''
 
     # location of R script to use with Plink R plugin functionality
-    plugin: ?! 
+    plugin: ?!
 
 eqtl:
     # parameters associated with eQTL results files
@@ -293,39 +293,39 @@ coloc:
 
 mlm:
     # source of imputed data to use to generate the GRM
-    genotypes: 
+    genotypes: ''
 
     # number of individuals to subsample for mlm analysis
-    subsample: 
+    subsample: ''
 
     # region to use to generate the grm CHR-START-END
-    grm_region: 
+    grm_region: ''
 
     # continuous covariates file
-    cont_covarfile: 
+    cont_covarfile: ''
 
     # names of continuous covariates
-    cont_covar: 
+    cont_covar: ''
 
     # discrete covariates file
-    discrete_covarfile: 
+    discrete_covarfile: ''
 
     # names of discrete covariates
-    discrete_covar: 
+    discrete_covar: ''
 
 reml:
     # file containing phenotypes
-    phenos: 
+    phenos: ''
 
     # prevalence of the dichotomous phenotype
     prevalence: 0.05
 
 functional:
     # directory containing tabix-index SNP functional scores
-    score_dir: 
+    score_dir: ''
 
     # refer to the imputed data to maximise the number of SNPs
-    bim_dir: 
+    bim_dir: ''
 
 joint:
     # directory containing allele frequency files
@@ -333,8 +333,8 @@ joint:
 
 pleiotropy:
     # traits to test for pleiotropy against SNPs
-    trait1 :  ?!
-    trait2 :  ?!
+    trait1: ?!
+    trait2: ?!
 
     # regression models to use for adjusting covariates
     # must be either logistic (binary traits) or linear (continuous traits)
@@ -353,7 +353,7 @@ annotations:
     database: ?!
 
     # directory with annotation information
-    dir: 
+    dir: ''
 
     ################################################################
     #

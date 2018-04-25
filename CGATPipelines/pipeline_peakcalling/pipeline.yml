@@ -23,7 +23,7 @@ scratchdir: /tmp
 web_dir: ../web
 
 # a version string
-version: 
+version: ''
 
 # Should be 1 if you have 'input' bam files (e.g. ChIP input control)
 input: 1
@@ -104,13 +104,13 @@ IDR:
 
     # separate options can be provided for each of these scenarios
     softthresh_selfconsistency: 0.05
-    options_selfconsistency: 
+    options_selfconsistency: ''
 
     softthresh_pooledconsistency: 0.05
-    options_pooledconsistency: 
+    options_pooledconsistency: ''
 
     softthresh_replicateconsistency: 0.05
-    options_replicateconsistency: 
+    options_replicateconsistency: ''
 
     ############################################################################
     #
@@ -223,7 +223,7 @@ macs2:
     # --pvalue: if qvalue is specified this overrides qvalue 
     #           For idr set min pvalue to 0.1
     # --mfold 10 30 --gsize mm
-    options:  --keep-dup all --gsize hs --broad
+    options: --keep-dup all --gsize hs --broad
 
 
     # BELOW OPTIONS ARE ONLY NEEDED IF USING IDR
@@ -268,7 +268,7 @@ sicer:
     # The minimum must be 2 times the read length
     # The maximum can be set to a value 
     min_insert_size: 300
-    max_insert_size: 1000000 
+    max_insert_size: 1000000
 
     # effective genome fraction, depends on read length
     # can be found at Uniqueome (Koehler et al 2010)
@@ -280,7 +280,7 @@ sicer:
     broad_gap_size: 3500
 
     # other options
-    options: 
+    options: ''
 
     # suffix for the output file to use as IDR input (recommended: use narrowPeak for MACS2) else specify broadPeak
     idrsuffix: narrowPeak
@@ -317,7 +317,7 @@ notebook:
     # if for some reason you have your own template reports - specify location here
     # otherwise default location will be used
     # <pipelines_directory>/pipeline_docs/pipeline_peakcalling/notebooks
-    template_dir: 
+    template_dir: ''
 
     ################################################################
     #

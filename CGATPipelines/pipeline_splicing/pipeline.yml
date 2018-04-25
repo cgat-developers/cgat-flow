@@ -23,7 +23,7 @@ release: 0.1
 # 0 > no, 1 > yes, currently rMATS only
 # if yes, please specify number of permutations (100 good start)
 permute: 0
-permutations: 
+permutations: ''
 
 
 ################################################################
@@ -32,10 +32,10 @@ permutations:
 #
 ################################################################
 annotations:
-    database: 
+    database: ''
 
     # directory with annotation information
-    dir: 
+    dir: ''
 
 
     ################################################################
@@ -47,16 +47,16 @@ MATS:
     # Cutoff splicing difference
     # The cutoff used in the null hypothesis test for differential splicing. 
     # The default is 0.0001 for 0.01% difference. Valid: 0 <= cutoff < 1
-    cutoff: 
+    cutoff: ''
 
     # Strandednes
     # fr-firststrand, fr-secondstrand or fr-unstranded
-    libtype: 
+    libtype: ''
 
     # FDR
     # FDR threshold for plotting of results using sashimiplot
     # only results below the threshold will be plotted
-    fdr: 
+    fdr: ''
 
 
 
@@ -72,7 +72,7 @@ DEXSeq:
     # yes
     # no
     # reverse
-    strandedness: 
+    strandedness: ''
 
 
     # model to pass as DEXSeq design
@@ -89,17 +89,17 @@ DEXSeq:
 
     # model needs to cotain the term exon
     # e.g. ~sample+exon+group:exon
-    model_1: 
-    model_2: 
+    model_1: ''
+    model_2: ''
 
     # contrast to return during post-hoc pairwise tests
     # e.g. group
-    contrast_1: 
-    contrast_2: 
+    contrast_1: ''
+    contrast_2: ''
 
     # reference level for contrast , e.g WT
-    refgroup_1: 
-    refgroup_2: 
+    refgroup_1: ''
+    refgroup_2: ''
 
 
 

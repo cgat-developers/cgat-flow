@@ -18,7 +18,7 @@ genome_dir: /ifs/mirror/genomes/plain
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -28,7 +28,7 @@ web_dir: ../web
 max_intron_size: 2000000
 
 # specify wether the data is paired end
-paired_end :  1
+paired_end: 1
 
 ################################################################
 ################################################################
@@ -39,7 +39,7 @@ annotations:
     database: ?!
 
     # directory with annotation information
-    dir: 
+    dir: ''
 
     ################################################################
     ################################################################
@@ -83,7 +83,7 @@ lincrna:
 bowtie:
 
     # location of indexed genome                                                                                                                                                                                                                 
-    genome_dir: /ifs/mirror/genomes/bowtie 
+    genome_dir: /ifs/mirror/genomes/bowtie
 
     ################################################################
     ################################################################
@@ -92,7 +92,7 @@ bowtie:
 cufflinks:
 
     # general cufflinks options - includes rRNA/MtRNA mask gtf file
-    options: --upper-quartile-norm 
+    options: --upper-quartile-norm
 
     # use mask file to remove rRNA and other high-copy transcripts
     include_mask: 1
@@ -114,7 +114,7 @@ cufflinks:
 cuffdiff:
 
     # general cuffdiff options
-    options: --upper-quartile-norm 
+    options: --upper-quartile-norm
 
     # use mask file to exclude highly expressed genes such as rRNA
     include_mask: 1
@@ -143,7 +143,7 @@ tophat:
     executable: tophat
 
     # default values, but enabling extra search options. Added the directory containing the bowtie indexed reference transcriptome
-    options: 
+    options: ''
 
     # map to reference transcriptome
     include_reference_transcriptome: 1
@@ -162,7 +162,7 @@ tophat:
     # see the following discussion to decide on whether
     # to leave them in or not:
     # http://seqanswers.com/forums/showthread.php?t=2921
-    unique: 
+    unique: ''
 
     # 'separated list of contigs to filter from BAM files after mapping
     remove_contigs: [chrM,chrMT]
@@ -174,11 +174,11 @@ tophat:
     remove_mismapped: 1
 
     # remove ribosomal rna reads
-    remove_rna: 
+    remove_rna: ''
 
     # if set, add a separate mapping of junctions after the tophat
     # run.
-    add_separate_junctions: 
+    add_separate_junctions: ''
 
     ################################################################
     ################################################################
@@ -203,7 +203,7 @@ bowtie:
     ################################################################
 reproducibility:
     # codes to compute reproducibility in
-    codes=cjeiopruxs.: 
+    codes: cjeiopruxs.=
 
     ################################################################
     ################################################################

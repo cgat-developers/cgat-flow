@@ -27,7 +27,7 @@ genome_dir: /ifs/mirror/genomes/plain
 scratchdir: /tmp
 
 # a version string
-version: 
+version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
@@ -126,7 +126,7 @@ mast:
     evalue: 10000000
 
     # options for mast
-    options: 
+    options: ''
 
     ##########################################################
     ##########################################################
@@ -192,7 +192,7 @@ gat:
     # workspace to use for gat. If empty, the default
     # is to use the ungapped genome as defined in the
     # annotations pipeline
-    workspace: 
+    workspace: ''
 
     ##############################################
     ##############################################

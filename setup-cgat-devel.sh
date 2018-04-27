@@ -32,3 +32,5 @@ for x in $PROJECTS; do
 	cd "$REPO_DIR/$x" && python setup.py develop
 done
 
+conda create -y -n macs2 python=2.7 macs2
+conda create -y -n sicer python=2.6 sicer

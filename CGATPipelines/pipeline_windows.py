@@ -1164,7 +1164,8 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
 
     # get all data
     dbhandle = P.connect()
-    data = pandas.read_sql("SELECT * FROM windows_counts", dbhandle)
+    tablename = IOTools.snip(os.path.basename(infile), ".load")
+    data = pandas.read_sql("SELECT * FROM {}".format(tablename), dbhandle)
 
     # remove interval_id column
     dataframe = data.drop(["interval_id"], axis=1).astype('float64')

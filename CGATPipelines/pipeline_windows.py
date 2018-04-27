@@ -112,8 +112,8 @@ import re
 import glob
 import csv
 import numpy
-import sqlite3
 import pandas
+from rpy2.robjects import r as R
 
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
@@ -121,8 +121,7 @@ from CGATCore import Pipeline as P
 import CGATPipelines.PipelineWindows as PipelineWindows
 import CGATPipelines.PipelineTracks as PipelineTracks
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
-
-from rpy2.robjects import r as R
+from CGATPipelines.Report import run_report
 
 #########################################################################
 #########################################################################
@@ -2708,7 +2707,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -2716,7 +2715,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(mkdir("%s/bamfiles" % PARAMS["web_dir"]),

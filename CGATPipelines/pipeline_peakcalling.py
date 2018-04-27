@@ -240,6 +240,11 @@ import sys
 import os
 import math
 import shutil
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
 from CGATCore import Pipeline as P
@@ -247,12 +252,7 @@ import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 import CGATPipelines.PipelinePeakcalling as PipelinePeakcalling
 import CGAT.BamTools.bamtools as Bamtools
 import CGATCore.Database as DB
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
+from CGATPipelines.Report import run_report
 
 #########################################################################
 # Load PARAMS Dictionary from Pipeline.innni file options ###############
@@ -1656,7 +1656,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1664,7 +1664,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 ###############################################################

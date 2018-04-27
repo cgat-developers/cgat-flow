@@ -132,6 +132,7 @@ from CGATCore import Pipeline as P
 import CGATPipelines.PipelineReadqc as PipelineReadqc
 import CGATPipelines.PipelinePreprocess as PipelinePreprocess
 import CGATCore.IOTools as IOTools
+from CGATPipelines.Report import run_report
 
 # load options from the config file
 PARAMS = P.get_parameters(
@@ -505,7 +506,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 def main(argv=None):

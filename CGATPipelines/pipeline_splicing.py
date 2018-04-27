@@ -128,7 +128,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 import CGATPipelines.PipelineTracks as PipelineTracks
 import CGATPipelines.PipelineSplicing as PipelineSplicing
-
+from CGATPipelines.Report import run_report
 
 ###################################################################
 ###################################################################
@@ -686,7 +686,7 @@ def build_report():
     '''
 
     E.info("starting report build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -700,7 +700,7 @@ def update_report():
     '''
 
     E.info("updating report")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)

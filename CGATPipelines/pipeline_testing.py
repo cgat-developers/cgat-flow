@@ -157,6 +157,7 @@ import tarfile
 import pandas
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
+from CGATPipelines.Report import run_report
 
 ###################################################
 ###################################################
@@ -621,7 +622,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting report build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -629,7 +630,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating report")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)

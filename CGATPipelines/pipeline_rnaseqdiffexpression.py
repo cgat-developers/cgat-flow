@@ -339,6 +339,7 @@ import CGATPipelines.PipelineGeneset as PipelineGeneset
 import CGATPipelines.PipelineRnaseq as PipelineRnaseq
 from CGATCore import Pipeline as P
 import CGATPipelines.PipelineTracks as PipelineTracks
+from CGATPipelines.Report import run_report
 
 import CGAT.Expression as Expression
 # levels of cuffdiff analysis
@@ -1537,7 +1538,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1545,7 +1546,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

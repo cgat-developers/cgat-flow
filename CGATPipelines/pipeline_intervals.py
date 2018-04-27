@@ -184,6 +184,7 @@ import CGATPipelines.PipelineIntervals as PipelineIntervals
 import CGATPipelines.PipelineMotifs as PipelineMotifs
 import CGATPipelines.PipelineWindows as PipelineWindows
 import CGATPipelines.PipelineTracks as PipelineTracks
+from CGATPipelines.Report import run_report
 
 
 # product available in ruffus 2.3.6, but not exported
@@ -1748,7 +1749,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1756,7 +1757,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)

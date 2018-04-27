@@ -39,4 +39,5 @@
 # perl -p -i -e "s/create_view/createView/" CGATPipelines/*.py
 # perl -p -i -e "s/getDatabaseName/get_database_name/" CGATPipelines/*.py
 # perl -p -i -e "s/importFromIterator/load_from_iterator/" CGATPipelines/*.py
+# perl -p -i -e "s/P.run_report/run_report/" CGATPipelines/*.py
 

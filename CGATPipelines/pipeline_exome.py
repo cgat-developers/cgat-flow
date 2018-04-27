@@ -171,6 +171,8 @@ import csv
 import glob
 import re
 import shutil
+import decimal
+import pandas as pd
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
 from CGATCore import Pipeline as P
@@ -178,8 +180,7 @@ import CGATPipelines.PipelineMapping as PipelineMapping
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 import CGATPipelines.PipelineExome as PipelineExome
 import CGATPipelines.PipelineExomeAncestry as PipelineExomeAncestry
-import decimal
-import pandas as pd
+from CGATPipelines.Report import run_report
 
 ###############################################################################
 ###############################################################################
@@ -187,10 +188,9 @@ import pandas as pd
 # load options from the config file
 
 
-P.get_parameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0], "pipeline.yml"])
 
-PARAMS = P.PARAMS
 INPUT_FORMATS = ("*.fastq.1.gz", "*.fastq.gz", "*.sra", "*.csfasta.gz")
 REGEX_FORMATS = regex(r"(\S+).(fastq.1.gz|fastq.gz|sra|csfasta.gz)")
 
@@ -2151,14 +2151,14 @@ def publish():
 def build_report():
     '''build report from scratch.'''
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
 def update_report():
     '''update report.'''
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

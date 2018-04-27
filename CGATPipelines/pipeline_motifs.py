@@ -137,6 +137,7 @@ import CGATCore.IOTools as IOTools
 
 import CGATPipelines.PipelineMotifs as PipelineMotifs
 import CGATPipelines.PipelineTracks as PipelineTracks
+from CGATPipelines.Report import run_report
 
 ###################################################
 ###################################################
@@ -846,7 +847,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -854,7 +855,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(mkdir("%s/bedfiles" % PARAMS["web_dir"]),

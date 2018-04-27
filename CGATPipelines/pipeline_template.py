@@ -60,6 +60,7 @@ import sys
 import os
 import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
+from CGATPipelines.Report import run_report
 
 # load options from the config file
 PARAMS = P.get_parameters(
@@ -115,7 +116,7 @@ def build_report():
     '''
 
     E.info("starting report build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -129,7 +130,7 @@ def update_report():
     '''
 
     E.info("updating report")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)

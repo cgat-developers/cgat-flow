@@ -328,7 +328,7 @@ unmappedouts = [["annotations.dir/%s%s" % (u, s)
                  for s in outfilesuffixes]
                 for u in unmapped]
 
-hpatissues = PARAMS.get('hpa_tissue', {})
+hpatissues = P.as_list(PARAMS.get('hpa_tissue', {}))
 hpatissues = ['clean_backgrounds.dir/%s_hpa_background.tsv'
               % tissue.replace(" ", "_") for tissue in hpatissues]
 

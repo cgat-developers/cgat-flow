@@ -1558,7 +1558,7 @@ class BWA(Mapper):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(os.path.join(self.tmpdir_fastq, "bwa"))
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
@@ -1715,7 +1715,7 @@ class BWAMEM(BWA):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(self.tmpdir_fastq + "bwa")
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 

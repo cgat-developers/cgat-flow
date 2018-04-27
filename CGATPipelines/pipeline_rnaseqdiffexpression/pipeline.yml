@@ -1,0 +1,372 @@
+
+# genome ID
+genome: hg38
+
+# directory where exported data is located
+exportdir: export
+
+# location of indexed genome 
+genome_dir: /ifs/mirror/genomes/faidx
+
+# scratchdir for data not to be backed up
+scratchdir: /tmp
+
+# a version string
+version: ''
+
+# directory for publishing results on the web
+web_dir: ../web
+
+# allowable quantifiers are:
+# featureCounts
+# gt2table
+# kallisto
+# salmon
+# sailfish
+quantifiers: [featurecounts,gtf2table,kallisto,salmon,sailfish]
+
+# provide a reference geneset (suffix= ".gtf.gz")
+# geneset=refcoding.gtf.gz
+# geneset should be located in working directory
+geneset: refcoding.gtf.gz
+
+# differential expression methods to apply
+# allowable quantifiers are:
+# deseq2
+# edger
+# sleuth
+de_tools: [deseq2,edger,sleuth]
+
+################################################################
+## Location of annotation database
+################################################################
+annotations:
+    database: ?!
+
+    # directory with annotation information
+    dir: ?!
+
+
+    ################################################################
+    ## merge options
+    ################################################################
+merge:
+    # input pattern
+    # For example, if your files are called:
+    #    CLLP80-S1-1-L001.fastq.1.gz
+    #    CLLP80-S1-1-L001.fastq.2.gz
+    #    CLLP80-S1-1-L002.fastq.1.gz
+    #    CLLP80-S1-1-L002.fastq.2.gz
+    # and you want to create the following files:
+    #    CLLP80-S1-1.quant
+    #
+    # choose the following input and output patterns:
+    #
+    # pattern_input=(.*)-(S\d)-(\d)-(L\d+)
+    # pattern_output=\1-\2-\3
+    # Note that the .quant etc will be added by the pipeline. The
+    # pattern must not include this.
+    pattern_input: (\S+)-(\S+)-(\S+)
+    pattern_output: \1-\2-\3
+
+
+    ################################################################
+    ## program options
+    ################################################################
+
+featurecounts:
+
+    threads: 4
+
+    #featurecounts stranded option is thus:
+    # 0: unstranded
+    # 1: first read in pair is on sense relative to transcript
+    # 2: first read in pair is on antisense relative to transcript
+    # use 2 if using fr-firststrand
+    strand: 0
+
+    #The Q flag specifies minimum mapping quality. Set to 10 to be
+    # compatible with the counting section.
+    #-M will allow multi mapping reads
+    #-O will allow reads to overlap more than one feature
+    options: -Q 10
+
+
+    ################################################################
+    ## kallisto options
+    ################################################################
+kallisto:
+    # kmer size for kallisto. Default is 31. Max is 31.
+    # Used to generate the Kallisto index.
+    # Kallisto will ignore transcripts shorter than this
+    kmer: 31
+
+    # number of threads for kallisto
+    threads: 1
+
+    # string to append to the Kallisto quant command to provide specific
+    # options
+    # optional arguments include:
+    # --bias
+    # --rf-stranded (check manual for strandedness details)
+    # see https://pachterlab.github.io/kallisto/manual 
+    options: ''
+
+    # fragment-length/sd required for single-end reads only
+    fragment_length: 180
+
+    fragment_sd: 20
+
+    # number of bootstrap samples. Note, you need to bootstrap for
+    # differential expression with sleuth if there are no technical
+    # replicates. If you only need point estimates, set to 1
+    # note that bootstrap must be set to at least 1
+    bootstrap: 100
+
+    # job memory for Kallisto
+    memory: 6G
+
+    ################################################################
+    #
+    # salmon options
+    #
+    ################################################################
+salmon:
+
+    # see `salmon quant --help` for explanation of library types
+    # ISF == fr-secondstrand in tophat
+    libtype: ISF
+
+    # String providing additional options to append to the salmon quant
+    # command
+    # optional arguments include:
+    # --extraSensitive
+    options: ''
+
+    # kmer size for salmon library
+    kmer: 31
+
+    # number of bootstrap samples
+    # Note: you need to bootstrap for differential expression with sleuth
+    # if there are no technical replicates
+    bootstrap: 100
+
+    # string to append to the salmon index command to provide specific
+    # options
+    # from salmon >= v0.5.0, an index type is required
+    # specify one of --type=fmd or --type=quasi
+    index_options: --type=fmd
+
+    threads: 1
+
+    memory: 2G
+
+    ################################################################
+    #
+    # sailfish options
+    #
+    ################################################################
+sailfish:
+
+    # sailfish library type
+    # see `sailfish quant --help` for explanation of library types
+    # or http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtyp
+    # ISF == fr-secondstrand in tophat = inward, stranded, read 1 from forward strand
+    libtype: ISF
+
+    # string to append to the sailfish quant command to provide specific
+    # options
+    # optional arguments include:
+    # --biasCorrec
+    options: ''
+
+    # string to append to the sailfish index command to provide specific
+    # options
+    # optional arguments for indexing include:
+    # --force, --threads N (default=4)
+    index_options: ''
+
+    # kmer size for sailfish library
+    kmer: 31
+
+    # number of bootstrap samples
+    # Note: you need to bootstrap for differential expression with sleuth
+    # if there are no technical replicates
+    bootstrap: 100
+
+    # number of threads for sailfish
+    threads: 1
+
+    # job_memory for sailfish
+    memory: 2G
+
+    ################################################################
+    ################################################################
+deseq2:
+    # fdr to accept for deseq2
+    fdr: 0.05
+
+    # model to pass as DESeq2 design
+    # for each design[experiment].tsv you need to define a model and
+    # contrast and refgroup
+
+    # e.g if you have two experiments (1 & 2)
+    # model1=~group
+    # contrast1=group
+    # refgroup1=Brain1
+    # model2=~group+condition
+    # contrast2=condition
+    # refgroup2=treated
+
+    model1: ~group
+    model2: ~group
+
+    # contrast to return during post-hoc pairwise tests
+    contrast1: group
+    contrast2: group
+
+    # reference level for contrast , e.g WT
+    refgroup1: Brain1
+    refgroup2: Brain1
+
+    # test for significance for deseq1 - wald or lrt
+    detest: wald
+
+    ################################################################
+    ################################################################
+edger:
+    # fdr to accept for edger
+    fdr: 0.05
+
+    # model to pass as DESeq2 design
+    # for each design[experiment].tsv you need to define a model and
+    # contrast and refgroup
+
+    # e.g if you have two experiments (1 & 2)
+    # model1=~group
+    # contrast1=group
+    # refgroup1=Brain1
+    # model2=~group+condition
+    # contrast2=condition
+    # refgroup2=treated
+
+    model1: ~group
+    model2: ~group
+
+    # contrast to return during post-hoc pairwise tests
+    contrast1: group
+    contrast2: group
+
+    # reference level for contrast , e.g WT
+    refgroup1: Brain1
+    refgroup2: Brain1
+
+
+    ################################################################
+    # sleuth options
+    ################################################################
+sleuth:
+
+    # GLM models for differential testing need to be specified seperately
+    # for each design*.tsv file using model_[design_prefix] format
+    # e.g two design files design1.tsv and .design2.tsv
+    # model1 = ~replicate+group
+    # model2 = ~group+condition
+
+    model1: ~group
+    model2: ~group
+
+    # GLM model for LRT testing, must be provided if LRT method used
+    # for each design*.tsv file using model_[design_prefix] format
+    # e.g two design files design1.tsv and .design2.tsv
+    # reduced_model1 = ~group
+    # reduced_model2 = ~condition
+
+    reduced_model1: ~1
+    reduced_model2: ~1
+
+    # contrast for differential testing need to be specified seperately
+    # for each design*.tsv file using model_[design_prefix] format
+    # e.g two design files design1.tsv and .design2.tsv
+    # contrast1 = group
+    # contrast2 = condition
+
+    contrast1: group
+    contrast2: group
+
+    # refgroup for differential testing need to be specified seperately
+    # for each design*.tsv file using model_[design_prefix] format
+    # e.g two design files design1.tsv and .design2.tsv
+    # refgroup_1=WT
+    # refgroup_2=untreated
+    refgroup1: Brain1
+    refgroup2: Brain1
+
+    fdr: 0.1
+
+    # set to 1 to perform gene-level as well as transcript-level
+    # differential expression analysis
+    genewise: 1
+
+    # ensembl gene biomart for genewise quantification aggregation
+    # purposes.  Note, the pipeline cannot currently handle genewise DE
+    # testing if the transcripts/genes are not in ensembl
+    # Use following R code to identify the correct database
+    # (e.g hsapiens_gene_ensembl)
+    # > library(biomaRt)
+    # > listDatasets(useEnsembl(biomart="ensembl"))  
+    gene_biomart: hsapiens_gene_ensembl
+
+    # test for significance for sleuth - wald or lrt
+    # if lrt MUST provide reduced model
+    detest: wald
+
+    # CURRENTLY NOT IN USE
+    ###################################################
+    # Note: Do we want to allow filtering, if so, for all tools, or just some?
+    # For example, DESeq2 applies automatic filtering for low expression
+    # filtering can't be applied in sleuth
+    ###################################################
+    # filtering options for differential count analysis
+
+    # minimum number of total counts per row (window)
+    filter_min_counts_per_row: 1
+
+    # minimum number of counts per sample
+    filter_min_counts_per_sample: 10
+
+    # apply percentile filtering using the total
+    # number of counts per row (window) across
+    # all samples.
+    # 20 removes 20% of the windows with the lowest
+    # counts.
+    filter_percentile_rowsums: 20
+
+    ################################################################
+    ################################################################
+    # FOR buildGeneLevelReadExtension - CURRENTLY NOT IN USE
+counting:
+    # aggregate function to summarize per-exon counts for a gene level.
+    # counts to take for differential expression analysis
+    type: counted_all
+
+    # minimum mapping quality of reads  
+    min_mapping_quality: 10
+
+
+    ################################################################
+report:
+    # number of threads to use to build the documentation
+    threads: 1
+
+    # directory for html documentation
+    html: report/html
+
+    # directory for doctrees
+    doctrees: report/doctrees
+
+    # prefix for publishing
+    prefix: default
+
+    # report engine to use
+    engine: cgatreport

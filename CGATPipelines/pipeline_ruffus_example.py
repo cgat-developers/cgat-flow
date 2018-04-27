@@ -40,9 +40,9 @@ from CGATCore import Pipeline as P
 
 
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 
 @originate(['a_originate.tsv', 'b_originate.tsv'])

@@ -210,7 +210,7 @@ class EntrezAnnotation(APIAnnotation):
         Prefix - used to reconise the annotation currently running
         outdb - output database
         email - entrez requires an email address to use its API, this
-        should be provided in the pipeline.ini file.
+        should be provided in the pipeline.yml file.
         '''
         APIAnnotation.__init__(self, prefix, "Entrez", outdb)
         Entrez.email = email
@@ -307,7 +307,7 @@ class MyGeneInfoAnnotation(APIAnnotation):
         Gets information from MyGeneInfo.org for the list of genes pulled from
         the Entrez Gene database.  This information is combined into a big
         python dictionary.
-        The fields to get from MyGeneInfo are specified in pipeline.ini, the
+        The fields to get from MyGeneInfo are specified in pipeline.yml, the
         list of all possible fields is at
         http://docs.mygene.info/en/latest/doc/data.html#available-fields
         Each MyGeneInfo 'object' is formatted slightly differently, depending
@@ -490,7 +490,7 @@ class GoAnnotation(MyGeneInfoAnnotation):
     def __init__(self, source, outdb, options, ohost):
         '''
         options can be BP, CC, MF or any combination of these, stored as a
-        string and comma delimited (from pipeline.ini)
+        string and comma delimited (from pipeline.yml)
         '''
         MyGeneInfoAnnotation.__init__(self, "go", source, outdb, ohost=ohost)
         self.options = options
@@ -502,7 +502,7 @@ class GoAnnotation(MyGeneInfoAnnotation):
         '''
         gores = self.dataset['go']
         godict = dict()
-        # options from pipeline.ini for which go namespaces are of interest
+        # options from pipeline.yml for which go namespaces are of interest
         options = self.options.split(",")
         goids = []
         goset = set()
@@ -559,13 +559,13 @@ class PathwayAnnotation(MyGeneInfoAnnotation):
     Pathway Annotations from mygene.info.  The 'pathway' dictionary returned
     by self.parse() contains annotations from a number of pathway
     database, those of interest (or
-    all) can be specified in the pipeline.ini.
+    all) can be specified in the pipeline.yml.
     '''
 
     def __init__(self, source, outdb, options, ohost):
         '''
         options - which pathway databases to keep (as a comma delimited
-        string from pipeline.ini)
+        string from pipeline.yml)
         '''
         MyGeneInfoAnnotation.__init__(self, "pathway", source, outdb,
                                       ohost=ohost)
@@ -574,7 +574,7 @@ class PathwayAnnotation(MyGeneInfoAnnotation):
     def parse(self):
         '''
         Parses the "pathway" dictionary extracted from MyGeneInfo above.
-        The pathway annotation sets of interest are specified in pipeline.ini,
+        The pathway annotation sets of interest are specified in pipeline.yml,
         or if 'all' is specified all pathway annotations available in
         the database are used.
         Each annotation set is used to generate 2 database tables:
@@ -588,7 +588,7 @@ class PathwayAnnotation(MyGeneInfoAnnotation):
         pathwaydict = DB['pathway']
         D = dict()
 
-        # If specific annotation sets to use are provided in pipeline.ini
+        # If specific annotation sets to use are provided in pipeline.yml
         # use those
         # otherwise get all the keys from the dictionaries in pathwaydict.
         typelist = self.options.split(",")
@@ -649,7 +649,7 @@ class HomologeneAnnotation(MyGeneInfoAnnotation):
     Uses information from the homologene dataset retrieved from MyGeneInfo
     to link entrez IDs from the host organism to those of homologous genes
     in other organisms of interest.
-    The organisms of interest can be specified in pipeline.ini or, if 'all'
+    The organisms of interest can be specified in pipeline.yml or, if 'all'
     is specified, every available organism is used ($25 organisms).
     '''
 

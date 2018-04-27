@@ -1,8 +1,9 @@
+import re
+import os
+import copy
 import pandas as pd
 import CGATCore.IOTools as IOTools
 import sqlite3
-import os
-import copy
 import rpy2.robjects as robjects
 import rpy2.interactive as r
 import rpy2.interactive.packages
@@ -24,18 +25,16 @@ def removeNonAscii(s):
 
 def getUnmapped(params):
     '''
-    Parses the PARAMS['annotation_flatfiles'] strings from the pipeline.ini
+    Parses the PARAMS['annotation_flatfiles'] strings from the pipeline.yml
     to find out which output files to create
     '''
     unmapped = dict()
-    for p in params:
-        if "_".join(p.split("_")[0:2]) == "annotation_flatfiles":
-            L = [x.strip() for x in params[p].split("-")]
-            for l in L:
-                l = l.split(" ")
-                if l[0] == "p":
-                    pref = l[1]
-                    unmapped[pref] = params[p]
+    flatfiles = params.get("annotation", {}).get("flatfiles", [])
+    for k, v in flatfiles:
+        unmapped = re.search("-p\s+(\S+)", v)
+        if unmapped:
+            pref = unmapped.groups()[0]
+            unmapped[pref] = v
     return unmapped
 
 
@@ -546,7 +545,7 @@ class FlatFileParser(AnnotationParser):
 
     def readOptions(self, optionsstring):
         '''
-        Reads an "optionsstring" from the pipeline.ini file and parses
+        Reads an "optionsstring" from the pipeline.yml file and parses
         this into a dictionary.
         The options string needs to contain these options:
         -p -  prefix for output files
@@ -1161,13 +1160,13 @@ def cleanGeneLists(infile, outfile, idtype, dbname):
 def HPABackground(tissue, level, supportive, outfile):
     '''
     Generates a background set using human protein atlas annotations using the
-    R hpar package and thresholds set in pipeline.ini
+    R hpar package and thresholds set in pipeline.yml
     '''
     r.packages.importr("hpar")
     robjects.r('''
     library("hpar")
     # Uses the r hpar library to find human protein atlas terms
-    # meeting the criteria specified in the pipeline.ini
+    # meeting the criteria specified in the pipeline.yml
 
     hpaQuery <- function(tissue, level, supportive=T){
         data(hpaNormalTissue)
@@ -1207,7 +1206,7 @@ def foregroundsVsBackgrounds(infiles, outfile, outfile2,
                              writegenes, host, ngenes, idtype):
     '''
     Runs the appropriate EnrichmentTester method according to
-    the parameters specified in the pipeline.ini.
+    the parameters specified in the pipeline.yml.
     '''
     annots = infiles[-1].replace("_genestoterms.tsv", "")
 

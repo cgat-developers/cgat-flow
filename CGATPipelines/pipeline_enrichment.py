@@ -10,7 +10,7 @@ This pipeline is a wrapper of script runGSEA.py (enrichment analysis
 by using GSEA. Further description is provided below.)
 
 To run this pipeline, one needs to specify required parameteres in
-pipeline.ini file (configuration file).
+pipeline.yml file (configuration file).
 
 This pipeline entails steps:
 
@@ -31,7 +31,7 @@ b. The Database is generated using the pipeline pipeline_geneinfo.py.
 
 This database is required to run pipeline_enrichment.
 Input gene list is translated into required id type.
-(Available options are specified in .ini file), sorts
+(Available options are specified in .yml file), sorts
 the gene list on the basis of provided ranking metric.
 It also removes all duplicate ids and generates report.
 A summary of preprocessing steps of the gene list is provided and lists
@@ -73,7 +73,7 @@ is a collection of annotated gene sets, which can be used for gene
 set enrichment analysis.OR you can create your own gene set in gmt
 or gmx format.
 
-3. Rest of the parameters can be specified in to pipeline.ini configuration
+3. Rest of the parameters can be specified in to pipeline.yml configuration
 file. Every parameter is set to deafult value.
 
 
@@ -210,7 +210,7 @@ There is not a 1:1 relationshup between different types of gene identifier
 (i.e. ensembl gene, entrez and hgnc) so you need to decide which
 list to use and stick to it.
 
-In the pipeline.ini you need to specify the type of gene ID you want to use.
+In the pipeline.yml you need to specify the type of gene ID you want to use.
 Foreground and background input lists should use this type of ID.
 For the annotation steps of the pipeline ensembl gene IDs are used,
 but before the enrichment test the gene IDs are translated back to the
@@ -258,7 +258,7 @@ Annotations from a Flat File
 The user can specify additional annotations to use which are not in the
 database as long as a file exists containing all the required information.
 Processing of this file requires users to specify a set of
-"annotations2annotations.py" options in the pipeline.ini.
+"annotations2annotations.py" options in the pipeline.yml.
 
 
 AnnotationSets
@@ -288,11 +288,11 @@ every available annotation.
 There are various ways to test for enrichment, these are contained in
 EnrichmentTester objects.  The standard is to test for enrichment of each
 term individually, however alternatives can be added as subclasses of
-EnrichmentTester and specified in the pipeline.ini.
+EnrichmentTester and specified in the pipeline.yml.
 
 Statistical tests for enrichment are called by the EnrichmentTester class
 and specified as StatsTest subclasses.  The test type, multiple testing
-correction and signficance threshold are specified in the pipeline.ini.
+correction and signficance threshold are specified in the pipeline.yml.
 (Only FisherExactTest currently implemented)
 '''
 
@@ -313,9 +313,9 @@ from textwrap import wrap
 
 # load options from the config file
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 dbname = PARAMS['db_name']
 unmapped = PipelineEnrichment.getUnmapped(PARAMS)
@@ -328,7 +328,7 @@ unmappedouts = [["annotations.dir/%s%s" % (u, s)
                  for s in outfilesuffixes]
                 for u in unmapped]
 
-hpatissues = PARAMS['hpa_tissue'].split(",")
+hpatissues = PARAMS.get('hpa_tissue', {})
 hpatissues = ['clean_backgrounds.dir/%s_hpa_background.tsv'
               % tissue.replace(" ", "_") for tissue in hpatissues]
 
@@ -449,7 +449,7 @@ def mapUnmappedAnnotations(outfiles):
     '''
     Allows the user to easily add annotations not in the database.
     Requires an "annotations2annotations.py" command specified in the
-    pipeline.ini providing details of a flat file containing the necessary
+    pipeline.yml providing details of a flat file containing the necessary
     information to build the AnnotationSet.
     '''
     ua = "annotations.dir/"
@@ -498,7 +498,7 @@ def cleanUserBackgrounds(infile, outfile):
 def buildHPABackground(outfile):
     '''
     Builds a background geneset based on human protein atlas expression values
-    specified in pipeline.ini - allows the user to use a tissue specific
+    specified in pipeline.yml - allows the user to use a tissue specific
     background
     '''
     tissue = outfile.split("/")[1].split("_")[0].replace("_", " ")
@@ -542,7 +542,7 @@ def foregroundsVsBackgrounds(infiles, outfiles):
     '''
     Takes every possible set of one foreground, one background and one
     AnnotationSet and performs enrichment analysis.  Analysis is
-    performed based on the "stats" parameters in the pipeline.ini.
+    performed based on the "stats" parameters in the pipeline.yml.
     Results are written to tab delimited files in results.dir, the _sig.tsv
     output file contains signficantly enriched terms only, the other output
     file contains all terms.

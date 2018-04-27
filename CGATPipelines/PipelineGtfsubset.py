@@ -184,8 +184,8 @@ def getRepeatDataFromUCSC(dbhandle,
     --log=%(outfile)s.log ''']
 
     if remove_contigs_regex:
-        statement.append(
-            ''' --contig-pattern="%(remove_contigs_regex)s" ''')
+        statement.append('--contig-pattern="{}"'.format(
+            ",".join(remove_contigs_regex)))
 
     statement.append('''| gzip > %(outfile)s ''')
 

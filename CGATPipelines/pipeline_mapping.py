@@ -45,10 +45,10 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 The sphinxreport report requires a :file:`conf.py` and
-:file:`sphinxreport.ini` file (see :ref:`PipelineReporting`). To start
+:file:`sphinxreport.yml` file (see :ref:`PipelineReporting`). To start
 with, use the files supplied with the Example_ data.
 
 Input
@@ -220,9 +220,9 @@ import CGATPipelines.PipelineWindows as PipelineWindows
 
 # Pipeline configuration
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False})
 

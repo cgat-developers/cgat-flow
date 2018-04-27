@@ -20,12 +20,12 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file. The
+The pipeline requires a configured :file:`pipeline.yml` file. The
 pipeline looks for a configuration file in several places:
 
    1. The default configuration in the :term:`code directory`.
-   2. A shared configuration file :file:`../pipeline.ini`.
-   3. A local configuration :file:`pipeline.ini`.
+   2. A shared configuration file :file:`../pipeline.yml`.
+   3. A local configuration :file:`pipeline.yml`.
 
 The order is as above. Thus, a local configuration setting will
 override a shared configuration setting and a default configuration
@@ -45,7 +45,7 @@ the default values:
 .. todo::
    describe important parameters
 
-The sphinxreport report requires a :file:`conf.py` and :file:`sphinxreport.ini` file 
+The sphinxreport report requires a :file:`conf.py` and :file:`sphinxreport.yml` file 
 (see :ref:`PipelineReporting`). To start with, use the files supplied with the
 Example_ data.
 
@@ -145,9 +145,9 @@ import CGATPipelines.PipelineTracks as PipelineTracks
 ###################################################
 from CGATCore import Pipeline as P
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'annotations_dir': ""})
 
@@ -177,7 +177,7 @@ def getAssociatedBAMFiles(track):
     By default, this method searches for ``track.bam`` file in the
     current directory and returns an offset of 0.
 
-    Associations can be defined in the .ini file in the section
+    Associations can be defined in the .yml file in the section
     [bams]. For example, the following snippet associates track
     track1 with the bamfiles :file:`track1.bam` and :file:`track2.bam`::
 

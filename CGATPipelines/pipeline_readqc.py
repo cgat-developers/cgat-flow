@@ -26,7 +26,7 @@ is as follows:
 2. Inspect the output to decide if and what kind of pre-processing is
    required.
 
-3. Edit the configuration file ``pipeline.ini`` to activate
+3. Edit the configuration file ``pipeline.yml`` to activate
    pre-processing and parameterize it appropriately. Note that
    parameters can be set on a per-sample basis.
 
@@ -44,7 +44,7 @@ is as follows:
 Configuration
 -------------
 
-See :file:`pipeline.ini` for setting configuration values affecting
+See :file:`pipeline.yml` for setting configuration values affecting
 the workflow (pre-processing or no pre-processing) and options for
 various pre-processing tools.
 
@@ -135,9 +135,9 @@ import CGATCore.IOTools as IOTools
 
 # load options from the config file
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # define input files and preprocessing steps
 # list of acceptable input formats
@@ -402,7 +402,7 @@ def runFastqScreen(infiles, outfile):
     job_memory = "8G"
 
     # Create fastq_screen config file in temp directory
-    # using parameters from Pipeline.ini
+    # using parameters from Pipeline.yml
     with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
                            "w") as f:
         for i, k in list(PARAMS.items()):

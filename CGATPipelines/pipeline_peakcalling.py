@@ -70,7 +70,7 @@ looking for peaks.
 the pipeline, only the results from one peakcaller can be taken forward for IDR
 analysis. If you want to run IDR analysis on the output of multiple peakcallers
 you will need first run IDR with one peakcaller then clone the pipeline, modify
-pipeline.ini file and delete the appropriate files to rerun the IDR analysis on
+pipeline.yml file and delete the appropriate files to rerun the IDR analysis on
 the output from a different peakcaller. Be warned that IDR analysis generates
 a large number of peakfiles and it's best to decide on your prefered peakcaller
 before running the IDR analysis.
@@ -145,7 +145,7 @@ Sample_bam = bam file you want to call peaks on (i.e. ChiP Bam or ATAC-Seq Bam)
 Input_bam = control file used as background reference in peakcalling
 (e.g. input file for ChIP-seq)
 
-pipeline.ini = File containing paramaters and options for
+pipeline.yml = File containing paramaters and options for
 running the pipeline
 
 design.tsv = This is a tab seperated file based on the design file for R package
@@ -180,7 +180,7 @@ stages of the pipeline
 
     Directory contains:
             * :term:`bams` files (and thier indexes) that have been filtered
-            according to specifications in pipeline.ini
+            according to specifications in pipeline.yml
             * a number of log files detailing the number of reads that have been
             filtered out for each reason.
             * for paired-end samples a file with the frequency of fragment
@@ -239,7 +239,6 @@ from ruffus.combinatorics import *
 import sys
 import os
 import math
-import sqlite3
 import shutil
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
@@ -258,16 +257,16 @@ import matplotlib.gridspec as gridspec
 #########################################################################
 # Load PARAMS Dictionary from Pipeline.innni file options ###############
 #########################################################################
-# load options from pipeline.ini file into PARAMS dictionary
+# load options from pipeline.yml file into PARAMS dictionary
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 
 PARAMS = P.PARAMS
 
-# add parameters from annotations pipeline.ini
+# add parameters from annotations pipeline.yml
 PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
     "genesets",
@@ -357,7 +356,7 @@ def loadDesignTable(infile, outfile):
             r"filtered_bams.dir/\1_counts.tsv"])
 def filterInputBAMs(infile, outfiles):
     '''
-    Applies various filters specified in the pipeline.ini to the bam file
+    Applies various filters specified in the pipeline.yml to the bam file
     Currently implemented are filtering:
         unwanted contigs based on partial name matching
         unmapped reads
@@ -367,8 +366,8 @@ def filterInputBAMs(infile, outfiles):
         reads below a mapping quality (MAPQ) score
         reads overlapping with blacklisted regions specified in bed file.
     '''
-    filters = PARAMS['filters_bamfilters'].split(",")
-    bedfiles = PARAMS['filters_bedfiles'].split(",")
+    filters = P.as_list(PARAMS['filters_bamfilters'])
+    bedfiles = P.as_list(PARAMS['filters_bedfiles'])
     blthresh = PARAMS['filters_blacklistthresh']
     if blthresh != "":
         blthresh = float(blthresh)
@@ -386,7 +385,7 @@ def filterInputBAMs(infile, outfiles):
                                          r"filtered_bams.dir/\1_counts.tsv"])
 def filterChipBAMs(infile, outfiles):
     '''
-    Applies various filters specified in the pipeline.ini to the bam file
+    Applies various filters specified in the pipeline.yml to the bam file
     Currently implemented are filtering:
         unmapped reads
         unpaired reads
@@ -395,8 +394,8 @@ def filterChipBAMs(infile, outfiles):
         reads below a mapping quality (MAPQ) score
         reads overlapping with blacklisted regions specified in bed file.
     '''
-    filters = PARAMS['filters_bamfilters'].split(",")
-    bedfiles = PARAMS['filters_bedfiles'].split(",")
+    filters = P.as_list(PARAMS['filters_bamfilters'])
+    bedfiles = P.as_list(PARAMS['filters_bedfiles'])
     blthresh = PARAMS['filters_blacklistthresh']
     if blthresh != "":
         blthresh = float(blthresh)
@@ -671,7 +670,7 @@ if int(PARAMS['IDR_run']) == 1:
         need to be generated - combined bam files of all the input bam
         files for this tissue.
         If you have chosen the "all" option for IDR_poolinputs in the
-        pipeline.ini, this step is skipped, as all inputs are pooled for
+        pipeline.yml, this step is skipped, as all inputs are pooled for
         all IDR analyses.
         '''
         cond_tissues = set(df['Condition'] + "_" + df['Tissue'])
@@ -741,8 +740,7 @@ if int(PARAMS['IDR_run']) == 1:
         PipelinePeakcalling.makePseudoBams(infile, pseudos,
                                            PARAMS['paired_end'],
                                            PARAMS['IDR_randomseed'],
-                                           PARAMS['filters_bamfilters'].split(
-                                               ","),
+                                           P.as_list(PARAMS['filters_bamfilters']),
                                            submit=True)
 else:
     # when not not running IDR
@@ -1274,7 +1272,7 @@ def runIDR(infile, outfile):
     IDR_options = string from pipeline ini file detailing IDR options
     Different IDR comparisions (e.g. selfconistency, pooledconsistency
     or replicate consistancy might require different IDR thresholds)
-    these can be set in the pipeline.ini file in the IDR section
+    these can be set in the pipeline.yml file in the IDR section
 
     Oracle files = oracle peakset - see IDR analysis for details of what this
     means?
@@ -1336,11 +1334,11 @@ def filterIDR(infile, outfiles):
     '''Take the IDR output, which is in ENCODE narrowPeaks format if the
     input is narrowPeaks, gtf or bed and ENCODE broadPeaks format if
     the input is broadPeaks.  Input is filtered based on whether it
-    passes the soft IDR thresholds provided in the pipeline.ini.
+    passes the soft IDR thresholds provided in the pipeline.yml.
     Peaks which pass this threshold with have a score in the
     "globalIDR" column which is greater than -log10(soft_threshold)
     where soft_threshold is the soft threshold provided in the
-    pipeline.ini.
+    pipeline.yml.
 
     Column headings are added and output is sorted by signalValue.
 

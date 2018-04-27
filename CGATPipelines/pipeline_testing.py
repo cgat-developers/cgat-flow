@@ -36,7 +36,7 @@ the second will build a summary report.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 Tests are described as section in the configuration file. A test
 section starts with the prefix ``test_``. For following example is a
@@ -107,7 +107,7 @@ For example, the contents of a tar-ball will look light this::
    test_mytest1.dir/hg19.idx
    test_mytest1.dir/hg19.fa
    test_mytest1.dir/hg19.fa.fai
-   test_mytest1.dir/pipeline.ini  # pipeline configuration file
+   test_mytest1.dir/pipeline.yml  # pipeline configuration file
    test_mytest1.dir/indices/      # configured to work in test dir
    test_mytest1.dir/indices/bwa/  # bwa indices
    test_mytest1.dir/indices/bwa/hg19.bwt
@@ -167,9 +167,9 @@ import CGATCore.IOTools as IOTools
 # load options from the config file
 from CGATCore import Pipeline as P
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # WARNING: pipeline names with underscores in their name are not allowed
 TESTS = sorted(set(["test_{}".format(x.split("_")[1])
@@ -188,7 +188,7 @@ def setupPrerequisites(infile, outfile):
     to_cluster = False
     track = P.snip(outfile, ".tgz")
 
-    # obtain data - should overwrite pipeline.ini file
+    # obtain data - should overwrite pipeline.yml file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
     P.run(statement)
@@ -204,7 +204,7 @@ def setupTests(infile, outfile):
     This method creates a directory in which a test will be run
     and downloads test data with configuration files.
     '''
-    to_cluster = False
+    # to_cluster = False
 
     track = P.snip(outfile, ".tgz")
 
@@ -227,7 +227,7 @@ def setupTests(infile, outfile):
         "> %(outfile)s.log)")
     P.run(statement)
 
-    # obtain data - should overwrite pipeline.ini file
+    # obtain data - should overwrite pipeline.yml file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
     P.run(statement)
@@ -255,7 +255,7 @@ def run_test(infile, outfile):
     # do not run on cluster, mirror
     # that a pipeline is started from
     # the head node
-    to_cluster = False
+    # to_cluster = False
 
     template_statement = (
         "(cd %%(track)s.dir; "
@@ -645,7 +645,7 @@ def main(argv=None):
     if "--local" in argv:
         workflow_options.append("--local")
     workflow_options.append("-p {}".format(P.get_params()["cluster"]["num_jobs"]))
-    
+
     P.get_params()["workflow_options"] == "".join(workflow_options)
     # manually set location of test scripts - this needs to be better organized
     # 1. make scripts live alongside pipeline_testing.py

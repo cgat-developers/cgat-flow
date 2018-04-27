@@ -15,7 +15,7 @@ specific genome and add it to the directory the pipeline is ran.
 Common to all of the annotations generated in this pipeline is that they
 are genomic - i.e. they are genomic intervals or relate to genomic intervals.
 Thus, annotations are tied to a particular version of the genome. This is
-parameterised within the pipeline.ini configuration file. The pipeline
+parameterised within the pipeline.yml configuration file. The pipeline
 follows two principle releases: the UCSC_ genome assembly and an ENSEMBL_
 geneset version.
 
@@ -43,7 +43,7 @@ full
 Configuration
 -------------
 
-The :file:`pipeline.ini` needs to be edited so that it points to the
+The :file:`pipeline.yml` needs to be edited so that it points to the
 appropriate locations of the auxiliary files.
 
 
@@ -73,7 +73,7 @@ Assembly report:
 
 miRbase GFF3:
    This can be downloaded from miRbase http://www.mirbase.org/ftp.shtml.
-   A path to the :term:`GFF3` file needs to be specified in the pipelin.ini
+   A path to the :term:`GFF3` file needs to be specified in the pipelin.yml
    configuration file. Make sure that the genome build version of the GFF3
    annotation file matches the ENSEMBL genome.
 
@@ -105,7 +105,7 @@ Using the pipeline results
 
 The gtf_subset pipeline provides an interface for presenting its
 results to other pipelines. The interface is defined in the file
-:file:`pipeline.ini`. For example::
+:file:`pipeline.yml`. For example::
 
    [interface]
    # fasta file with cdna sequences
@@ -337,9 +337,9 @@ import CGATPipelines.PipelineGO as PipelineGO
 # Pipeline configuration
 ###################################################
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # Add automatically created files to the interface.  This is required
 # when the pipeline is peek'ed.  The statement below will
@@ -583,7 +583,8 @@ def buildUCSCGeneSet(infile, outfile):
         # in quotation marks to avoid confusion with shell special
         # characters such as ( and |
         statement.append(
-            ''' --contig-pattern="%(ncbi_remove_contigs)s" ''')
+            '--contig-pattern="{}"'.format(",".join(
+                PARAMS["ncbi_remove_contigs"])))
 
     statement.append(
         '''
@@ -613,11 +614,11 @@ def buildCdsTranscript(infile, outfile):
     Arguments
     ---------
     infile : from ruffus
-       ENSEMBL geneset, filename named in pipeline.ini
+       ENSEMBL geneset, filename named in pipeline.yml
     outfile : from ruffus
-       Output filename named in pipeline.ini
+       Output filename named in pipeline.yml
     filteroption : string
-       Filter option set in the piepline.ini as feature column in GTF
+       Filter option set in the piepline.yml as feature column in GTF
        nomenclature
     '''
 
@@ -642,11 +643,11 @@ def buildExonTranscript(infile, outfile):
     Arguments
     ---------
     infile : from ruffus
-       ENSEMBL geneset, filename named in pipeline.ini
+       ENSEMBL geneset, filename named in pipeline.yml
     outfile : from ruffus
-       Output filename named in pipeline.ini
+       Output filename named in pipeline.yml
     filteroption : string
-       Filter option set in the piepline.ini as feature column in GTF
+       Filter option set in the piepline.yml as feature column in GTF
        nomenclature
     '''
     m = PipelineGtfsubset.SubsetGTF(infile)
@@ -670,11 +671,11 @@ def buildCodingExonTranscript(infile, outfile):
     Arguments
     ---------
     infile : from ruffus
-       ENSEMBL geneset, filename named in pipeline.ini
+       ENSEMBL geneset, filename named in pipeline.yml
     outfile : from ruffus
-       Output filename named in pipeline.ini
+       Output filename named in pipeline.yml
     filteroption : string
-       Filter option set in the piepline.ini as feature column in GTF
+       Filter option set in the piepline.yml as feature column in GTF
        nomenclature
     '''
     m = PipelineGtfsubset.SubsetGTF(infile)
@@ -699,11 +700,11 @@ def buildLincRNAExonTranscript(infile, outfile):
     Arguments
     ---------
     infile : from ruffus
-       ENSEMBL geneset, filename named in pipeline.ini
+       ENSEMBL geneset, filename named in pipeline.yml
     outfile : from ruffus
-       Output filename named in pipeline.ini
+       Output filename named in pipeline.yml
     filteroption : string
-       Filter option set in the piepline.ini as feature column in GTF
+       Filter option set in the piepline.yml as feature column in GTF
        nomenclature
     '''
     m = PipelineGtfsubset.SubsetGTF(infile)
@@ -729,11 +730,11 @@ def buildNonCodingExonTranscript(infile, outfile):
     Arguments
     ---------
     infile : from ruffus
-       ENSEMBL geneset, filename named in pipeline.ini
+       ENSEMBL geneset, filename named in pipeline.yml
     outfile : from ruffus
-       Output filename named in pipeline.ini
+       Output filename named in pipeline.yml
     filteroption : string
-       Filter option set in the piepline.ini as feature column in GTF
+       Filter option set in the piepline.yml as feature column in GTF
        nomenclature
     '''
     m = PipelineGtfsubset.SubsetGTF(infile)

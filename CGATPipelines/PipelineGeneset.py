@@ -317,7 +317,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     '''
 
     job_memory = "4G"
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf
@@ -395,7 +395,7 @@ def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
       if not it will be set to NA
     '''
 
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     gtf_file = IOTools.open_file(geneset_gtf, "rb")
     gtf_iterator = GTF.transcript_iterator(GTF.iterator(gtf_file))
@@ -527,7 +527,7 @@ def loadTranscriptInformation(infile, outfile,
        If True, only consider protein coding genes.
 
     '''
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf
@@ -632,7 +632,7 @@ def loadPeptideSequences(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-protein_id"
         "--map=protein_id:str")
 
@@ -734,7 +734,7 @@ def loadGeneStats(infile, outfile):
     """
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--map=gene_name:str")
 
@@ -908,7 +908,7 @@ def loadTranscripts(infile, outfile):
 
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id "
         "--allow-empty-file ")
@@ -927,7 +927,7 @@ def loadGeneCoordinates(infile, outfile):
 
     # TS. remove transcript_id column as this is now meaningless
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--ignore-column=transcript_id "
         "--allow-empty-file ")
@@ -954,7 +954,7 @@ def loadTranscript2Gene(infile, outfile):
        Logfile. The table name is derived from `outfile`.
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id ")
 
@@ -984,7 +984,7 @@ def loadTranscriptStats(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id "
         "--map=gene_id:str")
@@ -1026,7 +1026,7 @@ def loadProteinStats(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=protein_id "
         "--map=protein_id:str")
 

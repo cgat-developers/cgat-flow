@@ -15,7 +15,7 @@ from CGATCore import Pipeline as P
 ############################################################
 ############################################################
 # Pipeline configuration
-P.get_parameters(["%s.ini" % __file__[:-len(".py")], "pipeline.ini"])
+P.get_parameters(["%s.yml" % __file__[:-len(".py")], "pipeline.yml"])
 PARAMS = P.PARAMS
 
 ############################################################

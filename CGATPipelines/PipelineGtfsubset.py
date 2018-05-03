@@ -184,8 +184,8 @@ def getRepeatDataFromUCSC(dbhandle,
     --log=%(outfile)s.log ''']
 
     if remove_contigs_regex:
-        statement.append(
-            ''' --contig-pattern="%(remove_contigs_regex)s" ''')
+        statement.append('--contig-pattern="{}"'.format(
+            ",".join(remove_contigs_regex)))
 
     statement.append('''| gzip > %(outfile)s ''')
 
@@ -349,7 +349,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     '''
 
     job_memory = "4G"
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf

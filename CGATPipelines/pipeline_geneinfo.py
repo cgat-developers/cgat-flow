@@ -12,20 +12,20 @@ The annotations are downloaded from various APIs.
 This database provides annotation information about the genes and is used
 as an input for pipeline_enrichment.py
 
-annotate - load all annotations specified in pipeline.ini
-full - load all annotations and if specified in pipeline.ini, generate
+annotate - load all annotations specified in pipeline.yml
+full - load all annotations and if specified in pipeline.yml, generate
 a database for each list of genes in genelists.dir containing annotations
 for genes in this list
 
 Usage and Inputs
 ================
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 No other inputs are required.
 
 
 Output
 ======
-The major output is a database, named as specified in the pipeline.ini.
+The major output is a database, named as specified in the pipeline.yml.
 All annotations are mapped to ensemblg ids.
 
 Tables in the database are named as:
@@ -73,7 +73,7 @@ mygene.info provides many regularly updated annotations via its API
   biocarta, mousecyc, netpath, pharmgkb, pid, reactome, smpdb, wikipathways,
   yeastcyc)
 - HomologeneAnnotation - gene symbols for homologous genes in other species
-  as listed in the pipeline.ini
+  as listed in the pipeline.yml
 
 DataMineAnnotation
 
@@ -101,9 +101,9 @@ import pandas as pd
 
 
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # pick a pathway to use to check pathway annotation has run
 example_pw = PARAMS['my_gene_info_pathway'].split(",")[0]
@@ -209,7 +209,7 @@ def AnnotateWithPathway(infile, outfile):
     '''
     Annotates all genes in allgenes.tsv with pathway details, either
     for all pathway databases available via mygene.info or those
-    specified in the pipeline.ini
+    specified in the pipeline.yml
     Tables:
     ensemblg2xxx$annot - ensemblg to ID in pathway database
     xxx$details - pathway database ID to pathway details
@@ -230,7 +230,7 @@ def AnnotateWithPathway(infile, outfile):
 def AnnotateWithHomologene(infile, outfile):
     '''
     Annotates all genes in allgenes.tsv with homologous gene symbols from
-    either a list of species provided in the pipeline.ini or all species
+    either a list of species provided in the pipeline.yml or all species
     available in homologene via mygene.info
     Tables:
     ensemblg2symbol_xxx$geneid - ensemblg in original species to symbol in xxx

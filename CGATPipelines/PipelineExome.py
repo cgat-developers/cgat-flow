@@ -252,14 +252,13 @@ def variantAnnotator(vcffile, bamlist, outfile, genome,
     job_options = getGATKOptions()
     job_threads = 3
 
-    if annotations != "":
-        if annotations == "--useAllAnnotations":
-            anno = annotations
-        else:
-            anno = annotations.split(",")
-            anno = " -A " + " -A ".join(anno)
+    if "--useAllAnnotations" in annotations:
+        anno = "--useAllAnnotations"
+    elif annotations:
+        anno = " -A " + " -A ".join(annotations)
     else:
         anno = ""
+
     statement = '''GenomeAnalysisTK -T VariantAnnotator
                     -R %(genome)s
                     -I %(bamlist)s
@@ -626,7 +625,7 @@ def parseMutectCallStats(infile, outfile):
 
 @cluster_runnable
 def defineEBioStudies(cancer_types, outfile):
-    ''' For the cancer types specified in pipeline.ini, identify the
+    ''' For the cancer types specified in pipeline.yml, identify the
     relevent studies in eBio '''
 
     cancer_types = cancer_types.split(",")
@@ -842,7 +841,7 @@ def intersectionHeatmap(infiles, outfile):
 def filterQuality(infile, qualstr, qualfilter, outfiles):
     '''
     Filter variants based on quality.  Columns to filter on and
-    how they should be filtered can be specified in the pipeline.ini.
+    how they should be filtered can be specified in the pipeline.yml.
     Currently only implemented to filter numeric columns.  "." is assumed
     to mean pass.
     '''
@@ -1113,7 +1112,7 @@ def WriteFreqFiltered(infile, exacdict, exacinds, otherdict, otherinds,
 def filterRarity(infile, exac, freqs, thresh, outfiles):
     '''
     Filter out variants which are common in any of the exac or other
-    population datasets as specified in the pipeline.ini.
+    population datasets as specified in the pipeline.yml.
     '''
     exacdict, exacinds = FilterExacCols(infile, exac, thresh)
     otherdict, otherinds = FilterFreqCols(infile, thresh, freqs)
@@ -1126,7 +1125,7 @@ def filterDamage(infile, damagestr, outfiles):
     '''
     Filter variants which have not been assessed as damaging by any
     of the specified tools.
-    Tools and thresholds can be specified in the pipeline.ini.
+    Tools and thresholds can be specified in the pipeline.yml.
 
     Does not account for multiple alt alleles - if any ALT allele has
     been assessed as damaging with any tool the variant is kept,
@@ -1137,7 +1136,7 @@ def filterDamage(infile, damagestr, outfiles):
     cols = IOTools.open_file(infile).readline().strip().split("\t")
 
     D = dict()
-    # parses the "damage string" from the pipeline.ini
+    # parses the "damage string" from the pipeline.yml
     # this should be formatted as COLUMN|result1-result2-...,COLUMN|result1...
     # where variants with any of these results in this column will
     # be retained

@@ -47,9 +47,9 @@ pipelinesdir = os.path.dirname(CGATPipelines.__file__)
 # sphinx-report.
 inifile = os.path.join(os.path.dirname(CGATPipelines.__file__),
                        'configuration',
-                       'pipeline.ini')
+                       'pipeline.yml')
 
-PARAMS = P.getParameters([inifile, "pipeline.ini"])
+PARAMS = P.get_parameters([inifile, "pipeline.yml"])
 
 # Definition now part of CGATReport
 # def setup(app):
@@ -105,19 +105,19 @@ sys.path = [os.path.abspath('.'),
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.doctest',
               'sphinx.ext.coverage',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.imgmath',
               'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
-              'CGATReport.report_directive',
               'sphinx.ext.inheritance_diagram',
+              'CGATReport.report_directive',
               'CGATReport.errors_directive',
               'CGATReport.warnings_directive',
               'CGATReport.roles']
 
-if P.CONFIG.has_section('intersphinx'):
+if 'intersphinx' in PARAMS:
     intersphinx_mapping = dict(
         [(x, (os.path.abspath(y), None))
-         for x, y in P.CONFIG.items('intersphinx')])
+         for x, y in PARAMS["intersphinx"].items()])
 
 # Included at the end of each rst file
 rst_epilog = '''

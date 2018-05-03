@@ -42,7 +42,7 @@ The basic usage inside a pipeline task is as such::
 
 When implementing a tool, avoid specifying algorithmic options as
 class variables. Instead use an option string that can be set in
-:file:`pipeline.ini`. The only arguments to a tool constructor should
+:file:`pipeline.yml`. The only arguments to a tool constructor should
 pertain to pipeline integration, such as filenames, index locations,
 threading and in general processing options that change the tools
 input/output, as these need to be tracked by the pipeline.
@@ -1558,7 +1558,7 @@ class BWA(Mapper):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(self.tmpdir_fastq + "bwa")
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
@@ -1715,7 +1715,7 @@ class BWAMEM(BWA):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(self.tmpdir_fastq + "bwa")
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 

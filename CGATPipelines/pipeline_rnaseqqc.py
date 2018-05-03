@@ -81,7 +81,7 @@ with factors separated by ``-``, for example::
    sample1-mRNA-150k-R1-L02.fastq.1.gz
    sample1-mRNA-150k-R1-L02.fastq.2.gz
 
-and then set the ``factors`` variable in :file:`pipeline.ini` to::
+and then set the ``factors`` variable in :file:`pipeline.yml` to::
 
    factors=experiment-source-replicate-lane
 
@@ -191,6 +191,7 @@ import CGATPipelines.PipelineMapping as PipelineMapping
 import CGATPipelines.PipelineWindows as PipelineWindows
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 from CGATCore import Pipeline as P
+from CGATPipelines.Report import run_report
 
 import json
 
@@ -202,9 +203,9 @@ import json
 
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 PARAMS = P.PARAMS
 
@@ -1286,7 +1287,7 @@ def loadTranscriptProfiles(infiles, outfile):
     infiles = [
         x + ".geneprofileabsolutedistancefromthreeprimeend.matrix.tsv.gz" for x in infiles]
 
-    P.concatenateAndLoad(infiles, outfile, regex_filename=regex)
+    P.concatenate_and_load(infiles, outfile, regex_filename=regex)
 
 
 @merge(SEQUENCEFILES,
@@ -1822,7 +1823,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1830,7 +1831,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

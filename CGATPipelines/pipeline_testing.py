@@ -36,7 +36,7 @@ the second will build a summary report.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 Tests are described as section in the configuration file. A test
 section starts with the prefix ``test_``. For following example is a
@@ -107,7 +107,7 @@ For example, the contents of a tar-ball will look light this::
    test_mytest1.dir/hg19.idx
    test_mytest1.dir/hg19.fa
    test_mytest1.dir/hg19.fa.fai
-   test_mytest1.dir/pipeline.ini  # pipeline configuration file
+   test_mytest1.dir/pipeline.yml  # pipeline configuration file
    test_mytest1.dir/indices/      # configured to work in test dir
    test_mytest1.dir/indices/bwa/  # bwa indices
    test_mytest1.dir/indices/bwa/hg19.bwt
@@ -157,6 +157,7 @@ import tarfile
 import pandas
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
+from CGATPipelines.Report import run_report
 
 ###################################################
 ###################################################
@@ -167,9 +168,9 @@ import CGATCore.IOTools as IOTools
 # load options from the config file
 from CGATCore import Pipeline as P
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # WARNING: pipeline names with underscores in their name are not allowed
 TESTS = sorted(set(["test_{}".format(x.split("_")[1])
@@ -188,7 +189,7 @@ def setupPrerequisites(infile, outfile):
     #to_cluster = False
     track = P.snip(outfile, ".tgz")
 
-    # obtain data - should overwrite pipeline.ini file
+    # obtain data - should overwrite pipeline.yml file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
     P.run(statement)
@@ -217,16 +218,17 @@ def setupTests(infile, outfile):
     # run pipeline config
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
-    statement = '''
-    (cd %(track)s.dir;
-    cgatflow %(pipeline_name)s
-    %(pipeline_options)s
-    %(workflow_options)s
-    config) >& %(outfile)s.log
-    '''
+    statement = (
+        "(cd %(track)s.dir; "
+        "cgatflow %(pipeline_name)s "
+        "%(pipeline_options)s "
+        "%(workflow_options)s "
+        "config "
+        ">2 %(outfile)s.stderr "
+        "> %(outfile)s.log)")
     P.run(statement)
 
-    # obtain data - should overwrite pipeline.ini file
+    # obtain data - should overwrite pipeline.yml file
     statement = '''
     wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
     P.run(statement)
@@ -260,7 +262,9 @@ def run_test(infile, outfile):
         "(cd %%(track)s.dir; "
         "cgatflow %%(pipeline_name)s "
         "%%(pipeline_options)s "
-        "%%(workflow_options)s make %s) 1> %%(outfile)s 2> %%(outfile)s.stderr ")
+        "%%(workflow_options)s make %s) "
+        "1> %%(outfile)s "
+        "2> %%(outfile)s.stderr")
 
     if len(pipeline_targets) == 1:
         statement = template_statement % pipeline_targets[0]
@@ -618,7 +622,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting report build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -626,7 +630,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating report")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)
@@ -642,7 +646,7 @@ def main(argv=None):
     if "--local" in argv:
         workflow_options.append("--local")
     workflow_options.append("-p {}".format(P.get_params()["cluster"]["num_jobs"]))
-    
+
     P.get_params()["workflow_options"] == "".join(workflow_options)
     # manually set location of test scripts - this needs to be better organized
     # 1. make scripts live alongside pipeline_testing.py

@@ -205,7 +205,7 @@ class Quantifier(object):
            This is specified in pipeline_ini
            :term:`PARAMS` - library type option.
         kmer: int
-           This is specified in the pipeline.ini
+           This is specified in the pipeline.yml
            :term:`PARAMS` - kmer size for aligment free quant.
         '''
 
@@ -846,7 +846,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
         Name of BAM file with alignments to quantify with
     outdir: string
         Directory to place output files in
- 
+
     The output files generated are:
     1. e_data.ctab: Exon-level expression measurements
     2. i_data.ctab: intron/junction level expression measurements
@@ -866,7 +866,7 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
 
     if gtffile.endswith(".gz"):
         gtffile = "<( zcat %s)" % gtffile
-    
+
     job_threads = PARAMS["stringtie_quant_threads"]
     job_memory = PARAMS["stringtie_quant_memory"]
 
@@ -901,12 +901,12 @@ def quantifyWithStringTie(gtffile, bamfile, outdir):
     P.run(statement)
 
 
-def mergeAndLoadStringTie(infiles, track_regex, outfile):
+def merge_and_loadStringTie(infiles, track_regex, outfile):
     '''Load stringtie quantitation from multiple tracks into a set
-    of database tables. 
+    of database tables.
 
-    Arguements 
-    ---------- 
+    Arguements
+    ----------
     infiles: list of list of string
         infiles contains the output tables from a stringtie -b run for
         several tracks. Each item in the the list is the output files
@@ -948,25 +948,24 @@ def mergeAndLoadStringTie(infiles, track_regex, outfile):
     table_prefix = P.snip(outfile, ".load")
 
     for infile in infiles:
-        
         which_files = set([os.path.basename(f) for f in infile])
         assert len(which_files) == 1, "Input file lists not in same order"
         table_suffix = table_suffixes[list(which_files)[0]]
 
         tablename = os.path.basename(table_prefix + "_" + table_suffix)
         indexs = table_indexes[list(which_files)[0]]
-        
+
         if "2" in table_suffix:
             P.load(infile[0], outfile,
                    options="-i %s" % indexs,
                    tablename=tablename)
             continue
-            
-        P.concatenateAndLoad(infile, outfile,
-                             regex_filename=track_regex,
-                             tablename=tablename,
-                             options="--quick -i %s" % indexs,
-                             job_memory="12G")
+
+        P.concatenate_and_load(infile, outfile,
+                               regex_filename=track_regex,
+                               tablename=tablename,
+                               options="--quick -i %s" % indexs,
+                               job_memory="12G")
 
 
 def mergeCufflinksFPKM(infiles, outfile, genesets,
@@ -1250,7 +1249,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
 
     '''
 
-    prefix = P.toTable(outfile)
+    prefix = P.to_table(outfile)
     indir = infile + ".dir"
 
     if not os.path.exists(indir):
@@ -1651,7 +1650,7 @@ def buildUTRExtension(infile, outfile):
     '''
 
     # the bin size , see gtf2table - can be cleaned from column names
-    # or better set as options in .ini file
+    # or better set as options in .yml file
     binsize = 100
     territory_size = 15000
 

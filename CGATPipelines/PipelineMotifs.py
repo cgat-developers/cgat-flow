@@ -489,7 +489,7 @@ def loadMAST(infile, outfile):
     Add columns for the control data as well.
     '''
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     tmpfile = P.get_temp_file(".")
 

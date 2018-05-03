@@ -25,12 +25,12 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file. The
+The pipeline requires a configured :file:`pipeline.yml` file. The
 pipeline looks for a configuration file in several places:
 
    1. The default configuration in the :term:`code directory`.
-   2. A shared configuration file :file:`../pipeline.ini`.
-   3. A local configuration :file:`pipeline.ini`.
+   2. A shared configuration file :file:`../pipeline.yml`.
+   3. A local configuration :file:`pipeline.yml`.
 
 The order is as above. Thus, a local configuration setting will
 override a shared configuration setting and a default configuration
@@ -51,7 +51,7 @@ the default values:
    describe important parameters
 
 The sphinxreport report requires a :file:`conf.py` and
-:file:`sphinxreport.ini` file (see :ref:`PipelineReporting`). To start
+:file:`sphinxreport.yml` file (see :ref:`PipelineReporting`). To start
 with, use the files supplied with the Example_ data.
 
 
@@ -77,7 +77,7 @@ Additional peak files can be associated with one of the :term:`bam`
 files created by the pipeline. This permits counting the number of
 tags inside peaks, finding the peak summit, etc. In order to
 associated a peak file with a :term:`bam` formatted file, define a
-section in the pipeline.ini file. For example::
+section in the pipeline.yml file. For example::
 
 
    [mycalls.bed]
@@ -170,7 +170,9 @@ import pysam
 import numpy
 import xml.etree.ElementTree
 
-from ruffus import *
+from ruffus import transform, follows, mkdir, merge, regex, suffix, add_inputs,\
+    jobs_limit, files_re, collate, formatter
+
 from ruffus.task import task_decorator
 
 import CGATCore.Experiment as E
@@ -182,6 +184,7 @@ import CGATPipelines.PipelineIntervals as PipelineIntervals
 import CGATPipelines.PipelineMotifs as PipelineMotifs
 import CGATPipelines.PipelineWindows as PipelineWindows
 import CGATPipelines.PipelineTracks as PipelineTracks
+from CGATPipelines.Report import run_report
 
 
 # product available in ruffus 2.3.6, but not exported
@@ -195,9 +198,9 @@ class product(task_decorator):
 # Pipeline configuration
 ###################################################
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False})
 
@@ -245,7 +248,7 @@ def getAssociatedBAMFiles(track):
     By default, this method searches for ``track.bam`` file in the
     data directory and returns an offset of 0.
 
-    Associations can be defined in the .ini file in the section
+    Associations can be defined in the .yml file in the section
     [bams]. For example, the following snippet associates track
     track1 with the bamfiles :file:`track1.bam` and :file:`track2.bam`::
 
@@ -492,7 +495,7 @@ def exportPeakLocations(infile, outfile):
 
     dbh = P.connect()
     outf = IOTools.open_file(outfile, "w")
-    table = P.toTable(infile)
+    table = P.to_table(infile)
     for x in dbh.execute(
             """SELECT contig, peakcenter, peakcenter+1, interval_id, peakval
             FROM %(table)s """ % locals()):
@@ -1040,7 +1043,7 @@ def loadMotifSequenceComposition(infile, outfile):
     '''compute sequence composition of sequences used for ab-initio search.'''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile))
+        P.to_table(outfile))
 
     statement = '''
     cgat fasta2table
@@ -1092,7 +1095,7 @@ def runTomTom(infile, outfile):
 def loadTomTom(infile, outfile):
     '''load tomtom results'''
 
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     resultsdir = os.path.join(
         os.path.abspath(PARAMS["exportdir"]), "tomtom", infile)
@@ -1202,7 +1205,7 @@ def exportMotifLocations(infiles, outfile):
         tmpf = P.get_temp_file(".")
 
         for infile in infiles:
-            table = P.toTable(infile)
+            table = P.to_table(infile)
             track = P.snip(table, "_mast")
             for x in dbh.execute(
                     """SELECT contig, start, end, '%(track)s', evalue
@@ -1746,7 +1749,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1754,7 +1757,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(update_report)

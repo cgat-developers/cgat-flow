@@ -21,11 +21,11 @@ with the following layout::
 
   |-- [         55]  work
   |   |-- [         49]  conf.py -> ../src/pipeline_chipseq/conf.py
-  |   `-- [         54]  pipeline.ini -> ../src/pipeline_chipseq/pipeline.ini
+  |   `-- [         54]  pipeline.yml -> ../src/pipeline_chipseq/pipeline.yml
   `-- [        102]  src
       |-- [         55]  pipeline_chipseq
       |   |-- [      13142]  conf.py
-      |   `-- [       1232]  pipeline.ini
+      |   `-- [       1232]  pipeline.yml
       |-- [       6003]  pipeline_chipseq.py
       `-- [         58]  pipeline_docs
           |-- [        169]  pipeline_chipseq
@@ -192,7 +192,7 @@ def main(argv=sys.argv):
         shutil.copytree(fn_src, fn_dest)
 
     for f in ("conf.py",
-              "pipeline.ini"):
+              "pipeline.yml"):
         copy(f, 'src/pipeline_%s' % options.name, name=options.name)
 
     # copy the script
@@ -201,7 +201,7 @@ def main(argv=sys.argv):
 
     # create links
     for src, dest in (("conf.py", "conf.py"),
-                      ("pipeline.ini", "pipeline.ini")):
+                      ("pipeline.yml", "pipeline.yml")):
         d = os.path.join("work", dest)
         if os.path.exists(d) and options.force:
             os.unlink(d)

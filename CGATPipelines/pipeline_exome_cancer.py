@@ -159,6 +159,7 @@ import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 from CGATCore import Pipeline as P
 import re
 import CGATPipelines.PipelineExome as PipelineExome
+from CGATPipelines.Report import run_report
 
 USECLUSTER = True
 
@@ -178,9 +179,9 @@ def connect():
 
 #########################################################################
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False},
     only_import=__name__ != "__main__")
@@ -1033,7 +1034,7 @@ def buildVCFstats(infile, outfile):
 def loadVCFstats(infiles, outfile):
     '''Import variant statistics into SQLite'''
     filenames = " ".join(infiles)
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     csv2db_options = PARAMS["csv2db_options"]
     E.info("Loading vcf stats...")
     statement = '''cgat vcfstats2db
@@ -1063,7 +1064,7 @@ def loadMutectFilteringSummary(infile, outfile):
     '''Load mutect extended output into database'''
 
     dbh = connect()
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s |
                    cgat csv2db
                    --table %(tablename)s --retry --ignore-empty
@@ -1077,7 +1078,7 @@ def loadMutectFilteringSummary(infile, outfile):
 
 @originate("eBio_studies.tsv")
 def defineEBioStudies(outfile):
-    ''' For the cancer types specified in pipeline.ini, identify the
+    ''' For the cancer types specified in pipeline.yml, identify the
     relevent studies in eBio '''
 
     cancer_types = PARAMS["annotation_ebio_cancer_types"]
@@ -1236,14 +1237,14 @@ def publish():
 def build_report():
     '''build report from scratch.'''
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
 def update_report():
     '''update report.'''
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

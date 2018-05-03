@@ -351,7 +351,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
     P.run(statement)
 
 
-# @follows(run_reports)
+@follows(run_reports)
 @transform(run_tests,
            suffix(".log"),
            ".md5")
@@ -424,7 +424,6 @@ def compareCheckSums(infiles, outfile):
     '''compare checksum files against existing reference data.
     '''
 
-    to_cluster = False
     outf = IOTools.open_file(outfile, "w")
     outf.write("\t".join((
         ("track", "status",

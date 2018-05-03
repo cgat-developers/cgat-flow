@@ -10,6 +10,8 @@ copyright: CGAT
 version: 1.0
 release: ""
 
+exportdir: export
+
 data_url: http://www.cgat.org/downloads/public/cgat/pipeline_test_data
 
 ## Directory with test data and configurations

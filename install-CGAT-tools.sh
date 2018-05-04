@@ -92,13 +92,15 @@ if [[ $TRAVIS_INSTALL ]] ; then
 
    CGAT_HOME=$TRAVIS_BUILD_DIR
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-nosetests.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="scripts-nosetests.yml"
+   CONDA_INSTALL_TYPE_APPS="apps-nosetests.yml"
+   CONDA_INSTALL_TYPE_CORE="core-production.yml"
 
 elif [[ $JENKINS_INSTALL ]] ; then
 
    CGAT_HOME=$WORKSPACE
    CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-   CONDA_INSTALL_TYPE_SCRIPTS="scripts-devel.yml"
+   CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
+   CONDA_INSTALL_TYPE_CORE="core-production.yml"
 
 else
 
@@ -108,10 +110,12 @@ else
 
    if [[ $INSTALL_PRODUCTION ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-production.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="scripts-production.yml"
+      CONDA_INSTALL_TYPE_APPS="apps-production.yml"
+      CONDA_INSTALL_TYPE_CORE="core-production.yml"
    elif [[ $INSTALL_DEVEL ]] ; then
       CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-      CONDA_INSTALL_TYPE_SCRIPTS="scripts-devel.yml"
+      CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
+      CONDA_INSTALL_TYPE_CORE="core-devel.yml"
    elif [[ $INSTALL_TEST ]] || [[ $INSTALL_UPDATE ]] ; then
       if [[ -d $CGAT_HOME/conda-install ]] ; then
          AUX=`find $CGAT_HOME/conda-install/envs/cgat-* -maxdepth 0`
@@ -137,7 +141,7 @@ fi # if travis install
 CONDA_INSTALL_DIR=$CGAT_HOME/conda-install
 
 # set conda environment name
-[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-p"
+[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-f"
 
 } # get_cgat_env
 
@@ -167,17 +171,17 @@ echo " LIBRARY_PATH: "$LIBRARY_PATH
 echo " LD_LIBRARY_PATH: "$LD_LIBRARY_PATH
 echo " CGAT_HOME: "$CGAT_HOME
 echo " CONDA_INSTALL_DIR: "$CONDA_INSTALL_DIR
-echo " CONDA_INSTALL_TYPE_SCRIPTS: "$CONDA_INSTALL_TYPE_SCRIPTS
+echo " CONDA_INSTALL_TYPE_CORE:"$CONDA_INSTALL_TYPE_CORE
+echo " CONDA_INSTALL_TYPE_APPS: "$CONDA_INSTALL_TYPE_APPS
 echo " CONDA_INSTALL_TYPE_PIPELINES: "$CONDA_INSTALL_TYPE_PIPELINES
 echo " CONDA_INSTALL_ENV: "$CONDA_INSTALL_ENV
 echo " PYTHONPATH: "$PYTHONPATH
 [[ ! $INSTALL_TEST ]] && echo " PIPELINES_BRANCH: "$PIPELINES_BRANCH
-[[ ! $INSTALL_TEST ]] && echo " SCRIPTS_BRANCH: "$SCRIPTS_BRANCH
+[[ ! $INSTALL_TEST ]] && echo " APPS_BRANCH: "$APPS_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " CORE_BRANCH: "$CORE_BRANCH
 [[ ! $INSTALL_TEST ]] && echo " RELEASE: "$RELEASE
 echo " CODE_DOWNLOAD_TYPE: "$CODE_DOWNLOAD_TYPE
 echo " INSTALL_IDE: "$INSTALL_IDE
-echo " CGAT_DASHBOARD: "$CGAT_DASHBOARD
 echo " CLUSTER: "$CLUSTER
 echo
 
@@ -227,11 +231,15 @@ MINICONDA=
 
 if [[ `uname` == "Linux" ]] ; then
 
-   MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+   # Conda 4.4 breaks everything again!
+   #MINICONDA="Miniconda3-latest-Linux-x86_64.sh"
+   MINICONDA="Miniconda3-4.3.31-Linux-x86_64.sh"
 
 elif [[ `uname` == "Darwin" ]] ; then
 
-   MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+   # Conda 4.4 breaks everything again!
+   #MINICONDA="Miniconda3-latest-MacOSX-x86_64.sh"
+   MINICONDA="Miniconda3-4.3.31-MacOSX-x86_64.sh"
 
 else
 
@@ -246,12 +254,10 @@ fi
 
 log "downloading miniconda"
 # download and install conda
-# curl -O https://repo.continuum.io/miniconda/${MINICONDA}
-# Conda 4.4 breaks everything again
-curl -o Miniconda.sh -O https://repo.continuum.io/miniconda/Miniconda3-4.3.31-Linux-x86_64.sh
+curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
-bash Miniconda.sh -b -p $CONDA_INSTALL_DIR
+bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
 source ${CONDA_INSTALL_DIR}/bin/activate
 hash -r
 
@@ -266,23 +272,20 @@ log "installing conda CGAT environment"
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
 
-curl -o env-scripts.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_SCRIPTS}
+curl -o env-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
+
+curl -o env-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
 curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
-[[ ${CGAT_DASHBOARD} -eq 0 ]] && sed -i'' -e '/pika/d' env-pipelines.yml
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
 
 conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-pipelines.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-scripts.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-apps.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-core.yml
 
 # activate cgat environment
 source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
-
-# bx-python is not py3 yet
-pip install 'bx-python==0.7.3'
-# no conda package available
-pip install quicksect
 
 log "installing CGAT code into conda environment"
 # if installation is 'devel' (outside of travis), checkout latest version from github
@@ -406,10 +409,10 @@ install_extra_deps() {
 log "install extra deps"
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${SCRIPTS_BRANCH}/conda/environments/scripts-extra.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
 
 conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file scripts-extra.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
 if [[ ${INSTALL_IDE} -eq 1 ]] ; then
    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
@@ -424,9 +427,14 @@ install_py2_deps() {
 
 log "install Python 2 deps"
 
-curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-py2.yml
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-macs2.yml
 
-conda env update --quiet --file pipelines-py2.yml
+conda env update --quiet --file pipelines-macs2.yml
+
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-tophat2.yml
+
+conda env update --quiet --file pipelines-tophat2.yml
+
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
 
@@ -451,21 +459,21 @@ else
 
    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
       # get the latest version from Git Hub in zip format
-      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$SCRIPTS_BRANCH.zip
-      unzip $SCRIPTS_BRANCH.zip
-      rm $SCRIPTS_BRANCH.zip
+      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$APPS_BRANCH.zip
+      unzip $APPS_BRANCH.zip
+      rm $APPS_BRANCH.zip
       if [[ ${RELEASE} ]] ; then
-         NEW_NAME=`echo $SCRIPTS_BRANCH | sed 's/^v//g'`
+         NEW_NAME=`echo $APPS_BRANCH | sed 's/^v//g'`
          mv cgat-apps-$NEW_NAME/ cgat-apps/
       else
-         mv cgat-apps-$SCRIPTS_BRANCH/ cgat-apps/
+         mv cgat-apps-$APPS_BRANCH/ cgat-apps/
       fi
    elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH https://github.com/cgat-developers/cgat-apps.git
+      git clone --branch=$APPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
    elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
       # get latest version from Git Hub with git clone
-      git clone --branch=$SCRIPTS_BRANCH git@github.com:cgat-developers/cgat-apps.git
+      git clone --branch=$APPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
    else
       report_error " Unknown download type for CGAT code... "
    fi
@@ -586,14 +594,18 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
    log "install CGAT code into conda environment"
    [[ $TRAVIS_INSTALL  ]] && cd $CGAT_HOME
    [[ $JENKINS_INSTALL ]] && cd $CGAT_HOME/CGATPipelines
-   sed -i'' -e 's/install_requires=install_requires,//g' setup.py
+
+   # Python preparation
+   sed -i'' -e 's/CGATScripts/scripts/g' setup.py
+   sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+   sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
    python setup.py develop
 
    log "starting tests"
    # run nosetests
    if [[ $TEST_ALL ]] ; then
-      log "test_import.py" && nosetests -v tests/test_import.py && \
       log "test_style.py" && nosetests -v tests/test_style.py && \
+      log "test_import.py" && nosetests -v tests/test_import.py && \
       echo -e "restrict:\n    manifest:\n" > tests/_test_commandline.yaml && \
       log "test_commandline" && nosetests -v tests/test_commandline.py && \
       log "test_scripts" && nosetests -v tests/test_scripts.py ;
@@ -620,8 +632,10 @@ else
       # make sure you are in the CGAT_HOME/cgat-flow folder
       cd $CGAT_HOME/cgat-flow
 
-      # python preparation
-      sed -i'' -e 's/install_requires=install_requires,//g' setup.py
+      # Python preparation
+      sed -i'' -e 's/CGATScripts/scripts/g' setup.py
+      sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+      sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
       python setup.py develop
       OUTPUT_DIR=`pwd`
 
@@ -764,7 +778,7 @@ test_git_ssh() {
 test_mix_branch_release() {
    # don't mix branch and release options together
    if [[ $RELEASE ]] ; then
-      if [[ "$PIPELINES_BRANCH" != "master" ]] || [[ $SCRIPTS_BRANCH != "master" ]] ; then
+      if [[ "$PIPELINES_BRANCH" != "master" ]] || [[ $APPS_BRANCH != "master" ]] ; then
          echo
          echo " You cannot mix git branches and releases for the installation."
          echo
@@ -779,7 +793,7 @@ test_mix_branch_release() {
 # https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
 test_core_branch() {
    RELEASE_TEST=0
-   curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/README.md || RELEASE_TEST=$?
+   curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/README.rst || RELEASE_TEST=$?
    if [[ ${RELEASE_TEST} -ne 0 ]] ; then
       echo
       echo " The branch provided for cgat-core does not exist: ${CORE_BRANCH}"
@@ -808,7 +822,7 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
       echo " Please have a look at valid releases here: "
       echo " https://github.com/cgat-developers/cgat-flow/releases"
       echo
-      echo " An example of valid release is: --release v0.3.1"
+      echo " An example of valid release is: --release v0.4.0"
       report_error " Please use a valid release and try again."
    fi
       
@@ -816,16 +830,16 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
    # check scripts
    curl --output /dev/null \
       --silent --head --fail \
-      https://raw.githubusercontent.com/cgat-developers/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
+      https://raw.githubusercontent.com/cgat-developers/cgat-apps/${RELEASE}/README.rst || RELEASE_SCRIPTS=$?
       
    if [[ ${RELEASE_SCRIPTS} -ne 0 ]] ; then
       echo
       echo " The release number provided for the scripts does not exist: ${RELEASE}"
       echo
       echo " Please have a look at valid releases here: "
-      echo " https://github.com/cgat-developers/releases"
+      echo " https://github.com/cgat-developers/cgat-apps/releases"
       echo
-      echo " An example of valid release is: --release v0.3.1"
+      echo " An example of valid release is: --release v0.4.0"
       report_error " Please use a valid release and try again."
    fi
 }
@@ -835,17 +849,17 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
 help_message() {
 echo
 echo " This script uses Conda to install cgat-flow. To proceed, please type:"
-echo " ./install-CGAT-tools.sh --devel --no-dashboard [--location </full/path/to/folder/without/trailing/slash>]"
+echo " ./install-CGAT-tools.sh --devel [--location </full/path/to/folder/without/trailing/slash>]"
 echo
 echo " The default install folder will be: $HOME/cgat-install"
 echo
 echo " It is also possible to install/test a specific branch of the code on GitHub:"
-echo " ./install-CGAT-tools.sh --devel --no-dashboard --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
+echo " ./install-CGAT-tools.sh --devel --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
 echo
 echo " This will create an isolated Conda environment with both the pipelines and the scripts from:"
 echo " https://github.com/cgat-developers/cgat-apps"
 echo
-echo " The default name of the newly created conda environment is cgat-p, but you can change it with:"
+echo " The default name of the newly created conda environment is cgat-f, but you can change it with:"
 echo " --env-name name"
 echo
 echo " The code is downloaded in zip format by default. If you want to get a git clone, use:"
@@ -905,21 +919,18 @@ CGAT_HOME=$HOME/cgat-install
 CODE_DOWNLOAD_TYPE=0
 # which github branch to use (default: master)
 PIPELINES_BRANCH="master"
-SCRIPTS_BRANCH="master"
+APPS_BRANCH="master"
 CORE_BRANCH="master"
 # type of installation
 CONDA_INSTALL_TYPE_PIPELINES=
-CONDA_INSTALL_TYPE_SCRIPTS=
+CONDA_INSTALL_TYPE_APPS=
+CONDA_INSTALL_TYPE_CORE=
 # rename conda environment
 CONDA_INSTALL_ENV=
 # install additional IDEs?
 # 0 = no (default)
 # 1 = yes
 INSTALL_IDE=0
-# Is the dashboard available?
-# 0 = no
-# 1 = yes (default)
-CGAT_DASHBOARD=1
 # Use cluster?
 # 0 = no
 # 1 = yes (default)
@@ -1006,7 +1017,7 @@ case $key in
     ;;
 
     --scripts-branch)
-    SCRIPTS_BRANCH="$2"
+    APPS_BRANCH="$2"
     test_mix_branch_release
     shift 2
     ;;
@@ -1022,11 +1033,6 @@ case $key in
     shift
     ;;
 
-    --no-dashboard)
-    CGAT_DASHBOARD=0
-    shift
-    ;;
-
     --no-cluster)
     CLUSTER=0
     shift
@@ -1037,7 +1043,7 @@ case $key in
     test_mix_branch_release
     test_release
     PIPELINES_BRANCH="$2"
-    SCRIPTS_BRANCH="$2"
+    APPS_BRANCH="$2"
     shift 2
     ;;
 

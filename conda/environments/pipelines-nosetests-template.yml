@@ -1,5 +1,5 @@
 
-name: cgat-p
+name: cgat-f
 
 channels:
 - bioconda
@@ -13,12 +13,10 @@ dependencies:
 - zlib
 # bioinformatics tools
 # python deps
-- python
+- python=3.6
 - beautifulsoup4
 - biopython
-- brewer2mpl
 - cgat-report
-- future
 - httplib2
 - intermine
 - matplotlib
@@ -27,21 +25,17 @@ dependencies:
 - numpy
 - pandas
 - pep8
-- pika
 - pybedtools
-- pybigwig
-- pysam
+- pysam=0.14.0
 - python-drmaa
-- rpy2
+- rpy2=2.8.5
 - ruffus
 - scikit-learn
-- scipy
+- scipy=0.19.1
 - seaborn
 - setuptools
-- six
 - sqlalchemy
 - toposort
 # R deps
 - r-base
 - bioconductor-hpar
-

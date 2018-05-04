@@ -34,7 +34,7 @@ free to give it a go::
            --ide
 
         # once the installation is finished, enable the conda environment as requested by the installation script:
-        source </full/path/to/folder/without/trailing/slash>/conda-install/bin/activate cgat-p
+        source </full/path/to/folder/without/trailing/slash>/conda-install/bin/activate cgat-f
 
         # finally, please run the cgatflow command-line tool to check the installation:
         cgatflow --help

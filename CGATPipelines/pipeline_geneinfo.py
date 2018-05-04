@@ -116,7 +116,7 @@ else:
     example_homolo = example_homolo[0]
 
 # get the list of annotations to be downloaded from my gene info
-mgiannotations = PARAMS['my_gene_info_annotations'].split(",")
+mgiannotations = PARAMS['my_gene_info_annotations']
 
 
 @originate('allgenes.tsv')

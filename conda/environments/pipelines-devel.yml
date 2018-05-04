@@ -22,7 +22,7 @@ dependencies:
 - bowtie=1.2.2
 - bowtie2=2.3.4.1
 - bwa=0.7.17
-- cgat-report=0.7.6.1
+- cgat-report=0.8.0
 - cufflinks=2.2.1
 - fastq-screen=0.11.3
 - fastqc=0.11.7

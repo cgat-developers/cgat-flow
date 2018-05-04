@@ -13,7 +13,7 @@ dependencies:
 - beautifulsoup4=4.6.0
 - bioconductor-hpar=1.20.0
 - biopython=1.70
-- cgat-report=0.7.6.1
+- cgat-report=0.8.0
 - gcc=4.8.5
 - httplib2=0.10.3
 - intermine=1.09.09

@@ -15,6 +15,9 @@ genome: hg19
 # location of indexed genome for SAMtools
 genome_dir: /ifs/mirror/genomes/gatk
 
+########################################################
+# directory where exported data is located
+exportdir: export
 
 # Design table for the experiment, mapping fastq files to samples and phenotypes
 samples: ''

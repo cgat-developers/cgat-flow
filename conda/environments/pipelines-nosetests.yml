@@ -14,7 +14,6 @@ dependencies:
 - bioconductor-hpar=1.20.0
 - biopython=1.70
 - cgat-report=0.8.0
-- gcc=4.8.5
 - httplib2=0.10.3
 - intermine=1.09.09
 - matplotlib=2.2.0

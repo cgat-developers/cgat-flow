@@ -396,10 +396,13 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
       echo " The code successfully installed!"
       echo
       echo " To activate the CGAT environment type: "
-      echo " $ source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV"
+      echo " $ source $CONDA_INSTALL_DIR/etc/profile.d/conda.sh $CONDA_INSTALL_ENV"
+      echo " $ conda activate base"
+      echo " $ conda activate $CONDA_INSTALL_ENV"
+      [[ $INSTALL_PRODUCTION ]] && echo " cgatflow --help"
       echo
       echo " To deactivate the environment, use:"
-      echo " $ source deactivate"
+      echo " $ conda deactivate"
       echo
    fi # if-$ conda create
 
@@ -850,6 +853,13 @@ if [[ ${RELEASE_PIPELINES} -ne 0 ]] ; then
 }
 
 
+# test whether a C/C++ compiler is available
+test_compilers() {
+   which gcc &> /dev/null || report_error " C compiler not found "
+   which g++ &> /dev/null || report_error " C++ compiler not found "
+}
+
+
 # function to display help message
 help_message() {
 echo
@@ -893,6 +903,8 @@ exit 1
 } # help_message
 
 # the script starts here
+
+test_compilers
 
 if [[ $# -eq 0 ]] ; then
 

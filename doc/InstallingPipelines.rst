@@ -41,7 +41,10 @@ Here are the steps::
            --ide
 
         # once the installation is finished, enable the conda environment as requested by the installation script:
-        source </full/path/to/folder/without/trailing/slash>/conda-install/bin/activate cgat-f
+        # NB: you probably want to automate this by adding the instructions below to your .bashrc
+        source </full/path/to/folder/without/trailing/slash>/conda-install/etc/profile.d/conda.sh cgat-f
+        conda activate base
+        conda activate cgat-f
 
         # finally, please run the cgatflow command-line tool to check the installation:
         cgatflow --help

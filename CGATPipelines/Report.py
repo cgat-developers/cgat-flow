@@ -55,9 +55,9 @@ def run_report(clean=True,
     # from R plots.
     xvfb_command = IOTools.which("xvfb-run")
 
-    # permit multiple servers using -a option
+    # permit multiple servers using -d option
     if xvfb_command:
-        xvfb_command += " -a "
+        xvfb_command += " -d "
     else:
         xvfb_command = ""
 

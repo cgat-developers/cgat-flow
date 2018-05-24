@@ -259,12 +259,13 @@ def run_test(infile, outfile):
     #to_cluster = False
 
     template_statement = (
-        "(cd %%(track)s.dir; "
-        "cgatflow %%(pipeline_name)s "
+        "cd %%(track)s.dir; "
+        "xvfb-run -d cgatflow %%(pipeline_name)s "
         "%%(pipeline_options)s "
-        "%%(workflow_options)s make %s) "
-        "1> %%(outfile)s "
-        "2> %%(outfile)s.stderr")
+        "%%(workflow_options)s make %s "
+        "-L ../%%(outfile)s "
+        "-S ../%%(outfile)s.stdout "
+        "-E ../%%(outfile)s.stderr")
 
     if len(pipeline_targets) == 1:
         statement = template_statement % pipeline_targets[0]
@@ -302,8 +303,12 @@ def run_reports(infile, outfile):
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     statement = '''
-    (cd %(track)s.dir; cgatflow %(pipeline_name)s
-    %(pipeline_options)s %(workflow_options)s make build_report) 1> %(outfile)s 2> %(outfile)s.stderr
+    cd %(track)s.dir;
+    xvfb-run -d cgatflow %(pipeline_name)s
+    %(pipeline_options)s %(workflow_options)s make build_report
+    -L ../%(outfile)s
+    -S ../%(outfile)s.stdout
+    -E ../%(outfile)s.stderr
     '''
 
     P.run(statement, ignore_errors=True)

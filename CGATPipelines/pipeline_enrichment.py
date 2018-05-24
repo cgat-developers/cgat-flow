@@ -412,7 +412,7 @@ def runGsea(infile, outfile):
     resultsdir, output_fn = os.path.split(outfile)
 
     statement = ("cd {resultsdir} && "
-                 "xvfb-run "
+                 "xvfb-run -d "
                  "cgat runGSEA "
                  "-f ../{infile} -g {geneset} -m {min_size} -x {max_size} "
                  "-s {seed} -n {no} -d {p_no} -l {l_no} "

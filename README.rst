@@ -35,7 +35,7 @@ free to give it a go::
 
         # once the installation is finished, enable the conda environment as requested by the installation script
         # NB: you probably want to automate this by adding the instructions below to your .bashrc
-        source </full/path/to/folder/without/trailing/slash>/conda-install/etc/profile.d/conda.sh cgat-f
+        source </full/path/to/folder/without/trailing/slash>/conda-install/etc/profile.d/conda.sh
         conda activate base
         conda activate cgat-f
 

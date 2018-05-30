@@ -74,7 +74,7 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
+PARAMS = P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
      "../pipeline.yml",
      "pipeline.yml"])
@@ -84,7 +84,7 @@ PARAMS = P.getParameters(
 # 1. pipeline_genesets: any parameters will be added with the
 #    prefix "annotations_". The interface will be updated with
 #    "annotations_dir" to point to the absolute path names.
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
     "pipeline_genesets.py",
     on_error_raise=__name__ == "__main__",
@@ -143,7 +143,7 @@ def countWords(infile, outfile):
     # configuration files or variable that are declared in the calling
     # function.  For example, %(infile)s will we substituted with the
     # contents of the variable "infile".
-    P.run()
+    P.run(statement)
 
 
 @transform(countWords,

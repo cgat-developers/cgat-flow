@@ -9,7 +9,7 @@ Overview
 ========
 
 This pipeline computes the word frequencies in the configuration
-files :file:``pipeline.ini` and :file:`conf.py`.
+files :file:``pipeline.yml` and :file:`conf.py`.
 
 Usage
 =====
@@ -20,7 +20,7 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 CGATReport report requires a :file:`conf.py` and optionally a
 :file:`cgatreport.ini` file (see :ref:`PipelineReporting`).
 
@@ -37,7 +37,7 @@ Requirements
 ------------
 
 The pipeline requires the results from
-:doc:`pipeline_annotations`. Set the configuration variable
+:doc:`pipeline_genesets`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
 On top of the default CGAT setup, the pipeline requires the following
@@ -75,18 +75,18 @@ from CGATCore import Pipeline as P
 
 # load options from the config file
 PARAMS = P.getParameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # add configuration values from associated pipelines
 #
-# 1. pipeline_annotations: any parameters will be added with the
+# 1. pipeline_genesets: any parameters will be added with the
 #    prefix "annotations_". The interface will be updated with
 #    "annotations_dir" to point to the absolute path names.
 PARAMS.update(P.peekParameters(
     PARAMS["annotations_dir"],
-    "pipeline_annotations.py",
+    "pipeline_genesets.py",
     on_error_raise=__name__ == "__main__",
     prefix="annotations_",
     update_interface=True))
@@ -124,7 +124,7 @@ def connect():
 
 # ---------------------------------------------------
 # Specific pipeline tasks
-@transform(("pipeline.ini", "conf.py"),
+@transform(("pipeline.yml", "conf.py"),
            regex("(.*)\.(.*)"),
            r"\1.counts")
 def countWords(infile, outfile):

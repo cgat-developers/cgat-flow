@@ -9,7 +9,7 @@ Overview
 ========
 
 This pipeline computes the word frequencies in the configuration
-files :file:``pipeline.ini` and :file:`conf.py`.
+files :file:``pipeline.yml` and :file:`conf.py`.
 
 Usage
 =====
@@ -20,7 +20,7 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 CGATReport report requires a :file:`conf.py` and optionally a
 :file:`cgatreport.ini` file (see :ref:`PipelineReporting`).
 
@@ -37,7 +37,7 @@ Requirements
 ------------
 
 The pipeline requires the results from
-:doc:`pipeline_annotations`. Set the configuration variable
+:doc:`pipeline_genesets`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
 Pipeline output
@@ -62,15 +62,15 @@ import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+PARAMS = P.get_parameters(
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 
 # ---------------------------------------------------
 # Specific pipeline tasks
-@transform(("pipeline.ini", "conf.py"),
+@transform(("pipeline.yml", "conf.py"),
            regex("(.*)\.(.*)"),
            r"\1.counts")
 def countWords(infile, outfile):
@@ -89,7 +89,7 @@ def countWords(infile, outfile):
     # configuration files or variable that are declared in the calling
     # function.  For example, %(infile)s will we substituted with the
     # contents of the variable "infile".
-    P.run()
+    P.run(statement)
 
 
 @transform(countWords,

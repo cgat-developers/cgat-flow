@@ -502,7 +502,7 @@ def summarizeTagsWithinContext(tagfile,
                                contextfile,
                                outfile,
                                min_overlap=0.5,
-                               job_memory="4G"):
+                               job_memory="15G"):
     '''count occurances of tags in genomic context.
 
     Examines the genomic context to where tags align.
@@ -1074,38 +1074,6 @@ def loadBAMStats(infiles, outfile):
         | %(load_statement)s
         >> %(outfile)s """
         P.run(statement)
-
-
-def buildPicardRnaSeqMetrics(infiles, strand, outfile):
-    '''run picard:RNASeqMetrics
-    Arguments
-    ---------
-    infiles : string
-        Input filename in :term:`BAM` format.
-        Genome file in refflat format
-            (http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat)
-    outfile : string
-        Output filename with picard output.
-    '''
-    job_memory = PICARD_MEMORY
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
-    job_threads = 20
-    infile, genome = infiles
-
-    if BamTools.getNumReads(infile) == 0:
-        E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
-        return
-
-    statement = '''picard %(picard_opts)s CollectRnaSeqMetrics
-    REF_FLAT=%(genome)s
-    INPUT=%(infile)s
-    ASSUME_SORTED=true
-    OUTPUT=%(outfile)s
-    STRAND=%(strand)s
-    VALIDATION_STRINGENCY=SILENT
-    '''
-    P.run(statement)
 
 
 def loadPicardRnaSeqMetrics(infiles, outfiles):

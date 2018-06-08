@@ -55,10 +55,9 @@ Code
 ====
 
 """
-from ruffus import *
+from ruffus import transform, regex, suffix, follows
 import sys
 import os
-import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
 
 # load options from the config file
@@ -67,10 +66,9 @@ PARAMS = P.get_parameters(
      "../pipeline.yml",
      "pipeline.yml"])
 
-
 # ---------------------------------------------------
 # Specific pipeline tasks
-@transform(("pipeline.yml", "conf.py"),
+@transform(("pipeline.yml",),
            regex("(.*)\.(.*)"),
            r"\1.counts")
 def countWords(infile, outfile):

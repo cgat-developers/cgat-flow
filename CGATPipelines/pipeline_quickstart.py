@@ -20,11 +20,9 @@ This will create a new directory called ``chipseq`` in the current directory
 with the following layout::
 
   |-- [         55]  work
-  |   |-- [         49]  conf.py -> ../src/pipeline_chipseq/conf.py
   |   `-- [         54]  pipeline.yml -> ../src/pipeline_chipseq/pipeline.yml
   `-- [        102]  src
       |-- [         55]  pipeline_chipseq
-      |   |-- [      13142]  conf.py
       |   `-- [       1232]  pipeline.yml
       |-- [       6003]  pipeline_chipseq.py
       `-- [         58]  pipeline_docs
@@ -124,10 +122,9 @@ def main(argv=sys.argv):
     if not options.name:
         raise ValueError("please provide a pipeline name")
 
-    reportdir = os.path.abspath("src/pipeline_docs/pipeline_%s" % options.name)
-    confdir = os.path.abspath("src/pipeline_%s" % (options.name))
-
-    destination_dir = options.destination
+    destination_dir = os.path.abspath(options.destination)
+    reportdir = os.path.join(destination_dir, "src", "pipeline_docs", "pipeline_%s" % options.name)
+    confdir = os.path.join(destination_dir, "src", "pipeline_%s" % (options.name))
 
     # create directories
     for d in ("", "src", "work",
@@ -191,18 +188,17 @@ def main(argv=sys.argv):
 
         shutil.copytree(fn_src, fn_dest)
 
-    for f in ("conf.py",
-              "pipeline.yml"):
+    for f in ("pipeline.yml", ):
         copy(f, 'src/pipeline_%s' % options.name, name=options.name)
 
     # copy the script
-    copy("pipeline_template_%s.py" % options.pipeline_type, 'src',
+    copy("pipeline_template_%s.py" % options.pipeline_type,
+         'src',
          name=options.name)
 
     # create links
-    for src, dest in (("conf.py", "conf.py"),
-                      ("pipeline.yml", "pipeline.yml")):
-        d = os.path.join("work", dest)
+    for src, dest in (("pipeline.yml", "pipeline.yml"),):
+        d = os.path.join(destination_dir, "work", dest)
         if os.path.exists(d) and options.force:
             os.unlink(d)
         os.symlink(os.path.join(confdir, src), d)

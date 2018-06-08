@@ -65,12 +65,9 @@ Code
 ====
 
 """
-from ruffus import *
-
 import sys
 import os
-import sqlite3
-import CGATCore.Experiment as E
+from ruffus import transform, regex, suffix, follows
 from CGATCore import Pipeline as P
 
 # load options from the config file
@@ -87,47 +84,17 @@ PARAMS = P.get_parameters(
 PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
     "pipeline_genesets.py",
+    "genesets",
     on_error_raise=__name__ == "__main__",
     prefix="annotations_",
     update_interface=True))
 
-
-# if necessary, update the PARAMS dictionary in any modules file.
-# e.g.:
-#
-# import CGATPipelines.PipelineGeneset as PipelineGeneset
-# PipelineGeneset.PARAMS = PARAMS
-#
-# Note that this is a hack and deprecated, better pass all
-# parameters that are needed by a function explicitely.
-
-# -----------------------------------------------
-# Utility functions
-def connect():
-    '''utility function to connect to database.
-
-    Use this method to connect to the pipeline database.
-    Additional databases can be attached here as well.
-
-    Returns an sqlite3 database handle.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-    statement = '''ATTACH DATABASE '%s' as annotations''' % (
-        PARAMS["annotations_database"])
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
-
-
 # ---------------------------------------------------
 # Specific pipeline tasks
-@transform(("pipeline.yml", "conf.py"),
+@transform(("pipeline.yml",),
            regex("(.*)\.(.*)"),
            r"\1.counts")
-def countWords(infile, outfile):
+def count_words(infile, outfile):
     '''count the number of words in the pipeline configuration files.'''
 
     # the command line statement we want to execute
@@ -146,17 +113,17 @@ def countWords(infile, outfile):
     P.run(statement)
 
 
-@transform(countWords,
+@transform(count_words,
            suffix(".counts"),
            "_counts.load")
-def loadWordCounts(infile, outfile):
+def load_word_counts(infile, outfile):
     '''load results of word counting into database.'''
     P.load(infile, outfile, "--add-index=word")
 
 
 # ---------------------------------------------------
 # Generic pipeline tasks
-@follows(loadWordCounts)
+@follows(load_word_counts)
 def full():
     pass
 

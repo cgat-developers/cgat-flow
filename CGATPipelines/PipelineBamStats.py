@@ -518,7 +518,7 @@ def loadStrandSpecificity(infiles, outfile,
     for infile in infiles:
         name = P.snip(os.path.basename(infile), ".strand")
 
-        table = pd.read_csv(infile, sep="\t")
+        table = pd.read_csv(infile, sep="\t", comment="#")
         table["track"] = name
 
         if table_count == 0:

@@ -445,6 +445,11 @@ def summarizeFastqScreen(infiles, outfiles):
     all_files = []
     for infile in infiles:
         all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
+    if len(all_files) == 0:
+        E.warn("no fastqcscreen results to concatenate")
+        for x in outfiles:
+            IOTools.touch_file(x)
+        return
     df_summary, df_details = PipelineReadqc.read_fastq_screen(
         all_files,
         track_regex="([^/]+).fastq.(\d+)")

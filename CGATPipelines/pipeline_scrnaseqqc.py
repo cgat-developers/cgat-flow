@@ -66,7 +66,7 @@ Code
 
 """
 from ruffus import follows, transform, regex, suffix, mkdir, originate, \
-    add_inputs, collate, jobs_limit, formatter
+    add_inputs, collate, jobs_limit, formatter, merge
 from ruffus.combinatorics import product
 import sys
 import os
@@ -256,18 +256,14 @@ def makeSailfishIndex(infile, outfile):
 
     outdir = "/".join(outfile.split("/")[:-1])
     job_threads = 8
-    statement = '''
-    cgat fastq2tpm
-    --method=make_index
-    --program=sailfish
-    --index-fasta=%(infile)s
-    --kmer-size=%(sailfish_kmer)s
-    --threads=%(job_threads)s
-    --output-directory=%(outdir)s
-    --log=%(outfile)s.log
-    '''
-
-    P.run(statement)
+    statement = (
+        "sailfish index "
+        "--transcripts %(infile)s "
+        "--out %(outfile)s "
+        "--threads %(job_threads)i "
+        "--kmerSize %(sailfish_kmer)s "
+        "> %(outfile)s.log ")
+    P.run(statement, job_total_memory="12G")
 
 
 if PARAMS['paired']:
@@ -371,9 +367,8 @@ def transformSailfishOutput(infile, outfile):
     P.run(statement)
 
 
-@collate(transformSailfishOutput,
-         regex("tpm.dir/(.+)_(.+)_(.+).quant"),
-         r"tpm.dir/\1.tpm")
+@merge(transformSailfishOutput,
+       "sailfish_tpm.tsv")
 def mergeSailfishRuns(infiles, outfile):
     '''
     Merge all tpm estimates from sailfish across each
@@ -391,58 +386,37 @@ def mergeSailfishRuns(infiles, outfile):
     --regex-filename='(.+).quant'
     --log=%(outfile)s.log
     %(infiles)s
+    | (read h; echo \"$h\"; sort -k1,2 )
     > %(outfile)s'''
 
     P.run(statement)
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@follows(mergeSailfishRuns)
-@transform(mergeSailfishRuns,
-           suffix(".tpm"),
-           "tpm.load")
-def loadSailfishTpm(infile, outfile):
-    '''
-    load Sailfish TPM estimates into
-    CSVDB
-    '''
-
-    P.load(infile, outfile)
-
-
-@follows(transformSailfishOutput,
-         mergeSailfishRuns)
-@collate(transformSailfishOutput,
-         regex("tpm.dir/(.+)_(.+)_(.+).quant"),
-         r"tpm.dir/\1.counts")
-def mergeSailfishCounts(infiles, outfile):
+@merge(transformSailfishOutput,
+         "sailfish_counts.tsv")
+def mergeSailfish(infiles, outfile):
     '''
     Merge all raw counts from sailfish across each
     condition
     '''
 
     infiles = " ".join(infiles)
-    job_memory = "4G"
-
-    statement = '''
-    cgat combine_tables
-    --columns=1
-    --take=5
-    --use-file-prefix
-    --regex-filename='(.+).quant'
-    --log=%(outfile)s.log
-    %(infiles)s
-    > %(outfile)s'''
+    statement = (
+        "cgat combine_tables "
+        "--cat=track "
+        "--regex-filename='tpm.dir/(.+).quant' "
+        "--log=%(outfile)s.log "
+        "%(infiles)s "
+        "> %(outfile)s")
 
     P.run(statement)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@follows(mergeSailfishCounts)
-@transform(mergeSailfishCounts,
-           suffix(".counts"),
+@transform(mergeSailfish,
+           suffix(".tsv"),
            ".load")
-def loadSailfishCounts(infile, outfile):
+def loadSailfish(infile, outfile):
     '''
     load Sailfish gene counts data into
     CSVDB
@@ -562,7 +536,7 @@ def aggregateFeatureCounts(infiles, outfile):
     | tee %(outfile)s.table.tsv
     | gzip > %(outfile)s '''
 
-    P.run(statement)
+    P.run(statement, job_memory="8G")
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -574,8 +548,7 @@ def loadFeatureCounts(infile, outfile):
 
 
 @follows(loadFeatureCounts,
-         loadSailfishCounts,
-         loadSailfishTpm)
+         loadSailfish)
 def quantify_expression():
     pass
 

@@ -179,7 +179,6 @@ PARAMS = P.PARAMS
 # Add parameters from the gtf_subset pipeline, but
 # only the interface section. All PARAMS options
 # will have the prefix `annotations_`
-
 PARAMS.update(P.peek_parameters(
     PARAMS["gtf_dir"],
     "genesets",
@@ -254,11 +253,12 @@ def strandSpecificity(infile, outfile):
     '''This function will determine the strand specificity of your library
     from the bam file'''
 
-    iterations = "1000000"
-
-    PipelineBamStats.getStrandSpecificity(infile,
-                                          outfile,
-                                          iterations)
+    statement = (
+        "cgat bam2libtype "
+        "--max-iterations 10000 "
+        "< {infile} "
+        "> {outfile}".format(**locals()))
+    return P.run(statement)
 
 
 @follows(mkdir("BamFiles.dir"))
@@ -387,7 +387,6 @@ def processGenomicContext(infile, outfile):
     PipelineBamStats.defineBedFeatures(infile, outfile)
 
 
-@follows(processGenomicContext)
 @P.add_doc(PipelineBamStats.summarizeTagsWithinContext)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
@@ -409,6 +408,19 @@ def buildIdxStats(infile, outfile):
     be plotted later'''
 
     statement = '''samtools idxstats %(infile)s > %(outfile)s'''
+
+    P.run(statement)
+
+
+@follows(mkdir("SamtoolsStats.dir"))
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           r"SamtoolsStats.dir/\1.samtoolsstats")
+def buildSamtoolsStats(infile, outfile):
+    '''gets idxstats for bam file so number of reads per chromosome can
+    be plotted later'''
+
+    statement = '''samtools stats %(infile)s > %(outfile)s'''
 
     P.run(statement)
 

@@ -110,7 +110,7 @@ def loadFastqc(filename,
     options.database_url = database_url
     options.database_schema = None
     options.allow_empty = True
-    
+
     for fn in glob.glob(filename):
         prefix = os.path.basename(os.path.dirname(fn))
         results = []
@@ -248,3 +248,105 @@ def buildExperimentReadQuality(infiles, outfile, datadir):
     df_out.columns = ["_".join(T.split("-")[:-1]), ]
 
     df_out.to_csv(IOTools.open_file(outfile, "w"), sep="\t")
+
+
+def read_fastqc(infiles, track_regex, sep="-"):
+    """merge multiple fastq output into multiple dataframes.
+
+    Arguments
+    ---------
+    infiles : string
+        Input filename with fastqscreen output.
+    regex_track: string
+        Regular expression to extract track name from filename.
+    sep: char
+        Separator for merging multiple capture groups in regex.
+
+    Returns
+    -------
+    dataframes
+    """
+
+    dfs, tracks = collections.defaultdict(list), []
+    for infile in infiles:
+        try:
+            track = sep.join(re.search(track_regex, infile).groups())
+        except AttributeError:
+            raise ValueError("regex {} did not match file {}".format(
+                track_regex, infile))
+        tracks.append(track)
+        with IOTools.open_file(infile) as inf:
+            for name, status, header, data in FastqcSectionIterator(inf):
+                records = [x.split("\t") for x in data]
+                df = pd.DataFrame.from_records(records, columns=header.split("\t"))
+                dfs[name].append(df)
+
+    result = {}
+    for key, dd in dfs.items():
+        df = pd.concat(dd, keys=tracks, names=["track"])
+        df.index = df.index.droplevel(1)
+        key = re.sub(" ", "_", key.lower())
+        result[key] = df
+    return result
+
+
+def read_fastq_screen(infiles, track_regex, sep="-"):
+    """merge fastqscreen output into dataframes.
+
+    Arguments
+    ---------
+    infiles : string
+        Input filename with fastqscreen output.
+    regex_track: string
+        Regular expression to extract track name from filename.
+    sep: char
+        Separator for merging multiple capture groups in regex.
+
+    Returns
+    -------
+    multiple dataframes
+    """
+
+    dfs, tracks, summaries = [], [], []
+    for infile in infiles:
+
+        try:
+            track = sep.join(re.search(track_regex, infile).groups())
+        except AttributeError:
+            raise ValueError("regex {} did not match file {}".format(
+                track_regex, infile))
+
+        with IOTools.open_file(infile) as inf:
+            lines = inf.readlines()
+        version, aligner, reads = re.search(
+            "#Fastq_screen version: (\S+)\t#Aligner: (\S+)\t#Reads in subset: (\d+)\n",
+            lines.pop(0)).groups()
+        percent_no_hit = re.search(
+            "%Hit_no_genomes: (\S+)\n", lines.pop(-1)).groups()[0]
+
+        summaries.append((version, aligner, reads, percent_no_hit))
+
+        records = [x[:-1].split("\t") for x in lines if x.strip()]
+        df = pd.DataFrame.from_records(records[1:], columns=records[0])
+        df = df.rename(columns={
+            'Genome': "genome",
+            '#Reads_processed': "reads_processed",
+            '#Unmapped': "reads_unmapped",
+            '%Unmapped': "reads_unmapped_percent",
+            '#One_hit_one_genome': "one_hit_one_genome",
+            '%One_hit_one_genome': "one_hit_one_genome_percent",
+            '#Multiple_hits_one_genome': "multiple_hits_one_genome",
+            '%Multiple_hits_one_genome': "multiple_hits_one_genome_percent",
+            '#One_hit_multiple_genomes': "one_hit_multiple_genomes",
+            '%One_hit_multiple_genomes': "one_hit_multiple_genomes_percent",
+            'Multiple_hits_multiple_genomes': "multiple_hits_multiple_genomes",
+            '%Multiple_hits_multiple_genomes': "multiple_hits_multiple_genomes"})
+        dfs.append(df)
+        tracks.append(track)
+    df_details = pd.concat(dfs, keys=tracks, names=["track"])
+    df_details.index = df_details.index.droplevel(1)
+    df_summary = pd.DataFrame.from_records(
+        summaries, columns=["version", "aligner", "nreads", "nohit_percent"],
+        index=tracks)
+    df_summary.index.name = "track"
+    return df_summary, df_details

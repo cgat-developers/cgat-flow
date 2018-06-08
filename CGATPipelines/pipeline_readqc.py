@@ -400,7 +400,6 @@ def runFastqScreen(infiles, outfile):
         raise ValueError("Wrong number of threads for fastq_screen")
 
     job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
-    job_memory = "8G"
 
     # Create fastq_screen config file in temp directory
     # using parameters from Pipeline.yml
@@ -412,9 +411,45 @@ def runFastqScreen(infiles, outfile):
 
     m = PipelineMapping.FastqScreen()
     statement = m.build((infiles,), outfile)
-    P.run(statement)
+    P.run(statement, job_memory="8G")
     shutil.rmtree(tempdir)
     IOTools.touch_file(outfile)
+
+
+@active_if(PARAMS["fastq_screen_run"] == 1)
+@merge(runFastqc, ["fastqc_basic_statistics.tsv"])
+def summarizeFastqc(infiles, outfiles):
+    all_files = []
+
+    for infile in infiles:
+        track = P.snip(infile, ".fastqc")
+        all_files.extend(glob.glob(
+            os.path.join(
+                PARAMS["exportdir"],
+                "fastqc",
+                track + "*_fastqc", "fastqc_data.txt")))
+
+    dfs = PipelineReadqc.read_fastqc(
+        all_files,
+        track_regex="([^/]+).fastq.(\d+)")
+    for key, df in dfs.items():
+        fn = re.sub("basic_statistics", key, outfiles[0])
+        E.info("writing to {}".format(fn))
+        with IOTools.open_file(fn, "w") as outf:
+            df.to_csv(outf, sep="\t", index=True)
+
+
+@merge(runFastqScreen,
+       ["fastqscreen_summary.tsv", "fastcscreen_details.tsv"])
+def summarizeFastqScreen(infiles, outfiles):
+    all_files = []
+    for infile in infiles:
+        all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
+    df_summary, df_details = PipelineReadqc.read_fastq_screen(
+        all_files,
+        track_regex="([^/]+).fastq.(\d+)")
+    df_summary.to_csv(outfiles[0], sep="\t", index=True)
+    df_details.to_csv(outfiles[1], sep="\t", index=True)
 
 
 @merge(runFastqc, "status_summary.tsv.gz")
@@ -481,7 +516,8 @@ def loadFastqcSummary(infile, outfile):
 @follows(loadFastqc,
          loadFastqcSummary,
          loadExperimentLevelReadQualities,
-         runFastqScreen)
+         summarizeFastqScreen,
+         summarizeFastqc)
 def full():
     pass
 

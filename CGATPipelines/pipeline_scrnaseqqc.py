@@ -195,7 +195,7 @@ def makeSplicedCatalog(infile, outfile):
     > %(outfile)s
     '''
 
-    P.run(statement)
+    P.run(statement, job_memory="16G")
 
 
 @follows(makeSplicedCatalog)
@@ -701,7 +701,7 @@ def getCoverageStats(outfile):
     statement = (
         "cgat extract_stats "
         "--task=extract_table "
-        "--log={outfile}.log "
+        "--log=%(outfile)s.log "
         "--database-url=%(mapping_database_url)s "
         "--table-name=%(mapping_picard_dups)s "
         "> %(outfile)s")

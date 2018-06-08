@@ -8,7 +8,7 @@ Overview
 
 This pipeline generates a number of annotations that can be used with
 downstream CGAT pipelines. The user will download a GTF from ENSEMBL
-and then the GTF is parsed and filtered.In addition to downloading an
+and then the GTF is parsed and filtered. In addition to downloading an
 ensembl GTF the user will need to download an assembly report for their
 specific genome and add it to the directory the pipeline is ran.
 
@@ -53,29 +53,41 @@ software to be in the path:
 Input
 -----
 
-This pipeline requires a Ensembl GTF, mirBase GFF3 file and an assembly report.
+This pipeline requires an Ensembl GTF, a mirBase GFF3 file and an
+assembly report. Locations to these three input files are set in
+:file:`pipeline.yml`:
 
 Ensembl GTF:
-    This can be downloaded from http://www.ensembl.org/info/data/ftp/index.html
-    Note: CGAT pipelines use the UCSC GTF convention (chr naming of contigs)
-    and therefore the GTF is sanitized to the UCSC convention. As part of this
-    process an ncbi assembly report needs to be specified (see below).
+
+    The gene set can be downloaded from
+    http://www.ensembl.org/info/data/ftp/index.html Note: CGAT
+    pipelines traditionally use the UCSC GTF convention (chr naming of
+    contigs) and therefore the GTF is sanitized to the UCSC
+    convention. As part of this process an NCBI assembly report needs
+    to be specified (see below). More recently, UCSC and ENSEMBL are
+    converging on chromosome names.
 
 Assembly report:
     This is downloaded from the ncbi assembly page for your specific genome.
-    Using hg19 as an example:
-        Navigate to www......
-        From the database tab select assembly and add your genome into the
-        search bar i.e. hg19.
-        Then click the link "Download the full sequence report"
-        Add it to the folder where the pipeline will be running, the file is
-        for hg38 is called "GRCh38.p10_assembly_report.txt".
+
+    Using `hg39` as an example, follow these instructions:
+
+        1. Navigate to https://www.ncbi.nlm.nih.gov/assembly
+        2. From the database tab select assembly and add your genome into the
+           search bar i.e. `hg38`.
+        3. Click the link "Download the full sequence report"
+        4. Download the report into the folder where the pipeline will
+           be running. For `hg38`, the file is for hg38 is called
+           "GRCh38.p10_assembly_report.txt".
+        5. Update :file:`pipeline.yml` with the correct filename.
 
 miRbase GFF3:
-   This can be downloaded from miRbase http://www.mirbase.org/ftp.shtml.
-   A path to the :term:`GFF3` file needs to be specified in the pipelin.yml
-   configuration file. Make sure that the genome build version of the GFF3
-   annotation file matches the ENSEMBL genome.
+
+   This can be downloaded from miRbase
+   http://www.mirbase.org/ftp.shtml. The path to the :term:`GFF3` file
+   needs to be specified in :file:`pipeline.yml`. Make sure that the
+   genome build version of the GFF3 annotation file matches the
+   ENSEMBL genome.
 
 Running
 -------
@@ -316,6 +328,7 @@ Example
 ====
 Code
 ====
+
 """
 import sys
 import re

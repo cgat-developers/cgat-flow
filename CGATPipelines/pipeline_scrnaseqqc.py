@@ -393,7 +393,7 @@ def mergeSailfishRuns(infiles, outfile):
 
 
 @merge(transformSailfishOutput,
-         "sailfish_counts.tsv")
+       "sailfish_counts.tsv")
 def mergeSailfish(infiles, outfile):
     '''
     Merge all raw counts from sailfish across each

@@ -336,11 +336,6 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
          # make sure you are in the CGAT_HOME/cgat-flow folder
          cd $CGAT_HOME/cgat-flow
 
-      else
-
-         # in jenkins the code is in CGAT_HOME/CGATPipelines
-         cd $CGAT_HOME/CGATPipelines
-
       fi
 
       # Set up other environment variables
@@ -600,8 +595,7 @@ if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
 
    # python preparation
    log "install CGAT code into conda environment"
-   [[ $TRAVIS_INSTALL  ]] && cd $CGAT_HOME
-   [[ $JENKINS_INSTALL ]] && cd $CGAT_HOME/CGATPipelines
+   cd $CGAT_HOME
 
    # Python preparation
    sed -i'' -e 's/CGATScripts/scripts/g' setup.py

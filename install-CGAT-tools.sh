@@ -454,36 +454,28 @@ log "install cgat apps"
 OLDWD=`pwd`
 cd $CGAT_HOME
 
-if [[ $JENKINS_INSTALL ]] ; then
-
-   cd cgat/
-
-else
-
-   if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
-      # get the latest version from Git Hub in zip format
-      curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$APPS_BRANCH.zip
-      unzip $APPS_BRANCH.zip
-      rm $APPS_BRANCH.zip
-      if [[ ${RELEASE} ]] ; then
-         NEW_NAME=`echo $APPS_BRANCH | sed 's/^v//g'`
-         mv cgat-apps-$NEW_NAME/ cgat-apps/
-      else
-         mv cgat-apps-$APPS_BRANCH/ cgat-apps/
-      fi
-   elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
-      # get latest version from Git Hub with git clone
-      git clone --branch=$APPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
-   elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
-      # get latest version from Git Hub with git clone
-      git clone --branch=$APPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
+if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
+   # get the latest version from Git Hub in zip format
+   curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$APPS_BRANCH.zip
+   unzip $APPS_BRANCH.zip
+   rm $APPS_BRANCH.zip
+   if [[ ${RELEASE} ]] ; then
+      NEW_NAME=`echo $APPS_BRANCH | sed 's/^v//g'`
+      mv cgat-apps-$NEW_NAME/ cgat-apps/
    else
-      report_error " Unknown download type for CGAT code... "
+      mv cgat-apps-$APPS_BRANCH/ cgat-apps/
    fi
-
-   cd cgat-apps/
-
+elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
+   # get latest version from Git Hub with git clone
+   git clone --branch=$APPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
+elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
+   # get latest version from Git Hub with git clone
+   git clone --branch=$APPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
+else
+   report_error " Unknown download type for CGAT code... "
 fi
+
+cd cgat-apps/
 
 # remove install_requires (no longer required with conda package)
 sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py

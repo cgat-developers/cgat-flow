@@ -7,7 +7,7 @@ The readqc pipeline imports unmapped reads from one or more input
 files and performs basic quality control steps. The pipeline performs
 also read pre-processing such as quality trimming or adaptor removal.
 
-Quality metrics are based on the fastqc tools, see
+Quality metrics are based on the FastQC tools, see
 http://www.bioinformatics.bbsrc.ac.uk/projects/fastqc/ for further
 details.
 
@@ -115,7 +115,7 @@ Requirements:
 
 # import ruffus
 from ruffus import transform, merge, follows, mkdir, regex, suffix, \
-    jobs_limit, subdivide, collate, active_if, originate
+    jobs_limit, subdivide, collate, active_if, originate, split, formatter
 
 # import useful standard python modules
 import sys
@@ -147,7 +147,7 @@ INPUT_FORMATS = ["*.fastq.1.gz", "*.fastq.gz",
 
 # Regular expression to extract a track from an input file. Does not preserve
 # a directory as part of the track.
-REGEX_TRACK = r"([^/]+).(fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
+REGEX_TRACK = r"(?P<track>[^/]+).(?P<suffix>fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
 
 # Regular expression to extract a track from both processed and unprocessed
 # files
@@ -175,7 +175,7 @@ def unprocessReads(infiles, outfiles):
 # already been generated in the first run
 if PARAMS.get("preprocessors", None):
     if PARAMS["auto_remove"]:
-        # check if fastqc has been run
+        # check if FastQC has been run
         for x in IOTools.flatten([glob.glob(y) for y in INPUT_FORMATS]):
             f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
@@ -192,9 +192,6 @@ if PARAMS.get("preprocessors", None):
             '''Make a single fasta file for each sample of all contaminant adaptor
             sequences for removal
             '''
-
-            print(infile)
-            print(REGEX_TRACK)
 
             PipelinePreprocess.makeAdaptorFasta(
                 infile=infile,
@@ -337,28 +334,27 @@ def reconcileReads(infile, outfile):
 
 
 @follows(reconcileReads)
-@follows(mkdir(PARAMS["exportdir"]),
-         mkdir(os.path.join(PARAMS["exportdir"], "fastqc")))
+@follows(mkdir("fastqc.dir"))
 @transform((unprocessReads, processReads),
-           regex(REGEX_TRACK),
-           r"\1.fastqc")
-def runFastqc(infiles, outfile):
-    '''run Fastqc on each input file.
+           formatter(REGEX_TRACK),
+           r"fastqc.dir/{track[0]}.fastqc")
+def runFastQC(infiles, outfile):
+    '''run FastQC on each input file.
 
     convert sra files to fastq and check mapping qualities are in
     solexa format.  Perform quality control checks on reads from
     .fastq files.
+
     '''
-    # MM: only pass the contaminants file list if requested by user,
-    # do not make this the default behaviour
-    if PARAMS['use_custom_contaiminants']:
-        m = PipelineMapping.FastQc(nogroup=PARAMS["readqc_no_group"],
-                                   outdir=PARAMS["exportdir"] + "/fastqc",
+    # only pass the contaminants file list if requested by user,
+    if PARAMS['use_custom_contaminants']:
+        m = PipelineMapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+                                   outdir=os.path.dirname(outfile),
                                    contaminants=PARAMS['contaminants_path'],
                                    qual_format=PARAMS['qual_format'])
     else:
-        m = PipelineMapping.FastQc(nogroup=PARAMS["readqc_no_group"],
-                                   outdir=PARAMS["exportdir"] + "/fastqc",
+        m = PipelineMapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+                                   outdir=os.path.dirname(outfile),
                                    qual_format=PARAMS['qual_format'])
 
     if PARAMS["general_reconcile"] == 1:
@@ -369,69 +365,18 @@ def runFastqc(infiles, outfile):
     P.run(statement)
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(runFastqc, suffix(".fastqc"), "_fastqc.load")
-def loadFastqc(infile, outfile):
-    '''load FASTQC stats into database.'''
-    track = P.snip(infile, ".fastqc")
-    filename = os.path.join(
-        PARAMS["exportdir"], "fastqc", track + "*_fastqc", "fastqc_data.txt")
-    PipelineReadqc.loadFastqc(filename,
-                              database_url=PARAMS["database"]["url"])
-    IOTools.touch_file(outfile)
-
-
-@follows(mkdir(PARAMS["exportdir"]),
-         mkdir(os.path.join(PARAMS["exportdir"], "fastq_screen")))
-@active_if(PARAMS["fastq_screen_run"] == 1)
-@transform((unprocessReads, processReads),
-           regex(REGEX_TRACK_BOTH),
-           r"%s/fastq_screen/\2.fastqscreen" % PARAMS['exportdir'])
-def runFastqScreen(infiles, outfile):
-    '''run FastqScreen on input files.'''
-
-    # variables required for statement built by FastqScreen()
-    tempdir = P.get_temp_dir(".")
-    outdir = os.path.join(PARAMS["exportdir"], "fastq_screen")
-
-    # configure job_threads with fastq_screen_options from PARAMS
-    job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
-    if len(job_threads) != 1:
-        raise ValueError("Wrong number of threads for fastq_screen")
-
-    job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
-
-    # Create fastq_screen config file in temp directory
-    # using parameters from Pipeline.yml
-    with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
-                           "w") as f:
-        for i, k in list(PARAMS.items()):
-            if i.startswith("fastq_screen_database"):
-                f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
-
-    m = PipelineMapping.FastqScreen()
-    statement = m.build((infiles,), outfile)
-    P.run(statement, job_memory="8G")
-    shutil.rmtree(tempdir)
-    IOTools.touch_file(outfile)
-
-
-@active_if(PARAMS["fastq_screen_run"] == 1)
-@merge(runFastqc, ["fastqc_basic_statistics.tsv"])
-def summarizeFastqc(infiles, outfiles):
+@split(runFastQC, ["fastqc_basic_statistics.tsv.gz", "fastqc_*.tsv.gz"])
+def summarizeFastQC(infiles, outfiles):
     all_files = []
-
     for infile in infiles:
         track = P.snip(infile, ".fastqc")
         all_files.extend(glob.glob(
-            os.path.join(
-                PARAMS["exportdir"],
-                "fastqc",
-                track + "*_fastqc", "fastqc_data.txt")))
+            os.path.join(track + "*_fastqc",
+                         "fastqc_data.txt")))
 
     dfs = PipelineReadqc.read_fastqc(
-        all_files,
-        track_regex="([^/]+).fastq.(\d+)")
+        all_files)
+
     for key, df in dfs.items():
         fn = re.sub("basic_statistics", key, outfiles[0])
         E.info("writing to {}".format(fn))
@@ -439,52 +384,34 @@ def summarizeFastqc(infiles, outfiles):
             df.to_csv(outf, sep="\t", index=True)
 
 
-@merge(runFastqScreen,
-       ["fastqscreen_summary.tsv", "fastcscreen_details.tsv"])
-def summarizeFastqScreen(infiles, outfiles):
-    all_files = []
-    for infile in infiles:
-        all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
-    if len(all_files) == 0:
-        E.warn("no fastqcscreen results to concatenate")
-        for x in outfiles:
-            IOTools.touch_file(x)
-        return
-    df_summary, df_details = PipelineReadqc.read_fastq_screen(
-        all_files,
-        track_regex="([^/]+).fastq.(\d+)")
-    df_summary.to_csv(outfiles[0], sep="\t", index=True)
-    df_details.to_csv(outfiles[1], sep="\t", index=True)
-
-
-@merge(runFastqc, "status_summary.tsv.gz")
+@merge(runFastQC, "fastqc_status_summary.tsv.gz")
 def buildFastQCSummaryStatus(infiles, outfile):
-    '''load fastqc status summaries into a single table.'''
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildFastQCSummaryStatus(infiles, outfile, exportdir)
+    '''load FastQC status summaries into a single table.'''
+    PipelineReadqc.buildFastQCSummaryStatus(
+        infiles,
+        outfile,
+        "fastqc.dir")
+    
+
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
+@transform((summarizeFastQC, buildFastQCSummaryStatus),
+           suffix(".tsv.gz"), ".load")
+def loadFastQC(infile, outfile):
+    '''load FASTQC stats into database.'''
+    P.load(infile, outfile, options="--add-index=track")
 
 
-@follows(loadFastqc)
-@merge(runFastqc, "basic_statistics_summary.tsv.gz")
-def buildFastQCSummaryBasicStatistics(infiles, outfile):
-    '''load fastqc summaries into a single table.'''
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildFastQCSummaryBasicStatistics(infiles, outfile,
-                                                     exportdir)
-
-
-@follows(mkdir("experiment.dir"), loadFastqc)
-@collate(runFastqc,
-         regex("(processed.dir/)*(.*)-([^-]*).fastqc"),
-         r"experiment.dir/\2_per_sequence_quality.tsv")
+@follows(mkdir("experiment.dir"), loadFastQC)
+@collate(runFastQC,
+         formatter("(processed.dir/)*(?P<track>[^/]+)-([^-]+).fastqc"),
+         r"experiment.dir/{track[0]}_per_sequence_quality.tsv")
 def buildExperimentLevelReadQuality(infiles, outfile):
+    """Collate per sequence read qualities for all replicates per
+    experiment.  Replicates are the last part of a filename,
+    eg. Experiment-R1, Experiment-R2, etc.
+
     """
-    Collate per sequence read qualities for all replicates per experiment.
-    Replicates are the last part of a filename, eg. Experiment-R1,
-    Experiment-R2, etc.
-    """
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildExperimentReadQuality(infiles, outfile, exportdir)
+    PipelineReadqc.buildExperimentReadQuality(infiles, outfile, "fastqc.dir")
 
 
 @collate(buildExperimentLevelReadQuality,
@@ -511,18 +438,68 @@ def loadExperimentLevelReadQualities(infile, outfile):
     P.load(infile, outfile)
 
 
+@active_if(PARAMS["fastq_screen_run"] == 1)
+@follows(mkdir("fastq_screen.dir"))
+@transform((unprocessReads, processReads),
+           regex(REGEX_TRACK_BOTH),
+           r"fastq_screen.dir/\2.fastqscreen")
+def runFastqScreen(infiles, outfile):
+    '''run FastqScreen on input files.'''
+
+    # variables required for statement built by FastqScreen()
+    tempdir = P.get_temp_dir(".")
+    
+    # configure job_threads with fastq_screen_options from PARAMS
+    job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
+    if len(job_threads) != 1:
+        raise ValueError("Wrong number of threads for fastq_screen")
+
+    job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
+
+    # Create fastq_screen config file in temp directory
+    # using parameters from Pipeline.yml
+    with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
+                           "w") as f:
+        for i, k in list(PARAMS.items()):
+            if i.startswith("fastq_screen_database"):
+                f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
+
+    m = PipelineMapping.FastqScreen()
+    statement = m.build((infiles,), outfile)
+    P.run(statement, job_memory="8G")
+    shutil.rmtree(tempdir)
+    IOTools.touch_file(outfile)
+
+
+@active_if(PARAMS["fastq_screen_run"] == 1)
+@merge(runFastqScreen,
+       ["fastqscreen_summary.tsv.gz", "fastqscreen_details.tsv.gz"])
+def summarizeFastqScreen(infiles, outfiles):
+    all_files = []
+    for infile in infiles:
+        all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
+    if len(all_files) == 0:
+        E.warn("no fastqcscreen results to concatenate")
+        for x in outfiles:
+            IOTools.touch_file(x)
+        return
+    df_summary, df_details = PipelineReadqc.read_fastq_screen(
+        all_files)
+    df_summary.to_csv(outfiles[0], sep="\t", index=True)
+    df_details.to_csv(outfiles[1], sep="\t", index=True)
+
+
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform((buildFastQCSummaryStatus, buildFastQCSummaryBasicStatistics),
-           suffix(".tsv.gz"), ".load")
-def loadFastqcSummary(infile, outfile):
+@transform(summarizeFastqScreen,
+           suffix(".tsv"), ".load")
+def loadFastqScreen(infile, outfile):
+    '''load FASTQC stats into database.'''
     P.load(infile, outfile, options="--add-index=track")
 
 
-@follows(loadFastqc,
-         loadFastqcSummary,
-         loadExperimentLevelReadQualities,
-         summarizeFastqScreen,
-         summarizeFastqc)
+@follows(loadFastQC,
+         loadFastqScreen,
+         loadExperimentLevelReadQualities)
 def full():
     pass
 

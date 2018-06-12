@@ -513,7 +513,7 @@ class SequenceCollectionProcessor(object):
         assert len(infiles) > 0, "no input files for processing"
 
         tmpdir_fastq = P.get_temp_dir(shared=True)
-
+        self.tmpdir_fastq = tmpdir_fastq
         # create temporary directory again for nodes
         statement = ["mkdir -p %s" % tmpdir_fastq]
         fastqfiles = []
@@ -902,8 +902,6 @@ class SequenceCollectionProcessor(object):
             else:
                 raise NotImplementedError("unknown file format %s" % infile)
 
-        self.tmpdir_fastq = tmpdir_fastq
-
         assert len(fastqfiles) > 0, "no fastq files for mapping"
         return (" ; ".join(statement) + ";", fastqfiles)
 
@@ -1034,7 +1032,7 @@ class Mapper(SequenceCollectionProcessor):
         return statement
 
 
-class FastQc(Mapper):
+class FastQC(Mapper):
     """run the FastQC_ tool.
 
     Arguments

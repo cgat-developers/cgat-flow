@@ -20,6 +20,26 @@ import CGATCore.IOTools as IOTools
 import CGATCore.CSV2DB as CSV2DB
 
 
+def fastqc_filename2track(fn):
+    """extract track name from fastqc filename.
+
+    Because we deal with both paired end (track.fastq.1_fastqc
+    and single end data (track_fastqc), this is a bit cumbersome.
+    """
+    return re.sub(".fastq.", "-", IOTools.snip(os.path.basename(os.path.dirname(fn)),
+                                               "_fastqc"))
+
+
+def fastqscreen_filename2track(fn):
+    """extract track name from fastqc filename.
+
+    Because we deal with both paired end (track.fastq.1_fastqc
+    and single end data (track_fastqc), this is a bit cumbersome.
+    """
+    return re.sub(".fastq.", "-", IOTools.snip(os.path.basename(fn),
+                                               "_screen.txt"))
+
+
 def FastqcSectionIterator(infile):
     """iterate over FASTQC output file and yield each section.
 
@@ -147,16 +167,17 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
         Output filename in :term:`tsv` format.
     datadir : string
         Location of actual Fastqc output to be parsed.
-
+    track_regex : string
+        Regular expression to extract track from filename.
     '''
 
     outf = IOTools.open_file(outfile, "w")
     names = set()
     results = []
     for infile in infiles:
-        track = P.snip(os.path.basename(infile), ".fastqc")
+        base_track = IOTools.snip(os.path.basename(infile), ".fastqc")
         filename = os.path.join(datadir,
-                                track + "*_fastqc",
+                                base_track + "*_fastqc",
                                 "fastqc_data.txt")
         # there can be missing sections
         for fn in glob.glob(filename):
@@ -164,7 +185,7 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
             for name, status, header, data in FastqcSectionIterator(
                     IOTools.open_file(fn)):
                 stats[name] = status
-
+            track = fastqc_filename2track(fn)
             results.append((track, fn, stats))
             names.update(list(stats.keys()))
 
@@ -174,35 +195,6 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
         outf.write("%s\t%s\t%s\n" %
                    (track, os.path.dirname(fn),
                     "\t".join(stats[x] for x in names)))
-    outf.close()
-
-
-def buildFastQCSummaryBasicStatistics(infiles, outfile, datadir):
-    '''collect fastqc summary results from multiple runs into a single table.
-
-    Arguments
-    ---------
-    infiles : list
-        List of filenames with fastqc output (logging information). The
-        track name is derived from that.
-    outfile : list
-        Output filename in :term:`tsv` format.
-    datadir : string
-        Location of actual Fastqc output to be parsed.
-
-    '''
-
-    data = collectFastQCSections(infiles, "Basic Statistics", datadir)
-
-    outf = IOTools.open_file(outfile, "w")
-    first = True
-    for track, status, header, rows in data:
-        rows = [x.split("\t") for x in rows]
-        if first:
-            headers = [row[0] for row in rows]
-            outf.write("track\t%s\n" % "\t".join(headers))
-            first = False
-        outf.write("%s\t%s\n" % (track, "\t".join([row[1] for row in rows])))
     outf.close()
 
 
@@ -250,7 +242,7 @@ def buildExperimentReadQuality(infiles, outfile, datadir):
     df_out.to_csv(IOTools.open_file(outfile, "w"), sep="\t")
 
 
-def read_fastqc(infiles, track_regex, sep="-"):
+def read_fastqc(infiles):
     """merge multiple fastq output into multiple dataframes.
 
     Arguments
@@ -269,15 +261,11 @@ def read_fastqc(infiles, track_regex, sep="-"):
 
     dfs, tracks = collections.defaultdict(list), []
     for infile in infiles:
-        try:
-            track = sep.join(re.search(track_regex, infile).groups())
-        except AttributeError:
-            raise ValueError("regex {} did not match file {}".format(
-                track_regex, infile))
+        track = fastqc_filename2track(infile)
         tracks.append(track)
         with IOTools.open_file(infile) as inf:
             for name, status, header, data in FastqcSectionIterator(inf):
-                records = [x.split("\t") for x in data]
+                records = (x.split("\t") for x in data)
                 df = pd.DataFrame.from_records(records, columns=header.split("\t"))
                 dfs[name].append(df)
 
@@ -290,17 +278,13 @@ def read_fastqc(infiles, track_regex, sep="-"):
     return result
 
 
-def read_fastq_screen(infiles, track_regex, sep="-"):
+def read_fastq_screen(infiles):
     """merge fastqscreen output into dataframes.
 
     Arguments
     ---------
     infiles : string
         Input filename with fastqscreen output.
-    regex_track: string
-        Regular expression to extract track name from filename.
-    sep: char
-        Separator for merging multiple capture groups in regex.
 
     Returns
     -------
@@ -309,13 +293,7 @@ def read_fastq_screen(infiles, track_regex, sep="-"):
 
     dfs, tracks, summaries = [], [], []
     for infile in infiles:
-
-        try:
-            track = sep.join(re.search(track_regex, infile).groups())
-        except AttributeError:
-            raise ValueError("regex {} did not match file {}".format(
-                track_regex, infile))
-
+        track = fastqscreen_filename2track(infile)
         with IOTools.open_file(infile) as inf:
             lines = inf.readlines()
         version, aligner, reads = re.search(

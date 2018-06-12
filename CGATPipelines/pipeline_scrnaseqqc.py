@@ -254,16 +254,17 @@ def makeSailfishIndex(infile, outfile):
     spliced transcript sequences
     '''
 
-    outdir = "/".join(outfile.split("/")[:-1])
+    outdir = os.path.dirname(outfile)
     job_threads = 8
     statement = (
         "sailfish index "
         "--transcripts %(infile)s "
-        "--out %(outfile)s "
+        "--out %(outdir)s "
         "--threads %(job_threads)i "
         "--kmerSize %(sailfish_kmer)s "
-        "> %(outfile)s.log ")
-    P.run(statement, job_total_memory="12G")
+        ">& %(outfile)s.log ")
+    # building human transcriptome takes a lot of memory
+    P.run(statement, job_memory="unlimited")
 
 
 if PARAMS['paired']:
@@ -358,36 +359,9 @@ def transformSailfishOutput(infile, outfile):
     header section
     '''
 
-    job_memory = "0.5G"
-
     statement = '''cat  %(infile)s |
     awk 'BEGIN {printf("Name\\tLength\\tEffectiveLength\\tTPM\\tNumReads\\n")}
      {if(NR > 11) {print $0}}' >  %(outfile)s'''
-
-    P.run(statement)
-
-
-@merge(transformSailfishOutput,
-       "sailfish_tpm.tsv")
-def mergeSailfishRuns(infiles, outfile):
-    '''
-    Merge all tpm estimates from sailfish across each
-    condition
-    '''
-
-    infiles = " ".join(infiles)
-    job_memory = "2G"
-
-    statement = '''
-    cgat combine_tables
-    --columns=1
-    --take=4
-    --use-file-prefix
-    --regex-filename='(.+).quant'
-    --log=%(outfile)s.log
-    %(infiles)s
-    | (read h; echo \"$h\"; sort -k1,2 )
-    > %(outfile)s'''
 
     P.run(statement)
 
@@ -407,6 +381,7 @@ def mergeSailfish(infiles, outfile):
         "--regex-filename='tpm.dir/(.+).quant' "
         "--log=%(outfile)s.log "
         "%(infiles)s "
+        "| (read h; echo \"$h\"; sort -k1,2 ) "
         "> %(outfile)s")
 
     P.run(statement)

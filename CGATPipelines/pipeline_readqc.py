@@ -464,7 +464,7 @@ def runFastqScreen(infiles, outfile):
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
 
-    m = PipelineMapping.FastqScreen(outputdir="fastq_screen.dir/")
+    m = PipelineMapping.FastqScreen(outdir="fastq_screen.dir/")
     statement = m.build((infiles,), outfile)
     P.run(statement, job_memory="8G")
     shutil.rmtree(tempdir)

@@ -1172,8 +1172,8 @@ class FastqScreen(Mapper):
 
         outdir = self.outdir
         statement = '''fastq_screen %%(fastq_screen_options)s
-                    --outdir %%(outdir)s --conf %%(tempdir)s/fastq_screen.conf
-                    %(input_files)s >& %%(outdir)s/fastqscreen.log;''' % locals()
+                    --outdir %(outdir)s --conf %%(tempdir)s/fastq_screen.conf
+                    %(input_files)s >& %(outdir)s/fastqscreen.log;''' % locals()
         return statement
 
 

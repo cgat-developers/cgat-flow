@@ -272,7 +272,8 @@ class FeatureCountsQuantifier(Quantifier):
         # for legacy reasons look at feature_counts_paired
         if BamTools.is_paired(bamfile):
             # sort bamfile
-            bam_tmp = os.path.join(os.environ.get('TMPDIR'), os.path.basename(bamfile))
+            tmp_dir = P.get_temp_dir()
+            bam_tmp = os.path.join(tmp_dir, os.path.basename(bamfile))
             # select paired end mode, additional options
             paired_options = "-p -B"
             # sort by read name
@@ -291,12 +292,13 @@ class FeatureCountsQuantifier(Quantifier):
         if not os.path.exists(outfile_dir):
             os.makedirs(outfile_dir)
 
-        statement = '''zcat %(annotations)s > $TMPDIR/geneset.gtf;
+        statement = '''mkdir %(tmp_dir)s;
+                       zcat %(annotations)s > %(tmp_dir)s/geneset.gtf;
                        %(paired_processing)s
                        featureCounts %(options)s
                                      -T %(job_threads)i
                                      -s %(strand)s
-                                     -a $TMPDIR/geneset.gtf
+                                     -a %(tmp_dir)s/geneset.gtf
                                      %(paired_options)s
                                      -o %(outfile_raw)s -g %(level)s
                                      %(bamfile)s

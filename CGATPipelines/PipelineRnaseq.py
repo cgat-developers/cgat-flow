@@ -272,7 +272,7 @@ class FeatureCountsQuantifier(Quantifier):
         # for legacy reasons look at feature_counts_paired
         if BamTools.is_paired(bamfile):
             # sort bamfile
-            bam_tmp = '${TMPDIR}/' +  os.path.basename(bamfile)
+            bam_tmp = '${TMPDIR}/' + os.path.basename(bamfile)
             # select paired end mode, additional options
             paired_options = "-p -B"
             # sort by read name

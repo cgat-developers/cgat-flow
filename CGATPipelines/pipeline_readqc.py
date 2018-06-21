@@ -313,13 +313,13 @@ else:
         """dummy task - no processing of reads."""
 
 
-@active_if(PARAMS["general_reconcile"] == 1)
+@active_if(PARAMS["reconcile"] == 1)
 @follows(mkdir("reconciled.dir"))
 @transform(processReads, regex(
     r"processed.dir\/trimmed-(.*)\.fastq\.1\.gz"),
     r"reconciled.dir/trimmed-\1.fastq.1.gz")
 def reconcileReads(infile, outfile):
-    if PARAMS["general_reconcile"] == 1:
+    if PARAMS["reconcile"] == 1:
         in1 = infile
         in2 = infile.replace(".fastq.1.gz", ".fastq.2.gz")
         outfile = outfile.replace(".fastq.1.gz",  "")
@@ -357,7 +357,7 @@ def runFastQC(infiles, outfile):
                                    outdir=os.path.dirname(outfile),
                                    qual_format=PARAMS['qual_format'])
 
-    if PARAMS["general_reconcile"] == 1:
+    if PARAMS["reconcile"] == 1:
         infiles = infiles.replace("processed.dir/trimmed",
                                   "reconciled.dir/trimmed")
 

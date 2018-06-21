@@ -391,7 +391,7 @@ def buildFastQCSummaryStatus(infiles, outfile):
         infiles,
         outfile,
         "fastqc.dir")
-    
+
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform((summarizeFastQC, buildFastQCSummaryStatus),
@@ -448,7 +448,7 @@ def runFastqScreen(infiles, outfile):
 
     # variables required for statement built by FastqScreen()
     tempdir = P.get_temp_dir(".")
-    
+
     # configure job_threads with fastq_screen_options from PARAMS
     job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
     if len(job_threads) != 1:
@@ -464,7 +464,7 @@ def runFastqScreen(infiles, outfile):
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
 
-    m = PipelineMapping.FastqScreen()
+    m = PipelineMapping.FastqScreen(outdir="fastq_screen.dir/")
     statement = m.build((infiles,), outfile)
     P.run(statement, job_memory="8G")
     shutil.rmtree(tempdir)

@@ -22,7 +22,7 @@ import json
 
 
 def run_command(statement):
-    os.environ.update({'BASH_ENV': os.path.join(os.environ['HOME'],'.bashrc')})
+    os.environ.update({'BASH_ENV': os.path.join(os.environ['HOME'], '.bashrc')})
     process = subprocess.Popen(statement,
                                cwd=os.getcwd(),
                                shell=True,
@@ -59,7 +59,7 @@ for env_folder in envs:
        env_folder != install_folder:
         env_name = os.path.basename(env_folder)
         statement = "source activate {} && ".format(env_name)
-        statement+= "conda list --json"
+        statement += "conda list --json"
         (out, err) = run_command(statement)
         cmd_out = json.loads(out)
         conda_meta = install_folder + '/envs/' + env_name + '/conda-meta/pinned'

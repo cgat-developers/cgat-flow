@@ -1106,7 +1106,7 @@ fi
 [[ -z ${TRAVIS_INSTALL} ]] && \
 mkdir -p ${CGAT_HOME} && \
 [[ `df -P ${CGAT_HOME} | awk '/\// {print $4}'` -lt 41943040 ]] && \
-   report_error " Not enought disk space available on the installation folder: "$CGAT_HOME
+   report_error " Not enough disk space available on the installation folder: "$CGAT_HOME
 
 # perform actions according to the input parameters processed
 if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then

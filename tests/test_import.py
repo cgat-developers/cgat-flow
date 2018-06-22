@@ -40,7 +40,7 @@ EXCLUDE = (
     # No need to check cgat_check_deps.py
     'cgat_check_deps',
     # No need to check conda.py
-    'conda.py',)
+    'conda',)
 
 
 def check_import(filename, outfile):

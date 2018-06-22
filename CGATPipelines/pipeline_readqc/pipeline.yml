@@ -10,7 +10,7 @@ web_dir: ../web
 ################################################################
 # preprocessing options
 ################################################################
-# these options will only work if you have run the 
+# these options will only work if you have run the
 # readqc_pipeline previously
 
 # specify a comma seperated list of preprocessing tools to run
@@ -40,11 +40,11 @@ auto_remove: 0
 
 # provide a list of adaptor sequences to Fastqc to alter the behaviour
 # of the Adaptor Content module
-# if 0 fastqc will default to use its own contaminant_list - note if 
-# using default contaminant list (use_custom_contaminants=0)- contaminants_path 
-# needs to be set to the fastqc contaminant_list if using the auto removal 
+# if 0 fastqc will default to use its own contaminant_list - note if
+# using default contaminant list (use_custom_contaminants=0)- contaminants_path
+# needs to be set to the fastqc contaminant_list if using the auto removal
 # function for non-"No Hit" sequences - make sure you get the right version
-use_custom_contaiminants: 0
+use_custom_contaminants: 0
 contaminants_path: /ifs/apps/bio/fastqc-0.11.2/Configuration/contaminant_list.txt
 
 # if this is 1 then paired end reads are "reconciled" after processing -
@@ -60,7 +60,7 @@ qual_format: phred64
 ################################################################
 # Below are the options for the individual tools
 # You do not need to specify whether the reads are paired end
-# or include the fastq quality format  
+# or include the fastq quality format
 
 ################################################################
 ################################################################
@@ -72,7 +72,7 @@ trimgalore:
     # -q 20: trim bases below quality threshold (note: q is optional parameter)
     # --length 40: discard reads that become shorter than length INT.
     # --rrbs: Input is MspI digested RRBS sample
-    # -a: adapter sequence  
+    # -a: adapter sequence
     options: -q 20 --length 40 --rrbs -a AGATCGGAAGAGC
 
 
@@ -82,7 +82,7 @@ trimgalore:
     ################################################################
 sickle:
     # sickle uses a sliding window approach to remove low quality bases
-    # this can be used to trim both 3' and 5' ends  
+    # this can be used to trim both 3' and 5' ends
 
     #options
     # -q 20: minimum Phred quality score
@@ -105,7 +105,7 @@ trimmomatic:
     # this variable will be overriden if auto_remove != 0
     adapter: /ifs/apps/bio/trimmomatic-0.32/adapters/TruSeq2-PE.fa
 
-    # max mismatches in adapter sequence  
+    # max mismatches in adapter sequence
     mismatches: 1
 
     # accuracy thresholds. these values are (very roughly speaking) log-10
@@ -113,7 +113,7 @@ trimmomatic:
     # A threshold of 10 requires a perfect match of ~17bp (see above website)
     c_thresh: 10
 
-    # only used in paired end mode  
+    # only used in paired end mode
     p_thresh: 30
 
     #################################
@@ -139,7 +139,7 @@ trimmomatic:
     ##### fastx options
     ################################################################
 fastx:
-    # http://hannonlab.cshl.edu/fastx_toolkit/commandline.html#fastx_trimmer_usage 
+    # http://hannonlab.cshl.edu/fastx_toolkit/commandline.html#fastx_trimmer_usage
 
     # options
     # -f17 trim 17 bases from the 3 prime end
@@ -211,7 +211,7 @@ fastq_screen:
     options: --threads 10 --subset 100000
     ################################################################
     # fastq_screeen DATABASES
-    # fastq_screen requires paths to bowtie indices for all 
+    # fastq_screen requires paths to bowtie indices for all
     # contaminants. Remove the '#' in front of organisms if you are
     # interested in or add other ones using the same format
     # database prefix is mandatory!

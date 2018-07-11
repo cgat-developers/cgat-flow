@@ -284,7 +284,7 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
                         --guess-format=illumina-1.8
                         > %(fn)s.summary""")
 
-        cmd_process = " ; ".join(cmd_processors)
+        cmd_process = " ".join(cmd_processors)
         cmd_clean = self.cleanup()
 
         assert cmd_preprocess.strip().endswith(";")

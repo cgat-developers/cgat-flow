@@ -24,7 +24,7 @@ job:
 
 database:
     # database name
-    name: csvdb
+    url: sqlite:///./csvdb
 
     # ----------------------------------------------------------------
     # miRNA annotations

@@ -224,8 +224,8 @@ def setupTests(infile, outfile):
         "%(pipeline_options)s "
         "%(workflow_options)s "
         "config "
-        ">2 %(outfile)s.stderr "
-        "> %(outfile)s.log)")
+        "2> %(outfile)s.stderr "
+        "1> %(outfile)s.log)")
     P.run(statement)
 
     # obtain data - should overwrite pipeline.yml file

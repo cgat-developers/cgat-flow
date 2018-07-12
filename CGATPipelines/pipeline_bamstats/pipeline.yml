@@ -47,7 +47,7 @@ bam:
     ################################################################
 database:
 
-    name: csvdb
+    url: sqlite:///./csvdb
 
     ################################################################
     ## Location of database following the running pipeline_gtf_subset.py 

@@ -446,9 +446,6 @@ def loadExperimentLevelReadQualities(infile, outfile):
 def runFastqScreen(infiles, outfile):
     '''run FastqScreen on input files.'''
 
-    # variables required for statement built by FastqScreen()
-    tempdir = P.get_temp_dir(".")
-
     # configure job_threads with fastq_screen_options from PARAMS
     job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
     if len(job_threads) != 1:
@@ -456,15 +453,14 @@ def runFastqScreen(infiles, outfile):
 
     job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
 
-    # Create fastq_screen config file in temp directory
-    # using parameters from Pipeline.yml
-    with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
-                           "w") as f:
-        for i, k in list(PARAMS.items()):
+    tempdir = P.get_temp_dir(".")
+    conf_fn = os.path.join(tempdir, "fastq_screen.conf")
+    with IOTools.open_file(conf_fn, "w") as f:
+        for i, k in PARAMS.items():
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
 
-    m = PipelineMapping.FastqScreen(outdir="fastq_screen.dir/")
+    m = PipelineMapping.FastqScreen(config_filename=conf_fn)
     statement = m.build((infiles,), outfile)
     P.run(statement, job_memory="8G")
     shutil.rmtree(tempdir)

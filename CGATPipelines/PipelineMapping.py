@@ -1137,11 +1137,9 @@ class FastqScreen(Mapper):
 
     compress = True
 
-    def __init__(self,
-                 outdir=".",
-                 *args, **kwargs):
+    def __init__(self, config_filename, *args, **kwargs):
         Mapper.__init__(self, *args, **kwargs)
-        self.outdir = outdir
+        self.config_filename = config_filename
 
     def mapper(self, infiles, outfile):
         '''build mapping statement on infiles
@@ -1170,10 +1168,13 @@ class FastqScreen(Mapper):
             raise ValueError(
                 "unexpected number read files to map: %i " % nfiles)
 
-        outdir = self.outdir
-        statement = '''fastq_screen %%(fastq_screen_options)s
-                    --outdir %(outdir)s --conf %%(tempdir)s/fastq_screen.conf
-                    %(input_files)s >& %(outdir)s/fastqscreen.log;''' % locals()
+        config_filename = self.config_filename
+        outdir = os.path.dirname(outfile)
+        statement = ("fastq_screen %%(fastq_screen_options)s "
+                     "--outdir %(outdir)s "
+                     "--conf %(config_filename)s "
+                     "%(input_files)s "
+                     ">& %(outdir)s/fastqscreen.log; ") % locals()
         return statement
 
 

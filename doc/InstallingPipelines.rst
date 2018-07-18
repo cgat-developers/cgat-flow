@@ -28,7 +28,7 @@ Here are the steps::
         bash install-CGAT-tools.sh
 
         # install the development version (recommended, no production version yet):
-        bash install-CGAT-tools.sh --devel --no-dashboard [--location </full/path/to/folder/without/trailing/slash>]
+        bash install-CGAT-tools.sh --devel [--location </full/path/to/folder/without/trailing/slash>]
 
         # the code is downloaded in zip format by default. If you want to get a git clone, use:
            --git # for an HTTPS clone
@@ -41,7 +41,10 @@ Here are the steps::
            --ide
 
         # once the installation is finished, enable the conda environment as requested by the installation script:
-        source </full/path/to/folder/without/trailing/slash>/conda-install/bin/activate cgat-p
+        # NB: you probably want to automate this by adding the instructions below to your .bashrc
+        source </full/path/to/folder/without/trailing/slash>/conda-install/etc/profile.d/conda.sh
+        conda activate base
+        conda activate cgat-f
 
         # finally, please run the cgatflow command-line tool to check the installation:
         cgatflow --help

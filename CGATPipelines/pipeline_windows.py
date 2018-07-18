@@ -112,8 +112,8 @@ import re
 import glob
 import csv
 import numpy
-import sqlite3
 import pandas
+from rpy2.robjects import r as R
 
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
@@ -121,17 +121,16 @@ from CGATCore import Pipeline as P
 import CGATPipelines.PipelineWindows as PipelineWindows
 import CGATPipelines.PipelineTracks as PipelineTracks
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
-
-from rpy2.robjects import r as R
+from CGATPipelines.Report import run_report
 
 #########################################################################
 #########################################################################
 #########################################################################
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False})
 
@@ -207,8 +206,8 @@ def loadTagCounts(infiles, outfile):
        outfile: str
            filename of database loading logfile.
        '''
-    P.mergeAndLoad(infiles, outfile, columns=(0, 2),
-                   suffix=".tsv")
+    P.merge_and_load(infiles, outfile, columns=(0, 2),
+                     suffix=".tsv")
 
 
 # @P.add_doc(PipelineMappingQC.loadPicardDuplicateStats)
@@ -532,9 +531,9 @@ def loadCpgCompositionHistogram(infiles, outfile):
         filename for database load logfile
     '''
 
-    P.mergeAndLoad(infiles, outfile,
-                   regex="/(.*).cpghist.tsv.gz",
-                   row_wise=False)
+    P.merge_and_load(infiles, outfile,
+                     regex="/(.*).cpghist.tsv.gz",
+                     row_wise=False)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -605,9 +604,9 @@ def buildCpGCoverage(infiles, outfile):
 @merge(buildCpGCoverage, "cpg_coverage_by_reads.load")
 def loadCpGCoverage(infiles, outfile):
     '''load cpg coverage data - number of reads covering a CpG.'''
-    P.mergeAndLoad(infiles, outfile,
-                   regex="/(.*).cpg_coverage.gz",
-                   row_wise=False)
+    P.merge_and_load(infiles, outfile,
+                     regex="/(.*).cpg_coverage.gz",
+                     row_wise=False)
 
 
 @follows(loadCpGCoverage, loadCpGComposition, loadCpGAnnotation)
@@ -1000,7 +999,7 @@ def loadWindowsTagCounts(infile, outfile):
 def getInput(track):
     '''return a list of input tracks associated with track.
 
-    Associations can be defined in the .ini file in the section
+    Associations can be defined in the .yml file in the section
     [input]. For example, the following snippet associates track
     track1 with the bamfiles :file:`track1.bam` and :file:`track2.bam`::
 
@@ -1122,7 +1121,7 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
 
     # compute normalization ratios
     # total_input / total_column
-    # MM: note that the input in pipeline.ini needs to be the same
+    # MM: note that the input in pipeline.yml needs to be the same
     # as the dataframe header, not the actual filename
     ratios = {}
     for column in dataframe.columns:
@@ -1165,7 +1164,8 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
 
     # get all data
     dbhandle = P.connect()
-    data = pandas.read_sql("SELECT * FROM windows_counts", dbhandle)
+    tablename = IOTools.snip(os.path.basename(infile), ".load")
+    data = pandas.read_sql("SELECT * FROM {}".format(tablename), dbhandle)
 
     # remove interval_id column
     dataframe = data.drop(["interval_id"], axis=1).astype('float64')
@@ -2057,7 +2057,7 @@ def loadSpikeResults(infile, outfile):
         filename of database load logfile
     '''
     method = P.snip(os.path.dirname(outfile), '.dir')
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     tablename = '_'.join((tablename, method))
 
     P.load(infile, outfile, options='--add-index=fdr,power --allow-empty-file',
@@ -2256,9 +2256,9 @@ def loadDMRStats(infiles, outfile):
     outfile: str
         filename of database load logfile
     '''
-    P.concatenateAndLoad(infiles, outfile,
-                         missing_value=0,
-                         regex_filename=".*\/(.*).stats")
+    P.concatenate_and_load(infiles, outfile,
+                           missing_value=0,
+                           regex_filename=".*\/(.*).stats")
 
 # @merge( buildDMRBed, "dmr_overlap.tsv.gz" )
 # def computeDMROverlap( infiles, outfile ):
@@ -2708,7 +2708,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -2716,7 +2716,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 @follows(mkdir("%s/bamfiles" % PARAMS["web_dir"]),

@@ -53,7 +53,8 @@ def mapUCSCToEnsembl(genome):
 
 
 def annotateGenome(infile, outfile,
-                   only_proteincoding=False):
+                   only_proteincoding=False,
+                   job_memory="4G"):
     '''annotate genomic regions with reference gene set.
 
     The method applies the following filters to an ENSEMBL gene set:
@@ -116,11 +117,12 @@ def annotateGenome(infile, outfile,
     | gzip
     > %(outfile)s
     """
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
 
 def annotateGeneStructure(infile, outfile,
-                          only_proteincoding=False):
+                          only_proteincoding=False,
+                          job_memory="4G"):
     """annotate genomic regions with gene structure.
 
     The method applies the following filters to an ENSEMBL gene set:
@@ -184,7 +186,7 @@ def annotateGeneStructure(infile, outfile,
     | gzip
     > %(outfile)s
     """
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
 
 def buildFlatGeneSet(infile, outfile):
@@ -296,7 +298,7 @@ def buildProteinCodingGenes(infile, outfile):
     P.run(statement)
 
 
-def loadGeneInformation(infile, outfile, only_proteincoding=False):
+def loadGeneInformation(infile, outfile, only_proteincoding=False, job_memory="4G"):
     '''load gene-related attributes from :term:`gtf` file into database.
 
     This method takes transcript-associated features from an
@@ -316,8 +318,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
 
     '''
 
-    job_memory = "4G"
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf
@@ -346,7 +347,7 @@ def loadGeneInformation(infile, outfile, only_proteincoding=False):
     | %(load_statement)s
     > %(outfile)s'''
 
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
 
 def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
@@ -395,7 +396,7 @@ def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
       if not it will be set to NA
     '''
 
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     gtf_file = IOTools.open_file(geneset_gtf, "rb")
     gtf_iterator = GTF.transcript_iterator(GTF.iterator(gtf_file))
@@ -527,7 +528,7 @@ def loadTranscriptInformation(infile, outfile,
        If True, only consider protein coding genes.
 
     '''
-    table = P.toTable(outfile)
+    table = P.to_table(outfile)
 
     if only_proteincoding:
         filter_cmd = """cgat gtf2gtf
@@ -632,7 +633,7 @@ def loadPeptideSequences(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-protein_id"
         "--map=protein_id:str")
 
@@ -734,7 +735,7 @@ def loadGeneStats(infile, outfile):
     """
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--map=gene_name:str")
 
@@ -908,7 +909,7 @@ def loadTranscripts(infile, outfile):
 
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id "
         "--allow-empty-file ")
@@ -927,7 +928,7 @@ def loadGeneCoordinates(infile, outfile):
 
     # TS. remove transcript_id column as this is now meaningless
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--ignore-column=transcript_id "
         "--allow-empty-file ")
@@ -954,7 +955,7 @@ def loadTranscript2Gene(infile, outfile):
        Logfile. The table name is derived from `outfile`.
     '''
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id ")
 
@@ -984,7 +985,7 @@ def loadTranscriptStats(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=gene_id "
         "--add-index=transcript_id "
         "--map=gene_id:str")
@@ -1026,7 +1027,7 @@ def loadProteinStats(infile, outfile):
     '''
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=protein_id "
         "--map=protein_id:str")
 
@@ -1403,7 +1404,7 @@ def buildNUMTs(infile, outfile):
     os.unlink(tmpfile_mito)
 
 
-def sortGTF(infile, outfile, order="contig+gene"):
+def sortGTF(infile, outfile, order="contig+gene", job_memory="8G"):
     '''sort a gtf file.
 
     The sorting is performed on the cluster.
@@ -1430,17 +1431,15 @@ def sortGTF(infile, outfile, order="contig+gene"):
     else:
         compress = "cat"
 
-    job_memory = "4G"
-
     statement = '''%(uncompress)s %(infile)s
     | cgat gtf2gtf
     --method=sort --sort-order=%(order)s --log=%(outfile)s.log
     | %(compress)s > %(outfile)s'''
 
-    P.run(statement, job_memory="8G")
+    P.run(statement, job_memory=job_memory)
 
 
-def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
+def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles, job_memory="4G"):
     '''output a bed file with functional annotations.
 
     The genomic region a gene covers is taken from the `gtffile`.
@@ -1499,7 +1498,7 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles):
     statement = '''sort -k1,1 -k2,2n  < %(tmpfname)s | uniq
     | gzip > %(outfile_bed)s'''
 
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
     outf = IOTools.open_file(outfile_tsv, "w")
     outf.write("term\tdescription\n")

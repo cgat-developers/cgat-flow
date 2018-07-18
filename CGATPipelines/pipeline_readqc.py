@@ -7,7 +7,7 @@ The readqc pipeline imports unmapped reads from one or more input
 files and performs basic quality control steps. The pipeline performs
 also read pre-processing such as quality trimming or adaptor removal.
 
-Quality metrics are based on the fastqc tools, see
+Quality metrics are based on the FastQC tools, see
 http://www.bioinformatics.bbsrc.ac.uk/projects/fastqc/ for further
 details.
 
@@ -26,7 +26,7 @@ is as follows:
 2. Inspect the output to decide if and what kind of pre-processing is
    required.
 
-3. Edit the configuration file ``pipeline.ini`` to activate
+3. Edit the configuration file ``pipeline.yml`` to activate
    pre-processing and parameterize it appropriately. Note that
    parameters can be set on a per-sample basis.
 
@@ -44,7 +44,7 @@ is as follows:
 Configuration
 -------------
 
-See :file:`pipeline.ini` for setting configuration values affecting
+See :file:`pipeline.yml` for setting configuration values affecting
 the workflow (pre-processing or no pre-processing) and options for
 various pre-processing tools.
 
@@ -115,7 +115,7 @@ Requirements:
 
 # import ruffus
 from ruffus import transform, merge, follows, mkdir, regex, suffix, \
-    jobs_limit, subdivide, collate, active_if, originate
+    jobs_limit, subdivide, collate, active_if, originate, split, formatter
 
 # import useful standard python modules
 import sys
@@ -132,12 +132,13 @@ from CGATCore import Pipeline as P
 import CGATPipelines.PipelineReadqc as PipelineReadqc
 import CGATPipelines.PipelinePreprocess as PipelinePreprocess
 import CGATCore.IOTools as IOTools
+from CGATPipelines.Report import run_report
 
 # load options from the config file
 PARAMS = P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # define input files and preprocessing steps
 # list of acceptable input formats
@@ -146,7 +147,7 @@ INPUT_FORMATS = ["*.fastq.1.gz", "*.fastq.gz",
 
 # Regular expression to extract a track from an input file. Does not preserve
 # a directory as part of the track.
-REGEX_TRACK = r"([^/]+).(fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
+REGEX_TRACK = r"(?P<track>[^/]+).(?P<suffix>fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
 
 # Regular expression to extract a track from both processed and unprocessed
 # files
@@ -174,7 +175,7 @@ def unprocessReads(infiles, outfiles):
 # already been generated in the first run
 if PARAMS.get("preprocessors", None):
     if PARAMS["auto_remove"]:
-        # check if fastqc has been run
+        # check if FastQC has been run
         for x in IOTools.flatten([glob.glob(y) for y in INPUT_FORMATS]):
             f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
@@ -191,9 +192,6 @@ if PARAMS.get("preprocessors", None):
             '''Make a single fasta file for each sample of all contaminant adaptor
             sequences for removal
             '''
-
-            print(infile)
-            print(REGEX_TRACK)
 
             PipelinePreprocess.makeAdaptorFasta(
                 infile=infile,
@@ -315,13 +313,13 @@ else:
         """dummy task - no processing of reads."""
 
 
-@active_if(PARAMS["general_reconcile"] == 1)
+@active_if(PARAMS["reconcile"] == 1)
 @follows(mkdir("reconciled.dir"))
 @transform(processReads, regex(
     r"processed.dir\/trimmed-(.*)\.fastq\.1\.gz"),
     r"reconciled.dir/trimmed-\1.fastq.1.gz")
 def reconcileReads(infile, outfile):
-    if PARAMS["general_reconcile"] == 1:
+    if PARAMS["reconcile"] == 1:
         in1 = infile
         in2 = infile.replace(".fastq.1.gz", ".fastq.2.gz")
         outfile = outfile.replace(".fastq.1.gz",  "")
@@ -336,31 +334,30 @@ def reconcileReads(infile, outfile):
 
 
 @follows(reconcileReads)
-@follows(mkdir(PARAMS["exportdir"]),
-         mkdir(os.path.join(PARAMS["exportdir"], "fastqc")))
+@follows(mkdir("fastqc.dir"))
 @transform((unprocessReads, processReads),
-           regex(REGEX_TRACK),
-           r"\1.fastqc")
-def runFastqc(infiles, outfile):
-    '''run Fastqc on each input file.
+           formatter(REGEX_TRACK),
+           r"fastqc.dir/{track[0]}.fastqc")
+def runFastQC(infiles, outfile):
+    '''run FastQC on each input file.
 
     convert sra files to fastq and check mapping qualities are in
     solexa format.  Perform quality control checks on reads from
     .fastq files.
+
     '''
-    # MM: only pass the contaminants file list if requested by user,
-    # do not make this the default behaviour
-    if PARAMS['use_custom_contaiminants']:
-        m = PipelineMapping.FastQc(nogroup=PARAMS["readqc_no_group"],
-                                   outdir=PARAMS["exportdir"] + "/fastqc",
+    # only pass the contaminants file list if requested by user,
+    if PARAMS['use_custom_contaminants']:
+        m = PipelineMapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+                                   outdir=os.path.dirname(outfile),
                                    contaminants=PARAMS['contaminants_path'],
                                    qual_format=PARAMS['qual_format'])
     else:
-        m = PipelineMapping.FastQc(nogroup=PARAMS["readqc_no_group"],
-                                   outdir=PARAMS["exportdir"] + "/fastqc",
+        m = PipelineMapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+                                   outdir=os.path.dirname(outfile),
                                    qual_format=PARAMS['qual_format'])
 
-    if PARAMS["general_reconcile"] == 1:
+    if PARAMS["reconcile"] == 1:
         infiles = infiles.replace("processed.dir/trimmed",
                                   "reconciled.dir/trimmed")
 
@@ -368,82 +365,53 @@ def runFastqc(infiles, outfile):
     P.run(statement)
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(runFastqc, suffix(".fastqc"), "_fastqc.load")
-def loadFastqc(infile, outfile):
-    '''load FASTQC stats into database.'''
-    track = P.snip(infile, ".fastqc")
-    filename = os.path.join(
-        PARAMS["exportdir"], "fastqc", track + "*_fastqc", "fastqc_data.txt")
-    PipelineReadqc.loadFastqc(filename,
-                              database_url=PARAMS["database"]["url"])
-    IOTools.touch_file(outfile)
+@split(runFastQC, ["fastqc_basic_statistics.tsv.gz", "fastqc_*.tsv.gz"])
+def summarizeFastQC(infiles, outfiles):
+    all_files = []
+    for infile in infiles:
+        track = P.snip(infile, ".fastqc")
+        all_files.extend(glob.glob(
+            os.path.join(track + "*_fastqc",
+                         "fastqc_data.txt")))
+
+    dfs = PipelineReadqc.read_fastqc(
+        all_files)
+
+    for key, df in dfs.items():
+        fn = re.sub("basic_statistics", key, outfiles[0])
+        E.info("writing to {}".format(fn))
+        with IOTools.open_file(fn, "w") as outf:
+            df.to_csv(outf, sep="\t", index=True)
 
 
-@follows(mkdir(PARAMS["exportdir"]),
-         mkdir(os.path.join(PARAMS["exportdir"], "fastq_screen")))
-@active_if(PARAMS["fastq_screen_run"] == 1)
-@transform((unprocessReads, processReads),
-           regex(REGEX_TRACK_BOTH),
-           r"%s/fastq_screen/\2.fastqscreen" % PARAMS['exportdir'])
-def runFastqScreen(infiles, outfile):
-    '''run FastqScreen on input files.'''
-
-    # variables required for statement built by FastqScreen()
-    tempdir = P.get_temp_dir(".")
-    outdir = os.path.join(PARAMS["exportdir"], "fastq_screen")
-
-    # configure job_threads with fastq_screen_options from PARAMS
-    job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
-    if len(job_threads) != 1:
-        raise ValueError("Wrong number of threads for fastq_screen")
-
-    job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
-    job_memory = "8G"
-
-    # Create fastq_screen config file in temp directory
-    # using parameters from Pipeline.ini
-    with IOTools.open_file(os.path.join(tempdir, "fastq_screen.conf"),
-                           "w") as f:
-        for i, k in list(PARAMS.items()):
-            if i.startswith("fastq_screen_database"):
-                f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
-
-    m = PipelineMapping.FastqScreen()
-    statement = m.build((infiles,), outfile)
-    P.run(statement)
-    shutil.rmtree(tempdir)
-    IOTools.touch_file(outfile)
-
-
-@merge(runFastqc, "status_summary.tsv.gz")
+@merge(runFastQC, "fastqc_status_summary.tsv.gz")
 def buildFastQCSummaryStatus(infiles, outfile):
-    '''load fastqc status summaries into a single table.'''
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildFastQCSummaryStatus(infiles, outfile, exportdir)
+    '''load FastQC status summaries into a single table.'''
+    PipelineReadqc.buildFastQCSummaryStatus(
+        infiles,
+        outfile,
+        "fastqc.dir")
 
 
-@follows(loadFastqc)
-@merge(runFastqc, "basic_statistics_summary.tsv.gz")
-def buildFastQCSummaryBasicStatistics(infiles, outfile):
-    '''load fastqc summaries into a single table.'''
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildFastQCSummaryBasicStatistics(infiles, outfile,
-                                                     exportdir)
+@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
+@transform((summarizeFastQC, buildFastQCSummaryStatus),
+           suffix(".tsv.gz"), ".load")
+def loadFastQC(infile, outfile):
+    '''load FASTQC stats into database.'''
+    P.load(infile, outfile, options="--add-index=track")
 
 
-@follows(mkdir("experiment.dir"), loadFastqc)
-@collate(runFastqc,
-         regex("(processed.dir/)*(.*)-([^-]*).fastqc"),
-         r"experiment.dir/\2_per_sequence_quality.tsv")
+@follows(mkdir("experiment.dir"), loadFastQC)
+@collate(runFastQC,
+         formatter("(processed.dir/)*(?P<track>[^/]+)-([^-]+).fastqc"),
+         r"experiment.dir/{track[0]}_per_sequence_quality.tsv")
 def buildExperimentLevelReadQuality(infiles, outfile):
+    """Collate per sequence read qualities for all replicates per
+    experiment.  Replicates are the last part of a filename,
+    eg. Experiment-R1, Experiment-R2, etc.
+
     """
-    Collate per sequence read qualities for all replicates per experiment.
-    Replicates are the last part of a filename, eg. Experiment-R1,
-    Experiment-R2, etc.
-    """
-    exportdir = os.path.join(PARAMS["exportdir"], "fastqc")
-    PipelineReadqc.buildExperimentReadQuality(infiles, outfile, exportdir)
+    PipelineReadqc.buildExperimentReadQuality(infiles, outfile, "fastqc.dir")
 
 
 @collate(buildExperimentLevelReadQuality,
@@ -470,17 +438,64 @@ def loadExperimentLevelReadQualities(infile, outfile):
     P.load(infile, outfile)
 
 
+@active_if(PARAMS["fastq_screen_run"] == 1)
+@follows(mkdir("fastq_screen.dir"))
+@transform((unprocessReads, processReads),
+           regex(REGEX_TRACK_BOTH),
+           r"fastq_screen.dir/\2.fastqscreen")
+def runFastqScreen(infiles, outfile):
+    '''run FastqScreen on input files.'''
+
+    # configure job_threads with fastq_screen_options from PARAMS
+    job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
+    if len(job_threads) != 1:
+        raise ValueError("Wrong number of threads for fastq_screen")
+
+    job_threads = int(re.sub(r'--threads ', '', job_threads[0]))
+
+    tempdir = P.get_temp_dir(".")
+    conf_fn = os.path.join(tempdir, "fastq_screen.conf")
+    with IOTools.open_file(conf_fn, "w") as f:
+        for i, k in PARAMS.items():
+            if i.startswith("fastq_screen_database"):
+                f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
+
+    m = PipelineMapping.FastqScreen(config_filename=conf_fn)
+    statement = m.build((infiles,), outfile)
+    P.run(statement, job_memory="8G")
+    shutil.rmtree(tempdir)
+    IOTools.touch_file(outfile)
+
+
+@active_if(PARAMS["fastq_screen_run"] == 1)
+@merge(runFastqScreen,
+       ["fastqscreen_summary.tsv.gz", "fastqscreen_details.tsv.gz"])
+def summarizeFastqScreen(infiles, outfiles):
+    all_files = []
+    for infile in infiles:
+        all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
+    if len(all_files) == 0:
+        E.warn("no fastqcscreen results to concatenate")
+        for x in outfiles:
+            IOTools.touch_file(x)
+        return
+    df_summary, df_details = PipelineReadqc.read_fastq_screen(
+        all_files)
+    df_summary.to_csv(outfiles[0], sep="\t", index=True)
+    df_details.to_csv(outfiles[1], sep="\t", index=True)
+
+
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform((buildFastQCSummaryStatus, buildFastQCSummaryBasicStatistics),
-           suffix(".tsv.gz"), ".load")
-def loadFastqcSummary(infile, outfile):
+@transform(summarizeFastqScreen,
+           suffix(".tsv"), ".load")
+def loadFastqScreen(infile, outfile):
+    '''load FASTQC stats into database.'''
     P.load(infile, outfile, options="--add-index=track")
 
 
-@follows(loadFastqc,
-         loadFastqcSummary,
-         loadExperimentLevelReadQualities,
-         runFastqScreen)
+@follows(loadFastQC,
+         loadFastqScreen,
+         loadExperimentLevelReadQualities)
 def full():
     pass
 
@@ -490,8 +505,11 @@ def full():
 def renderMultiqc(infile):
     '''build mulitqc report'''
 
-    statement = '''LANG=en_GB.UTF-8 multiqc . -f;
-                   mv multiqc_report.html MultiQC_report.dir/'''
+    statement = (
+        "export LANG=en_GB.UTF-8 && "
+        "export LC_ALL=en_GB.UTF-8 && "
+        "multiqc . -f && "
+        "mv multiqc_report.html MultiQC_report.dir/")
 
     P.run(statement)
 
@@ -502,7 +520,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 def main(argv=None):

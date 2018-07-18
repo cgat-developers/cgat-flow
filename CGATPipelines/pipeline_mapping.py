@@ -45,10 +45,10 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 The sphinxreport report requires a :file:`conf.py` and
-:file:`sphinxreport.ini` file (see :ref:`PipelineReporting`). To start
+:file:`sphinxreport.yml` file (see :ref:`PipelineReporting`). To start
 with, use the files supplied with the Example_ data.
 
 Input
@@ -220,9 +220,9 @@ import CGATPipelines.PipelineWindows as PipelineWindows
 
 # Pipeline configuration
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"],
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"],
     defaults={
         'paired_end': False})
 
@@ -967,7 +967,7 @@ def mapReadsWithTophat2(infiles, outfile):
             " --transcriptome-index=%s -n 2" % prefix
 
     statement = m.build((infile,), outfile)
-    P.run(statement)
+    P.run(statement, job_condaenv="tophat2")
 
 ############################################################
 ############################################################
@@ -1909,7 +1909,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
     @collate(countReads,
              regex("%s.nreads" % PARAMS["merge_pattern_input"]),
-             r"%s.nreads" % PARAMS["merge_pattern_output"],
+             r"nreads.dir/%s.nreads" % PARAMS["merge_pattern_output"],
              )
     def mergeReadCounts(infiles, outfile):
         '''merge read counts files from the same experiment using
@@ -1968,12 +1968,16 @@ def loadReadCounts(infiles, outfile):
 
     '''
 
+    # ensure no duplication of input/output when
+    # mergeReadCounts isn't performed on a pattern
+    infiles = set(infiles)
+
     outf = P.get_temp_file(".")
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
-        track = P.snip(infile, ".nreads")
-        lines = IOTools.open_file(infile).readlines()
-        nreads = int(lines[0][:-1].split("\t")[1])
+        track = os.path.basename(P.snip(infile, ".nreads"))
+        line = IOTools.open_file(infile).readline()
+        nreads = int(line[:-1].split("\t")[1])
         outf.write("%s\t%i\n" % (track, nreads))
     outf.close()
 
@@ -2064,7 +2068,7 @@ def loadBigWigStats(infiles, outfile):
                         for x in infiles])
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=track")
 
     statement = '''cgat combine_tables

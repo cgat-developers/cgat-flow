@@ -22,7 +22,7 @@ import CGATCore.CSV as CSV
 PARAMS = {}
 
 
-def createGOFromENSEMBL(infile, outfile):
+def createGOFromENSEMBL(infile, outfile, job_memory="5G"):
     """get GO assignments from ENSEMBL
 
     Download GO assignments from the ENSEMBL database and store in
@@ -53,7 +53,7 @@ def createGOFromENSEMBL(infile, outfile):
     > %(outfile)s.log
     '''
 
-    P.run(statement, job_memory="5G")
+    P.run(statement, job_memory=job_memory)
 
 
 def createGOFromGeneOntology(infile, outfile):
@@ -273,7 +273,7 @@ def getGODescriptions(infile):
         table[fields.index("description")])])
 
 
-def createGOSlimFromENSEMBL(infile, outfile):
+def createGOSlimFromENSEMBL(infile, outfile, job_memory="5G"):
     """build GO SLIM assignments.
 
     This method downloads a GOSlim specification
@@ -311,15 +311,13 @@ def createGOSlimFromENSEMBL(infile, outfile):
     P.run(statement)
 
     E.info("mapping GO to GOSlim")
-    job_memory = "5G"
     statement = '''
     map2slim -outmap %(outfile)s.map
     %(goslim_fn)s
     %(ontology_fn)s
     '''
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
-    job_memory = "5G"
     statement = '''
     zcat < %(infile)s
     | cgat runGO
@@ -330,7 +328,7 @@ def createGOSlimFromENSEMBL(infile, outfile):
     | gzip
     > %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, job_memory=job_memory)
 
 
 def runGOFromFiles(outfile,
@@ -402,7 +400,7 @@ def runGOFromFiles(outfile,
 
     options = " ".join(options)
     statement = '''
-    cgat runGO 
+    cgat runGO
     --filename-input=%(go_file)s
     --genes-tsv-file=%(fg_file)s
     --output-filename-pattern='%(outdir)s/%%(set)s.%%(go)s.%%(section)s'

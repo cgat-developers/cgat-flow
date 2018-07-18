@@ -1,7 +1,7 @@
 
 # This environment will include other dependencies to assist with the development and running of pipelines
 
-name: cgat-p
+name: cgat-f
 
 channels:
 - bioconda
@@ -9,6 +9,7 @@ channels:
 - defaults
 
 dependencies:
+- sphinxcontrib-programoutput
 - sphinx_bootstrap_theme
 - rstudio
 - spyder

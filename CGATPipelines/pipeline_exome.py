@@ -161,14 +161,18 @@ Code
 """
 
 # load modules
-from ruffus import *
-from ruffus.combinatorics import *
+from ruffus import transform, mkdir, follows, merge, regex, suffix, \
+    jobs_limit, files, collate, add_inputs, formatter, \
+    active_if
+from ruffus.combinatorics import permutations
 import sys
 import os
 import csv
 import glob
 import re
 import shutil
+import decimal
+import pandas as pd
 import CGATCore.Experiment as E
 import CGATCore.IOTools as IOTools
 from CGATCore import Pipeline as P
@@ -176,8 +180,7 @@ import CGATPipelines.PipelineMapping as PipelineMapping
 import CGATPipelines.PipelineMappingQC as PipelineMappingQC
 import CGATPipelines.PipelineExome as PipelineExome
 import CGATPipelines.PipelineExomeAncestry as PipelineExomeAncestry
-import decimal
-import pandas as pd
+from CGATPipelines.Report import run_report
 
 ###############################################################################
 ###############################################################################
@@ -185,10 +188,9 @@ import pandas as pd
 # load options from the config file
 
 
-P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0], "pipeline.ini"])
+PARAMS = P.get_parameters(
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0], "pipeline.yml"])
 
-PARAMS = P.PARAMS
 INPUT_FORMATS = ("*.fastq.1.gz", "*.fastq.gz", "*.sra", "*.csfasta.gz")
 REGEX_FORMATS = regex(r"(\S+).(fastq.1.gz|fastq.gz|sra|csfasta.gz)")
 
@@ -213,7 +215,7 @@ def loadROI(infile, outfile):
     '''Import regions of interest bed file into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
     header = "chr,start,stop,feature"
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -231,7 +233,7 @@ def loadROI(infile, outfile):
 def loadROI2Gene(infile, outfile):
     '''Import genes mapping to regions of interest bed file into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -248,7 +250,7 @@ def loadROI2Gene(infile, outfile):
 def loadSamples(infile, outfile):
     '''Import sample information into SQLite.'''
     scriptsdir = PARAMS["general_scriptsdir"]
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
               --ignore-empty
@@ -686,15 +688,17 @@ def loadNDR(infile, outfile):
            r"variants/all_samples.snpeff.vcf")
 def annotateVariantsSNPeff(infile, outfile):
     '''Annotate variants using SNPeff'''
-    job_options = "-l mem_free=6G"
+    job_memory = PARAMS["annotation_memory"]
     job_threads = PARAMS["annotation_threads"]
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
-    statement = '''snpEff eff
-                   -c %(config)s
-                   -v %(snpeff_genome)s
-                   -o gatk %(infile)s > %(outfile)s''' % locals()
-    P.run(statement)
+    statement = (
+        "snpEff -Xmx%(job_memory)s "
+        "eff "
+        "-c %(config)s "
+        "-v %(snpeff_genome)s "
+        "-o gatk %(infile)s > %(outfile)s" % locals())
+    P.run(statement, job_memory=PARAMS["annotation_memory"])
 
 ###############################################################################
 
@@ -962,7 +966,7 @@ def annotateVariantsSNPsift():
            r"variants/all_samples.vep.vcf")
 def annotateVariantsVEP(infile, outfile):
     '''
-    Adds annotations as specified in the pipeline.ini using Ensembl
+    Adds annotations as specified in the pipeline.yml using Ensembl
     variant effect predictor (VEP).
     '''
     # infile - VCF
@@ -1271,7 +1275,7 @@ def ancestry():
 def qualityFilterVariants(infile, outfiles):
     '''
     Filter variants based on quality.  Columns to filter on and
-    how they should be filtered can be specified in the pipeline.ini.
+    how they should be filtered can be specified in the pipeline.yml.
     Currently only implemented to filter numeric columns.  "." is assumed
     to mean pass.
     '''
@@ -1288,7 +1292,7 @@ def qualityFilterVariants(infile, outfiles):
 def rarityFilterVariants(infiles, outfiles):
     '''
     Filter out variants which are common in any of the exac or other
-    population datasets as specified in the pipeline.ini.
+    population datasets as specified in the pipeline.yml.
     '''
     infile = infiles[0]
     thresh = PARAMS['filtering_rarethresh']
@@ -1306,7 +1310,7 @@ def damageFilterVariants(infiles, outfiles):
     '''
     Filter variants which have not been assessed as damaging by any
     of the specified tools.
-    Tools and thresholds can be specified in the pipeline.ini.
+    Tools and thresholds can be specified in the pipeline.yml.
 
     Does not account for multiple alt alleles - if any ALT allele has
     been assessed as damaging with any tool the variant is kept,
@@ -2003,7 +2007,7 @@ def loadVCFstats(infiles, outfile):
     '''Import variant statistics into SQLite'''
     scriptsdir = PARAMS["general_scriptsdir"]
     filenames = " ".join(infiles)
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
     E.info("Loading vcf stats...")
     statement = '''cgat vcfstats2db %(filenames)s >>
                    %(outfile)s; '''
@@ -2147,14 +2151,14 @@ def publish():
 def build_report():
     '''build report from scratch.'''
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
 def update_report():
     '''update report.'''
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

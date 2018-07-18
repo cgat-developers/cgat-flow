@@ -1,0 +1,201 @@
+################################################################
+#
+#
+# Pipeline pipeline_enrichment.py configuration file for sphinxreport
+#
+# This pipeline.ini file lists some configuration options that you might 
+# want a user to set automatically.
+#
+# Add pipeline specific options into separate sections
+#
+################################################################
+## general options
+# Project name
+
+projectname: CGATProject
+
+# Copyright statement
+copyright: CGAT (2010-2014)
+
+# The short X.Y version.
+version: 0.1
+
+# The full version, including alpha/beta/rc tags.
+release: 0.1
+
+########################################################
+# directory where exported data is located
+exportdir: export
+
+############################################################
+# Options for running each enrichment analysis
+############################################################
+analysis:
+    # Analysis type, options are:
+    # GSEA (Geneset enrichment analysis) and
+    # ORA  (Over Representative Analysis)
+    gsea: 1
+    ora: 1
+
+    ##########################################################
+    # Parameters for GSEA analysis.
+
+
+id_gsea:
+    # id type of input gene list.
+    type: entrez
+    # which gene id type is used for the analysis
+    # can be ensemblg, entrez or symbol
+    # The analysis will be based on this ID type 
+    # for symbol, append the organism id of the species.
+    # e.g. symbol_Homo_sapiens, symbol_Mus_musculus
+    ## organism id in entrez - 9606 = human, 10090 = mouse
+    # others here: http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/
+    # NOTE:id type of gene list and gene set should be same. This option is 
+    # only for translating gene list id to your required id type.
+    to_convert: entrez
+
+geneset:
+    # path to geneset
+    name: /ifs/mirror/gsea/geneset.gmt
+
+db_gsea:
+    # path to a annotated database generated using pipeline_geneinfo.py
+    name: /ifs/projects/reshma/DATABASE/human_db_110817
+
+stats_gsea:
+    # details of statistical tests for enrichment
+
+    # Minimum size of a gene set.Gene sets smaller than this are excluded 
+    # from the analysis
+    min_size: 25
+
+    # Maximum size of a gene set. Gene sets larger than this are excluded from the analysis
+    max_size: 500
+
+    # A number use to initialize a pseudorandom number generator
+    seed: 42
+
+    # Number of permutations to perform in assessing the statistical significance of the enrichment score 
+    permut: 10
+
+    # Number of gene sets to display enrichment plots (plots will be displayed for the specified 
+    # number of gene sets with the highest absolute normalized enrichment scores (each phenotype) 
+    display_num: 5
+
+    # Number of top scoring gene sets, which is used for leading edge analysis
+    ngeneset: 10
+    ###########################################################
+
+
+
+    ###########################################################
+    # Parameters for ORA analysis
+db:
+    # path to a database generated using pipeline_geneinfo.py
+    name: /ifs/projects/katherineb/pipeline_enrichment_testing/OO2/humannew
+    # common name of species - human, mouse, rat etc.
+    species: human
+
+id:
+    # which gene id type is used for the input gene lists
+    # can be ensemblg, entrez or symbol
+    # the analysis will be based on this ID type and the all genes background will be
+    # all IDs of this type in this organism
+    # NOTE - if this is ensemblg, all ensemblg IDs will be used as a background, including multiple
+    # identifiers for the same gene
+    # for symbol, append the scientific name of the species the gene ids are from
+    # e.g. symbol_Homo_sapiens, symbol_Mus_musculus
+    type: symbol_Homo_sapiens
+
+
+stats:
+    # details of statistical tests for enrichment
+
+    # how to identifiy enriched terms - currently implemented are termbyterm - look for
+    # enrichment of each term irrespective of other terms and elim - prioritise
+    # more derived parts of the ontology using the elim method described in 
+    # http://bioinformatics.oxfordjournals.org/content/22/13/1600.full.pdf
+    runtype: elim
+
+    # which statistical test to use to look for enrichment of each term
+    # currently only Fisher has been implemented
+    testtype: Fisher
+
+    # correction for multiple testing to apply - currently only bon (bonferroni)
+    # has been implemented
+    correction: bon
+
+    # minimum significant accepted pvalue
+    thresh: 0.05
+
+    # if 1 write the lists of genes in the foreground and background which are
+    # annotated to the most enriched terms in each database to tsv files
+    # in the results.dir directory
+    writegenes: 1
+    # the number of enriched terms for which to write gene lists for each database
+    # using a high number here may result in a very large number of files
+    # as file count will be number of foregrounds * number of backgrounds * ngenes
+    ngenes: 5
+
+annotation_flatfiles:
+    # strings specifying the options for parsing any additional files containing annotations
+    # options are described in the pipeline module file
+    # any number of flatfiles can be specified in this section as 1=, 2=, 3= etc.
+    1: -p DO -l /ifs/mirror/disease_ontology/do_rif.human.txt -k 0 -o 4 -ont /ifs/mirror/disease_ontology/doid.obo -ids entrez
+
+hpa:
+    # option to generate a background geneset using the human protein atlas (via R package
+    # hpar
+    # applicable for lists of genes from humans only
+
+    # 1 = generate a hpa background
+    run: 1
+
+    # comma delimited list tissues to build a background for - choose from 
+    #
+    #"adrenal gland"     "appendix"          "bone marrow"      
+    #"breast"            "bronchus"          "cerebellum"       
+    #"cerebral cortex"   "cervix, uterine"   "colon"            
+    #"duodenum"          "endometrium 1"     "endometrium 2"    
+    #"epididymis"        "esophagus"         "fallopian tube"   
+    #"gallbladder"       "heart muscle"      "hippocampus"      
+    #"kidney"            "lateral ventricle" "liver"            
+    #"lung"              "lymph node"        "nasopharynx"      
+    #"oral mucosa"       "ovary"             "pancreas"         
+    #"parathyroid gland" "placenta"          "prostate"         
+    #"rectum"            "salivary gland"    "seminal vesicle"  
+    #"skeletal muscle"   "skin 1"            "skin 2"           
+    #"small intestine"   "smooth muscle"     "soft tissue 1"    
+    #"soft tissue 2"     "spleen"            "stomach 1"        
+    #"stomach 2"         "testis"            "thyroid gland"    
+    #"tonsil"            "urinary bladder"   "vagina"       
+    tissue: [kidney,liver]
+
+    # minimum level of expression in hpa - can be low, medium or high
+    minlevel: low
+
+    # 1 = filter on hpa expression labelled with "Reliability = Supportive" and
+    # remove "Reliability = Uncertain"
+    # 0 = do not filter based on reliability
+    supportive: 1
+
+plots:
+    barcolor: #d95f02
+
+cytoscape:
+    # paths to files containing lists of IDs included in the cytoscape
+    # gene set network files
+    go: /ifs/mirror/cytoscape/cytoscape_goterms.tsv
+    reactome: /ifs/mirror/cytoscape/cytoscape_reactometerms.tsv
+
+    ################################################################
+    #
+    # sphinxreport build options
+    #
+    ################################################################
+report:
+
+    # prefix to use for publishing the report from this pipeline
+    prefix: default
+

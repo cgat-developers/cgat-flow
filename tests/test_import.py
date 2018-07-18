@@ -33,28 +33,14 @@ from nose.tools import ok_
 EXPRESSIONS = (
     ('tests', 'tests/*.py'),
     ('scripts', 'scripts/*.py'),
-    ('optic', 'scripts/optic/*.py'),
-    ('gpipe', 'scripts/gpipe/*.py'),
-    ('CGAT', 'CGAT/*.py'),
     ('CGATPipelines', 'CGATPipelines/*.py'))
 
 # Scripts to exclude as they fail imports.
 EXCLUDE = (
     # No need to check cgat_check_deps.py
     'cgat_check_deps',
-    # The following fail because of pybedtools
-    # compilation fails. Reason why it triggers
-    # recompilation or why it fails is unknown
-    # (it seems using C compiler for C++ code).
-    'pipeline_intervals',
-    'PipelinePeakcalling',
-    'pipeline_peakcalling',
-    'bam2transcriptContribution',
-    'beds2counts',
-    'fasta2bed',
-    # The following fail because of pyximport
-    # problems
-    'bed2table',)
+    # No need to check conda.py
+    'conda',)
 
 
 def check_import(filename, outfile):

@@ -513,7 +513,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     o.close()
 
     # check the filtering is done correctly - write a log file
-    # if unpaired is specified in bamfilters in the pipeline.ini
+    # if unpaired is specified in bamfilters in the pipeline.yml
     # remove reads whose mate has been filtered out elsewhere
 
     T = P.get_temp_filename(".")
@@ -1861,7 +1861,7 @@ class SicerPeakcaller(Peakcaller):
             control = "--control-bam-file=%(controlfile)s\
             --control-offset=%(offset)i" % locals()
 
-        tablename = P.toTable(outfile) + "_regions"
+        tablename = P.to_table(outfile) + "_regions"
         load_statement = P.build_load_statement(
             tablename,
             options="--add-index=contig,start "

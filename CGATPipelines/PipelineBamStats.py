@@ -55,124 +55,6 @@ def getNumReadsFromReadsFile(infile):
     return nreads
 
 
-def getStrandSpecificity(infile, outfile, iterations):
-    '''
-    This code will determine the strand specificity of your reads
-    for calculating library strandness.
-
-    The nomencalture used is documented in the salmon documentation:
-    http://salmon.readthedocs.io/en/latest/library_type.html
-
-    The code relies heavily on pysam to determin read orientation.
-
-    For single-end data:
-    Determining which read the strand is on is straightforward using pysam
-    function .is_reversed.
-
-    For paired-end data:
-    The relative position of read1 and read2 needs to be determined including
-    orientation relative to each other.
-    '''
-    outfile = IOTools.open_file(outfile, "w")
-    samfile = pysam.Samfile(infile)
-
-    n = 0
-
-    # initialise counts for each library type
-    MSR = 0
-    MSF = 0
-    ISF = 0
-    ISR = 0
-    OSF = 0
-    OSR = 0
-    SR = 0
-    SF = 0
-
-    reads_processed = set()
-
-    for read in samfile:
-
-        n += 1
-        if n <= int(iterations):
-
-            # to handle paired end reads:
-            if read.is_paired and read.is_proper_pair:
-                if read.qname in reads_processed:
-                    pass
-                else:
-
-                    # get attributes of read
-                    read_start = read.reference_start
-                    read_end = read.reference_end
-                    read_neg = read.is_reverse
-
-                    # specify which read is R1 and which is R2:
-                    # specify which read is R1 and which is R2:
-                    if read.is_read1 is True:
-                        R1_is_reverse = read.is_reverse
-                        R1_reference_start = read.reference_start
-
-                        R2_is_reverse = read.mate_is_reverse
-                        R2_reference_start = read.next_reference_start
-                    else:
-                        R1_is_reverse = read.mate_is_reverse
-                        R1_reference_start = read.next_reference_start
-
-                        R2_is_reverse = read.is_reverse
-                        R2_reference_start = read.reference_start
-
-                        # Decision tree to specify strandness:
-                        # potential to convert this to a machine learning
-                        # decision tree algorithm in the future:
-                    if R1_is_reverse is True:
-
-                        if R2_is_reverse is True:
-
-                            MSF += 1
-                        else:
-                            if R2_reference_start - R1_reference_start >= 0:
-                                OSR += 1
-                            else:
-                                ISR += 1
-
-                    else:
-
-                        if R2_is_reverse is True:
-
-                            if R1_reference_start - R2_reference_start >= 0:
-
-                                OSF += 1
-                            else:
-                                ISF += 1
-                        else:
-                            MSR += 1
-            else:
-                if read.is_reverse:
-                    SR += 1
-                else:
-                    SF += 1
-        else:
-            break
-    total = MSR + ISR + OSR + ISF + MSF + OSF + SF + SR
-
-    def total_percent(strand, total):
-        return float(strand) / float(total) * 100
-
-    MSR_total = total_percent(MSR, total)
-    ISR_total = total_percent(ISR, total)
-    OSR_total = total_percent(OSR, total)
-    ISF_total = total_percent(ISF, total)
-    MSF_total = total_percent(MSF, total)
-    OSF_total = total_percent(OSF, total)
-    SF_total = total_percent(SF, total)
-    SR_total = total_percent(SR, total)
-
-    outfile.write("MSR\tISR\tOSR\tISF\tMSF\tOSF\tSF\tSR\n")
-    outfile.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %
-                  (MSR_total, ISR_total, OSR_total, ISF_total, MSF_total, OSF_total,
-                   SF_total, SR_total))
-
-
 def buildPicardInsertSizeStats(infile, outfile, genome_file):
     '''run Picard:CollectInsertSizeMetrics
     Collect insert size statistics.
@@ -502,7 +384,7 @@ def summarizeTagsWithinContext(tagfile,
                                contextfile,
                                outfile,
                                min_overlap=0.5,
-                               job_memory="4G"):
+                               job_memory="15G"):
     '''count occurances of tags in genomic context.
 
     Examines the genomic context to where tags align.
@@ -579,7 +461,7 @@ def loadTranscriptProfile(infiles, outfile,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
     '''
 
@@ -626,7 +508,7 @@ def loadStrandSpecificity(infiles, outfile,
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
 
     outf = P.get_temp_file(".")
 
@@ -636,7 +518,7 @@ def loadStrandSpecificity(infiles, outfile,
     for infile in infiles:
         name = P.snip(os.path.basename(infile), ".strand")
 
-        table = pd.read_csv(infile, sep="\t")
+        table = pd.read_csv(infile, sep="\t", comment="#")
         table["track"] = name
 
         if table_count == 0:
@@ -677,12 +559,12 @@ def loadCountReads(infiles, outfile,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
 
     outf = P.get_temp_file(".")
 
@@ -728,12 +610,12 @@ def loadPicardMetrics(infiles, outfile, suffix,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
 
     outf = P.get_temp_file(".")
 
@@ -809,12 +691,12 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         Suffix to remove from track name.
     tablename : string
         Tablename to use. If unset, the table name will be derived
-        from `outfile` and suffix as ``toTable(outfile) + "_" +
+        from `outfile` and suffix as ``to_table(outfile) + "_" +
         suffix``.
     '''
 
     if not tablename:
-        tablename = "%s_%s" % (P.toTable(outfile), suffix)
+        tablename = "%s_%s" % (P.to_table(outfile), suffix)
         tablename = tablename.replace("_metrics", "_histogram")
 
     # some files might be missing
@@ -1014,7 +896,7 @@ def loadBAMStats(infiles, outfile):
     header = ",".join([P.snip(os.path.basename(x), ".readstats")
                        for x in infiles])
     filenames = " ".join(["<( cut -f 1,2 < %s)" % x for x in infiles])
-    tablename = P.toTable(outfile)
+    tablename = P.to_table(outfile)
 
     load_statement = P.build_load_statement(
         tablename,
@@ -1074,38 +956,6 @@ def loadBAMStats(infiles, outfile):
         | %(load_statement)s
         >> %(outfile)s """
         P.run(statement)
-
-
-def buildPicardRnaSeqMetrics(infiles, strand, outfile):
-    '''run picard:RNASeqMetrics
-    Arguments
-    ---------
-    infiles : string
-        Input filename in :term:`BAM` format.
-        Genome file in refflat format
-            (http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat)
-    outfile : string
-        Output filename with picard output.
-    '''
-    job_memory = PICARD_MEMORY
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
-    job_threads = 20
-    infile, genome = infiles
-
-    if BamTools.getNumReads(infile) == 0:
-        E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
-        return
-
-    statement = '''picard %(picard_opts)s CollectRnaSeqMetrics
-    REF_FLAT=%(genome)s
-    INPUT=%(infile)s
-    ASSUME_SORTED=true
-    OUTPUT=%(outfile)s
-    STRAND=%(strand)s
-    VALIDATION_STRINGENCY=SILENT
-    '''
-    P.run(statement)
 
 
 def loadPicardRnaSeqMetrics(infiles, outfiles):
@@ -1235,7 +1085,7 @@ def loadSummarizedContextStats(infiles,
     filenames = " ".join(infiles)
 
     load_statement = P.build_load_statement(
-        P.toTable(outfile),
+        P.to_table(outfile),
         options="--add-index=track")
 
     statement = """cgat combine_tables

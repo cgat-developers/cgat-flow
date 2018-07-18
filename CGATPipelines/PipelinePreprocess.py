@@ -284,7 +284,7 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
                         --guess-format=illumina-1.8
                         > %(fn)s.summary""")
 
-        cmd_process = " ; ".join(cmd_processors)
+        cmd_process = " ".join(cmd_processors)
         cmd_clean = self.cleanup()
 
         assert cmd_preprocess.strip().endswith(";")
@@ -545,8 +545,8 @@ class Cutadapt(ProcessTool):
 
             if untrimmed:
                 processing_options += \
-                    "--untrimmed-output=%(untrimmed_output1)s" \
-                    "--untrimmed-output-paired=%(untrimmed_output2)s" % locals()
+                    " --untrimmed-output=%(untrimmed_output1)s" \
+                    " --untrimmed-paired-output=%(untrimmed_output2)s" % locals()
 
             cmds.append('''
             cutadapt %(processing_options)s %(in1)s %(in2)s

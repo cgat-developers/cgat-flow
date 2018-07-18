@@ -42,7 +42,7 @@ The basic usage inside a pipeline task is as such::
 
 When implementing a tool, avoid specifying algorithmic options as
 class variables. Instead use an option string that can be set in
-:file:`pipeline.ini`. The only arguments to a tool constructor should
+:file:`pipeline.yml`. The only arguments to a tool constructor should
 pertain to pipeline integration, such as filenames, index locations,
 threading and in general processing options that change the tools
 input/output, as these need to be tracked by the pipeline.
@@ -513,7 +513,7 @@ class SequenceCollectionProcessor(object):
         assert len(infiles) > 0, "no input files for processing"
 
         tmpdir_fastq = P.get_temp_dir(shared=True)
-
+        self.tmpdir_fastq = tmpdir_fastq
         # create temporary directory again for nodes
         statement = ["mkdir -p %s" % tmpdir_fastq]
         fastqfiles = []
@@ -902,8 +902,6 @@ class SequenceCollectionProcessor(object):
             else:
                 raise NotImplementedError("unknown file format %s" % infile)
 
-        self.tmpdir_fastq = tmpdir_fastq
-
         assert len(fastqfiles) > 0, "no fastq files for mapping"
         return (" ; ".join(statement) + ";", fastqfiles)
 
@@ -1034,7 +1032,7 @@ class Mapper(SequenceCollectionProcessor):
         return statement
 
 
-class FastQc(Mapper):
+class FastQC(Mapper):
     """run the FastQC_ tool.
 
     Arguments
@@ -1139,6 +1137,10 @@ class FastqScreen(Mapper):
 
     compress = True
 
+    def __init__(self, config_filename, *args, **kwargs):
+        Mapper.__init__(self, *args, **kwargs)
+        self.config_filename = config_filename
+
     def mapper(self, infiles, outfile):
         '''build mapping statement on infiles
         The output is created in outdir. The output files
@@ -1166,9 +1168,13 @@ class FastqScreen(Mapper):
             raise ValueError(
                 "unexpected number read files to map: %i " % nfiles)
 
-        statement = '''fastq_screen %%(fastq_screen_options)s
-                    --outdir %%(outdir)s --conf %%(tempdir)s/fastq_screen.conf
-                    %(input_files)s >& %%(outdir)s/fastqscreen.log;''' % locals()
+        config_filename = self.config_filename
+        outdir = os.path.dirname(outfile)
+        statement = ("fastq_screen %%(fastq_screen_options)s "
+                     "--outdir %(outdir)s "
+                     "--conf %(config_filename)s "
+                     "%(input_files)s "
+                     ">& %(outdir)s/fastqscreen.log; ") % locals()
         return statement
 
 
@@ -1558,7 +1564,7 @@ class BWA(Mapper):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(self.tmpdir_fastq + "bwa")
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
@@ -1715,7 +1721,7 @@ class BWAMEM(BWA):
 
         nfiles = max(num_files)
 
-        tmpdir = os.path.join(self.tmpdir_fastq + "bwa")
+        tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
         statement = ["mkdir -p %s;" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
@@ -2149,9 +2155,6 @@ class Tophat(Mapper):
 
         executable = self.executable
 
-        statement = P.getCondaEnvironment(PARAMS['conda_py2'])
-        statement.append(" && ")
-
         num_files = [len(x) for x in infiles]
 
         if max(num_files) != min(num_files):
@@ -2397,9 +2400,6 @@ class TopHat_fusion(Mapper):
             index_prefix = "%(bowtie_index_dir)s/%(genome)s"
 
         data_options = " ".join(data_options)
-
-        statement = P.getCondaEnvironment(PARAMS['conda_py2'])
-        statement.append(" && ")
 
         if nfiles == 1:
             infiles = ",".join([x[0] for x in infiles])

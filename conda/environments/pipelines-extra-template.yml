@@ -2,7 +2,7 @@
 # This environment will include other dependencies that have not been detected automatically
 # but are required to run the pipelines
 
-name: cgat-p
+name: cgat-f
 
 channels:
 - bioconda
@@ -10,9 +10,10 @@ channels:
 - defaults
 
 dependencies:
+- mysqlclient
 - cutadapt
 - blast
 - bashlex
-- pandoc
-- multiqc
-
+- pandoc=1.19.2
+# conda env upgrade updates
+- gmap=2017.05.08 # https://github.com/ContinuumIO/anaconda-issues/issues/704

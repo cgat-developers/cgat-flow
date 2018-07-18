@@ -86,7 +86,7 @@ def getRepeatsFromUCSC(dbhandle,
        will be collected.
     outfile : string
        Filename of output file in :term:`gff` format.
-    remove_contigs_regex : string
+    remove_contigs_regex : list
        If given, remove repeats on contigs matching the regular
        expression given.
 
@@ -139,10 +139,10 @@ def getRepeatsFromUCSC(dbhandle,
     --log=%(outfile)s.log ''']
 
     if remove_contigs_regex:
-        statement.append(
-            ''' --contig-pattern="%(remove_contigs_regex)s" ''')
+        statement.append('--contig-pattern="{}"'.format(
+            ",".join(remove_contigs_regex)))
 
-    statement.append('''| gzip > %(outfile)s ''')
+    statement.append('| gzip > %(outfile)s')
 
     statement = " ".join(statement)
 

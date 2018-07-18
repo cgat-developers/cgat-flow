@@ -9,7 +9,7 @@ Overview
 ========
 
 This pipeline computes the word frequencies in the configuration
-files :file:``pipeline.ini` and :file:`conf.py`.
+files :file:``pipeline.yml` and :file:`conf.py`.
 
 Usage
 =====
@@ -20,7 +20,7 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 CGATReport report requires a :file:`conf.py` and optionally a
 :file:`cgatreport.ini` file (see :ref:`PipelineReporting`).
 
@@ -37,7 +37,7 @@ Requirements
 ------------
 
 The pipeline requires the results from
-:doc:`pipeline_annotations`. Set the configuration variable
+:doc:`pipeline_genesets`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
 On top of the default CGAT setup, the pipeline requires the following
@@ -65,69 +65,36 @@ Code
 ====
 
 """
-from ruffus import *
-
 import sys
 import os
-import sqlite3
-import CGATCore.Experiment as E
+from ruffus import transform, regex, suffix, follows
 from CGATCore import Pipeline as P
 
 # load options from the config file
-PARAMS = P.getParameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+PARAMS = P.get_parameters(
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 # add configuration values from associated pipelines
 #
-# 1. pipeline_annotations: any parameters will be added with the
+# 1. pipeline_genesets: any parameters will be added with the
 #    prefix "annotations_". The interface will be updated with
 #    "annotations_dir" to point to the absolute path names.
-PARAMS.update(P.peekParameters(
+PARAMS.update(P.peek_parameters(
     PARAMS["annotations_dir"],
-    "pipeline_annotations.py",
+    "pipeline_genesets.py",
+    "genesets",
     on_error_raise=__name__ == "__main__",
     prefix="annotations_",
     update_interface=True))
 
-
-# if necessary, update the PARAMS dictionary in any modules file.
-# e.g.:
-#
-# import CGATPipelines.PipelineGeneset as PipelineGeneset
-# PipelineGeneset.PARAMS = PARAMS
-#
-# Note that this is a hack and deprecated, better pass all
-# parameters that are needed by a function explicitely.
-
-# -----------------------------------------------
-# Utility functions
-def connect():
-    '''utility function to connect to database.
-
-    Use this method to connect to the pipeline database.
-    Additional databases can be attached here as well.
-
-    Returns an sqlite3 database handle.
-    '''
-
-    dbh = sqlite3.connect(PARAMS["database_name"])
-    statement = '''ATTACH DATABASE '%s' as annotations''' % (
-        PARAMS["annotations_database"])
-    cc = dbh.cursor()
-    cc.execute(statement)
-    cc.close()
-
-    return dbh
-
-
 # ---------------------------------------------------
 # Specific pipeline tasks
-@transform(("pipeline.ini", "conf.py"),
+@transform(("pipeline.yml",),
            regex("(.*)\.(.*)"),
            r"\1.counts")
-def countWords(infile, outfile):
+def count_words(infile, outfile):
     '''count the number of words in the pipeline configuration files.'''
 
     # the command line statement we want to execute
@@ -143,20 +110,20 @@ def countWords(infile, outfile):
     # configuration files or variable that are declared in the calling
     # function.  For example, %(infile)s will we substituted with the
     # contents of the variable "infile".
-    P.run()
+    P.run(statement)
 
 
-@transform(countWords,
+@transform(count_words,
            suffix(".counts"),
            "_counts.load")
-def loadWordCounts(infile, outfile):
+def load_word_counts(infile, outfile):
     '''load results of word counting into database.'''
     P.load(infile, outfile, "--add-index=word")
 
 
 # ---------------------------------------------------
 # Generic pipeline tasks
-@follows(loadWordCounts)
+@follows(load_word_counts)
 def full():
     pass
 

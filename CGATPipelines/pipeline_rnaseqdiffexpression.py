@@ -130,10 +130,10 @@ information how to use CGAT pipelines.
 Configuration
 -------------
 
-The pipeline requires a configured :file:`pipeline.ini` file.
+The pipeline requires a configured :file:`pipeline.yml` file.
 
 The sphinxreport report requires a :file:`conf.py` and
-:file:`sphinxreport.ini` file (see :ref:`PipelineReporting`). To start
+:file:`sphinxreport.yml` file (see :ref:`PipelineReporting`). To start
 with, use the files supplied with the Example_ data.
 
 Input
@@ -339,6 +339,7 @@ import CGATPipelines.PipelineGeneset as PipelineGeneset
 import CGATPipelines.PipelineRnaseq as PipelineRnaseq
 from CGATCore import Pipeline as P
 import CGATPipelines.PipelineTracks as PipelineTracks
+from CGATPipelines.Report import run_report
 
 import CGAT.Expression as Expression
 # levels of cuffdiff analysis
@@ -353,9 +354,9 @@ CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
 
 # load options from the config file
 P.get_parameters(
-    ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
-     "../pipeline.ini",
-     "pipeline.ini"])
+    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
+     "../pipeline.yml",
+     "pipeline.yml"])
 
 PARAMS = P.PARAMS
 PARAMS.update(P.peek_parameters(
@@ -516,7 +517,6 @@ def buildSalmonIndex(infile, outfile):
     '''
 
     job_memory = "2G"
-
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files
@@ -638,7 +638,7 @@ def runFeatureCounts(infiles, outfiles):
 
     featurecounts_threads : int
         :term:`PARAMS` - number of threads to run feature counts. This is
-        specified in pipeline.ini
+        specified in pipeline.yml
 
     featurecounts_strand : int
         :term:`PARAMS`
@@ -1329,7 +1329,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     if PARAMS['sleuth_genewise']:
 
         assert PARAMS['sleuth_gene_biomart'], (
-            "Must provide a biomart (see pipeline.ini)")
+            "Must provide a biomart (see pipeline.yml)")
 
         # gene-wise sleuth seems to be even more memory hungry!
         # Use 2 * transcript memory estimate
@@ -1538,7 +1538,7 @@ def build_report():
     '''build report from scratch.'''
 
     E.info("starting documentation build process from scratch")
-    P.run_report(clean=True)
+    run_report(clean=True)
 
 
 @follows(mkdir("report"))
@@ -1546,7 +1546,7 @@ def update_report():
     '''update report.'''
 
     E.info("updating documentation")
-    P.run_report(clean=False)
+    run_report(clean=False)
 
 
 def main(argv=None):

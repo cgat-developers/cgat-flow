@@ -53,3 +53,6 @@ _test_commandline.yaml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# svg files in doc/images
+doc/images/*.svg

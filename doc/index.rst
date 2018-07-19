@@ -49,16 +49,18 @@ NGS Pipelines
 -------------
 
 .. toctree::
-   :maxdepth: 1	
+   :maxdepth: 1
+   :caption: NGS Pipelines
+   :name: NGS Pipelines
 
-   pipeline_readqc: Read QC and processing before mapping <pipelines/pipeline_readqc.rst>
-   pipeline_mapping: Short read mapping and QC <pipelines/pipeline_mapping.rst>
-   pipeline_rnaseqtranscripts: RNA-seq transcript construction <pipelines/pipeline_rnaseqtranscripts.rst>
-   pipeline_rnaseqdiffexpression: RNA-seq differential expression <pipelines/pipeline_rnaseqdiffexpression.rst>
-   pipline_rnaseqlncrna: RNA-seq lncRNA analysis <pipelines/pipeline_rnaseqlncrna.rst>
-   pipeline_peakcalling: ChIP-seq Peak calling <pipelines/pipeline_peakcalling.rst>
-   pipeline_windows: Genomic read distribution <pipelines/pipeline_windows.rst>
-   pipeline_exome: Exome-seq <pipelines/pipeline_exome.rst>
+   readqc: Read QC and processing before mapping <pipelines/pipeline_readqc.rst>
+   mapping: Short read mapping <pipelines/pipeline_mapping.rst>
+   bamstats: Mapping QC statistics <pipelines/pipeline_bamstats.rst>
+   rnaseqdiffexpression: RNA-seq differential expression <pipelines/pipeline_rnaseqdiffexpression.rst>
+   peakcalling: ChIP-seq Peak calling <pipelines/pipeline_peakcalling.rst>
+   windows: Genomic read distribution <pipelines/pipeline_windows.rst>
+   exome: Exome-seq <pipelines/pipeline_exome.rst>
+   motifs: motif discovery on intervals <pipelines/pipeline_motifs.rst>
 
 Genomics Pipelines
 ------------------
@@ -66,11 +68,8 @@ Genomics Pipelines
 .. toctree::
    :maxdepth: 1	
 
-   pipeline_annotations: Building genomic annotations <pipelines/pipeline_annotations.rst>
-   pipeline_intervals: Annotating genomic intervals <pipelines/pipeline_intervals.rst>
-   pipeline_ancestral_repeats: Deriving ancestral repeats <pipelines/pipeline_ancestral_repeats.rst>
-   pipeline_chains: Processing genomic alignments <pipelines/pipeline_chains.rst>
-   pipeline_liftover: Mapping genomic features <pipelines/pipeline_liftover.rst>
+   genesets: Building genomic annotations <pipelines/pipeline_annotations.rst>
+   intervals: Annotating genomic intervals <pipelines/pipeline_intervals.rst>
 
 Meta pipelines
 --------------
@@ -78,7 +77,7 @@ Meta pipelines
 .. toctree::
    :maxdepth: 1	
 
-   pipeline_testing: Regression testing of pipelines <pipelines/pipeline_testing.rst>
+   testing: Regression testing of pipelines <pipelines/pipeline_testing.rst>
 
 Disclaimer
 ==========

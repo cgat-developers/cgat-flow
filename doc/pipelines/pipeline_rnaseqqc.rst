@@ -2,7 +2,7 @@
 .. figure:: ../images/pipeline_rnaseqqc.svg
 
 
-.. automodule:: pipeline_rnaseqqc
+.. automodule:: CGATPipelines.pipeline_rnaseqqc
    :members:
    :show-inheritance:
 

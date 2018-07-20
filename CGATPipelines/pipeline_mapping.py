@@ -1861,12 +1861,12 @@ for x in P.as_list(PARAMS["mappers"]):
 def mapping():
     ''' dummy task to define upstream mapping tasks'''
 
+
 if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
     if "merge_pattern_output" not in PARAMS or \
        not PARAMS["merge_pattern_output"]:
         raise ValueError(
             "no output pattern 'merge_pattern_output' specified")
-
 
     @collate(MAPPINGTARGETS,
              regex("%s\.([^.]+)\.bam" % PARAMS["merge_pattern_input"].strip()),

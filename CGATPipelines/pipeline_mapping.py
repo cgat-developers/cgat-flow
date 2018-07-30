@@ -1908,7 +1908,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
     MAPPINGTARGETS = MAPPINGTARGETS + [mergeBAMFiles]
 
     @collate(countReads,
-             regex("%s.nreads" % PARAMS["merge_pattern_input"]),
+             regex("ndreads.dir/%s.nreads" % PARAMS["merge_pattern_input"]),
              r"nreads.dir/%s.nreads" % PARAMS["merge_pattern_output"],
              )
     def mergeReadCounts(infiles, outfile):

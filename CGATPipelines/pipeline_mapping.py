@@ -852,7 +852,7 @@ def mapReadsWithTophat(infiles, outfile):
             " --transcriptome-index=%s -n 2" % prefix
 
     statement = m.build((infile,), outfile)
-    P.run(statement)
+    P.run(statement, job_condaenv="tophat2")
 
 
 @active_if(SPLICED_MAPPING)

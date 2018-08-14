@@ -585,7 +585,7 @@ def buildReferenceTranscriptome(infile, outfile):
     gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s;
     samtools faidx %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, job_condaenv="tophat2")
 
     dest = P.snip(os.path.abspath(gtf_file), ".gtf") + ".gff"
     if not os.path.exists(dest):

@@ -585,7 +585,7 @@ def buildReferenceTranscriptome(infile, outfile):
     gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s;
     samtools faidx %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, job_condaenv="tophat2")
 
     dest = P.snip(os.path.abspath(gtf_file), ".gtf") + ".gff"
     if not os.path.exists(dest):
@@ -852,7 +852,7 @@ def mapReadsWithTophat(infiles, outfile):
             " --transcriptome-index=%s -n 2" % prefix
 
     statement = m.build((infile,), outfile)
-    P.run(statement)
+    P.run(statement, job_condaenv="tophat2")
 
 
 @active_if(SPLICED_MAPPING)

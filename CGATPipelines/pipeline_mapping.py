@@ -1909,7 +1909,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
     @collate(countReads,
              regex("%s.nreads" % PARAMS["merge_pattern_input"]),
-             r"nreads.dir/%s.nreads" % PARAMS["merge_pattern_output"],
+             r"%s.nreads" % PARAMS["merge_pattern_output"],
              )
     def mergeReadCounts(infiles, outfile):
         '''merge read counts files from the same experiment using

@@ -1869,7 +1869,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
             "no output pattern 'merge_pattern_output' specified")
 
     @collate(MAPPINGTARGETS,
-             regex("%s\.([^.]+).bam" % PARAMS["merge_pattern_input"].strip()),
+             regex("%s\.([^.]+)\.bam" % PARAMS["merge_pattern_input"].strip()),
              # the last expression counts number of groups in pattern_input
              r"%s.\%i.bam" % (PARAMS["merge_pattern_output"].strip(),
                               PARAMS["merge_pattern_input"].count("(") + 1),
@@ -1894,8 +1894,8 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
             E.info(
                 "%(outfile)s: only one file for merging - creating "
                 "softlink" % locals())
-            P.clone(infiles[0], outfile)
-            P.clone(infiles[0] + ".bai", outfile + ".bai")
+            os.symlink(infiles[0], outfile)
+            os.symlink(infiles[0] + ".bai", outfile + ".bai")
             return
 
         infiles = " ".join(infiles)
@@ -1907,9 +1907,10 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
     MAPPINGTARGETS = MAPPINGTARGETS + [mergeBAMFiles]
 
+    @follows(mergeBAMFiles)
     @collate(countReads,
              regex("%s.nreads" % PARAMS["merge_pattern_input"]),
-             r"nreads.dir/%s.nreads" % PARAMS["merge_pattern_output"],
+             r"%s.nreads" % PARAMS["merge_pattern_output"],
              )
     def mergeReadCounts(infiles, outfile):
         '''merge read counts files from the same experiment using

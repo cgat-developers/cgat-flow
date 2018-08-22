@@ -557,7 +557,7 @@ class SequenceCollectionProcessor(object):
                     repo, acc = line.strip().split("\t")[:2]
                     if repo == "SRA":
                         statement.append(Sra.prefetch(acc))
-                        f, format = Sra.peek(acc)
+                        f, format, _ = Sra.peek(acc)
                         statement.append(Sra.extract(acc, tmpdir_fastq))
 
                         extracted_files = ["%s/%s" % (

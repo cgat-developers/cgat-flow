@@ -511,7 +511,7 @@ def aggregateFeatureCounts(infiles, outfile):
     | tee %(outfile)s.table.tsv
     | gzip > %(outfile)s '''
 
-    P.run(statement, job_memory="8G")
+    P.run(statement, job_memory="16G")
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")

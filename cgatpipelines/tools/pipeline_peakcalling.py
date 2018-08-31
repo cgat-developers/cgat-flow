@@ -859,7 +859,6 @@ def makeBamInputTable(outfile):
     bamfiles = os.listdir("peakcalling_bams.dir")
 
     for k in ks:
-        import pdb; pdb.set_trace()
         inputstem = inputD[k]
         chipstem = k
         chipstem = P.snip(chipstem)

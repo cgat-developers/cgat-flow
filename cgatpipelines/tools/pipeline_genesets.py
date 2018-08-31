@@ -383,7 +383,6 @@ def connectToUCSC():
 # Assembly
 ############################################################
 
-
 @follows(mkdir('assembly.dir'))
 @files(os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fasta"),
        PARAMS['interface_contigs'])

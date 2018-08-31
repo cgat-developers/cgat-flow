@@ -173,7 +173,8 @@ def unprocessReads(infiles, outfiles):
 if P.get_params().get("preprocessors", None):
     if P.get_params()["auto_remove"]:
         # check if FastQC has been run
-        for x in IOTools.flatten([glob.glob(y) for y in P.get_params()["input_globs"].get("default", INPUT_FORMATS)]):
+        for x in IOTools.flatten([glob.glob(y) for y in
+                                  P.get_params()["input_globs"].get("default", INPUT_FORMATS)]):
             f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
                 raise ValueError(

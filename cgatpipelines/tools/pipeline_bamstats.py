@@ -333,7 +333,6 @@ def buildBAMStats(infiles, outfile):
     annotations_interface_rna_gtf : str
         :term:`PARMS`. :term:`gtf` format file with repetitive rna
     '''
-
     rna_file = PARAMS["annotations_interface_rna_gff"]
 
     job_memory = "32G"

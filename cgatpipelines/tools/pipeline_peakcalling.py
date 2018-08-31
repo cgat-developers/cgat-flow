@@ -305,11 +305,9 @@ idrPARAMS['useoracle'] = PARAMS['IDR_useoracle']
 
 if os.path.exists("design.tsv"):
     df, inputD = peakcalling.readDesignTable("design.tsv",
-                                                     PARAMS['IDR_poolinputs'])
+                                             PARAMS['IDR_poolinputs'])
     INPUTBAMS = list(set(df['bamControl'].values))
     CHIPBAMS = list(set(df['bamReads'].values))
-
-
 else:
     E.warn("design.tsv is not located within the folder")
     INPUTBAMS = []
@@ -323,7 +321,7 @@ else:
 # Check if reads are paired end
 ########################################################################
 
-if CHIPBAMS and Bamtools.is_paired(CHIPBAMS[0]) is True:
+if CHIPBAMS and Bamtools.is_paired(CHIPBAMS[0]):
     PARAMS['paired_end'] = True
 else:
     PARAMS['paired_end'] = False
@@ -349,7 +347,7 @@ def loadDesignTable(infile, outfile):
     P.load(infile, outfile)
 
 
-@active_if(PARAMS['input'] != 0)
+@active_if(PARAMS["have_input"] != 0)
 @follows(mkdir("filtered_bams.dir"))
 @transform(INPUTBAMS, regex("(.*).bam"),
            [r"filtered_bams.dir/\1_filtered.bam",
@@ -661,7 +659,7 @@ if int(PARAMS['IDR_run']) == 1:
             # all bam files for this tissue and condition
             peakcalling.mergeSortIndex(innames, out)
 
-    @active_if(PARAMS['IDR_poolinputs'] != "all" and PARAMS['input'] != 0)
+    @active_if(PARAMS['IDR_poolinputs'] != "all" and PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @split(filterInputBAMs, "IDR_inputs.dir/*_pooled_filtered.bam")
     def makePooledInputs(infiles, outfiles):
@@ -703,7 +701,7 @@ else:
         Dummy task if IDR not requested.
         '''
 
-    @active_if(PARAMS['input'] != 0)
+    @active_if(PARAMS["have_input"] != 0)
     @transform(filterInputBAMs, regex("filtered_bams.dir/(.*).bam"),
                r'filtered_bams.dir/\1.bam')
     def makePooledInputs(infile, outfile):
@@ -760,7 +758,7 @@ else:
 # used to do this depends on the IDR_poolinputs parameter
 
 if PARAMS['IDR_poolinputs'] == "none":
-    @active_if(PARAMS['input'] != 0)
+    @active_if(PARAMS['use_input'] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @transform(filterInputBAMs, regex("filtered_bams.dir/(.*).bam"),
                r'IDR_inputs.dir/\1.bam')
@@ -775,7 +773,7 @@ if PARAMS['IDR_poolinputs'] == "none":
 
 
 elif PARAMS['IDR_poolinputs'] == "all":
-    @active_if(PARAMS['input'] != 0)
+    @active_if(PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @merge(filterInputBAMs, "IDR_inputs.dir/pooled_all.bam")
     def makeIDRInputBams(infiles, outfile):
@@ -790,7 +788,7 @@ elif PARAMS['IDR_poolinputs'] == "all":
 
 
 elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
-    @active_if(PARAMS['input'] != 0)
+    @active_if(PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @split(filterInputBAMs, r'IDR_inputs.dir/*.bam')
     def makeIDRInputBams(infiles, outfiles):
@@ -808,6 +806,8 @@ elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
         '''
         outs = set(inputD.values())
         for out in outs:
+            if not out:
+                continue
             p = out.split("_")
             cond = p[0]
             tissue = p[1]
@@ -824,7 +824,7 @@ elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
 
 
 elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] == 1:
-    @active_if(PARAMS['input'] != 0)
+    @active_if(PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @follows(mkdir('IDR_inputs.dir'))
     @transform(makePooledInputs, regex("IDR_inputs.dir/(.*).bam"),
@@ -859,10 +859,11 @@ def makeBamInputTable(outfile):
     bamfiles = os.listdir("peakcalling_bams.dir")
 
     for k in ks:
+        import pdb; pdb.set_trace()
         inputstem = inputD[k]
         chipstem = k
         chipstem = P.snip(chipstem)
-        if PARAMS['input'] == 0:
+        if PARAMS["have_input"] == 0:
             inputfile = "-"
         else:
             inputstem = P.snip(inputstem)
@@ -956,7 +957,7 @@ def callMacs2peaks(infiles, outfile):
     '''
     D = peakcalling.readTable(infiles[1])
     bam = infiles[0]
-    if PARAMS['input'] == 0:
+    if PARAMS["have_input"] == 0:
         inputf = None
     else:
         inputf = D[bam]
@@ -1026,7 +1027,7 @@ def callNarrowerPeaksWithSicer(infiles, outfile):
     maxfragsize = PARAMS['sicer_max_insert_size']
 
     # If there are no inputs
-    if PARAMS['input'] == 0:
+    if PARAMS["have_input"] == 0:
         inputf = None
     else:
         inputf = D[bam]
@@ -1098,7 +1099,7 @@ def callBroaderPeaksWithSicer(infiles, outfile):
     maxfragsize = PARAMS['sicer_max_insert_size']
 
     # If there are no inputs
-    if PARAMS['input'] == 0:
+    if PARAMS["have_input"] == 0:
         inputf = None
     else:
         inputf = D[bam]

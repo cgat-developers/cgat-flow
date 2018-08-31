@@ -348,7 +348,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
         -not -regex '.*\/report.*'
         -not -regex '.*\/_.*'
         \( %(regex_pattern)s \)
-        -exec %(scriptsdir)s/cgat_file_apply.sh {} %(metric)s \;
+        -exec %(test_scriptsdir)s/cgat_file_apply.sh {} %(metric)s \;
         | perl -p -e "s/ +/\\t/g"
         | sort -k1,1
         > %(outfile)s'''
@@ -417,7 +417,7 @@ def mergeFileStatistics(infiles, outfile):
     infiles = " ".join(sorted(infiles))
 
     statement = '''
-    %(scriptsdir)s/merge_testing_output.sh
+    %(test_scriptsdir)s/merge_testing_output.sh
     %(infiles)s
     > %(outfile)s'''
     P.run(statement)
@@ -656,7 +656,7 @@ def main(argv=None):
     # 1. make scripts live alongside pipeline_testing.py
     # 2. make scripts available via cgatflow CLI
     # 3. include scripts in pipeline_testing
-    P.get_params()["scriptsdir"] = os.path.join(
+    P.get_params()["test_scriptsdir"] = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts")
     P.main(argv)
 

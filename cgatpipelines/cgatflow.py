@@ -22,7 +22,6 @@ import sys
 import re
 import glob
 import imp
-import collections
 import cgatpipelines
 
 
@@ -82,11 +81,13 @@ def main(argv=None):
     command = re.sub("-", "_", command)
     pipeline = "pipeline_{}".format(command)
 
-    (file, pathname, description) = imp.find_module(pipeline, paths)
-    module = imp.load_module(pipeline, file, pathname, description)
-
     # remove 'cgatflow' from sys.argv
     del sys.argv[0]
+
+    (file, pathname, description) = imp.find_module(pipeline, paths)
+
+    module = imp.load_module(pipeline, file, pathname, description)
+
     module.main(sys.argv)
 
 

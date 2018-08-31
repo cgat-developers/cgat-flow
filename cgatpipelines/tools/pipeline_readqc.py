@@ -134,27 +134,23 @@ import cgatpipelines.tasks.preprocess as preprocess
 import CGATCore.IOTools as IOTools
 from cgatpipelines.report import run_report
 
-# load options from the config file
-PARAMS = P.get_parameters(
-    ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
-     "../pipeline.yml",
-     "pipeline.yml"])
 
-# define input files and preprocessing steps
-# list of acceptable input formats
-INPUT_FORMATS = ["*.fastq.1.gz", "*.fastq.gz",
-                 "*.sra", "*.csfasta.gz", "*.remote"]
+# Initialize the pipeline
+P.initialize()
 
-# Regular expression to extract a track from an input file. Does not preserve
-# a directory as part of the track.
+# Define input files and preprocessing steps list of acceptable input
+# formats
+INPUT_FORMATS = ["*.fastq.1.gz", "*.fastq.gz", "*.sra", "*.csfasta.gz", "*.remote"]
+
+# Regular expression to extract a track from an input file. Does not
+# preserve a directory as part of the track.
 REGEX_TRACK = r"(?P<track>[^/]+).(?P<suffix>fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
 
-# Regular expression to extract a track from both processed and unprocessed
-# files
-REGEX_TRACK_BOTH = \
-    r"(processed.dir/)*([^/]+)\.(fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
+# Regular expression to extract a track from both processed and
+# unprocessed files
+REGEX_TRACK_BOTH = r"(processed.dir/)*([^/]+)\.(fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
 
-SEQUENCEFILES_REGEX = r"(\S+).(?P<suffix>fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
+SEQUENCEFILES_REGEX = r"([^/]+).(?P<suffix>fastq.1.gz|fastq.gz|sra|csfasta.gz|remote)"
 
 
 def connect():
@@ -162,21 +158,22 @@ def connect():
     Setup a connection to an sqlite database
     '''
 
-    dbh = sqlite3.connect(PARAMS['database'])
+    dbh = sqlite3.connect(P.get_params()['database'])
     return dbh
 
 
-@transform(INPUT_FORMATS, regex("(.*)"), r"\1")
+@transform(P.get_params()["input_globs"].get("default", INPUT_FORMATS),
+           regex("(.*)"), r"\1")
 def unprocessReads(infiles, outfiles):
     """dummy task - no processing of reads."""
 
 
 # if preprocess tools are specified, preprocessing is done on output that has
 # already been generated in the first run
-if PARAMS.get("preprocessors", None):
-    if PARAMS["auto_remove"]:
+if P.get_params().get("preprocessors", None):
+    if P.get_params()["auto_remove"]:
         # check if FastQC has been run
-        for x in IOTools.flatten([glob.glob(y) for y in INPUT_FORMATS]):
+        for x in IOTools.flatten([glob.glob(y) for y in P.get_params()["input_globs"].get("default", INPUT_FORMATS)]):
             f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
                 raise ValueError(
@@ -198,7 +195,7 @@ if PARAMS.get("preprocessors", None):
                 outfile=outfile,
                 track=re.match(REGEX_TRACK, infile).groups()[0],
                 dbh=connect(),
-                contaminants_file=PARAMS['contaminants_path'])
+                contaminants_file=P.get_params()['contaminants_path'])
 
         @merge(makeAdaptorFasta, "contaminants.fasta")
         def aggregateAdaptors(infiles, outfile):
@@ -218,7 +215,7 @@ if PARAMS.get("preprocessors", None):
 
     else:
         @follows(mkdir("fasta.dir"))
-        @transform(INPUT_FORMATS,
+        @transform(P.get_params()["input_globs"].get("default", INPUT_FORMATS),
                    regex(SEQUENCEFILES_REGEX),
                    r"fasta.dir/\1.fasta")
         def aggregateAdaptors(infile, outfile):
@@ -226,81 +223,81 @@ if PARAMS.get("preprocessors", None):
 
     @follows(mkdir("processed.dir"),
              aggregateAdaptors)
-    @subdivide(INPUT_FORMATS,
+    @subdivide(P.get_params()["input_globs"].get("default", INPUT_FORMATS),
                regex(SEQUENCEFILES_REGEX),
                r"processed.dir/trimmed-\1.fastq*.gz")
     def processReads(infile, outfiles):
         '''process reads from .fastq and other sequence files.
         '''
-        trimmomatic_options = PARAMS["trimmomatic_options"]
+        trimmomatic_options = P.get_params()["trimmomatic_options"]
 
-        if PARAMS["auto_remove"]:
+        if P.get_params()["auto_remove"]:
             trimmomatic_options = " ILLUMINACLIP:%s:%s:%s:%s:%s:%s " % (
                 "contaminants.fasta",
-                PARAMS["trimmomatic_mismatches"],
-                PARAMS["trimmomatic_p_thresh"],
-                PARAMS["trimmomatic_c_thresh"],
-                PARAMS["trimmomatic_min_adapter_len"],
-                PARAMS["trimmomatic_keep_both_reads"]) + trimmomatic_options
+                P.get_params()["trimmomatic_mismatches"],
+                P.get_params()["trimmomatic_p_thresh"],
+                P.get_params()["trimmomatic_c_thresh"],
+                P.get_params()["trimmomatic_min_adapter_len"],
+                P.get_params()["trimmomatic_keep_both_reads"]) + trimmomatic_options
 
-        elif PARAMS["trimmomatic_adapter"]:
+        elif P.get_params()["trimmomatic_adapter"]:
             trimmomatic_options = " ILLUMINACLIP:%s:%s:%s:%s:%s:%s " % (
-                PARAMS["trimmomatic_adapter"],
-                PARAMS["trimmomatic_mismatches"],
-                PARAMS["trimmomatic_p_thresh"],
-                PARAMS["trimmomatic_c_thresh"],
-                PARAMS["trimmomatic_min_adapter_len"],
-                PARAMS["trimmomatic_keep_both_reads"]) + trimmomatic_options
+                P.get_params()["trimmomatic_adapter"],
+                P.get_params()["trimmomatic_mismatches"],
+                P.get_params()["trimmomatic_p_thresh"],
+                P.get_params()["trimmomatic_c_thresh"],
+                P.get_params()["trimmomatic_min_adapter_len"],
+                P.get_params()["trimmomatic_keep_both_reads"]) + trimmomatic_options
 
-        job_threads = PARAMS["threads"]
+        job_threads = P.get_params()["threads"]
         job_memory = "12G"
 
         track = re.match(REGEX_TRACK, infile).groups()[0]
 
         m = preprocess.MasterProcessor(
-            save=PARAMS["save"],
-            summarize=PARAMS["summarize"],
-            threads=PARAMS["threads"],
-            qual_format=PARAMS['qual_format'])
+            save=P.get_params()["save"],
+            summarize=P.get_params()["summarize"],
+            threads=P.get_params()["threads"],
+            qual_format=P.get_params()['qual_format'])
 
-        for tool in P.as_list(PARAMS["preprocessors"]):
+        for tool in P.as_list(P.get_params()["preprocessors"]):
 
             if tool == "fastx_trimmer":
                 m.add(preprocess.FastxTrimmer(
-                    PARAMS["fastx_trimmer_options"],
-                    threads=PARAMS["threads"]))
+                    P.get_params()["fastx_trimmer_options"],
+                    threads=P.get_params()["threads"]))
             elif tool == "trimmomatic":
                 m.add(preprocess.Trimmomatic(
                     trimmomatic_options,
-                    threads=PARAMS["threads"]))
+                    threads=P.get_params()["threads"]))
             elif tool == "sickle":
                 m.add(preprocess.Sickle(
-                    PARAMS["sickle_options"],
-                    threads=PARAMS["threads"]))
+                    P.get_params()["sickle_options"],
+                    threads=P.get_params()["threads"]))
             elif tool == "trimgalore":
                 m.add(preprocess.Trimgalore(
-                    PARAMS["trimgalore_options"],
-                    threads=PARAMS["threads"]))
+                    P.get_params()["trimgalore_options"],
+                    threads=P.get_params()["threads"]))
             elif tool == "flash":
                 m.add(preprocess.Flash(
-                    PARAMS["flash_options"],
-                    threads=PARAMS["threads"]))
+                    P.get_params()["flash_options"],
+                    threads=P.get_params()["threads"]))
             elif tool == "reversecomplement":
                 m.add(preprocess.ReverseComplement(
-                    PARAMS["reversecomplement_options"]))
+                    P.get_params()["reversecomplement_options"]))
             elif tool == "pandaseq":
                 m.add(preprocess.Pandaseq(
-                    PARAMS["pandaseq_options"],
-                    threads=PARAMS["threads"]))
+                    P.get_params()["pandaseq_options"],
+                    threads=P.get_params()["threads"]))
             elif tool == "cutadapt":
-                cutadapt_options = PARAMS["cutadapt_options"]
-                if PARAMS["auto_remove"]:
+                cutadapt_options = P.get_params()["cutadapt_options"]
+                if P.get_params()["auto_remove"]:
                     cutadapt_options += " -a file:contaminants.fasta "
                 m.add(preprocess.Cutadapt(
                     cutadapt_options,
-                    threads=PARAMS["threads"],
-                    untrimmed=PARAMS['cutadapt_reroute_untrimmed'],
-                    process_paired=PARAMS["cutadapt_process_paired"]))
+                    threads=P.get_params()["threads"],
+                    untrimmed=P.get_params()['cutadapt_reroute_untrimmed'],
+                    process_paired=P.get_params()["cutadapt_process_paired"]))
             else:
                 raise NotImplementedError("tool '%s' not implemented" % tool)
 
@@ -313,24 +310,25 @@ else:
         """dummy task - no processing of reads."""
 
 
-@active_if(PARAMS["reconcile"] == 1)
+@active_if(P.get_params()["reconcile"] == 1)
 @follows(mkdir("reconciled.dir"))
 @transform(processReads, regex(
     r"processed.dir\/trimmed-(.*)\.fastq\.1\.gz"),
     r"reconciled.dir/trimmed-\1.fastq.1.gz")
 def reconcileReads(infile, outfile):
-    if PARAMS["reconcile"] == 1:
+    if P.get_params()["reconcile"] == 1:
         in1 = infile
         in2 = infile.replace(".fastq.1.gz", ".fastq.2.gz")
         outfile = outfile.replace(".fastq.1.gz",  "")
-        job_threads = PARAMS["threads"]
-        job_memory = "8G"
+
         statement = """cgat fastqs2fastqs
             --method=reconcile
             --output-filename-pattern=%(outfile)s.fastq.%%s.gz
             %(in1)s %(in2)s"""
 
-        P.run(statement)
+        P.run(statement,
+              job_threads=P.get_params()["threads"],
+              job_memory="8G")
 
 
 @follows(reconcileReads)
@@ -347,17 +345,17 @@ def runFastQC(infiles, outfile):
 
     '''
     # only pass the contaminants file list if requested by user,
-    if PARAMS['use_custom_contaminants']:
-        m = mapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+    if P.get_params()['use_custom_contaminants']:
+        m = mapping.FastQC(nogroup=P.get_params()["readqc_no_group"],
                                    outdir=os.path.dirname(outfile),
-                                   contaminants=PARAMS['contaminants_path'],
-                                   qual_format=PARAMS['qual_format'])
+                                   contaminants=P.get_params()['contaminants_path'],
+                                   qual_format=P.get_params()['qual_format'])
     else:
-        m = mapping.FastQC(nogroup=PARAMS["readqc_no_group"],
+        m = mapping.FastQC(nogroup=P.get_params()["readqc_no_group"],
                                    outdir=os.path.dirname(outfile),
-                                   qual_format=PARAMS['qual_format'])
+                                   qual_format=P.get_params()['qual_format'])
 
-    if PARAMS["reconcile"] == 1:
+    if P.get_params()["reconcile"] == 1:
         infiles = infiles.replace("processed.dir/trimmed",
                                   "reconciled.dir/trimmed")
 
@@ -393,7 +391,7 @@ def buildFastQCSummaryStatus(infiles, outfile):
         "fastqc.dir")
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
+@jobs_limit(P.get_params().get("jobs_limit_db", 1), "db")
 @transform((summarizeFastQC, buildFastQCSummaryStatus),
            suffix(".tsv.gz"), ".load")
 def loadFastQC(infile, outfile):
@@ -430,7 +428,7 @@ def combineExperimentLevelReadQualities(infiles, outfile):
     P.run(statement)
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
+@jobs_limit(P.get_params().get("jobs_limit_db", 1), "db")
 @transform(combineExperimentLevelReadQualities,
            regex(".+/(.+).tsv"),
            r"\1.load")
@@ -438,7 +436,7 @@ def loadExperimentLevelReadQualities(infile, outfile):
     P.load(infile, outfile)
 
 
-@active_if(PARAMS["fastq_screen_run"] == 1)
+@active_if(P.get_params()["fastq_screen_run"] == 1)
 @follows(mkdir("fastq_screen.dir"))
 @transform((unprocessReads, processReads),
            regex(REGEX_TRACK_BOTH),
@@ -446,8 +444,8 @@ def loadExperimentLevelReadQualities(infile, outfile):
 def runFastqScreen(infiles, outfile):
     '''run FastqScreen on input files.'''
 
-    # configure job_threads with fastq_screen_options from PARAMS
-    job_threads = re.findall(r'--threads \d+', PARAMS['fastq_screen_options'])
+    # configure job_threads with fastq_screen_options from P.get_params()
+    job_threads = re.findall(r'--threads \d+', P.get_params()['fastq_screen_options'])
     if len(job_threads) != 1:
         raise ValueError("Wrong number of threads for fastq_screen")
 
@@ -456,7 +454,7 @@ def runFastqScreen(infiles, outfile):
     tempdir = P.get_temp_dir(".")
     conf_fn = os.path.join(tempdir, "fastq_screen.conf")
     with IOTools.open_file(conf_fn, "w") as f:
-        for i, k in PARAMS.items():
+        for i, k in P.get_params().items():
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
 
@@ -467,7 +465,7 @@ def runFastqScreen(infiles, outfile):
     IOTools.touch_file(outfile)
 
 
-@active_if(PARAMS["fastq_screen_run"] == 1)
+@active_if(P.get_params()["fastq_screen_run"] == 1)
 @merge(runFastqScreen,
        ["fastqscreen_summary.tsv.gz", "fastqscreen_details.tsv.gz"])
 def summarizeFastqScreen(infiles, outfiles):
@@ -485,7 +483,7 @@ def summarizeFastqScreen(infiles, outfiles):
     df_details.to_csv(outfiles[1], sep="\t", index=True)
 
 
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
+@jobs_limit(P.get_params().get("jobs_limit_db", 1), "db")
 @transform(summarizeFastqScreen,
            suffix(".tsv"), ".load")
 def loadFastqScreen(infile, outfile):
@@ -524,9 +522,8 @@ def build_report():
 
 
 def main(argv=None):
-    if argv is None:
-        argv = sys.argv
     P.main(argv)
+
 
 if __name__ == "__main__":
     sys.exit(P.main(sys.argv))

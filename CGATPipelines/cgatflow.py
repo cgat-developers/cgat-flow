@@ -61,11 +61,11 @@ def main(argv=None):
     argv = sys.argv
 
     # paths to look for pipelines:
-    path = os.path.join(os.path.abspath(os.path.dirname(CGATPipelines.__file__)))
+    path = os.path.join(os.path.abspath(os.path.dirname(CGATPipelines.__file__)), "tools")
     relpath = os.path.abspath("../src")
 
     paths = [path, relpath]
-    
+
     if len(argv) == 1 or argv[1] == "--help" or argv[1] == "-h":
         pipelines = []
         for path in paths:
@@ -81,12 +81,14 @@ def main(argv=None):
     command = argv[1]
     command = re.sub("-", "_", command)
     pipeline = "pipeline_{}".format(command)
-    
+
     (file, pathname, description) = imp.find_module(pipeline, paths)
     module = imp.load_module(pipeline, file, pathname, description)
+
     # remove 'cgatflow' from sys.argv
     del sys.argv[0]
     module.main(sys.argv)
+
 
 if __name__ == "__main__":
     sys.exit(main())

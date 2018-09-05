@@ -39,7 +39,7 @@ import CGATCore.IOTools as IOTools
 import CGAT.BamTools.bamtools as BamTools
 import CGATCore.Pipeline as P
 
-PICARD_MEMORY = "12G"
+PICARD_MEMORY = "20G"
 
 
 def getNumReadsFromReadsFile(infile):
@@ -155,6 +155,8 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
         return
 
     statement = '''picard %(picard_opts)s CollectMultipleMetrics
+    USE_JDK_DEFLATER=true
+    USE_JDK_INFLATER=true
     INPUT=%(infile)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true

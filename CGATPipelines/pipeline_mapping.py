@@ -1891,12 +1891,23 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         '''
 
         if len(infiles) == 1:
-            E.info(
-                "%(outfile)s: only one file for merging - creating "
-                "softlink" % locals())
-            os.symlink(infiles[0], outfile)
-            os.symlink(infiles[0] + ".bai", outfile + ".bai")
-            return
+            if os.path.isfile(os.path.join(infiles[0], outfile)):
+                E.info(
+                    "%(outfile)s: only one file for merging - creating "
+                    "softlink" % locals())
+                os.symlink(os.path.basename(infiles[0]), outfile)
+                os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
+                return
+            else:
+                E.info(
+                    "%(outfile)s: only one file for merging - overwriting "
+                    "existing softlink" % locals())
+                os.remove(outfile)
+                os.remove(outfile + ".bai")
+                os.symlink(os.path.basename(infiles[0]), outfile)
+                os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
+                return	
+        
 
         infiles = " ".join(infiles)
         statement = '''

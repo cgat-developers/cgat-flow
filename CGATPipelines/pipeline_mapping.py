@@ -207,6 +207,8 @@ import re
 import glob
 import sqlite3
 import collections
+import shutil #required for 'butter' mapper
+import CGAT.Sra as Sra #required for 'butter' mapper
 
 import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
@@ -1636,7 +1638,7 @@ def mapReadsWithBWA(infile, outfile):
             strip_sequence=PARAMS["strip_sequence"],
             set_nh=PARAMS["bwa_set_nh"])
     else:
-        raise ValueError("bwa algorithm '%s' not known" % algorithm)
+        raise ValueError("bwa algorithm '%s' not known" % PARAMS["bwa_algorithm"])
 
     statement = m.build((infile,), outfile)
     P.run(statement)
@@ -1900,14 +1902,14 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
                 return
             else:
                 E.info(
-                    "%(outfile)s: only one file for merging - overwriting "
-                    "existing softlink" % locals())
-                os.remove(outfile)
-                os.remove(outfile + ".bai")
-                os.symlink(os.path.basename(infiles[0]), outfile)
-                os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
-                return	
-        
+                    "%(outfile)s: only one file for merging - softlink "
+                    "already exists" % locals())
+                #os.remove(outfile)
+                #os.remove(outfile + ".bai")
+                #os.symlink(os.path.basename(infiles[0]), outfile)
+                #os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
+                return
+
 
         infiles = " ".join(infiles)
         statement = '''

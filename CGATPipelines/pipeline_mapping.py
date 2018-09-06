@@ -1746,7 +1746,7 @@ def mapReadsWithButter(infile, outfile):
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
         outdir = P.get_temp_dir()
-        f = Sra.sneak(infile, outdir)
+        f = Sra.peek(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
         paired end data,Butter does not support paired end reads''')
@@ -1814,7 +1814,7 @@ def mapReadsWithShortstack(infile, outfile):
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
         outdir = P.get_temp_dir()
-        f = Sra.sneak(infile, outdir)
+        f = Sra.peek(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
         paired end data,shortstack does not support paired end reads''')

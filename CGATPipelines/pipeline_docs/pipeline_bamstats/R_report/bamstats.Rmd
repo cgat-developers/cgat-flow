@@ -23,21 +23,12 @@ library(reshape2)
 setwd("./..")
 mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 
-db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats;')
 
-db_1 <- db[,c("track","alignments_duplicate","alignments_filtered",
-              "alignments_mapped","alignments_mate_reverse",
-              "alignments_mate_unmapped", "alignments_no_rna",
-              "alignments_paired","alignments_proper_pair",
-              "alignments_qc_fail","alignments_read1",
-              "alignments_read2","alignments_reverse","alignments_rna",
-              "alignments_secondary","alignments_total","alignments_unmapped"   )]
+db <- db[,grep("track|alignments", names(db))]
 
 DT::datatable(as.data.frame(db_1, class = 'cell-border stripe'))
 
 ```
-
-
 
 This table details all of the statistics for the reads.
 
@@ -48,9 +39,7 @@ mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 
 db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats;')
 
-db_2 <- db[,c("track","category","pairs_mapped","pairs_total","reads_mapped",            
-              "reads_missing","reads_norna","reads_norna_unique","reads_total",             
-              "reads_unique","reads_unmapped")]
+db_2 <- db[,grep("track|reads", names(db))]
 
 DT::datatable(as.data.frame(db_2, class = 'cell-border stripe'))
 ```

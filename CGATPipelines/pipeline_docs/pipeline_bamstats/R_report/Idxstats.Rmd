@@ -79,7 +79,7 @@ mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 db <- dbGetQuery(mydb, 'SELECT * FROM idxstats_reads_per_chromosome;')
 
 
-db <- db[,grep("chrX|chrY|track", names(db))]
+db <- db[,grep("chrX$|chrY$|track", names(db))]
 
 db <- melt(db, id.vars="track")
 
@@ -103,7 +103,7 @@ mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 db <- dbGetQuery(mydb, 'SELECT * FROM idxstats_reads_per_chromosome;')
 
 
-db <- db[,grep("chrX|chrY|track", names(db))]
+db <- db[,grep("chrX$|chrY$|track", names(db))]
 
 percentageX <- function(x){
   total <- x[1]+x[2]

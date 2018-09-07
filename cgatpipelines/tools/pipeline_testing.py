@@ -8,7 +8,7 @@ This pipeline executes other pipelines for testing purposes.
 Overview
 ========
 
-This pipeline implements automated testing of CGAT pipelines. The
+This pipeline implements automated testing of cgat pipelines. The
 pipeline downloads test data from a specified URL, runs the associated
 pipeline for each data set and compares the output with a reference.
 The results are collected in a report.
@@ -19,7 +19,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 In order to run all tests, simply enter an empty directory and type::
 
@@ -155,8 +155,8 @@ import re
 import glob
 import tarfile
 import pandas
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
 from cgatpipelines.report import run_report
 
 ###################################################
@@ -166,7 +166,7 @@ from cgatpipelines.report import run_report
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 PARAMS = P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
      "../pipeline.yml",

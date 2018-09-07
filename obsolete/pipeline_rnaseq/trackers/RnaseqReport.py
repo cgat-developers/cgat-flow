@@ -1,8 +1,8 @@
 import re
 import glob
 
-from CGATReport.Tracker import *
-from CGATReport.Utils import PARAMS as P
+from cgatReport.Tracker import *
+from cgatReport.Utils import PARAMS as P
 import PipelineTracks
 
 # get from config file

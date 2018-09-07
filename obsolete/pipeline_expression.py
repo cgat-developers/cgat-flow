@@ -32,13 +32,13 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
 from ruffus import *
 import sqlite3
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 import gzip
-import CGAT.Expression as Expression
+import cgat.Expression as Expression
 
 from rpy2.robjects import r as R
 

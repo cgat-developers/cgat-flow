@@ -85,8 +85,8 @@ PY_DEPS[toposort]="toposort"
 PY_DEPS[web]="web.py"
 PY_DEPS[weblogolib]="python-weblogo"
 PY_DEPS[bashlex]="ignore"
-PY_DEPS[CGAT]="cgat-apps"
-PY_DEPS[CGATCore]="cgat-core"
+PY_DEPS[cgat]="cgat-apps"
+PY_DEPS[cgatcore]="cgatcore"
 PY_DEPS[CGATReport]="cgat-report"
 
 # dictionary to translate R deps

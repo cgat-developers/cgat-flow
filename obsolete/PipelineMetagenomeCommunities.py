@@ -8,11 +8,11 @@ classes and utility functions for pipeline_metagenomecommunities.py
 import os
 import collections
 
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
 from rpy2.robjects import r as R
-import CGAT.GTF as GTF
+import cgat.GTF as GTF
 
 
 def normaliseKraken(infile, outfile):

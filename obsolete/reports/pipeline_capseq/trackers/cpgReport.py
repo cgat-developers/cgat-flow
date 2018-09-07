@@ -6,9 +6,9 @@ import itertools
 import glob
 import PipelineTracks
 
-from CGATReport.Tracker import *
-from CGATReport.odict import OrderedDict as odict
-from CGATReport.Utils import PARAMS as P
+from cgatReport.Tracker import *
+from cgatReport.odict import OrderedDict as odict
+from cgatReport.Utils import PARAMS as P
 
 EXPORTDIR = P['cpg_exportdir']
 DATADIR = P['cpg_datadir']

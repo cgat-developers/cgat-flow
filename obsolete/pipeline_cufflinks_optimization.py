@@ -55,7 +55,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -92,7 +92,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -145,9 +145,9 @@ import sqlite3
 from rpy2.robjects import r as R
 import pysam
 
-import CGATCore.Experiment as E
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
 
 ###################################################
 ###################################################
@@ -156,7 +156,7 @@ import CGATCore.IOTools as IOTools
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 from functools import reduce
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],

@@ -8,10 +8,10 @@ Purpose
 .. The goal of this script is to provide a list of third-party command-line
 programs used in a Python script given as input, and check whether
 they are on your PATH. This is useful to identify dependencies across all
-CGAT pipelines and module files.
+cgat pipelines and module files.
 
 This script takes the path to a Python script, which is expected to call
-command-line programs like we do in CGAT pipelines, i.e.:
+command-line programs like we do in cgat pipelines, i.e.:
 
    statement = """cmd-1 | cmd-2 | cmd-3""""
    P.run()
@@ -26,7 +26,7 @@ Usage
 
 Example::
 
-   python cgat_check_deps --pipeline CGATPipelines/pipeline_annotations.py
+   python cgat_check_deps --pipeline cgatPipelines/pipeline_annotations.py
 
 Type::
 
@@ -175,7 +175,7 @@ def cleanup_statement(statement):
     # cleanup whitespaces, tabs, and newlines
     result = " ".join(statement.split())
     # cleanup parameter interpolation
-    result = re.sub("\%\(\w+\)\w+", "CGATparameter", result)
+    result = re.sub("\%\(\w+\)\w+", "cgatparameter", result)
     return result
 
 
@@ -323,7 +323,7 @@ def main(argv=None):
     # setup command line parser
     parser = argparse.ArgumentParser(description='Get 3rd party dependencies.')
 
-    parser.add_argument("pipeline", help="Path to CGAT pipeline or module")
+    parser.add_argument("pipeline", help="Path to cgat pipeline or module")
 
     parser.add_argument("-s", "--print-summary", dest="summary",
                         action="store_true", default=False,

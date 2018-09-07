@@ -22,7 +22,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning`
-on general information how to use CGAT pipelines.
+on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -77,7 +77,7 @@ fastq.1.gz, fastq2.2.gz
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +---------------+----------+------------------------------------------------+
@@ -131,13 +131,13 @@ import re
 import itertools
 import glob
 import sqlite3
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineMapping as PipelineMapping
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineRrbs as RRBS
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgatPipelines.PipelineMapping as PipelineMapping
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineRrbs as RRBS
 import pandas as pd
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 import numpy as np
 ###################################################

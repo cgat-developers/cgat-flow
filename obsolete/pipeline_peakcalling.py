@@ -138,7 +138,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -185,7 +185,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+-------------------------+
@@ -309,16 +309,16 @@ import itertools
 import glob
 import sqlite3
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.Bed as Bed
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.BamTools as BamTools
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.Bed as Bed
+import cgatcore.IOTools as IOTools
+import cgatcore.Database as Database
+import cgat.BamTools as BamTools
 
-import CGATPipelines.PipelinePeakcalling as PipelinePeakcalling
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMappingQC as PipelineMappingQC
+import cgatPipelines.PipelinePeakcalling as PipelinePeakcalling
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMappingQC as PipelineMappingQC
 
 ###################################################
 ###################################################

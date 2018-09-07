@@ -4,7 +4,7 @@ the flow of data through a series of functions.
 
 There is a PowerPoint presentation with details of all the ruffus decorators
 and which goes through the functions in this pipeline one by one at
-https://www.cgat.org/downloads/public/training/CGATTrainingSessions/2017-02-14-KatyBrownRuffus.pptx
+https://www.cgat.org/downloads/public/training/cgatTrainingSessions/2017-02-14-KatyBrownRuffus.pptx
 
 No input is required, to run the pipeline the steps are:
 
@@ -36,7 +36,7 @@ from ruffus import *
 from ruffus.combinatorics import *
 import sys
 import os
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 
 
 PARAMS = P.get_parameters(
@@ -356,7 +356,7 @@ def advancedRuffus():
 @follows(basicRuffus, advancedRuffus)
 def full():
     '''
-    All CGAT pipelines should end with a full() function which updates,
+    All cgat pipelines should end with a full() function which updates,
     if needed, all branches of the pipeline.
     The @follows statement should ensure that all functions are covered,
     either directly or as prerequisites.

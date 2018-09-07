@@ -24,7 +24,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -116,9 +116,9 @@ Code
 """
 import sys
 import os
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import logging as L
-import CGATPipelines.PipelineUCSC as PipelineUCSC
+import cgatPipelines.PipelineUCSC as PipelineUCSC
 
 from ruffus import *
 
@@ -127,7 +127,7 @@ from ruffus import *
 ###################################################
 # Pipeline configuration
 ###################################################
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",

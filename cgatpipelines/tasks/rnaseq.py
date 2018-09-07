@@ -33,9 +33,9 @@ Reference
 
 """
 
-import CGATCore.Experiment as E
-import CGATCore.CSV as CSV
-import CGAT.Sra as Sra
+import cgatcore.Experiment as E
+import cgatcore.CSV as CSV
+import cgat.Sra as Sra
 
 import collections
 import glob
@@ -51,16 +51,16 @@ from rpy2.robjects import r as R
 import rpy2.robjects as ro
 import rpy2.rinterface as ri
 
-import CGAT.BamTools.bamtools as BamTools
-import CGAT.Counts as Counts
-import CGATCore.Database as Database
-import CGAT.Expression as Expression
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgat.BamTools.bamtools as BamTools
+import cgat.Counts as Counts
+import cgatcore.Database as Database
+import cgat.Expression as Expression
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
 import cgatpipelines.tasks.mapping as mapping
 
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.Pipeline import cluster_runnable
 
 # AH: commented as I thought we wanted to avoid to
 # enable this automatically due to unwanted side

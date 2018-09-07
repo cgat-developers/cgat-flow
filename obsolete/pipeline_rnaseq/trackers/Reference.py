@@ -6,7 +6,7 @@ import itertools
 import math
 
 from RnaseqReport import *
-from CGATReport.ResultBlock import ResultBlock, ResultBlocks
+from cgatReport.ResultBlock import ResultBlock, ResultBlocks
 
 import Stats
 

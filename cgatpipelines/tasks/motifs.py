@@ -39,17 +39,17 @@ import shutil
 import glob
 
 import logging as L
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.Masker as Masker
-import CGAT.Glam2Scan as Glam2Scan
-import CGAT.MAST as MAST
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.IndexedFasta as IndexedFasta
+import cgat.Masker as Masker
+import cgat.Glam2Scan as Glam2Scan
+import cgat.MAST as MAST
+import cgatcore.IOTools as IOTools
+import cgat.Bed as Bed
 # TODO: remove dependency
-# import CGAT.Bioprospector as Bioprospector
-import CGAT.FastaIterator as FastaIterator
+# import cgat.Bioprospector as Bioprospector
+import cgat.FastaIterator as FastaIterator
 
 
 def filterMotifsFromMEME(infile, outfile, selected):

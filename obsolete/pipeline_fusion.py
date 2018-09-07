@@ -27,7 +27,7 @@ able to use our own annontations.
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -79,7 +79,7 @@ Requirements
 The pipeline requires the results from :doc:`pipeline_annotations`. Set the configuration variable 
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -133,10 +133,10 @@ import glob
 import os
 import shutil
 import sqlite3
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMapping as PipelineMapping
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMapping as PipelineMapping
 ###################################################
 ###################################################
 ###################################################

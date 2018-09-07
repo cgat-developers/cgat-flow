@@ -14,13 +14,13 @@ Code
 
 '''
 
-import CGAT.Expression as Expression
-import CGAT.Counts as Counts
-import CGATCore.IOTools as IOTools
+import cgat.Expression as Expression
+import cgat.Counts as Counts
+import cgatcore.IOTools as IOTools
 
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.Pipeline import cluster_runnable
 
 from rpy2.robjects import r as R
 

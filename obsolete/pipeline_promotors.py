@@ -19,7 +19,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -43,7 +43,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -90,11 +90,11 @@ import os
 import re
 import collections
 import sqlite3
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.FastaIterator as FastaIterator
-import CGAT.Bed as Bed
-import CGATPipelines.PipelineGeneset as PipelineGeneset
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.FastaIterator as FastaIterator
+import cgat.Bed as Bed
+import cgatPipelines.PipelineGeneset as PipelineGeneset
 
 ###################################################
 ###################################################
@@ -103,7 +103,7 @@ import CGATPipelines.PipelineGeneset as PipelineGeneset
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",

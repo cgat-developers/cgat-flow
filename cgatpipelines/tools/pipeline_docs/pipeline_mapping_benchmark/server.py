@@ -2,8 +2,8 @@
 
 import web
 
-from CGATReport import Cache
-from CGATReport import DataTree
+from cgatReport import Cache
+from cgatReport import DataTree
 
 urls = ( '/data/(.*)', 'DataTable',
          '/index/(.*)', 'Index'  )

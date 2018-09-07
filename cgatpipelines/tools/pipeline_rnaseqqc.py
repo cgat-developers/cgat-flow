@@ -39,7 +39,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning`
-on general information how to use CGAT pipelines.
+on general information how to use cgat pipelines.
 
 
 Input
@@ -184,13 +184,13 @@ import seaborn as sns
 from rpy2.robjects import r as R
 from rpy2.robjects import pandas2ri
 
-import CGATCore.Experiment as E
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.mappingqc as mappingqc
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 from cgatpipelines.report import run_report
 
 import json
@@ -1515,7 +1515,7 @@ def plotTopGenesHeatmap(outfile):
     plot a heatmap of the intersection'''
 
     # if someone can find a nice heatmap plotter from a dissimilarity
-    # matrix which is compatable with CGATReport, the sqlite and
+    # matrix which is compatable with cgatReport, the sqlite and
     # pandas code should be changed into a tracker
 
     exp_select_cmd = '''

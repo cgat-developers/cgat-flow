@@ -15,7 +15,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -78,7 +78,7 @@ The pipeline requires the information from the following pipelines:
    set the configuration variable :py:data:`annotations_database` and
    :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -132,8 +132,8 @@ from ruffus import *
 import sqlite3
 import xml.etree.ElementTree
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
 
 import cgatpipelines.tasks.motifs as motifs
 import cgatpipelines.tasks.tracks as tracks
@@ -144,7 +144,7 @@ from cgatpipelines.report import run_report
 ###################################################
 # Pipeline configuration
 ###################################################
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
      "../pipeline.yml",

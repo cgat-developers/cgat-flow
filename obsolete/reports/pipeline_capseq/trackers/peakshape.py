@@ -7,7 +7,7 @@ import math
 import numpy
 import IOTools
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from cpgReport import *
 
 ##########################################################################

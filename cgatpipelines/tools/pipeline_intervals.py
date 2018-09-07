@@ -20,7 +20,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -175,11 +175,11 @@ from ruffus import transform, follows, mkdir, merge, regex, suffix, add_inputs,\
 
 from ruffus.task import task_decorator
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
-import CGAT.MatrixTools as MatrixTools
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgat.Bed as Bed
+import cgat.MatrixTools as MatrixTools
 import cgatpipelines.tasks.intervals as intervals
 import cgatpipelines.tasks.motifs as motifs
 import cgatpipelines.tasks.windows as windows

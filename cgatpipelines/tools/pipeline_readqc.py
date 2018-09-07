@@ -15,7 +15,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning`
-on general information how to use CGAT pipelines.
+on general information how to use cgat pipelines.
 
 When pre-processing reads before mapping, the workflow of the pipeline
 is as follows:
@@ -125,13 +125,13 @@ import shutil
 import sqlite3
 import glob
 
-# import modules from the CGAT code collection
-import CGATCore.Experiment as E
+# import modules from the cgat code collection
+import cgatcore.Experiment as E
 import cgatpipelines.tasks.mapping as mapping
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 import cgatpipelines.tasks.readqc as readqc
 import cgatpipelines.tasks.preprocess as preprocess
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 from cgatpipelines.report import run_report
 
 

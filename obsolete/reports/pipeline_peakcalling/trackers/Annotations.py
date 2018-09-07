@@ -5,7 +5,7 @@ import types
 import itertools
 import PeakcallingReport
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from collections import OrderedDict as odict
 
 ##########################################################################

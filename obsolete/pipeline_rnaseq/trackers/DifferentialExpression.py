@@ -5,9 +5,9 @@ import types
 import itertools
 import math
 
-from CGATReport.Tracker import *
-from CGATReport.Utils import PARAMS as P
-from CGATReport.odict import OrderedDict as odict
+from cgatReport.Tracker import *
+from cgatReport.Utils import PARAMS as P
+from cgatReport.odict import OrderedDict as odict
 
 from RnaseqReport import *
 

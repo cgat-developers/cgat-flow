@@ -83,15 +83,15 @@ import glob
 import collections
 import re
 import itertools
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 import logging as L
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.GTF as GTF
-import CGAT.Fastq as Fastq
-import CGAT.IndexedFasta as IndexedFasta
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgat.Fastq as Fastq
+import cgat.IndexedFasta as IndexedFasta
 import cgatpipelines.tasks.geneset as geneset
-import CGAT.Sra as Sra
+import cgat.Sra as Sra
 
 SequenceInformation = collections.namedtuple("SequenceInformation",
                                              """paired_end
@@ -692,7 +692,7 @@ class SequenceCollectionProcessor(object):
                     # Usually sra extraction files have format
                     # '1_fastq.gz' for both single and paired end files
                     # This code corrects the output to the format expected by
-                    # CGAT s
+                    # cgat s
                     infile = sra_extraction_files[0]
                     basename = os.path.basename(infile)
 

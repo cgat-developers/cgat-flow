@@ -6,10 +6,10 @@ Reference
 ---------
 '''
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 from rpy2.robjects import r as R
-import CGATCore.IOTools as IOTools
-import CGAT.Biomart as Biomart
+import cgatcore.IOTools as IOTools
+import cgat.Biomart as Biomart
 import re
 
 

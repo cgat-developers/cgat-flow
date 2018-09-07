@@ -21,12 +21,12 @@ import math
 import numpy
 import numpy.ma as ma
 import itertools
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.BamTools.bamtools as BamTools
-import CGATCore.IOTools as IOTools
-import CGAT.Expression as Expression
-import CGAT.Bed as Bed
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.BamTools.bamtools as BamTools
+import cgatcore.IOTools as IOTools
+import cgat.Expression as Expression
+import cgat.Bed as Bed
 
 
 def convertReadsToIntervals(bamfile,
@@ -658,7 +658,7 @@ def runDE(design_file,
     # over all windows.
     statement += '''
     | cgat randomize_lines --keep-header=1
-    | python -m CGATCore.Pipeline.farm
+    | python -m cgatcore.Pipeline.farm
     --method=multiprocessing
     --cluster-options="-l mem_free=16G"
     --cluster-queue=%(cluster_queue)s

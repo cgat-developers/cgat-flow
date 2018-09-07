@@ -49,7 +49,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -79,7 +79,7 @@ file :file:`pipeline.ini` and download annotations using mysql.
 Running
 -------
 
-The pipeline can be run as any other CGAT pipeline, but as its purpose
+The pipeline can be run as any other cgat pipeline, but as its purpose
 is to provide a set of shared annotation between multiple projects
 there is an etiquette to be followed:
 
@@ -135,7 +135,7 @@ particular, consider the following questions:
    file are ideal for intervals with a single annotation. If multiple
    annotations are assigned with a feature, use :term:`gff`. For genes,
    use :term:`gtf`. Do not provide the same information with different
-   formats - formats can be easily interconverted using CGAT tools.
+   formats - formats can be easily interconverted using cgat tools.
 
 Known problems
 --------------
@@ -569,17 +569,17 @@ from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
 
 import pyBigWig
 import sqlite3
-import CGAT.Experiment as E
-import CGATPipelines.Pipeline as P
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.IOTools as IOTools
-import CGAT.Database as Database
-import CGAT.Biomart as Biomart
-import CGATPipelines.PipelineGeneset as PipelineGeneset
-import CGATPipelines.PipelineGO as PipelineGO
-import CGATPipelines.PipelineUCSC as PipelineUCSC
-import CGATPipelines.PipelineKEGG as PipelineKEGG
-import CGAT.Intervals as Intervals
+import cgat.Experiment as E
+import cgatPipelines.Pipeline as P
+import cgat.IndexedFasta as IndexedFasta
+import cgat.IOTools as IOTools
+import cgat.Database as Database
+import cgat.Biomart as Biomart
+import cgatPipelines.PipelineGeneset as PipelineGeneset
+import cgatPipelines.PipelineGO as PipelineGO
+import cgatPipelines.PipelineUCSC as PipelineUCSC
+import cgatPipelines.PipelineKEGG as PipelineKEGG
+import cgat.Intervals as Intervals
 
 
 ###################################################
@@ -768,7 +768,7 @@ def buildUngappedContigBed(infile, outfiles):
 def buildGenomeInformation(infile, outfile):
     '''
     Compute genome composition information, such as length
-    and CpG density.  Uses the CGAT script `fasta2table`.
+    and CpG density.  Uses the cgat script `fasta2table`.
 
     Parameters
     ----------
@@ -815,7 +815,7 @@ def loadGenomeInformation(infile, outfile):
 def buildGenomeGCSegmentation(infile, outfile):
     '''
     Segments the genome into isochores - windows according to G+C
-    content.  Uses `CGAT` script `fasta2bed` to generate fixed-width
+    content.  Uses `cgat` script `fasta2bed` to generate fixed-width
     windows with their G+C content as a score.  This is then used
     as the input for `bed2bed` which merges together adjacent or
     overlapping intervals with the same number of bases into bins
@@ -866,7 +866,7 @@ def buildGenomeGCSegmentation(infile, outfile):
 def buildCpGBed(infile, outfile):
     '''
     Output a :term:`BED` file that contains the location of all CpGs
-    in the input genome using `CGAT` script `fasta2bed`.
+    in the input genome using `cgat` script `fasta2bed`.
 
     Parameters
     ----------
@@ -2204,7 +2204,7 @@ def imputeGO(infiles, outfile):
 # THIS IS CURRRENTLY FAILYING - NEED TO CHECK R CODE
 # AND FIX
 
-# I have fixed it in a commit to cgat/CGAT/Biomart.py - KB
+# I have fixed it in a commit to cgat/cgat/Biomart.py - KB
 
 
 @jobs_limit(PARAMS.get("jobs_limit_R", 1), "R")

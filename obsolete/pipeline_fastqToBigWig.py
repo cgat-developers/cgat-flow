@@ -15,7 +15,7 @@ performs the following tasks:
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -69,7 +69,7 @@ set the configuration variables:
    :py:data:`annotations_database` 
    :py:data:`annotations_dir`
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -127,11 +127,11 @@ from ruffus import *
 import sys
 import glob
 import os
-import CGATCore.Experiment as E
-import CGATPipelines.PipelineChipseq as PIntervals
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMapping as PipelineMapping
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+import cgatPipelines.PipelineChipseq as PIntervals
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMapping as PipelineMapping
+from cgatcore import Pipeline as P
 
 USECLUSTER = True
 

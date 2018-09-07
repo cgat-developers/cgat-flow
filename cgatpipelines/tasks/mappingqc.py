@@ -7,13 +7,13 @@ Reference
 
 """
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import os
 import re
 import pandas
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools.bamtools as BamTools
-from CGATCore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgat.BamTools.bamtools as BamTools
+from cgatcore import Pipeline as P
 
 PICARD_MEMORY = "9G"
 

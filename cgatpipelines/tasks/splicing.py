@@ -13,7 +13,7 @@ Methods implemented are:
 
    rMATS
 
-DEXSeq is implemented elsewhere (CGAT code collection: counts2table),
+DEXSeq is implemented elsewhere (cgat code collection: counts2table),
 as it is closely related to counts-based differential expression tools.
 
 
@@ -55,10 +55,10 @@ Requirements
 import os
 import random
 import itertools
-import CGAT.BamTools.bamtools as BamTools
-import CGATCore.Experiment as E
-import CGAT.Expression as Expression
-from CGATCore import Pipeline as P
+import cgat.BamTools.bamtools as BamTools
+import cgatcore.Experiment as E
+import cgat.Expression as Expression
+from cgatcore import Pipeline as P
 
 
 def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):

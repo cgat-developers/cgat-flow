@@ -300,12 +300,12 @@ from ruffus import *
 from ruffus.combinatorics import *
 import os
 import sqlite3
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
 import sys
 import cgatpipelines.tasks.gsenrichment as enrichment
 import cgatpipelines.tasks.enrichmentgsea as gsea
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 from cgatpipelines.report import run_report
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -329,7 +329,7 @@ unmappedouts = [["annotations.dir/%s%s" % (u, s)
                  for s in outfilesuffixes]
                 for u in unmapped]
 
-hpatissues = P.as_list(PARAMS.get('hpa_tissue', {}))
+hpatissues = P.as_list(PARAMS.get('hpa_tissue', []))
 hpatissues = ['clean_backgrounds.dir/%s_hpa_background.tsv'
               % tissue.replace(" ", "_") for tissue in hpatissues]
 
@@ -393,7 +393,7 @@ def preprocessGsea(infile, outfile):
 @follows(preprocessGsea)
 @transform(preprocessGsea,
            regex("gsea_processed.dir/(.*).processed$"),
-           r"\1.dir/CGAT_Gene_set_details.tsv")
+           r"\1.dir/cgat_Gene_set_details.tsv")
 def runGsea(infile, outfile):
     '''
     Perform the enrichment analysis, by using gene set enrichment analysis
@@ -492,9 +492,9 @@ def cleanUserBackgrounds(infile, outfile):
                                       submit=True)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
+@active_if(PARAMS.get('analysis_ora', False))
 @follows(cleanUserBackgrounds)
-@active_if(int(PARAMS['hpa_run']) == 1)
+@active_if(PARAMS.get("hpa_run", False))
 @originate(hpatissues)
 def buildHPABackground(outfile):
     '''
@@ -510,7 +510,7 @@ def buildHPABackground(outfile):
                                      submit=True)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
+@active_if(PARAMS.get('analysis_ora', False))
 @follows(mapUnmappedAnnotations)
 @merge("annotations.dir/*_genestoterms.tsv",
        "clean_backgrounds.dir/allgenes.tsv")
@@ -524,7 +524,7 @@ def buildStandardBackground(infiles, outfile):
     P.run(statement)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
+@active_if(PARAMS.get('analysis_ora', 1))
 @follows(buildHPABackground)
 @follows(cleanUserBackgrounds)
 @follows(cleanForegrounds)
@@ -562,8 +562,7 @@ def foregroundsVsBackgrounds(infiles, outfiles):
                                                 PARAMS['id_type'],
                                                 submit=True)
 
-
-@active_if(PARAMS['analysis_ora'] == 1)
+@active_if(PARAMS.get('analysis_ora', 1))
 @follows(mkdir("barcharts.dir"))
 @transform(foregroundsVsBackgrounds,
            regex("results.dir/(.*)(_go|_hpo)(_all_results.tsv)"),
@@ -590,7 +589,7 @@ def makeBarCharts(infiles, outfile):
         out.close()
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
+@active_if(PARAMS.get('analysis_ora', 1))
 @follows(mkdir("cytoscape.dir"))
 @transform(foregroundsVsBackgrounds,
            regex("results.dir/(.*)(_go|_reactome)(_all_results.tsv)"),
@@ -645,7 +644,7 @@ def update_report():
 
 @follows(update_report)
 def publish_report():
-    '''publish report in the CGAT downloads directory.'''
+    '''publish report in the cgat downloads directory.'''
 
     E.info("publishing report")
     P.publish_report()

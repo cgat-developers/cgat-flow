@@ -94,7 +94,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information
-how to use CGAT pipelines.
+how to use cgat pipelines.
 
 Configuration
 -------------
@@ -181,11 +181,11 @@ import os
 import re
 from rpy2.robjects import r as R
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineLncRNA as PipelineLncRNA
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
+import cgatPipelines.PipelineLncRNA as PipelineLncRNA
 
 ###################################################
 # Pipeline configuration

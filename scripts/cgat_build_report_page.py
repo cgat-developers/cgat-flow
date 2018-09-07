@@ -33,8 +33,8 @@ import sys
 import re
 import subprocess
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
 
 
 def main(argv=None):
@@ -85,7 +85,7 @@ def main(argv=None):
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>CGAT project reports</title>
+    <title>cgat project reports</title>
     <link rel="stylesheet" href="cgat.css" type="text/css" />
     <link rel="stylesheet" href="pygments.css" type="text/css" />
     <link rel="shortcut icon" href="http://cgatwiki.anat.ox.ac.uk/favicon.ico">
@@ -96,7 +96,7 @@ def main(argv=None):
     <div class="related">
       <h3>Navigation</h3>
       <ul>
-        <li><a href="index.html">CGAT Projects Overview</a> &raquo;</li>
+        <li><a href="index.html">cgat Projects Overview</a> &raquo;</li>
       </ul>
     </div>
 
@@ -105,11 +105,11 @@ def main(argv=None):
         <div class="bodywrapper">
           <div class="body">
  <div class="section" id="cgat-pipelines">
-<H1>CGAT exported project pages</H1>
+<H1>cgat exported project pages</H1>
 
 <p> 
 This page is for internal use only. Do not distribute outside of
-CGAT and do not make this page available on the world wide web.
+cgat and do not make this page available on the world wide web.
 </p>
 
 <table class="sortable">\n''')

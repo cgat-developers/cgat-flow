@@ -17,7 +17,7 @@ Overview
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -72,9 +72,9 @@ import os
 import gzip
 from ruffus import *
 
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATCore.IOTools as IOTools
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatcore.IOTools as IOTools
 
 ###################################################
 ###################################################

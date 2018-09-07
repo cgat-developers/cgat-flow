@@ -112,7 +112,7 @@ Reference
 #             }
 
 #     .. note::
-#        This function is CGAT specific.
+#        This function is cgat specific.
 
 #     '''
 
@@ -290,7 +290,7 @@ Reference
 
 #     will create a hub file at
 #     :file:`<uploaddir>/OBFUSID/mapping/ucsc.hub`, where
-#     OBFUSID is the obfuscated directory entry in the CGAT
+#     OBFUSID is the obfuscated directory entry in the cgat
 #     download directory for a particular project.
 
 #     If you want to create group tracks and get them to inherit from a
@@ -368,7 +368,7 @@ Reference
 
 #     # the import is located here to avoid cyclical dependencies
 #     # between Local.py, Pipeline.py and PipelineUCSC.py
-#     import CGATPipelines.PipelineUCSC as PipelineUCSC
+#     import cgatPipelines.PipelineUCSC as PipelineUCSC
 
 #     if not prefix:
 #         prefix = PARAMS.get("report_prefix", "")
@@ -403,9 +403,9 @@ Reference
 #         with IOTools.openFile(hubfile) as infile:
 #             hubdata = PipelineUCSC.readUCSCFile(infile)
 #     else:
-#         hubdata = [('hub', "CGAT-" + project_name),
-#                    ('shortLabel', "CGAT-" + project_name),
-#                    ('longLabel', "Data for CGAT project %s" % project_name),
+#         hubdata = [('hub', "cgat-" + project_name),
+#                    ('shortLabel', "cgat-" + project_name),
+#                    ('longLabel', "Data for cgat project %s" % project_name),
 #                    ('genomesFile', "genomes.txt"),
 #                    ('email', 'andreas.heger@gmail.com')]
 

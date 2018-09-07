@@ -10,10 +10,10 @@ import re
 import pysam
 import random
 
-from CGATCore import Pipeline as P
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineTracks as PipelineTracks
-from CGAT import WrapperIDR
+from cgatcore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgatPipelines.PipelineTracks as PipelineTracks
+from cgat import WrapperIDR
 
 
 def splitBam(infile, outfile_stub, params):

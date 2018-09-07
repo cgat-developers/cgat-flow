@@ -33,11 +33,11 @@ import gzip
 import pysam
 import pandas as pd
 
-# load CGAT specific modules
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools.bamtools as BamTools
-import CGATCore.Pipeline as P
+# load cgat specific modules
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.BamTools.bamtools as BamTools
+import cgatcore.Pipeline as P
 
 PICARD_MEMORY = "12G"
 

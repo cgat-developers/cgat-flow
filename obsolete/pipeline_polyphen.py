@@ -33,8 +33,8 @@ import glob
 import os
 import itertools
 import sqlite3
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
 import PipelineGeneset as PGeneset
 
 ###################################################################

@@ -10,7 +10,7 @@ import numpy.ma
 import Stats
 import Histogram
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from cpgReport import *
 
 ##########################################################################

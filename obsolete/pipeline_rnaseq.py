@@ -272,7 +272,7 @@ construction with varying sequencing depth.
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -326,7 +326,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the
+On top of the default cgat setup, the pipeline requires the following software to be in the
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -438,9 +438,9 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import logging as L
-import CGATCore.Database as Database
+import cgatcore.Database as Database
 import sys
 import os
 import re
@@ -453,23 +453,23 @@ import random
 
 import numpy
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.Tophat as Tophat
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
+import cgat.IndexedFasta as IndexedFasta
+import cgat.Tophat as Tophat
 from rpy2.robjects import r as R
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
-import CGAT.Expression as Expression
+import cgat.Expression as Expression
 
-import CGATPipelines.PipelineGeneset as PipelineGeneset
-import CGATPipelines.PipelineMapping as PipelineMapping
-import CGATPipelines.PipelineRnaseq as PipelineRnaseq
-import CGATPipelines.PipelineMappingQC as PipelineMappingQC
-import CGAT.Stats as Stats
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineGeneset as PipelineGeneset
+import cgatPipelines.PipelineMapping as PipelineMapping
+import cgatPipelines.PipelineRnaseq as PipelineRnaseq
+import cgatPipelines.PipelineMappingQC as PipelineMappingQC
+import cgat.Stats as Stats
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 # levels of cuffdiff analysis
 # (no promotor and splice -> no lfold column)
 CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")

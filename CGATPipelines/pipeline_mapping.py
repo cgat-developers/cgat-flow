@@ -207,8 +207,11 @@ import re
 import glob
 import sqlite3
 import collections
-import shutil #required for 'butter' mapper
-import CGAT.Sra as Sra #required for 'butter' mapper
+
+
+# required for 'butter' mapper
+import shutil
+import CGAT.Sra as Sra
 
 import CGATCore.Experiment as E
 from CGATCore import Pipeline as P
@@ -1904,12 +1907,11 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
                 E.info(
                     "%(outfile)s: only one file for merging - softlink "
                     "already exists" % locals())
-                #os.remove(outfile)
-                #os.remove(outfile + ".bai")
-                #os.symlink(os.path.basename(infiles[0]), outfile)
-                #os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
+                # os.remove(outfile)
+                # os.remove(outfile + ".bai")
+                # os.symlink(os.path.basename(infiles[0]), outfile)
+                # os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
                 return
-
 
         infiles = " ".join(infiles)
         statement = '''

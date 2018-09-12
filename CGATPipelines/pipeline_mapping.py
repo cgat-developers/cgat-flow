@@ -1907,10 +1907,6 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
                 E.info(
                     "%(outfile)s: only one file for merging - softlink "
                     "already exists" % locals())
-                # os.remove(outfile)
-                # os.remove(outfile + ".bai")
-                # os.symlink(os.path.basename(infiles[0]), outfile)
-                # os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
                 return
 
         infiles = " ".join(infiles)

@@ -173,16 +173,15 @@ elif major == 3:
     pass
 
 if INSTALL_CGAT_CODE_COLLECTION:
-    cgat_packages = find_packages(exclude=["CGATPipelines*", "scripts*"])
+    cgat_packages = find_packages(exclude=["cgatpipelines*", "scripts*"])
 else:
     cgat_packages = find_packages(exclude=["scripts*"])
 
 # rename scripts to CGATScripts
 cgat_packages.append("CGATScripts")
 
-cgat_package_dirs = {'CGAT': 'CGAT',
-                     'CGATScripts': 'scripts',
-                     'CGATPipelines': 'CGATPipelines'}
+cgat_package_dirs = {'CGATScripts': 'scripts',
+                     'cgatpipelines': 'cgatpipelines'}
 
 ##########################################################
 ##########################################################
@@ -202,7 +201,7 @@ Operating System :: MacOS
 
 setup(
     # package information
-    name='CGATPipelines',
+    name='cgatpipelines',
     version=version,
     description='CGAT : the Computational Genomics Analysis Toolkit',
     author='Andreas Heger',
@@ -218,7 +217,7 @@ setup(
     package_dir=cgat_package_dirs,
     include_package_data=True,
     entry_points={
-        'console_scripts': ['cgatflow = CGATPipelines.cgatflow:main']
+        'console_scripts': ['cgatflow = cgatpipelines.cgatflow:main']
     },
     # dependencies
     install_requires=install_requires,

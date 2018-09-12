@@ -155,8 +155,6 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
         return
 
     statement = '''picard %(picard_opts)s CollectMultipleMetrics
-    USE_JDK_DEFLATER=true
-    USE_JDK_INFLATER=true
     INPUT=%(infile)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true

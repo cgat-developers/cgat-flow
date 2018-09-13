@@ -9,15 +9,15 @@ import os
 import sys
 import ruffus
 
-import CGATCore.Experiment as E
-import CGATCore.Pipeline as P
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.Pipeline as P
+import cgatcore.IOTools as IOTools
 
 
 def run_report(clean=True,
                with_pipeline_status=True,
                pipeline_status_format="svg"):
-    '''run CGATreport.
+    '''run cgatreport.
 
     This will also run ruffus to create an svg image of the pipeline
     status unless *with_pipeline_status* is set to False. The image

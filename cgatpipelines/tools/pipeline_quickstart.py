@@ -5,7 +5,7 @@
 Purpose
 -------
 
-This script creates a new pipeline according to the CGAT
+This script creates a new pipeline according to the cgat
 pipeline layout. This is useful when starting a new pipeline
 from scratch.
 
@@ -62,7 +62,7 @@ src/pipeline_chipseq
 src/pipeline_docs/pipeline_chipseq
    Directory for the pipeline report
 src/pipeline_docs/themes
-   The CGAT report theme.
+   The cgat report theme.
 
 Type::
 
@@ -81,9 +81,9 @@ import sys
 import re
 import os
 import shutil
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
 
 
 def main(argv=sys.argv):
@@ -106,7 +106,7 @@ def main(argv=sys.argv):
         "-t", "--pipeline-type", dest="pipeline_type", type="choice",
         choices=("full", "minimal"),
         help="type of pipeline to output. "
-        "full=a complete pipeline for the CGAT environment "
+        "full=a complete pipeline for the cgat environment "
         "minimum=minimum pipeline "
         "[%default]")
 
@@ -231,7 +231,7 @@ def main(argv=sys.argv):
     name = options.name
 
     print("""
-Welcome to your new %(name)s CGAT pipeline.
+Welcome to your new %(name)s cgat pipeline.
 
 All files have been successfully copied to `%(destination_dir)s`. In
 order to start the pipeline, go to `%(destination_dir)s/work`

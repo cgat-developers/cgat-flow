@@ -1,10 +1,10 @@
 import itertools
 import glob
 
-from CGATReport.Tracker import *
-from CGATReport.Utils import PARAMS as P
-from CGATCore import Pipeline as Pipeline
-import CGATPipelines.PipelineTracks as PipelineTracks
+from cgatReport.Tracker import *
+from cgatReport.Utils import PARAMS as P
+from cgatcore import Pipeline as Pipeline
+import cgatPipelines.PipelineTracks as PipelineTracks
 ###################################################################
 ###################################################################
 # parameterization

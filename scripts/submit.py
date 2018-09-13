@@ -31,8 +31,8 @@ import sys
 import re
 import glob
 import subprocess
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
 
 
 def checkPythonRuns(filename):

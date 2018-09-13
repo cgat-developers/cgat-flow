@@ -44,7 +44,7 @@ and the expected complexity of the sample. We make no effort here to advise on k
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -88,7 +88,7 @@ Optional inputs
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+

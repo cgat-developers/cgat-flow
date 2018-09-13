@@ -9,11 +9,11 @@ Reference
 
 import os
 import pysam
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.GTF as GTF
-import CGATCore.Pipeline as P
-import CGATCore.Database as Database
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgatcore.Pipeline as P
+import cgatcore.Database as Database
 
 
 class SubsetGTF():

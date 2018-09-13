@@ -58,7 +58,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -82,7 +82,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +----------+-----------+---------------------------+
@@ -113,11 +113,11 @@ import os
 import sqlite3
 import pandas
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.SetTools as SetTools
-import CGATPipelines.PipelineGO as PipelineGO
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgatcore.Database as Database
+import cgat.SetTools as SetTools
+import cgatPipelines.PipelineGO as PipelineGO
 
 ###################################################
 ###################################################
@@ -126,7 +126,7 @@ import CGATPipelines.PipelineGO as PipelineGO
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 PARAMS = P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
@@ -141,7 +141,7 @@ PARAMS.update(P.peekParameters(
 
 # Update the PARAMS dictionary in any PipelineModules
 # e.g.:
-# import CGATPipelines.PipelineGeneset as PipelineGeneset
+# import cgatPipelines.PipelineGeneset as PipelineGeneset
 # PipelineGeneset.PARAMS = PARAMS
 
 

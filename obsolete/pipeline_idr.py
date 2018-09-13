@@ -74,7 +74,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information
-how to use CGAT pipelines.
+how to use cgat pipelines.
 
 Configuration
 -------------
@@ -98,7 +98,7 @@ The pipeline requires the results from :doc:`pipeline_annotations`. Set the
 configuration variable :py:data:`annotations_database`
 and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following software
+On top of the default cgat setup, the pipeline requires the following software
 to be in the path:
 
 +--------------------+-------------------+------------------------------------+
@@ -148,13 +148,13 @@ import sqlite3
 import glob
 import shutil
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgatcore.Database as Database
 
-import CGATPipelines.PipelineIDR as IDR
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineIDR as IDR
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 # Pipeline configuration
 P.getParameters(
@@ -537,7 +537,7 @@ def runIDROnIndividualReplicates(infiles, outfile):
     Run IDR consecutively for each pairwise combination of a particular
     EXPERIMENT
     """
-    # set IDR parameters (HACK!) WrapperIDR is in /ifs/devel/CGAT
+    # set IDR parameters (HACK!) WrapperIDR is in /ifs/devel/cgat
     chr_table = os.path.join(PARAMS["annotations_dir"],
                              PARAMS["annotations_interface_contigs"])
 

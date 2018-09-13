@@ -7,7 +7,7 @@ bechmark pipeline
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------

@@ -132,7 +132,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information
-how to use CGAT pipelines.
+how to use cgat pipelines.
 
 Configuration
 -------------
@@ -171,7 +171,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------+
@@ -252,9 +252,9 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import logging as L
-import CGATCore.Database as Database
+import cgatcore.Database as Database
 
 import sys
 import os
@@ -267,20 +267,20 @@ import collections
 import random
 
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.Tophat as Tophat
-import CGAT.Sra as Sra
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
+import cgat.IndexedFasta as IndexedFasta
+import cgat.Tophat as Tophat
+import cgat.Sra as Sra
 
 from rpy2.robjects import r as R
 from rpy2.rinterface import RRuntimeError
 
-import CGATPipelines.PipelineGeneset as PipelineGeneset
-import CGATPipelines.PipelineRnaseq as PipelineRnaseq
-import CGAT.Stats as Stats
-import CGATPipelines.PipelineTracks as PipelineTracks
-from CGATCore import Pipeline as P
+import cgatPipelines.PipelineGeneset as PipelineGeneset
+import cgatPipelines.PipelineRnaseq as PipelineRnaseq
+import cgat.Stats as Stats
+import cgatPipelines.PipelineTracks as PipelineTracks
+from cgatcore import Pipeline as P
 
 ###################################################
 ###################################################

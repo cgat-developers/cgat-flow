@@ -53,7 +53,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -142,7 +142,7 @@ ToDo: make exome sequencing example
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 Requirements:
@@ -173,9 +173,9 @@ import re
 import shutil
 import decimal
 import pandas as pd
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.exome as exome
@@ -1442,10 +1442,12 @@ def findGenes(infile, outfile):
 # Tabulation
 
 
-TABULATION_INPUT = {0: annotateVariantsVEP, 1: findGenes}
+TABULATION_INPUT = {'': annotateVariantsVEP,
+                    0: annotateVariantsVEP,
+                    1: findGenes}
 
 
-@transform(TABULATION_INPUT[PARAMS["annotation_add_genes_of_interest"]],
+@transform(TABULATION_INPUT[PARAMS.get("annotation_add_genes_of_interest", 0)],
            regex(r"variants/all_samples.(snpsift|genes).vcf"),
            r"variants/all_samples.snpsift.table")
 def vcfToTable(infile, outfile):

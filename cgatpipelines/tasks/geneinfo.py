@@ -1,4 +1,4 @@
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 from Bio import Entrez
 import numpy as np
 import httplib2
@@ -9,10 +9,10 @@ import re
 import os
 import xml.etree.ElementTree as ET
 import pandas as pd
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
 from urllib.request import urlopen
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.Pipeline import cluster_runnable
 import mygene
 
 

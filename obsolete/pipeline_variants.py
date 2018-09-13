@@ -21,7 +21,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -67,7 +67,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -117,29 +117,29 @@ import glob
 import gzip
 import os
 import itertools
-import CGATCore.CSV as CSV
+import cgatcore.CSV as CSV
 import re
 import math
 import collections
 import numpy
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.Biomart as Biomart
-import CGAT.FastaIterator as FastaIterator
-import CGATPipelines.PipelineEnrichment as PEnrichment
-import CGATPipelines.PipelineUCSC as PipelineUCSC
+import cgat.GTF as GTF
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgatcore.Database as Database
+import cgat.Biomart as Biomart
+import cgat.FastaIterator as FastaIterator
+import cgatPipelines.PipelineEnrichment as PEnrichment
+import cgatPipelines.PipelineUCSC as PipelineUCSC
 import scipy.stats
-import CGAT.Stats as Stats
+import cgat.Stats as Stats
 import pysam
 
 # only update R if called as pipeline
 # otherwise - failure with sphinx
 from rpy2.robjects import r as R
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+from cgatcore import Pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 ###################################################
 ###################################################

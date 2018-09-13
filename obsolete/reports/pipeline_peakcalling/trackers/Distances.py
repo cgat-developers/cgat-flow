@@ -6,7 +6,7 @@ import itertools
 import PeakcallingReport
 import Annotations
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 
 ##########################################################################
 ##########################################################################

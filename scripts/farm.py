@@ -80,11 +80,11 @@ import stat
 
 from multiprocessing.pool import Pool, ThreadPool
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.Blat as Blat
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.Blat as Blat
 
-from CGATCore.Pipeline import Cluster as Cluster
+from cgatcore.Pipeline import Cluster as Cluster
 
 try:
     import drmaa

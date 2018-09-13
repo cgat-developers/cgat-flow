@@ -15,11 +15,11 @@
 import sys
 import os
 
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 import cgatpipelines
 
 ################################################################
-# Options related to CGAT pipelines
+# Options related to cgat pipelines
 
 # path were documentation source resides.
 # Use environment variable SPHINX_DOCSDIR.
@@ -51,7 +51,7 @@ inifile = os.path.join(os.path.dirname(cgatpipelines.__file__),
 
 PARAMS = P.get_parameters([inifile, "pipeline.yml"])
 
-# Definition now part of CGATReport
+# Definition now part of cgatReport
 # def setup(app):
 #     app.add_config_value('PARAMS', {}, True)
 
@@ -109,10 +109,10 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
               'sphinx.ext.inheritance_diagram',
-              'CGATReport.report_directive',
-              'CGATReport.errors_directive',
-              'CGATReport.warnings_directive',
-              'CGATReport.roles']
+              'cgatReport.report_directive',
+              'cgatReport.errors_directive',
+              'cgatReport.warnings_directive',
+              'cgatReport.roles']
 
 if 'intersphinx' in PARAMS:
     intersphinx_mapping = dict(
@@ -121,10 +121,10 @@ if 'intersphinx' in PARAMS:
 
 # Included at the end of each rst file
 rst_epilog = '''
-.. _CGAT: http://www.cgat.org
-.. _CGAT Training Programme: http://www.cgat.org
-.. _CGAT Pipelines: https://www.cgat.org/downloads/public/cgat/documentation/Pipelines.html#pipelines
-.. _CGAT Scripts: https://www.cgat.org/downloads/public/cgat/documentation/cgat.html#cgat
+.. _cgat: http://www.cgat.org
+.. _cgat Training Programme: http://www.cgat.org
+.. _cgat Pipelines: https://www.cgat.org/downloads/public/cgat/documentation/Pipelines.html#pipelines
+.. _cgat Scripts: https://www.cgat.org/downloads/public/cgat/documentation/cgat.html#cgat
 .. _pysam: http://code.google.com/p/pysam/
 .. _samtools: http://samtools.sourceforge.net/
 .. _tabix: http://samtools.sourceforge.net/tabix.shtml/
@@ -166,7 +166,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = 'test'
-copyright = '2014, %CGAT%'
+copyright = '2014, %cgat%'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -323,7 +323,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('index', 'test.tex', 'test Documentation',
-     '\\%CGAT\\%', 'manual'),
+     '\\%cgat\\%', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -353,7 +353,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'test', 'test Documentation',
-     ['%CGAT%'], 1)
+     ['%cgat%'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -367,7 +367,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'test', 'test Documentation',
-     '%CGAT%', 'test', 'One line description of project.',
+     '%cgat%', 'test', 'One line description of project.',
      'Miscellaneous'),
 ]
 

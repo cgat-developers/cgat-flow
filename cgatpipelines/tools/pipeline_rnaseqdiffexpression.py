@@ -125,7 +125,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -197,7 +197,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------+----------+------------------------------------+
@@ -297,7 +297,7 @@ ChangeLog
 15.10.2015  Charlotte George, Sebastian Luna-Valero
             SCRUM Oct 2015. Updating documentation.
 
-10.10.2016  CGAT Fellows. SCRUM Oct 2016. Complete re-write of
+10.10.2016  cgat Fellows. SCRUM Oct 2016. Complete re-write of
             pipeline and modules to simplify workflow and add alignment-free
             methods
 
@@ -323,8 +323,8 @@ Code
 from ruffus import *
 from ruffus.combinatorics import *
 
-import CGATCore.Experiment as E
-# import CGAT.scrum_expression as SE
+import cgatcore.Experiment as E
+# import cgat.scrum_expression as SE
 
 import sys
 import os
@@ -332,16 +332,16 @@ import re
 import glob
 import pandas as pd
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
 
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 from cgatpipelines.report import run_report
 
-import CGAT.Expression as Expression
+import cgat.Expression as Expression
 # levels of cuffdiff analysis
 # (no promotor and splice -> no lfold column)
 CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
@@ -699,7 +699,7 @@ def runFeatureCounts(infiles, outfiles):
 def runGTF2Table(infiles, outfiles):
     '''
     Compute read counts and coverage of transcripts and genes using the
-    CGAT gtf2table tools.
+    cgat gtf2table tools.
 
     Takes a list of :term:`bam` files defined in "BAM_TRACKS" and a
     :term:`gtf` file containing transcript and gene level annotations

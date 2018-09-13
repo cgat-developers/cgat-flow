@@ -12,11 +12,11 @@ import os
 import collections
 import sqlite3
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.Stats as Stats
-import CGATCore.IOTools as IOTools
-import CGATCore.CSV as CSV
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.Stats as Stats
+import cgatcore.IOTools as IOTools
+import cgatcore.CSV as CSV
 
 # set from calling module
 PARAMS = {}

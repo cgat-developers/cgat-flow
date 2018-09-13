@@ -18,11 +18,11 @@ import collections
 import sqlite3
 import pandas as pd
 
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-import CGAT.GTF as GTF
-import CGAT.IndexedFasta as IndexedFasta
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
+import cgat.GTF as GTF
+import cgat.IndexedFasta as IndexedFasta
 
 # When importing this module, set PARAMS to your parameter
 # dictionary

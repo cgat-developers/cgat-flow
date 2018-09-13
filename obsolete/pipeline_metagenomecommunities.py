@@ -74,7 +74,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -119,7 +119,7 @@ fastq.1.gz, fastq2.2.gz
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------+
@@ -170,7 +170,7 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 
 import sys
 import os
@@ -178,15 +178,15 @@ import re
 import glob
 
 import sqlite3
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineMapping as PipelineMapping
-# import CGATPipelines.PipelineMetagenomeAssembly as PipelineMetagenomeAssembly
-import CGATPipelines.PipelineMetagenomeCommunities \
+import cgatcore.IOTools as IOTools
+import cgatPipelines.PipelineMapping as PipelineMapping
+# import cgatPipelines.PipelineMetagenomeAssembly as PipelineMetagenomeAssembly
+import cgatPipelines.PipelineMetagenomeCommunities \
     as PipelineMetagenomeCommunities
-import CGAT.Metaphlan as Metaphlan
-import CGATPipelines.PipelineMapping as PipelineMapping
+import cgat.Metaphlan as Metaphlan
+import cgatPipelines.PipelineMapping as PipelineMapping
 import pandas
-# import CGATPipelines.PipelineTracks as PipelineTracks
+# import cgatPipelines.PipelineTracks as PipelineTracks
 
 ###################################################
 ###################################################
@@ -195,7 +195,7 @@ import pandas
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 
 P.getParameters(["pipeline.ini",
                  "%s/pipeline.ini" % os.path.splitext(__file__)[0], ])

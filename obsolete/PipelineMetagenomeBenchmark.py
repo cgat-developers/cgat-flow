@@ -6,11 +6,11 @@ import os
 import collections
 import sqlite3
 
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-import CGAT.FastaIterator as FastaIterator
-import CGAT.Fastq as Fastq
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
+import cgat.FastaIterator as FastaIterator
+import cgat.Fastq as Fastq
 import pysam
 from rpy2.robjects import r as R
 

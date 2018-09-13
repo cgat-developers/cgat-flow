@@ -6,10 +6,10 @@ intervalannotation.py - Tasks associated with annotation of genomic intervals
 import shutil
 import os
 import sqlite3
-import CGATCore.IOTools as IOTools
-import CGAT.IndexedGenome as IndexedGenome
-import CGAT.Bed as Bed
-from CGATCore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgat.IndexedGenome as IndexedGenome
+import cgat.Bed as Bed
+from cgatcore import Pipeline as P
 
 ############################################################
 ############################################################

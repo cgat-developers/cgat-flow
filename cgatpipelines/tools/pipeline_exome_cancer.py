@@ -49,7 +49,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -102,7 +102,7 @@ will contain a column called "shRNA" with values "shRNA" and "null".
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+------------+-------------------------------------------+
@@ -149,14 +149,14 @@ from ruffus import *
 # from rpy2.robjects import r as R
 
 import numpy
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import sys
 import os
 import sqlite3
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
-from CGATCore import Pipeline as P
+from cgatcore import Pipeline as P
 import re
 import cgatpipelines.tasks.exome as exome
 from cgatpipelines.report import run_report

@@ -1,6 +1,6 @@
 import os
 import subprocess
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import sqlite3 as sql
 import pandas as pd
 import pandas.io.sql as pdsql

@@ -2,14 +2,14 @@ import re
 import os
 import copy
 import pandas as pd
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 import sqlite3
 import rpy2.robjects as robjects
 import rpy2.interactive as r
 import rpy2.interactive.packages
 import scipy.stats as stats
-from CGATCore.Pipeline import cluster_runnable
-import CGATCore.Experiment as E
+from cgatcore.Pipeline import cluster_runnable
+import cgatcore.Experiment as E
 import ast as ast
 import numpy as np
 from toposort import toposort_flatten

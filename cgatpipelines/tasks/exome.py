@@ -8,14 +8,14 @@ Reference
 """
 # Import modules
 import os
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-from CGATCore.Pipeline import cluster_runnable
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
+from cgatcore.Pipeline import cluster_runnable
 import numpy as np
 import pandas as pd
-import CGATCore.CSV as csv
-import CGAT.VCF as VCF
+import cgatcore.CSV as csv
+import cgat.VCF as VCF
 import collections
 import re
 from urllib.request import urlopen
@@ -189,7 +189,7 @@ def mutectSNPCaller(infile, outfile, mutect_log, genome, cosmic,
                     gatk_key=None,
                     artifact=False):
     '''Call SNVs using Broad's muTect'''
-    # TS. this is currently CGAT specific. How to generalise?
+    # TS. this is currently cgat specific. How to generalise?
 
     job_memory_java = job_memory.lower()
     job_threads = 1

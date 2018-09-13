@@ -69,7 +69,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -115,9 +115,9 @@ import numpy
 import pandas
 from rpy2.robjects import r as R
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+from cgatcore import Pipeline as P
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.mappingqc as mappingqc

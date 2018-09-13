@@ -17,14 +17,14 @@ import collections
 import sqlite3
 import pysam
 import numpy
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.IndexedGenome as IndexedGenome
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
-import CGAT.BamTools as BamTools
-import CGAT.WrapperMACS as WrapperMACS
-import CGAT.WrapperZinba as WrapperZinba
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.IndexedGenome as IndexedGenome
+import cgatcore.IOTools as IOTools
+import cgat.Bed as Bed
+import cgat.BamTools as BamTools
+import cgat.WrapperMACS as WrapperMACS
+import cgat.WrapperZinba as WrapperZinba
 
 
 def getPeakShiftFromMacs(infile):

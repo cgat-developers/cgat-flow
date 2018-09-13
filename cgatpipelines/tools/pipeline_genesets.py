@@ -7,7 +7,7 @@ Overview
 ========
 
 This pipeline generates a number of annotations that can be used with
-downstream CGAT pipelines. The user will download a GTF from ENSEMBL
+downstream cgat pipelines. The user will download a GTF from ENSEMBL
 and then the GTF is parsed and filtered. In addition to downloading an
 ensembl GTF the user will need to download an assembly report for their
 specific genome and add it to the directory the pipeline is ran.
@@ -26,7 +26,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Principle targets
 -----------------
@@ -47,7 +47,7 @@ The :file:`pipeline.yml` needs to be edited so that it points to the
 appropriate locations of the auxiliary files.
 
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 Input
@@ -60,7 +60,7 @@ assembly report. Locations to these three input files are set in
 Ensembl GTF:
 
     The gene set can be downloaded from
-    http://www.ensembl.org/info/data/ftp/index.html Note: CGAT
+    http://www.ensembl.org/info/data/ftp/index.html Note: cgat
     pipelines traditionally use the UCSC GTF convention (chr naming of
     contigs) and therefore the GTF is sanitized to the UCSC
     convention. As part of this process an NCBI assembly report needs
@@ -108,7 +108,7 @@ you can run the `full` task:
    python /path/to/directory/genesets make full -v 5
 
 
-The pipeline can be run as any other CGAT pipeline, but as its purpose
+The pipeline can be run as any other cgat pipeline, but as its purpose
 is to provide a set of annotation that can be used by other pipelines
 therefore there is an etiquette to be followed:
 
@@ -338,10 +338,10 @@ import glob
 import pandas as pd
 from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
     suffix, regex, add_inputs, originate
-import CGAT.IndexedFasta as IndexedFasta
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Pipeline as P
+import cgat.IndexedFasta as IndexedFasta
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgatcore.Pipeline as P
 import cgatpipelines.tasks.gtfsubset as gtfsubset
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.go as go
@@ -521,7 +521,7 @@ def buildUngappedContigBed(infile, outfiles):
 def buildCpGBed(infile, outfile):
     '''
     Output a :term:`BED` file that contains the location of all CpGs
-    in the input genome using `CGAT` script `fasta2bed`.
+    in the input genome using `cgat` script `fasta2bed`.
 
     Parameters
     ----------

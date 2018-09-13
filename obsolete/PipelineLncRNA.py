@@ -7,14 +7,14 @@ PipelineLncRNA.py - functions and classes for use with the lincRNA pipeline
 import re
 import sys
 import os
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
 import gzip
 import collections
-import CGAT.IndexedGenome as IndexedGenome
-import CGAT.IndexedFasta as IndexedFasta
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
+import cgat.IndexedGenome as IndexedGenome
+import cgat.IndexedFasta as IndexedFasta
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
 import sqlite3
 import tempfile
 import string
@@ -2051,7 +2051,7 @@ def sort_block_components_by_block(block1, block2):
 
 
 ##########################################################################
-# CGAT functions for extracting MAF alignments
+# cgat functions for extracting MAF alignments
 ##########################################################################
 
 def gtfToBed12(infile, outfile, model):

@@ -15,9 +15,9 @@ import glob
 import collections
 from io import StringIO
 import pandas as pd
-from CGATCore import Pipeline as P
-import CGATCore.IOTools as IOTools
-import CGATCore.CSV2DB as CSV2DB
+from cgatcore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgatcore.CSV2DB as CSV2DB
 
 
 def fastqc_filename2track(fn):

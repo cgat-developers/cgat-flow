@@ -56,13 +56,13 @@ except ImportError:
     pass
 
 ##########################
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.IndexedGenome as IndexedGenome
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools.bamtools as BamTools
-import CGAT.Bed as Bed
-import CGAT.WrapperMACS as WrapperMACS
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.IndexedGenome as IndexedGenome
+import cgatcore.IOTools as IOTools
+import cgat.BamTools.bamtools as BamTools
+import cgat.Bed as Bed
+import cgat.WrapperMACS as WrapperMACS
 
 
 def getPeakShiftFromMacs(infile):

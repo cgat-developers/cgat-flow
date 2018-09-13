@@ -27,7 +27,7 @@ computes are:
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -48,7 +48,7 @@ Requirements
 
 The pipeline requires the results from :doc:`pipeline_annotations` and :doc:`pipeline_ancestral_repeats`.
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the
+On top of the default cgat setup, the pipeline requires the following software to be in the
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -91,12 +91,12 @@ import os
 import gzip
 from ruffus import *
 import sqlite3
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.GTF as GTF
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgatcore.Database as Database
+import cgat.GTF as GTF
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 # load options from the config file
 P.getParameters(

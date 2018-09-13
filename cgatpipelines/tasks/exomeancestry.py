@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-import CGATCore.IOTools as IOTools
+import cgatcore.IOTools as IOTools
 import random
 import itertools
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.Pipeline import cluster_runnable
 import json
 import decimal
 from sklearn.cluster import KMeans

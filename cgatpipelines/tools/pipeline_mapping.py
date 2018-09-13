@@ -40,7 +40,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -93,7 +93,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +---------+------------+------------------------------------------------+
@@ -207,11 +207,11 @@ import re
 import sqlite3
 import collections
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools.bamtools as BamTools
+import cgatcore.Experiment as E
+from cgatcore import Pipeline as P
+import cgat.GTF as GTF
+import cgatcore.IOTools as IOTools
+import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc

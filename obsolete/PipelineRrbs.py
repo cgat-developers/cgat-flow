@@ -36,13 +36,13 @@ import re
 import sqlite3
 import itertools
 import copy
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.FastaIterator as FastaIterator
-import CGAT.IndexedFasta as IndexedFasta
+from cgatcore import Pipeline as P
+import cgatcore.Experiment as E
+import cgatcore.IOTools as IOTools
+import cgat.FastaIterator as FastaIterator
+import cgat.IndexedFasta as IndexedFasta
 import pandas as pd
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.Pipeline import cluster_runnable
 import numpy as np
 from rpy2.robjects import r
 from rpy2.robjects.packages import importr

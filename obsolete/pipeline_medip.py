@@ -48,7 +48,7 @@ Briefly, the data is processed in the following way:
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -83,7 +83,7 @@ fastq.1.gz, fastq2.2.gz
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -126,7 +126,7 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import logging as L
 import sys
 import os
@@ -134,12 +134,12 @@ import re
 import itertools
 import glob
 import sqlite3
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineMapping as PipelineMapping
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMappingQC as PipelineMappingQC
-import CGATPipelines.PipelineMedip as PipelineMedip
-from CGATCore import Pipeline as P
+import cgatcore.IOTools as IOTools
+import cgatPipelines.PipelineMapping as PipelineMapping
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMappingQC as PipelineMappingQC
+import cgatPipelines.PipelineMedip as PipelineMedip
+from cgatcore import Pipeline as P
 
 from rpy2.robjects import r as R
 

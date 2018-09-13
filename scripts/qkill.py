@@ -34,7 +34,7 @@ Command line options
 import sys
 import re
 import subprocess
-import CGATCore.Experiment as E
+import cgatcore.Experiment as E
 import xml.etree.ElementTree
 import io as StringIO
 

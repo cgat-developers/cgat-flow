@@ -23,6 +23,7 @@ library(reshape2)
 setwd("./..")
 mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 
+db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats;')
 
 db <- db[,grep("track|alignments", names(db))]
 

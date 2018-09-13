@@ -516,7 +516,7 @@ def buildSalmonIndex(infile, outfile):
        path to output file
     '''
 
-    job_memory = "2G"
+    job_memory = "6G"
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files

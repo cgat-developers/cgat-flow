@@ -2166,8 +2166,6 @@ def outputTopWindows(infile, outfiles):
     '''
     outfile = outfiles[0]
 
-    ignore_pipe_errors = True
-
     statement = '''zcat %(infile)s
     | awk '$4 !~ /inf/'
     | sort -k4,4n
@@ -2176,7 +2174,7 @@ def outputTopWindows(infile, outfiles):
     | bgzip
     > %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, ignore_pipe_errors=True)
 
     outfile = outfiles[1]
 
@@ -2188,7 +2186,7 @@ def outputTopWindows(infile, outfiles):
     | bgzip
     > %(outfile)s
     '''
-    P.run(statement)
+    P.run(statement, ignore_pipe_errors=True)
 
 
 @transform(mergeDMRWindows,

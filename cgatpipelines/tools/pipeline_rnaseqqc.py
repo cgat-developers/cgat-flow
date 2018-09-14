@@ -546,11 +546,12 @@ def buildTranscriptGeneMap(infile, outfile):
            r"fastq.dir/\2.subset")
 def subsetSequenceData(infile, outfile):
     """subset fastq files"""
-    ignore_pipe_erors = True
-    ignore_errors = True
     m = mapping.SubsetHead(limit=PARAMS["sample_size"])
     statement = m.build((infile,), outfile)
-    P.run(statement)
+    P.run(statement,
+          ignore_pipe_errors=True,
+          ignore_errors=True)
+
     IOTools.touch_file(outfile)
 
 
@@ -630,12 +631,12 @@ def subsetRange(infile, outfiles):
     limits = [int(nreads / (100.0 / int(depth)))
               for depth in subset_depths]
 
-    ignore_pipe_erors = True
-    ignore_errors = True
     m = mapping.SubsetHeads(limits=limits)
     statement = m.build((infile,), outfile)
 
-    P.run(statement)
+    P.run(statement,
+          ignore_pipe_errors=True,
+          ignore_errors=True)
 
     IOTools.touch_file(outfile)
 

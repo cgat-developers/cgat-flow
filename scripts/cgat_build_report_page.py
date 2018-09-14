@@ -33,8 +33,8 @@ import sys
 import re
 import subprocess
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 def main(argv=None):
@@ -76,7 +76,7 @@ def main(argv=None):
     files = stdout.split('\n')
     files.sort()
 
-    outfile = IOTools.openFile(os.path.join(options.dest, "index.html"), "w")
+    outfile = iotools.openFile(os.path.join(options.dest, "index.html"), "w")
 
     outfile.write('''
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -125,7 +125,7 @@ cgat and do not make this page available on the world wide web.
         relpath = re.sub('.*proj\d+/', '', f)
         report = re.sub('^[^/]*/', '', os.path.dirname(relpath))
 
-        lines = IOTools.openFile(f).readlines()
+        lines = iotools.openFile(f).readlines()
         titles = [x for x in lines if "<title>" in x]
         if titles:
             title = re.search("<title>(.*)</title>", titles[0]).groups()[0]

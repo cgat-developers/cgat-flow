@@ -131,7 +131,7 @@ To run the example, simply unpack and untar::
 
 # load modules
 from ruffus import *
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import sqlite3
 import sys
 import os
@@ -142,7 +142,7 @@ import pandas.io.sql as pdsql
 from rpy2.robjects import r as R
 import rpy2.robjects as robjects
 import cgatPipelines.PipelineTransfacMatch as PipelineTFM
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],

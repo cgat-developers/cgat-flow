@@ -16,11 +16,11 @@ Code
 
 import cgat.Expression as Expression
 import cgat.Counts as Counts
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
-from cgatcore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 
 from rpy2.robjects import r as R
 
@@ -99,7 +99,7 @@ def runSleuthAll(samples, base_dir, counts, tpm):
 def makeExpressionSummaryPlots(counts_inf, design_inf, logfile):
     ''' use the plotting methods for Counts object to make summary plots'''
 
-    with IOTools.openFile(logfile, "w") as log:
+    with iotools.openFile(logfile, "w") as log:
 
         plot_prefix = P.snip(logfile, ".log")
 
@@ -153,7 +153,7 @@ def identifyLowConfidenceTranscripts(infile, outfile):
 
     df = pd.read_table(infile, sep="\t", index_col=0)
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
 
         outf.write("%s\t%s\n" % ("transcript_id", "reason"))
 

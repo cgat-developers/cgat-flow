@@ -36,8 +36,8 @@ import copy
 import platform
 
 from nose.tools import ok_
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import TestUtils
 
 # handle to original E.Start function
@@ -161,8 +161,8 @@ def test_cmdline():
         ORIGINAL_START = E.start
 
     # read the first two columns
-    map_option2action = IOTools.read_map(
-        IOTools.open_file(FILENAME_OPTIONLIST),
+    map_option2action = iotools.read_map(
+        iotools.open_file(FILENAME_OPTIONLIST),
         columns=(0, 1),
         has_header=True)
 
@@ -193,7 +193,7 @@ def test_cmdline():
 
         fail_.description = script_name
         # check if script contains getopt
-        with IOTools.open_file(script_name) as inf:
+        with iotools.open_file(script_name) as inf:
             if "getopt" in inf.read():
                 yield (fail_,
                        "script uses getopt directly: %s" % script_name)

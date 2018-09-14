@@ -438,9 +438,9 @@ Code
 # load modules
 from ruffus import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import logging as L
-import cgatcore.Database as Database
+import cgatcore.database as Database
 import sys
 import os
 import re
@@ -454,7 +454,7 @@ import random
 import numpy
 import sqlite3
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgat.IndexedFasta as IndexedFasta
 import cgat.Tophat as Tophat
 from rpy2.robjects import r as R
@@ -468,7 +468,7 @@ import cgatPipelines.PipelineMapping as PipelineMapping
 import cgatPipelines.PipelineRnaseq as PipelineRnaseq
 import cgatPipelines.PipelineMappingQC as PipelineMappingQC
 import cgat.Stats as Stats
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineTracks as PipelineTracks
 # levels of cuffdiff analysis
 # (no promotor and splice -> no lfold column)
@@ -649,15 +649,15 @@ def mergeAndFilterGTF(infile, outfile, logfile):
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.openFile(rna_file, "r")))
+                GTF.iterator(iotools.openFile(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.openFile(logfile, "w")
+    logf = iotools.openFile(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
-    for all_exons in GTF.transcript_iterator(GTF.iterator(IOTools.openFile(infile))):
+    for all_exons in GTF.transcript_iterator(GTF.iterator(iotools.openFile(infile))):
 
         c.input += 1
 
@@ -810,9 +810,9 @@ def buildReferenceGeneSet(infile, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.openFile(tmpfilename3, "w")
+    outf = iotools.openFile(tmpfilename3, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.openFile(tmpfilename2 + ".combined.gtf")
+    inf = iotools.openFile(tmpfilename2 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -937,8 +937,8 @@ def buildCodingTranscriptSet(infile, outfile):
     cc = dbh.cursor()
     transcript_ids = set([x[0] for x in cc.execute(statement)])
 
-    inf = IOTools.openFile(infile)
-    outf = IOTools.openFile(outfile, 'w')
+    inf = iotools.openFile(infile)
+    outf = iotools.openFile(outfile, 'w')
 
     for g in GTF.iterator(inf):
         if g.transcript_id in transcript_ids:
@@ -968,9 +968,9 @@ def buildTerminalExons(infile, outfile):
 
     size = 50
 
-    outf1 = IOTools.openFile(outfile, "w")
+    outf1 = iotools.openFile(outfile, "w")
 
-    for gff in GTF.flat_gene_iterator(GTF.iterator_filtered(GTF.iterator(IOTools.openFile(infile)),
+    for gff in GTF.flat_gene_iterator(GTF.iterator_filtered(GTF.iterator(iotools.openFile(infile)),
                                                             feature="exon")):
         gene_id, contig, strand = gff[0].gene_id, gff[0].contig, gff[0].strand
 
@@ -1053,9 +1053,9 @@ def buildJunctions(infile, outfile):
 
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     njunctions = 0
-    for gffs in GTF.transcript_iterator(GTF.iterator(IOTools.openFile(infile, "r"))):
+    for gffs in GTF.transcript_iterator(GTF.iterator(iotools.openFile(infile, "r"))):
 
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
@@ -1147,7 +1147,7 @@ def buildMaskGtf(infile, outfile):
     This takes ensembl annotations (geneset_all.gtf.gz) and writes out all entries that
     have a 'source' match to "rRNA" or 'contig' match to "chrM". for use with cufflinks
     '''
-    geneset = IOTools.openFile(infile)
+    geneset = iotools.openFile(infile)
     outf = open(outfile, "wb")
     for entry in GTF.iterator(geneset):
         if re.findall("rRNA", entry.source) or re.findall("chrM", entry.contig):
@@ -1278,7 +1278,7 @@ def buildJunctionsDB(infiles, outfile):
             E.warn("can't find junctions file '%s'" % junctions_file)
             continue
 
-        inf = IOTools.openFile(junctions_file)
+        inf = iotools.openFile(junctions_file)
         for line in inf:
             if line.startswith("#"):
                 continue
@@ -1533,7 +1533,7 @@ def buildBAMReports(infile, outfile):
 
     # use a fake X display in order to avoid problems with
     # no X connection on the cluster
-    xvfb_command = IOTools.which("xvfb-run")
+    xvfb_command = iotools.which("xvfb-run")
 
     # permit multiple servers using -a option
     if xvfb_command:
@@ -1581,7 +1581,7 @@ def buildTophatStats(infiles, outfile):
 
         raise ValueError("pattern '%s' not found %s" % (pattern, lines))
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("\t".join(("track",
                           "reads_in",
                           "reads_removed",
@@ -1597,7 +1597,7 @@ def buildTophatStats(infiles, outfile):
 
         try:
             fn = os.path.join(indir, "prep_reads.log")
-            lines = IOTools.openFile(fn).readlines()
+            lines = iotools.openFile(fn).readlines()
             reads_removed, reads_in = list(map(
                 int, _select(lines, "(\d+) out of (\d+) reads have been filtered out")))
             reads_out = reads_in - reads_removed
@@ -1607,7 +1607,7 @@ def buildTophatStats(infiles, outfile):
 
         try:
             fn = os.path.join(indir, "reports.log")
-            lines = IOTools.openFile(fn).readlines()
+            lines = iotools.openFile(fn).readlines()
             tophat_reports_version = _select(lines, "tophat_reports (.*)$")
             junctions_loaded = int(_select(lines, "Loaded (\d+) junctions"))
             junctions_found = int(
@@ -2143,7 +2143,7 @@ def loadTranscriptComparison(infile, outfile):
 
     <track>_tracking
     '''
-    tracks, result = Tophat.parseTranscriptComparison(IOTools.openFile(infile))
+    tracks, result = Tophat.parseTranscriptComparison(iotools.openFile(infile))
     tracks = [P.snip(os.path.basename(x), ".gtf.gz") for x in tracks]
 
     tmpfile = P.getTempFilename()
@@ -2231,7 +2231,7 @@ def loadTranscriptComparison(infile, outfile):
     fn = "%s.tracking.gz" % infile
 
     if os.path.exists(fn):
-        for transfrag in Tophat.iterate_tracking(IOTools.openFile(fn, "r")):
+        for transfrag in Tophat.iterate_tracking(iotools.openFile(fn, "r")):
 
             nexperiments = len([x for x in transfrag.transcripts if x])
 
@@ -2316,7 +2316,7 @@ def loadTranscriptComparison(infile, outfile):
                                    "end",
                                    "nexperiments", ) + tuple(tracks)))
 
-    for locus in Tophat.iterate_locus(IOTools.openFile("%s.loci.gz" % infile, "r")):
+    for locus in Tophat.iterate_locus(iotools.openFile("%s.loci.gz" % infile, "r")):
 
         counts = [len(x) for x in locus.transcripts]
         nexperiments = len([x for x in counts if x > 0])
@@ -2411,9 +2411,9 @@ def buildFullGeneSet(infiles, outfile):
                tablename)
         keep = None
 
-    inf = GTF.iterator(IOTools.openFile(abinitio_gtf))
-    outf1 = IOTools.openFile(keep_gtf, "w")
-    outf2 = IOTools.openFile(remove_gtf, "w")
+    inf = GTF.iterator(iotools.openFile(abinitio_gtf))
+    outf1 = iotools.openFile(keep_gtf, "w")
+    outf2 = iotools.openFile(remove_gtf, "w")
 
     c = E.Counter()
     for gtf in inf:
@@ -2461,19 +2461,19 @@ def buildNovelGeneSet(infiles, outfile):
     indices = {}
     for section in sections:
         indices[section] = GTF.readAndIndex(
-            GTF.iterator_filtered(GTF.iterator(IOTools.openFile(reference_gtf)),
+            GTF.iterator_filtered(GTF.iterator(iotools.openFile(reference_gtf)),
                                   source=section),
             with_value=False)
 
     E.info("build indices for %i features" % len(indices))
 
-    repeats = GTF.readAndIndex(GTF.iterator(IOTools.openFile(repeats_gff)),
+    repeats = GTF.readAndIndex(GTF.iterator(iotools.openFile(repeats_gff)),
                                with_value=False)
 
     E.info("build index for repeats")
 
     total_genes, remove_genes = set(), collections.defaultdict(set)
-    inf = GTF.iterator(IOTools.openFile(abinitio_gtf))
+    inf = GTF.iterator(iotools.openFile(abinitio_gtf))
     for gtf in inf:
         total_genes.add(gtf.gene_id)
         for section in sections:
@@ -2536,31 +2536,31 @@ def buildLincRNAGeneSet(infiles, outfile):
     indices = {}
     for section in input_sections:
         indices[section] = GTF.readAndIndex(
-            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(IOTools.openFile(reference_gtf))),
+            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(iotools.openFile(reference_gtf))),
                                   source=section),
             with_value=False)
 
     E.info("built indices for %i features" % len(indices))
 
     indices["repeats"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(repeats_gff)), with_value=False)
+        GTF.iterator(iotools.openFile(repeats_gff)), with_value=False)
 
     E.info("added index for repeats")
 
     indices["pseudogenes"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(pseudogenes_gtf)), with_value=False)
+        GTF.iterator(iotools.openFile(pseudogenes_gtf)), with_value=False)
 
     E.info("added index for pseudogenes")
 
     indices["numts"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(numts_gtf)), with_value=False)
+        GTF.iterator(iotools.openFile(numts_gtf)), with_value=False)
 
     E.info("added index for numts")
 
     sections = list(indices.keys())
 
     total_genes, remove_genes = set(), collections.defaultdict(set)
-    inf = GTF.iterator(IOTools.openFile(infile_abinitio))
+    inf = GTF.iterator(iotools.openFile(infile_abinitio))
 
     E.info("collecting genes to remove")
 
@@ -2920,7 +2920,7 @@ def buildReproducibility(infile, outfile):
     ##################################################################
     # build table correlating expression values
     ##################################################################
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track1\ttrack2\tcode\tpairs\tnull1\tnull2\tboth_null\tnot_null\tone_null\t%s\n" %
                "\t".join(Stats.CorrelationTest.getHeaders()))
 
@@ -3206,7 +3206,7 @@ def buildExpressionStats(tables, method, outfile):
 
     keys_status = "OK", "NOTEST", "FAIL", "NOCALL"
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("\t".join(("geneset", "level", "treatment_name", "control_name", "tested",
                           "\t".join(["status_%s" % x for x in keys_status]),
                           "significant",
@@ -3445,7 +3445,7 @@ def buildFPKMGeneLevelTagCounts(infiles, outfile):
         results.append(
             dict(Database.executewait(dbhandle, statement).fetchall()))
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     gene_ids = set()
     for x in results:
         gene_ids.update(list(x.keys()))
@@ -3664,7 +3664,7 @@ def loadExonLevelReadCounts(infiles, outfile):
     tracks = [re.match("exon_counts.dir/(\S+)_vs.*", x).groups()[0]
               for x in tracks]
 
-    outf = IOTools.openFile(tmpfile2, "w")
+    outf = iotools.openFile(tmpfile2, "w")
     outf.write("gene_id\tchromosome\tstart\tend\t%s\n" % "\t".join(tracks))
 
     for line in open(tmpfile, "r"):
@@ -4113,7 +4113,7 @@ def aggregateExonLevelReadCounts(infiles, outfile):
     tracks = [re.match("exon_counts.dir/(\S+)_vs.*", x).groups()[0]
               for x in tracks]
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("gene_id\t%s\n" % "\t".join(tracks))
 
     for line in open(tmpfile, "r"):
@@ -4258,7 +4258,7 @@ def runDESeq(infile, outfile):
         all_results.extend(results)
         E.info("%s vs %s: %s" % (track1, track2, counts))
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         Expression.writeExpressionResults(outf, all_results)
 
 #########################################################################
@@ -4346,7 +4346,7 @@ def buildGeneSetsOfInterest(infile, outfile):
 
     data = Database.executewait(dbh, statement % locals())
 
-    outfiles = IOTools.FilePool(outfile + "_%s.bed.gz")
+    outfiles = iotools.FilePool(outfile + "_%s.bed.gz")
 
     for test_id, track1, track2, contig, start, end, strand, l2fold in data:
         try:

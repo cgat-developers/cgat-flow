@@ -57,12 +57,12 @@ Code
 # load modules
 from ruffus import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import sys
 import os
 import glob
 import sqlite3
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineTracks as PipelineTracks
 
 # load options from the config file
@@ -110,7 +110,7 @@ def buildSummaryMapping(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
 
     table = "bam_stats"
 
@@ -141,7 +141,7 @@ def buildSummaryCalledDMRs(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("metatrack\ttest\tntested\tnok\tnsignificant\tn2fold\n")
 
     for track in TRACKS:
@@ -174,7 +174,7 @@ def buildSummaryCpGCoverage(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("metatrack\ttrack\tcoverage\tncovered\tpcovered\n")
 
     for track in TRACKS:

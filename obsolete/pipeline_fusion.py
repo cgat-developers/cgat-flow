@@ -133,8 +133,8 @@ import glob
 import os
 import shutil
 import sqlite3
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineTracks as PipelineTracks
 import cgatPipelines.PipelineMapping as PipelineMapping
 ###################################################

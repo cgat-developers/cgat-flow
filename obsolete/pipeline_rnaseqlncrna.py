@@ -181,10 +181,10 @@ import os
 import re
 from rpy2.robjects import r as R
 
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgatPipelines.PipelineLncRNA as PipelineLncRNA
 
 ###################################################
@@ -399,7 +399,7 @@ def renameTranscriptsInPreviousSets(infile, outfile):
     cufflinks identifiers as we use in the analysis - don't do if they
     have an ensembl id - sort by transcript
     '''
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     for gtf in GTF.iterator(inf):
         if gtf.gene_id.find("ENSG") != -1:
             statement = '''zcat %(infile)s | grep -v "#"
@@ -540,10 +540,10 @@ def runCPC(infile, outfile):
     run coding potential calculations on lncRNA geneset
     '''
     # farm.py is called from within cpc.sh
-    assert IOTools.which("farm.py"), \
+    assert iotools.which("farm.py"), \
         "farm.py needs to be in $PATH for cpc to run"
     # Default cpc parameters don't work with later versions of blast
-    E.info("Running cpc with blast version:%s" % IOTools.which("blastx"))
+    E.info("Running cpc with blast version:%s" % iotools.which("blastx"))
 
     result_evidence = P.snip(outfile, ".result") + ".evidence"
     working_dir = "cpc"
@@ -660,7 +660,7 @@ def buildRefcodingGeneSetStats(infile, outfile):
     tmpf = P.getTempFilename(".") + ".gz"
     PipelineLncRNA.flagExonStatus(infile, tmpf)
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("\t".join(["no_transcripts",
                           "no_genes",
                           "no_exons_per_transcript",
@@ -741,7 +741,7 @@ def loadLncRNAClass(infile, outfile):
 
     # just load each transcript with its classification
     temp = P.getTempFile(".")
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     for transcript in GTF.transcript_iterator(GTF.iterator(inf)):
         temp.write("%s\t%s\t%s\n" % (
             transcript[0].transcript_id,
@@ -964,7 +964,7 @@ def loadLncRNAPhyloCSF(infile, outfile):
            r"lncRNA_control/lincRNA.gtf.gz")
 def extractEnsemblLincRNA(infile, outfile):
     tmpf = P.getTempFile("/ifs/scratch")
-    for gtf in GTF.iterator(IOTools.openFile(infile)):
+    for gtf in GTF.iterator(iotools.openFile(infile)):
         if gtf.source == "lincRNA":
             tmpf.write(str(gtf) + "\n")
         else:
@@ -1125,10 +1125,10 @@ def buildControlFasta(infile, outfile):
            r"\1/cpc/control_cpc.result")
 def runControlCPC(infile, outfile):
     # farm.py is called from within cpc.sh
-    assert IOTools.which(
+    assert iotools.which(
         "farm.py"), "farm.py needs to be in $PATH for cpc to run"
     # Default cpc parameters don't work with later versions of blast
-    E.info("Running cpc with blast version:%s" % IOTools.which("blastx"))
+    E.info("Running cpc with blast version:%s" % iotools.which("blastx"))
 
     result_evidence = P.snip(outfile, ".result") + ".evidence"
     working_dir = "lncRNA_control/cpc"

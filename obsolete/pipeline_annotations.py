@@ -572,7 +572,7 @@ import sqlite3
 import cgat.Experiment as E
 import cgatPipelines.Pipeline as P
 import cgat.IndexedFasta as IndexedFasta
-import cgat.IOTools as IOTools
+import cgat.iotools as iotools
 import cgat.Database as Database
 import cgat.Biomart as Biomart
 import cgatPipelines.PipelineGeneset as PipelineGeneset
@@ -683,7 +683,7 @@ def buildContigBed(infile, outfile):
     '''
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
         outs.write("%s\t%i\t%i\n" % (contig, 0, size))
@@ -721,8 +721,8 @@ def buildUngappedContigBed(infile, outfiles):
 
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs_nogap = IOTools.openFile(outfiles[0], "w")
-    outs_gap = IOTools.openFile(outfiles[1], "w")
+    outs_nogap = iotools.openFile(outfiles[0], "w")
+    outs_gap = iotools.openFile(outfiles[1], "w")
     min_gap_size = PARAMS["assembly_gaps_min_size"]
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
@@ -1013,7 +1013,7 @@ def buildLincRNAExonTranscripts(infile, outfile):
         PipelineGeneset.buildLincRNAExons(infile, outfile)
     except Exception:
         if os.path.exists(outfile):
-            assert len(IOTools.openFile(outfile).readlines()) == 0
+            assert len(iotools.openFile(outfile).readlines()) == 0
         else:
             raise Exception("Failed to create %s" % outfile)
 
@@ -1821,7 +1821,7 @@ def buildMapableRegions(infiles, outfile):
         if start is not None:
             yield start, this_end
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
 
     for contig, size in contigs.items():
 
@@ -1933,7 +1933,7 @@ if PARAMS["genome"].startswith("hg"):
           :term:`BED` format file of GWAS catalog entries
         '''
 
-        reader = csv.DictReader(IOTools.openFile(infile),
+        reader = csv.DictReader(iotools.openFile(infile),
                                 dialect="excel-tab")
 
         tracks = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -1978,7 +1978,7 @@ if PARAMS["genome"].startswith("hg"):
         extension = PARAMS["gwas_extension"]
 
         c = E.Counter()
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         for disease, pp in tracks.items():
 
             for contig, positions in pp.items():
@@ -1996,7 +1996,7 @@ if PARAMS["genome"].startswith("hg"):
 
         outf.close()
 
-        outf = IOTools.openFile(outfile + ".log", "w")
+        outf = iotools.openFile(outfile + ".log", "w")
         outf.write("category\tcounts\n%s\n" % c.asTable())
         outf.close()
 
@@ -2072,7 +2072,7 @@ if PARAMS["genome"].startswith("hg"):
         contigsizes = fasta.getContigSizes()
 
         c = E.Counter()
-        for line in IOTools.openFile(track + "_snps.tsv.gz"):
+        for line in iotools.openFile(track + "_snps.tsv.gz"):
             pubmed_id, rs, pvalue, block, ensgenes, short, icd10 = line[
                 :-1].split("\t")
             c.input += 1
@@ -2093,7 +2093,7 @@ if PARAMS["genome"].startswith("hg"):
             c.parsed += 1
 
         intervals.sort()
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         cc = E.Counter()
         for k, x in itertools.groupby(intervals, key=lambda x: x):
             outf.write("%s\t%i\t%i\t%s\n" % k)
@@ -2102,7 +2102,7 @@ if PARAMS["genome"].startswith("hg"):
         outf.close()
         E.info(c)
 
-        outf = IOTools.openFile(outfile + ".log", "w")
+        outf = iotools.openFile(outfile + ".log", "w")
         outf.write("category\tcounts\n%s\n" % cc.asTable())
         outf.close()
 

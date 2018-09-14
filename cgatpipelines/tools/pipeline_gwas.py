@@ -78,8 +78,8 @@ import sys
 import os
 import re
 import sqlite3
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 from cgatpipelines.report import run_report
 
 # load options from the config file
@@ -1770,7 +1770,7 @@ def splitRegionsFile(infile, outfile):
     '''
 
     P.run(statement)
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(splitRegionsFile)
@@ -1999,7 +1999,7 @@ def splitTargetVariants(infile, outfile):
     '''
 
     P.run(statement)
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(splitTargetVariants)
@@ -3356,7 +3356,7 @@ def splitGwasRegions(infile, outfile):
     '''
 
     P.run(statement)
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(tabixIndexLd,
@@ -3384,7 +3384,7 @@ def splitConditionalRegions(infile, outfile):
     '''
 
     P.run(statement)
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(splitGwasRegions,

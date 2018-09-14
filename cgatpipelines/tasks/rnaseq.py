@@ -33,8 +33,8 @@ Reference
 
 """
 
-import cgatcore.Experiment as E
-import cgatcore.CSV as CSV
+import cgatcore.experiment as E
+import cgatcore.csv as CSV
 import cgat.Sra as Sra
 
 import collections
@@ -53,14 +53,14 @@ import rpy2.rinterface as ri
 
 import cgat.BamTools.bamtools as BamTools
 import cgat.Counts as Counts
-import cgatcore.Database as Database
+import cgatcore.database as Database
 import cgat.Expression as Expression
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.mapping as mapping
 
-from cgatcore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 
 # AH: commented as I thought we wanted to avoid to
 # enable this automatically due to unwanted side
@@ -139,7 +139,7 @@ def estimateSleuthMemory(bootstraps, samples, transcripts):
 def findColumnPosition(infile, column):
     ''' find the position in the header of the specified column
     The returned value is one-based (e.g for bash cut)'''
-    with IOTools.open_file(infile, "r") as inf:
+    with iotools.open_file(infile, "r") as inf:
         while True:
             header = inf.readline()
             if not header.startswith("#"):
@@ -500,7 +500,7 @@ class SalmonQuantifier(AF_Quantifier):
 def makeExpressionSummaryPlots(counts_inf, design_inf, logfile):
     ''' use the plotting methods for Counts object to make summary plots'''
 
-    with IOTools.open_file(logfile, "w") as log:
+    with iotools.open_file(logfile, "w") as log:
 
         plot_prefix = P.snip(logfile, ".log")
         log.write("1")
@@ -629,7 +629,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
     counter = E.Counter()
 
     # write summary table
-    outf = IOTools.open_file(outfile + ".removed.tsv.gz", "w")
+    outf = iotools.open_file(outfile + ".removed.tsv.gz", "w")
     outf.write("gene_id\tnoverlap\tsection\n")
     for gene_id, r in remove_genes.items():
         for s in r:
@@ -641,7 +641,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
 
     # filter gtf file
     tmpfile = P.get_temp_file(".")
-    inf = GTF.iterator(IOTools.open_file(infile))
+    inf = GTF.iterator(iotools.open_file(infile))
 
     genes_input, genes_output = set(), set()
 
@@ -655,7 +655,7 @@ def filterAndMergeGTF(infile, outfile, remove_genes, merge=False):
     tmpfile.close()
     tmpfilename = tmpfile.name
 
-    outf = IOTools.open_file(outfile + ".summary.tsv.gz", "w")
+    outf = iotools.open_file(outfile + ".summary.tsv.gz", "w")
     outf.write("category\ttranscripts\n")
     for x, y in counter.items():
         outf.write("%s\t%i\n" % (x, y))
@@ -826,7 +826,7 @@ def loadCufflinks(infile, outfile):
            "--ignore-column=nearest_ref_id "
            "--rename-column=tracking_id:transcript_id")
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 def quantifyWithStringTie(gtffile, bamfile, outdir):
@@ -1114,7 +1114,7 @@ def buildExpressionStats(
 
     keys_status = "OK", "NOTEST", "FAIL", "NOCALL"
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("\t".join(
         ("design",
          "geneset",
@@ -1247,7 +1247,7 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     indir = infile + ".dir"
 
     if not os.path.exists(indir):
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     # E.info( "building cummeRbund database" )
@@ -1296,13 +1296,13 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
     # Jethro - load tables of sample specific cuffdiff fpkm values into csvdb
     # IMS: First read in lookup table for CuffDiff/Pipeline sample name
     # conversion
-    inf = IOTools.open_file(os.path.join(indir, "read_groups.info.gz"))
+    inf = iotools.open_file(os.path.join(indir, "read_groups.info.gz"))
     inf.readline()
     sample_lookup = {}
 
     for line in inf:
         line = line.split("\t")
-        our_sample_name = IOTools.snip(line[0])
+        our_sample_name = iotools.snip(line[0])
         our_sample_name = re.sub("-", "_", our_sample_name)
         cuffdiff_sample_name = "%s_%s" % (line[1], line[2])
         sample_lookup[cuffdiff_sample_name] = our_sample_name
@@ -1317,8 +1317,8 @@ def loadCuffdiff(dbhandle, infile, outfile, min_fpkm=1.0):
         tablename = prefix + "_" + level + "sample_fpkms"
 
         tmpf = P.get_temp_filename(".")
-        inf = IOTools.open_file(os.path.join(indir, fn)).readlines()
-        outf = IOTools.open_file(tmpf, "w")
+        inf = iotools.open_file(os.path.join(indir, fn)).readlines()
+        outf = iotools.open_file(tmpf, "w")
 
         samples = []
         genes = {}
@@ -1430,7 +1430,7 @@ def parseCuffdiff(infile, min_fpkm=1.0):
 
     results = []
 
-    for line in IOTools.open_file(infile):
+    for line in iotools.open_file(infile):
         if line.startswith("test_id"):
             continue
         data = CuffdiffResult._make(line[:-1].split("\t"))
@@ -1650,7 +1650,7 @@ def buildUTRExtension(infile, outfile):
 
     # read gene coordinates
     geneinfos = {}
-    for x in CSV.DictReader(IOTools.open_file(infile), dialect='excel-tab'):
+    for x in csv.DictReader(iotools.open_file(infile), dialect='excel-tab'):
         contig, strand, start, end = x['contig'], x[
             'strand'], int(x['start']), int(x['end'])
         geneinfos[x['gene_id']] = (contig, strand,
@@ -1888,7 +1888,7 @@ def buildUTRExtension(infile, outfile):
 
     E.info("fitting: %s" % str(counter))
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     outf.write("\t".join(
         ["gene_id", "contig", "strand", "status5", "status3"] +
@@ -2060,4 +2060,4 @@ def plotGeneLevelReadExtension(infile, outfile):
         R('''myplot(lscaled, utrs)''')
         R['dev.off']()
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)

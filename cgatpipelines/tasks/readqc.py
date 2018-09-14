@@ -15,9 +15,9 @@ import glob
 import collections
 from io import StringIO
 import pandas as pd
-from cgatcore import Pipeline as P
-import cgatcore.IOTools as IOTools
-import cgatcore.CSV2DB as CSV2DB
+from cgatcore import pipeline as P
+import cgatcore.iotools as iotools
+import cgatcore.csv2db as csv2db
 
 
 def fastqc_filename2track(fn):
@@ -26,7 +26,7 @@ def fastqc_filename2track(fn):
     Because we deal with both paired end (track.fastq.1_fastqc
     and single end data (track_fastqc), this is a bit cumbersome.
     """
-    return re.sub(".fastq.", "-", IOTools.snip(os.path.basename(os.path.dirname(fn)),
+    return re.sub(".fastq.", "-", iotools.snip(os.path.basename(os.path.dirname(fn)),
                                                "_fastqc"))
 
 
@@ -36,7 +36,7 @@ def fastqscreen_filename2track(fn):
     Because we deal with both paired end (track.fastq.1_fastqc
     and single end data (track_fastqc), this is a bit cumbersome.
     """
-    return re.sub(".fastq.", "-", IOTools.snip(os.path.basename(fn),
+    return re.sub(".fastq.", "-", iotools.snip(os.path.basename(fn),
                                                "_screen.txt"))
 
 
@@ -104,7 +104,7 @@ def collectFastQCSections(infiles, section, datadir):
         filename = os.path.join(datadir, track + "*_fastqc", "fastqc_data.txt")
         for fn in glob.glob(filename):
             for name, status, header, data in FastqcSectionIterator(
-                    IOTools.open_file(fn)):
+                    iotools.open_file(fn)):
                 if name == section:
                     results.append((track, status, header, data))
     return results
@@ -124,7 +124,7 @@ def loadFastqc(filename,
         Database backend.
     '''
 
-    parser = CSV2DB.buildParser()
+    parser = csv2db.buildParser()
     (options, args) = parser.parse_args([])
 
     options.database_url = database_url
@@ -136,14 +136,14 @@ def loadFastqc(filename,
         results = []
 
         for name, status, header, data in FastqcSectionIterator(
-                IOTools.open_file(fn)):
+                iotools.open_file(fn)):
             # do not collect basic stats, see loadFastQCSummary
             if name == "Basic Statistics":
                 continue
             options.tablename = prefix + "_" + re.sub(" ", "_", name)
 
             inf = StringIO("\n".join([header] + data) + "\n")
-            CSV2DB.run(inf, options)
+            csv2db.run(inf, options)
             results.append((name, status))
 
         # load status table
@@ -152,7 +152,7 @@ def loadFastqc(filename,
         inf = StringIO(
             "\n".join(["name\tstatus"] +
                       ["\t".join(x) for x in results]) + "\n")
-        CSV2DB.run(inf, options)
+        csv2db.run(inf, options)
 
 
 def buildFastQCSummaryStatus(infiles, outfile, datadir):
@@ -171,11 +171,11 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
         Regular expression to extract track from filename.
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     names = set()
     results = []
     for infile in infiles:
-        base_track = IOTools.snip(os.path.basename(infile), ".fastqc")
+        base_track = iotools.snip(os.path.basename(infile), ".fastqc")
         filename = os.path.join(datadir,
                                 base_track + "*_fastqc",
                                 "fastqc_data.txt")
@@ -183,7 +183,7 @@ def buildFastQCSummaryStatus(infiles, outfile, datadir):
         for fn in glob.glob(filename):
             stats = collections.defaultdict(str)
             for name, status, header, data in FastqcSectionIterator(
-                    IOTools.open_file(fn)):
+                    iotools.open_file(fn)):
                 stats[name] = status
             track = fastqc_filename2track(fn)
             results.append((track, fn, stats))
@@ -239,7 +239,7 @@ def buildExperimentReadQuality(infiles, outfile, datadir):
     df_out = pd.DataFrame(df_out.sum(axis=1))
     df_out.columns = ["_".join(T.split("-")[:-1]), ]
 
-    df_out.to_csv(IOTools.open_file(outfile, "w"), sep="\t")
+    df_out.to_csv(iotools.open_file(outfile, "w"), sep="\t")
 
 
 def read_fastqc(infiles):
@@ -263,7 +263,7 @@ def read_fastqc(infiles):
     for infile in infiles:
         track = fastqc_filename2track(infile)
         tracks.append(track)
-        with IOTools.open_file(infile) as inf:
+        with iotools.open_file(infile) as inf:
             for name, status, header, data in FastqcSectionIterator(inf):
                 records = (x.split("\t") for x in data)
                 df = pd.DataFrame.from_records(records, columns=header.split("\t"))
@@ -294,7 +294,7 @@ def read_fastq_screen(infiles):
     dfs, tracks, summaries = [], [], []
     for infile in infiles:
         track = fastqscreen_filename2track(infile)
-        with IOTools.open_file(infile) as inf:
+        with iotools.open_file(infile) as inf:
             lines = inf.readlines()
         version, aligner, reads = re.search(
             "#Fastq_screen version: (\S+)\t#Aligner: (\S+)\t#Reads in subset: (\d+)\n",

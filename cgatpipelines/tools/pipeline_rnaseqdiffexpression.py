@@ -323,7 +323,7 @@ Code
 from ruffus import *
 from ruffus.combinatorics import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 # import cgat.scrum_expression as SE
 
 import sys
@@ -333,11 +333,11 @@ import glob
 import pandas as pd
 import sqlite3
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 from cgatpipelines.report import run_report
 
@@ -569,7 +569,7 @@ def buildSailfishIndex(infile, outfile):
 def getTranscript2GeneMap(outfile):
     ''' Extract a 1:1 map of transcript_id to gene_id from the geneset '''
 
-    iterator = GTF.iterator(IOTools.open_file(PARAMS['geneset']))
+    iterator = GTF.iterator(iotools.open_file(PARAMS['geneset']))
     transcript2gene_dict = {}
 
     for entry in iterator:
@@ -584,7 +584,7 @@ def getTranscript2GeneMap(outfile):
         else:
             transcript2gene_dict[entry.transcript_id] = entry.gene_id
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("transcript_id\tgene_id\n")
         for key, value in sorted(transcript2gene_dict.items()):
             outf.write("%s\t%s\n" % (key, value))
@@ -1290,7 +1290,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     # to estimate sleuth memory, we need to know the number of
     # samples, transcripts and boostraps
     number_transcripts = 0
-    with IOTools.open_file(transcripts, "r") as inf:
+    with iotools.open_file(transcripts, "r") as inf:
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1
@@ -1475,7 +1475,7 @@ def NormaliseExpression():
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(DETARGETS, "differential_expression.load")
 def loadDifferentialExpression(infiles, outfiles):
-    for infile in IOTools.flatten(infiles):
+    for infile in iotools.flatten(infiles):
         outfile = P.snip(infile, ".tsv") + ".load"
         P.load(infile, outfile)
 
@@ -1485,7 +1485,7 @@ def loadDifferentialExpression(infiles, outfiles):
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(NORMTARGETS, "normalised_expression.load")
 def loadNormalisedExpression(infiles, outfiles):
-    for infile in IOTools.flatten(infiles):
+    for infile in iotools.flatten(infiles):
         outfile = P.snip(infile, ".tsv.gz") + ".load"
         P.load(infile, outfile)
 

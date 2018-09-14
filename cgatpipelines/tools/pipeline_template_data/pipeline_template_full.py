@@ -68,7 +68,7 @@ Code
 import sys
 import os
 from ruffus import transform, regex, suffix, follows
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 # load options from the config file
 PARAMS = P.get_parameters(

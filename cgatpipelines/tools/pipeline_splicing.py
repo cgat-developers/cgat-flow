@@ -124,8 +124,8 @@ import sqlite3
 import pandas as pd
 from rpy2.robjects import r as R
 import cgat.BamTools.bamtools as BamTools
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.splicing as splicing
 from cgatpipelines.report import run_report
@@ -436,7 +436,7 @@ def loadMATS(infile, outfile):
     try:
         P.load(infile, outfile)
     except:
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 @collate(runMATS,
@@ -525,7 +525,7 @@ def permuteMATS(infile, outfiles, outdir):
     for i in range(0, PARAMS["permutations"]):
         if not os.path.exists("%s/run%i.dir" % (outdir, i)):
             os.makedirs("%s/run%i.dir" % (outdir, i))
-        IOTools.touch_file("%s/run%i.dir/init" % (outdir, i))
+        iotools.touch_file("%s/run%i.dir/init" % (outdir, i))
 
 
 @transform(permuteMATS,

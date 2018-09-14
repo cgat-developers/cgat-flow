@@ -56,9 +56,9 @@ import os
 import random
 import itertools
 import cgat.BamTools.bamtools as BamTools
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgat.Expression as Expression
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 
 def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):

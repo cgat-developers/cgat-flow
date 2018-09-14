@@ -113,9 +113,9 @@ import os
 import sqlite3
 import pandas
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-import cgatcore.Database as Database
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatcore.database as Database
 import cgat.SetTools as SetTools
 import cgatPipelines.PipelineGO as PipelineGO
 
@@ -126,7 +126,7 @@ import cgatPipelines.PipelineGO as PipelineGO
 ###################################################
 
 # load options from the config file
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 PARAMS = P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
@@ -187,7 +187,7 @@ def buildGeneListMatrix(infiles, outfile):
     headers = []
     for infile in infiles:
         genelist = pandas.read_csv(
-            IOTools.openFile(infile),
+            iotools.openFile(infile),
             index_col=0,
             sep='\t')
 
@@ -227,19 +227,19 @@ def buildGeneListMatrix(infiles, outfile):
                                      len(backgrounds[-1])))
 
     E.info("writing gene list matrix")
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         SetTools.writeSets(outf, genesets, labels=headers)
-    with IOTools.openFile(outfile + ".bg.tsv.gz", "w") as outf:
+    with iotools.openFile(outfile + ".bg.tsv.gz", "w") as outf:
         SetTools.writeSets(outf, backgrounds, labels=headers)
 
     E.info("writing intersection/union matrix")
     # build set intersection matrix
     matrix = SetTools.unionIntersectionMatrix(genesets)
-    with IOTools.openFile(outfile + ".matrix.gz", "w") as outf:
-        IOTools.writeMatrix(outf, matrix, headers, headers)
+    with iotools.openFile(outfile + ".matrix.gz", "w") as outf:
+        iotools.writeMatrix(outf, matrix, headers, headers)
     matrix = SetTools.unionIntersectionMatrix(backgrounds)
-    with IOTools.openFile(outfile + ".bg.matrix.gz", "w") as outf:
-        IOTools.writeMatrix(outf, matrix, headers, headers)
+    with iotools.openFile(outfile + ".bg.matrix.gz", "w") as outf:
+        iotools.writeMatrix(outf, matrix, headers, headers)
 
 
 @transform(buildGeneListMatrix,

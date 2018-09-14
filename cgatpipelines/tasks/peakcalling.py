@@ -2,15 +2,15 @@ import os
 import re
 import collections
 import itertools
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
 import pandas as pd
 import pysam
 import numpy as np
 import shutil
-from cgatcore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 from rpy2.robjects import r as R
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
@@ -658,7 +658,7 @@ def checkBams(infile, filters, qlim, pe, outfile, contigs_to_remove):
     else:
         outbam = "%s.bam" % outfile
         shutil.copy(infile, outbam)
-    out = IOTools.open_file(infile.replace(".bam", ".fraglengths"), "w")
+    out = iotools.open_file(infile.replace(".bam", ".fraglengths"), "w")
     out.write("frag_length\tfrequency\n")
     for key in fragment_length:
         out.write("%s\t%d\n" % (key, fragment_length[key]))
@@ -736,7 +736,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         '''
         P.run(statement, job_condaenv="macs2")
 
-        with IOTools.open_file(logfile) as inf:
+        with iotools.open_file(logfile) as inf:
             lines = inf.readlines()
             line = [x for x in lines
                     if "# predicted fragment length is" in x]
@@ -748,7 +748,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
                 line[0]).groups()[0]
             std = 'na'
         shutil.rmtree("%s.dir" % outfile)
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     outf.write("\t".join(
         map(str, (mode, mean, std, tagsize))) + "\n")
@@ -876,7 +876,7 @@ def getMacsPeakShiftEstimate(infile):
         path to input file
     '''
 
-    with IOTools.open_file(infile, "r") as inf:
+    with iotools.open_file(infile, "r") as inf:
 
         header = inf.readline().strip().split("\t")
         values = inf.readline().strip().split("\t")
@@ -1628,7 +1628,7 @@ class Macs2Peakcaller(Peakcaller):
         keys = [x[1] for x in map_targets]
 
         results = collections.defaultdict(list)
-        with IOTools.open_file(infile) as f:
+        with iotools.open_file(infile) as f:
             for line in f:
                 for x, y in mapper.items():
                     s = y.search(line)
@@ -1646,7 +1646,7 @@ class Macs2Peakcaller(Peakcaller):
                 v = "\t".join(map(str, val + ["na"] * (c - len(val))))
             row.append(v)
 
-        peaks = IOTools.open_file(
+        peaks = iotools.open_file(
             infile.replace(".macs2.log",
                            ".macs2_peaks.xls.gz")).readlines()
         npeaks = 0
@@ -1657,7 +1657,7 @@ class Macs2Peakcaller(Peakcaller):
         row.extend([str(npeaks)])
         keys.extend(["number_of_peaks"])
 
-        out = IOTools.open_file(outfile, "w")
+        out = iotools.open_file(outfile, "w")
         out.write("sample\t%s\n%s\n" % ("\t".join(keys), "\t".join(row)))
         out.close()
 
@@ -1924,7 +1924,7 @@ class SicerPeakcaller(Peakcaller):
 
         # build headers
         outfile = "%s.log.table" % infile
-        outs = IOTools.open_file(outfile, "w")
+        outs = iotools.open_file(outfile, "w")
 
         headers = []
         for k in keys:
@@ -1937,7 +1937,7 @@ class SicerPeakcaller(Peakcaller):
         outs.write("track\t%s" % "\t".join(headers) + "\n")
 
         results = collections.defaultdict(list)
-        with IOTools.open_file(infile) as f:
+        with iotools.open_file(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -2159,7 +2159,7 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
     pairs = pseudoreppairs_rows + pseudopooledpairs_rows + reppairs_rows
 
     # Write all the table rows to the output file
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write(
             "file1\tfile2\tIDR_comparison_type\tOracle_Peak_File\t"
             "Condition\tTissue\n")

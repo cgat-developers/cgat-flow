@@ -126,7 +126,7 @@ Code
 # load modules
 from ruffus import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import logging as L
 import sys
 import os
@@ -134,12 +134,12 @@ import re
 import itertools
 import glob
 import sqlite3
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgatPipelines.PipelineMapping as PipelineMapping
 import cgatPipelines.PipelineTracks as PipelineTracks
 import cgatPipelines.PipelineMappingQC as PipelineMappingQC
 import cgatPipelines.PipelineMedip as PipelineMedip
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 from rpy2.robjects import r as R
 
@@ -840,7 +840,7 @@ def aggregateTiledReadCounts(infiles, outfile):
 
     tracks = [re.sub("\..*", '', os.path.basename(x)) for x in infiles]
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("interval_id\t%s\n" % "\t".join(tracks))
 
     for line in open(tmpfile, "r"):
@@ -1163,9 +1163,9 @@ def buildMRBed(infile, outfile):
     The score is the log fold change.
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     c = E.Counter()
-    for row in csv.DictReader(IOTools.openFile(infile),
+    for row in csv.DictReader(iotools.openFile(infile),
                               dialect="excel-tab"):
         c.input += 1
 

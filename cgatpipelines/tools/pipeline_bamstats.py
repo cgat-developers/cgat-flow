@@ -159,12 +159,12 @@ Code
 import sys
 import os
 import sqlite3
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 
 from ruffus import transform, merge, mkdir, regex, suffix, follows, add_inputs,\
     active_if, jobs_limit, originate
 
-import cgatcore.Pipeline as P
+import cgatcore.pipeline as P
 import cgatpipelines.tasks.bamstats as bamstats
 
 
@@ -547,7 +547,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
     job_memory = "4G"
 
     if "transcriptome.dir" in infile:
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''

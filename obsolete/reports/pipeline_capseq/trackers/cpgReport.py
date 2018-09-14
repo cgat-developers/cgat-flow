@@ -4,7 +4,7 @@ import re
 import types
 import itertools
 import glob
-import PipelineTracks
+import pipelineTracks
 
 from cgatReport.Tracker import *
 from cgatReport.odict import OrderedDict as odict

@@ -10,8 +10,8 @@ import re
 import pysam
 import random
 
-from cgatcore import Pipeline as P
-import cgatcore.IOTools as IOTools
+from cgatcore import pipeline as P
+import cgatcore.iotools as iotools
 import cgatPipelines.PipelineTracks as PipelineTracks
 from cgat import WrapperIDR
 
@@ -335,9 +335,9 @@ class sppIDRPeaks(callerIDRPeaks):
         """
         # select location of the spp script to run
         if self.PARAMS_PEAKCALLER["spp_options_idr_script"] == "default":
-            executable = IOTools.which("run_spp.R")
+            executable = iotools.which("run_spp.R")
         elif self.PARAMS_PEAKCALLER["spp_options_idr_script"] == "nodups":
-            executable = IOTools.which("run_spp_nodups.R")
+            executable = iotools.which("run_spp_nodups.R")
         else:
             executable = self.PARAMS_PEAKCALLER["spp_options_idr_script"]
             try:
@@ -464,7 +464,7 @@ def countPeaks(infiles, outf):
         sample_id = os.path.basename(infile).split("_VS_")[0]
         tissue, condition, replicate = sample_id.split("-")
         experiment = tissue + "_" + condition
-        n_peaks = str(len(IOTools.openFile(infile).readlines()))
+        n_peaks = str(len(iotools.openFile(infile).readlines()))
         outf.write("\t".join([sample_id,
                               experiment,
                               tissue,
@@ -481,7 +481,7 @@ def countPeaks(infiles, outf):
 
 
 def findNPeaks(infiles, outfile, params):
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("Tissue\t"
                "Condition\t"
                "Experiment\t"
@@ -503,7 +503,7 @@ def findNPeaks(infiles, outfile, params):
         sample1, sample2 = inf_name.split("_vs_")
         n_peaks = 0
         header = True
-        for line in IOTools.openFile(inf):
+        for line in iotools.openFile(inf):
             if header:
                 header = False
                 continue

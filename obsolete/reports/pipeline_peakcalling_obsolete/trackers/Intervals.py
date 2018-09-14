@@ -1,6 +1,6 @@
 from PeakcallingReport import *
 
-import cgatcore.IOTools
+import cgatcore.iotools
 
 
 class FoldChangeTracker(TrackerSQL):
@@ -585,7 +585,7 @@ class PeakShapeTracker(Tracker):
         if not os.path.exists(fn):
             return
 
-        matrix, rownames, colnames = IOTools.readMatrix(IOTools.openFile(fn))
+        matrix, rownames, colnames = iotools.readMatrix(iotools.openFile(fn))
 
         nrows = len(rownames)
         if nrows < 2:

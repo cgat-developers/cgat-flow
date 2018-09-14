@@ -1,7 +1,7 @@
 import os, sys, re, types, itertools
 import Stats
 import IndexedGenome
-import PipelineTracks
+import pipelineTracks
 
 from ChipseqReport import *
 from cgatReport.Tracker import *

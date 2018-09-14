@@ -21,10 +21,10 @@ import math
 import numpy
 import numpy.ma as ma
 import itertools
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgat.BamTools.bamtools as BamTools
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgat.Expression as Expression
 import cgat.Bed as Bed
 
@@ -282,7 +282,7 @@ def aggregateWindowsTagCounts(infiles,
     tracks = [re.search(regex, os.path.basename(x)).groups()[0]
               for x in infiles]
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("interval_id\t%s\n" % "\t".join(tracks))
 
     # filter for uniqueness - keys with the same value as the
@@ -390,13 +390,13 @@ def buildDMRStats(infiles, outfile, method, fdr_threshold=None):
     def f_status(x):
         return x.status
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     is_first = True
     for infile in infiles:
 
         xx = 0
-        for line in IOTools.iterate(IOTools.open_file(infile)):
+        for line in iotools.iterate(iotools.open_file(infile)):
             key = f_key(line)
 
             r, s = results[key], status[key]
@@ -481,7 +481,7 @@ def buildFDRStats(infile, outfile, method):
     '''
 
     raise NotImplementedError("function is incomplete")
-    data = pandas.read_csv(IOTools.open_file(infile), sep="\t", index_col=0)
+    data = pandas.read_csv(iotools.open_file(infile), sep="\t", index_col=0)
 
     assert data['treatment_name'][0] == data['treatment_name'][-1]
     assert data['control_name'][0] == data['control_name'][-1]
@@ -512,8 +512,8 @@ def outputAllWindows(infile, outfile):
     outfile : string
         Output filename in :term:`bed` format.
     '''
-    outf = IOTools.open_file(outfile, "w")
-    for line in IOTools.iterate(IOTools.open_file(infile)):
+    outf = iotools.open_file(outfile, "w")
+    for line in iotools.iterate(iotools.open_file(infile)):
         outf.write("\t".join(
             (line.contig, line.start, line.end,
              "%6.4f" % float(line.l2fold))) + "\n")
@@ -647,7 +647,7 @@ def runDE(design_file,
         --log=%(outfile)s.log
         '''
 
-    prefix = IOTools.snip(os.path.basename(outfile))
+    prefix = iotools.snip(os.path.basename(outfile))
     E.info(prefix)
 
     # --bashrc=%(pipeline_scriptsdir)s/bashrc.cgat
@@ -658,7 +658,7 @@ def runDE(design_file,
     # over all windows.
     statement += '''
     | cgat randomize_lines --keep-header=1
-    | python -m cgatcore.Pipeline.farm
+    | python -m cgatcore.pipeline.farm
     --method=multiprocessing
     --cluster-options="-l mem_free=16G"
     --cluster-queue=%(cluster_queue)s
@@ -969,7 +969,7 @@ def outputSpikeCounts(outfile, infile_name,
     dd = pandas.DataFrame(d2hist_counts)
     dd.index = list(xedges[:-1])
     dd.columns = list(yedges[:-1])
-    dd.to_csv(IOTools.open_file(outfile, "w"),
+    dd.to_csv(iotools.open_file(outfile, "w"),
               sep="\t")
 
     return df, d2hist_counts, xedges, yedges, l10average, l2fold
@@ -998,7 +998,7 @@ def plotDETagStats(infile, composition_file, outfile):
         additional_columns=("CpG_density",
                             "length"))
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @P.cluster_runnable
@@ -1044,7 +1044,7 @@ def buildSpikeResults(infile, outfile):
 
     if not os.path.exists(spikefile):
         E.warn('no spike data: %s' % spikefile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     ########################################
@@ -1087,7 +1087,7 @@ def buildSpikeResults(infile, outfile):
 
     assert xedges.all() == unspiked_xedges.all()
 
-    tmpfile = IOTools.open_file(tmpfile_name, "w")
+    tmpfile = iotools.open_file(tmpfile_name, "w")
     tmpfile.write("\t".join(
         ("expression",
          "fold",
@@ -1101,7 +1101,7 @@ def buildSpikeResults(infile, outfile):
     spiked_total = float(spiked_d2hist_counts.sum().sum())
     unspiked_total = float(unspiked_d2hist_counts.sum().sum())
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("fdr\tpower\tintervals\tintervals_percent\n")
 
     # significant results

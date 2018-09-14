@@ -155,8 +155,8 @@ import re
 import glob
 import tarfile
 import pandas
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 from cgatpipelines.report import run_report
 
 ###################################################
@@ -166,7 +166,7 @@ from cgatpipelines.report import run_report
 ###################################################
 
 # load options from the config file
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 PARAMS = P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
      "../pipeline.yml",
@@ -320,7 +320,7 @@ def compute_file_metrics(infile, outfile, metric, suffixes):
 
     if suffixes is None or len(suffixes) == 0:
         E.info("No metrics computed for {}".format(outfile))
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     track = P.snip(infile, ".log")
@@ -429,7 +429,7 @@ def compareCheckSums(infiles, outfile):
     '''compare checksum files against existing reference data.
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("\t".join((
         ("track", "status",
          "job_finished",
@@ -454,7 +454,7 @@ def compareCheckSums(infiles, outfile):
         logfiles = glob.glob(track + "*.log")
         job_finished = True
         for logfile in logfiles:
-            is_complete = IOTools.is_complete(logfile)
+            is_complete = iotools.is_complete(logfile)
             E.debug("logcheck: {} = {}".format(logfile, is_complete))
             job_finished = job_finished and is_complete
 
@@ -476,11 +476,11 @@ def compareCheckSums(infiles, outfile):
         if not os.path.exists(reffile):
             raise ValueError('no reference data defined for %s' % track)
 
-        cmp_data = pandas.read_csv(IOTools.open_file(infile),
+        cmp_data = pandas.read_csv(iotools.open_file(infile),
                                    sep="\t",
                                    index_col=0)
 
-        ref_data = pandas.read_csv(IOTools.open_file(reffile),
+        ref_data = pandas.read_csv(iotools.open_file(reffile),
                                    sep="\t",
                                    index_col=0)
 

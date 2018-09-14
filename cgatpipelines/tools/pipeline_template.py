@@ -58,8 +58,8 @@ Code
 from ruffus import *
 import sys
 import os
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 from cgatpipelines.report import run_report
 
 # load options from the config file

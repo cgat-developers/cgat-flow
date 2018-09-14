@@ -3,7 +3,7 @@ import glob
 
 from cgatReport.Tracker import *
 from cgatReport.Utils import PARAMS as P
-import PipelineTracks
+import pipelineTracks
 
 # get from config file
 UCSC_DATABASE = "hg19"

@@ -36,7 +36,7 @@ from ruffus import *
 from ruffus.combinatorics import *
 import sys
 import os
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 
 PARAMS = P.get_parameters(

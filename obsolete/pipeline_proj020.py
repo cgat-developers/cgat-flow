@@ -123,7 +123,7 @@ import io
 import fileinput
 import cgat.Fastq as fq
 import logging as L
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgatPipelines.PipelineMapping as PipelineMapping
 from ruffus import *
 
@@ -132,7 +132,7 @@ from ruffus import *
 ###################################################################
 ###################################################################
 # Pipeline configuration
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(["pipeline.ini"])
 PARAMS = P.PARAMS
 USECLUSTER = True
@@ -304,7 +304,7 @@ def trimGeneTrapVectorRead1(infile, outfile):
 
     #contaminant_file = PARAMS["trim_contaminants"]
     #adaptors = []
-    # for entry in FastaIterator.FastaIterator( IOTools.openFile( contaminant_file ) ):
+    # for entry in FastaIterator.FastaIterator( iotools.openFile( contaminant_file ) ):
     #    adaptors.append( "-a %s" % entry.sequence )
     #adaptors= " ".join(adaptors)
 

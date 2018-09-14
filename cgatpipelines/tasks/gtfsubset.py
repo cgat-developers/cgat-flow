@@ -9,18 +9,18 @@ Reference
 
 import os
 import pysam
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.GTF as GTF
-import cgatcore.Pipeline as P
-import cgatcore.Database as Database
+import cgatcore.pipeline as P
+import cgatcore.database as Database
 
 
 class SubsetGTF():
 
     def __init__(self, infile, *args, **kwargs):
 
-        self.gtf = GTF.iterator(IOTools.open_file(infile, "r"))
+        self.gtf = GTF.iterator(iotools.open_file(infile, "r"))
 
     def makeLineDict(self, line):
         D = line.asDict()
@@ -40,7 +40,7 @@ class SubsetGTF():
 
         '''
 
-        with IOTools.open_file(outfile, "w") as outf:
+        with iotools.open_file(outfile, "w") as outf:
             for line in self.gtf:
                 D = self.makeLineDict(line)
                 if len(filteritem) == 1:
@@ -68,7 +68,7 @@ class SubsetGTF():
 class SubsetGFF3():
 
     def __init__(self, infile, *args, **kwargs):
-        self.gff = pysam.tabix_iterator(IOTools.open_file(infile),
+        self.gff = pysam.tabix_iterator(iotools.open_file(infile),
                                         parser=pysam.asGFF3())
 
     def makeLineDict(self, line):
@@ -85,7 +85,7 @@ class SubsetGFF3():
 
     def filterGFF3(self, outfile, filteroption, filteritem):
 
-        with IOTools.open_file(outfile, "w") as outf:
+        with iotools.open_file(outfile, "w") as outf:
             for line in self.gff:
                 D = self.makeLineDict(line)
                 if D[filteroption] == filteritem[0]:

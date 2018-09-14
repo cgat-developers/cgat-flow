@@ -309,11 +309,11 @@ import itertools
 import glob
 import sqlite3
 
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgat.Bed as Bed
-import cgatcore.IOTools as IOTools
-import cgatcore.Database as Database
+import cgatcore.iotools as iotools
+import cgatcore.database as Database
 import cgat.BamTools as BamTools
 
 import cgatPipelines.PipelinePeakcalling as PipelinePeakcalling
@@ -584,10 +584,10 @@ if PARAMS["calling_normalize"] is True:
         counts = []
         countfiles = glob.glob("*.prep.count")
         for cf in countfiles:
-            fh = IOTools.openFile(cf, "r")
+            fh = iotools.openFile(cf, "r")
             counts.append(int(fh.read()))
             fh.close()
-        fh = IOTools.openFile(outfile, "w")
+        fh = iotools.openFile(outfile, "w")
         fh.write(str(min(counts)))
         fh.close
 
@@ -601,7 +601,7 @@ if PARAMS["calling_normalize"] is True:
         have approximately
         the same number of reads.
         '''
-        fh = IOTools.openFile("minreads")
+        fh = iotools.openFile("minreads")
         minreads = int(fh.read())
         fh.close
         PipelinePeakcalling.buildSimpleNormalizedBAM(
@@ -684,7 +684,7 @@ def mergeBackgroundWindows(infiles, outfile):
         # write a dummy file with a dummy chromosome
         # an empty background file would otherwise cause
         # errors downstream in bedtools intersect
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         outf.write("chrXXXX\t1\t2\n")
         outf.close()
         return
@@ -782,7 +782,7 @@ def predictFragmentSize(infile, outfile):
         '''
         P.run()
 
-        with IOTools.openFile(outfile + ".tsv") as inf:
+        with iotools.openFile(outfile + ".tsv") as inf:
             lines = inf.readlines()
             line = [x for x in lines
                     if "# predicted fragment length is" in x]
@@ -794,7 +794,7 @@ def predictFragmentSize(infile, outfile):
                 line[0]).groups()[0]
             std = 'na'
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     outf.write("\t".join(
         map(str, (mode, mean, std, tagsize))) + "\n")
@@ -818,7 +818,7 @@ def buildFragmentSizeTable(infiles, outfile):
 def getFragmentSizeTable():
     if not os.path.exists('fragment_sizes.tsv'):
         raise ValueError('can not read fragment_sizes.tsv')
-    table = IOTools.readMap(IOTools.openFile('fragment_sizes.tsv'),
+    table = iotools.readMap(iotools.openFile('fragment_sizes.tsv'),
                             columns='all',
                             has_header=True)
     return table
@@ -1428,7 +1428,7 @@ def callPeaksWithSPPForIDR(infile, outfile):
     if controlfile is None:
         raise ValueError("idr analysis requires a control")
 
-    executable = IOTools.which("run_spp.R")
+    executable = iotools.which("run_spp.R")
     if executable is None:
         raise ValueError("could not find run_spp.R")
 
@@ -1598,7 +1598,7 @@ def exportFilteredIntervalsAsBed(infiles, outfiles):
 
     track = P.snip(os.path.basename(infile), ".load")
 
-    logfile = IOTools.openFile(outfile_summary, "w")
+    logfile = iotools.openFile(outfile_summary, "w")
     logfile.write(
         "category\tinput\toutput\tremoved_background\tremoved_merged\n")
 

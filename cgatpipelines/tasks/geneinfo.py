@@ -1,4 +1,4 @@
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 from Bio import Entrez
 import numpy as np
 import httplib2
@@ -9,10 +9,10 @@ import re
 import os
 import xml.etree.ElementTree as ET
 import pandas as pd
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 from urllib.request import urlopen
-from cgatcore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 import mygene
 
 
@@ -20,7 +20,7 @@ def readGeneList(filename):
     '''
     Reads a file containing one gene ID per line into a list
     '''
-    return [line.strip() for line in IOTools.open_file(filename).readlines()]
+    return [line.strip() for line in iotools.open_file(filename).readlines()]
 
 
 def getSymbols(hostfile):
@@ -29,7 +29,7 @@ def getSymbols(hostfile):
     returns a list of gene symbols
     '''
     return [line.strip().split("\t")[0]
-            for line in IOTools.open_file(hostfile).readlines()]
+            for line in iotools.open_file(hostfile).readlines()]
 
 
 class APIAnnotation(object):
@@ -136,7 +136,7 @@ class APIAnnotation(object):
             cnames = tab[1]
             ctypes = tab[2]
             zipped = tab[0]
-            outf = (IOTools.open_file(tabkey + ".load", "w"))
+            outf = (iotools.open_file(tabkey + ".load", "w"))
             #  check there are the right number of column names for the dataset
             assert len(cnames) == len(
                 zipped[0]), "length of column names doesn't \

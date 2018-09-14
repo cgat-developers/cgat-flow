@@ -245,13 +245,13 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.peakcalling as peakcalling
 import cgat.BamTools.bamtools as Bamtools
-import cgatcore.Database as DB
+import cgatcore.database as DB
 from cgatpipelines.report import run_report
 
 #########################################################################
@@ -485,7 +485,7 @@ def loadFragmentLengthDistributions(infiles, outfile):
     only be computed if sample is paired-end if samples are not this function
     is not run'''
     infile = infiles[0].replace(".bam", ".fraglengths")
-    if len(IOTools.open_file(infile).readlines()) > 2:
+    if len(iotools.open_file(infile).readlines()) > 2:
         P.load(infile, outfile)
     else:
         os.system("touch %s" % outfile)
@@ -863,7 +863,7 @@ def makeBamInputTable(outfile):
 
     '''
     ks = inputD.keys()
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     out.write('ChipBam\tInputBam\n')
     bamfiles = os.listdir("peakcalling_bams.dir")
 
@@ -909,10 +909,10 @@ def mergeInsertSizes(infiles, outfile):
     '''
     Combines insert size outputs into one file
     '''
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     out.write("filename\tmode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     for infile in infiles:
-        res = IOTools.open_file(infile).readlines()
+        res = iotools.open_file(infile).readlines()
         out.write("%s\t%s\n" % (infile, res[-1].strip()))
     out.close()
 
@@ -1267,7 +1267,7 @@ def splitForIDR(infile, outfiles):
 
         pairstring = "%s_v_%s" % (p1, p2)
 
-        out = IOTools.open_file("IDR.dir/%s.dummy" % pairstring, "w")
+        out = iotools.open_file("IDR.dir/%s.dummy" % pairstring, "w")
         out.write("%s\n" % "\n".join(p))
         out.close()
 
@@ -1287,7 +1287,7 @@ def runIDR(infile, outfile):
     means?
 
     '''
-    lines = [line.strip() for line in IOTools.open_file(infile).readlines()]
+    lines = [line.strip() for line in iotools.open_file(infile).readlines()]
     infile1, infile2, setting, oraclefile, condition, tissue = lines
     options = PARAMS['IDR_options']
 
@@ -1311,7 +1311,7 @@ def runIDR(infile, outfile):
         idrPARAMS, options, oraclefile, test=True)
 
     P.run(statement)
-    lines = IOTools.open_file(T).readlines()
+    lines = iotools.open_file(T).readlines()
     os.remove(T)
     os.remove('%s.log' % T)
 
@@ -1331,7 +1331,7 @@ def runIDR(infile, outfile):
         IDR failed for %(infile1)s vs %(infile2)s - fewer than 20\
         peaks in the merged peak list\
         *******************************************************""" % locals())
-        out = IOTools.open_file(outfile, "w")
+        out = iotools.open_file(outfile, "w")
         out.write("IDR FAILED - NOT ENOUGH PEAKS IN MERGED PEAK LIST")
         out.close()
 
@@ -1435,7 +1435,7 @@ def filterIDR(infile, outfiles):
     else:
         T = ((0, 0, 0, 0, 0, "FALSE"))
 
-    out = IOTools.open_file(outfiles[1], "w")
+    out = iotools.open_file(outfiles[1], "w")
     out.write("%s\n" % "\t".join(H))
     out.write("%s\n" % "\t".join([str(t) for t in T]))
 

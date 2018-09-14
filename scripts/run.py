@@ -74,7 +74,7 @@ Command line options
 import os
 import sys
 import subprocess
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 
 
 def main(argv=None):

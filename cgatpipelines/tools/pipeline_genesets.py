@@ -339,9 +339,9 @@ import pandas as pd
 from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
     suffix, regex, add_inputs, originate
 import cgat.IndexedFasta as IndexedFasta
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-import cgatcore.Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatcore.pipeline as P
 import cgatpipelines.tasks.gtfsubset as gtfsubset
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.go as go
@@ -436,7 +436,7 @@ def buildContigBed(infile, outfile):
     '''
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs = IOTools.open_file(outfile, "w")
+    outs = iotools.open_file(outfile, "w")
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
         outs.write("%s\t%i\t%i\n" % (contig, 0, size))
@@ -474,8 +474,8 @@ def buildUngappedContigBed(infile, outfiles):
 
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs_nogap = IOTools.open_file(outfiles[0], "w")
-    outs_gap = IOTools.open_file(outfiles[1], "w")
+    outs_nogap = iotools.open_file(outfiles[0], "w")
+    outs_gap = iotools.open_file(outfiles[1], "w")
     min_gap_size = PARAMS["assembly_gaps_min_size"]
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
@@ -1150,7 +1150,7 @@ def identifyProteinCodingGenes(outfile):
     FROM gene_info
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 

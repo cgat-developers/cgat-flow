@@ -80,11 +80,11 @@ import stat
 
 from multiprocessing.pool import Pool, ThreadPool
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.Blat as Blat
 
-from cgatcore.Pipeline import Cluster as Cluster
+from cgatcore.pipeline import Cluster as Cluster
 
 try:
     import drmaa
@@ -99,7 +99,7 @@ def chunk_iterator_lines(infile, args, prefix, use_header=False):
     chunk_size = args[0]
     n = 0
     filename = "%s/%010i.in" % (prefix, n)
-    outfile = IOTools.openFile(filename, "w")
+    outfile = iotools.openFile(filename, "w")
     header = None
 
     for line in infile:
@@ -117,7 +117,7 @@ def chunk_iterator_lines(infile, args, prefix, use_header=False):
             outfile.close()
             yield filename
             filename = "%s/%010i.in" % (prefix, n)
-            outfile = IOTools.openFile(filename, "w")
+            outfile = iotools.openFile(filename, "w")
             if header:
                 outfile.write(header)
 
@@ -137,7 +137,7 @@ def chunk_iterator_column(infile, args, prefix, use_header=False):
     """
 
     column, max_files = args
-    files = IOTools.FilePool()
+    files = iotools.FilePool()
     header = False
 
     if max_files:
@@ -211,7 +211,7 @@ def chunk_iterator_regex_group(infile, args, prefix, use_header=False):
             last = this
 
             filename = "%s/%s.in" % (prefix, this)
-            outfile = IOTools.openFile(filename, "w")
+            outfile = iotools.openFile(filename, "w")
             if header:
                 outfile.write(header)
             n = 0
@@ -235,7 +235,7 @@ def chunk_iterator_regex_split(infile, args, prefix, use_header=False):
     nlines = 0
     n = 0
     filename = "%s/%010i.in" % (prefix, n)
-    outfile = IOTools.openFile(filename, "w")
+    outfile = iotools.openFile(filename, "w")
 
     for line in infile:
 
@@ -247,7 +247,7 @@ def chunk_iterator_regex_split(infile, args, prefix, use_header=False):
                 outfile.close()
                 yield filename
                 filename = "%s/%010i.in" % (prefix, n)
-                outfile = IOTools.openFile(filename, "w")
+                outfile = iotools.openFile(filename, "w")
                 nlines = 0
 
             n += 1
@@ -411,7 +411,7 @@ class ResultBuilder:
 
         for fi, fn in filenames:
             E.debug("# merging %s" % fn)
-            infile = IOTools.openFile(fn, "r")
+            infile = iotools.openFile(fn, "r")
 
             if options.output_header:
                 self.parseHeader(infile, outfile, options)
@@ -481,7 +481,7 @@ class ResultBuilderFasta(ResultBuilder):
 
     def __call__(self, filenames, outfile, options):
         for fi, fn in filenames:
-            infile = IOTools.openFile(fn, "r")
+            infile = iotools.openFile(fn, "r")
             for l in infile:
                 if l[0] == "#":
                     options.stdlog.write(l)
@@ -503,7 +503,7 @@ class ResultBuilderBinary(ResultBuilder):
 
     def __call__(self, filenames, outfile, options):
         for fi, fn in filenames:
-            shutil.copyfileobj(IOTools.openFile(fn, "r"), outfile)
+            shutil.copyfileobj(iotools.openFile(fn, "r"), outfile)
 
 
 class ResultBuilderCopies(ResultBuilder):
@@ -530,7 +530,7 @@ class ResultBuilderLog(ResultBuilder):
 
     def __call__(self, filenames, outfile, options):
         for fi, fn in filenames:
-            infile = IOTools.openFile(fn, "r")
+            infile = iotools.openFile(fn, "r")
             outfile.write(
                 "######### logging output for %s ###################\n" % fi)
             for l in infile:
@@ -587,9 +587,9 @@ def runCommand(data):
         else:
             E.info("%s: submitting command: %s" % (filename, c))
 
-        infile = IOTools.openFile(filename, "r")
-        outfile = IOTools.openFile(filename + ".out", "w")
-        errfile = IOTools.openFile(filename + ".err", "a")
+        infile = iotools.openFile(filename, "r")
+        outfile = iotools.openFile(filename + ".out", "w")
+        errfile = iotools.openFile(filename + ".err", "a")
 
         retcode = subprocess.call(c,
                                   shell=True,
@@ -625,7 +625,7 @@ def hasFinished(retcode, filename, output_tag, logfile):
     if retcode != 0:
         try:
             if not output_tag or not re.search(output_tag,
-                                               IOTools.getLastLine(logfile)):
+                                               iotools.getLastLine(logfile)):
                 return False
         except IOError:
             E.warn("could not read output_tag from files %s" % (logfile))
@@ -1083,7 +1083,7 @@ def main(argv=None):
         rr = re.search("'--log=(\S+)'", cmd) or re.search("'--L\s+(\S+)'", cmd)
         if rr:
             E.info("logging output goes to %s" % rr.groups()[0])
-            logfile = IOTools.openFile(rr.groups()[0], "a")
+            logfile = iotools.openFile(rr.groups()[0], "a")
             ResultBuilderLog()(
                 [(x[0], "%s.log" % x[0]) for x in started_requests],
                 logfile,
@@ -1144,7 +1144,7 @@ def main(argv=None):
                 E.info("output of %i files goes to %s" %
                        (len(filenames), filename))
 
-                outfile = IOTools.openFile(
+                outfile = iotools.openFile(
                     options.output_pattern % filename, "w")
                 builder(input_filenames, outfile, options)
                 outfile.close()

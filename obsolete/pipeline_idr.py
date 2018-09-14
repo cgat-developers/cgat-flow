@@ -148,12 +148,12 @@ import sqlite3
 import glob
 import shutil
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-import cgatcore.Database as Database
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatcore.database as Database
 
 import cgatPipelines.PipelineIDR as IDR
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineTracks as PipelineTracks
 
 # Pipeline configuration
@@ -417,7 +417,7 @@ def callPeaksOnIndividualReplicates(infile, outfile):
        "./peakfiles_individual_replicates/"
        "peakcalling_summary_individual_replicates.tsv")
 def summarizePeaksForIndividualReplicates(infiles, outfile):
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("Sample_id\t"
                "Experiment\t"
                "Tissue\t"
@@ -459,7 +459,7 @@ def callPeaksOnPseudoreplicates(infile, outfile):
        "./peakfiles_pseudoreplicates/"
        "peakcalling_summary_pseudoreplicates.tsv")
 def summarizePeaksForPseudoreplicates(infiles, outfile):
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("Sample_id\t"
                "Experiment\t"
                "Tissue\t"
@@ -503,7 +503,7 @@ def callPeaksOnPooledPseudoreplicates(infile, outfile):
        "./peakfiles_pooled_pseudoreplicates/"
        "peakcalling_summary_pooled_pseudoreplicates.tsv")
 def summarizePeaksForPooledPseudoreplicates(infiles, outfile):
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("Sample_id\t"
                "Experiment\t"
                "Tissue\t"

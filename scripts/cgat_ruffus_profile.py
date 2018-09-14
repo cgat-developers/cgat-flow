@@ -105,8 +105,8 @@ import re
 import datetime
 import collections
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 class Counter(object):
@@ -215,7 +215,7 @@ def main(argv=sys.argv):
 
     rootpath = os.path.abspath(".")
 
-    infile = IOTools.openFile(options.logfile)
+    infile = iotools.openFile(options.logfile)
 
     for line in infile:
         if not rx.match(line):

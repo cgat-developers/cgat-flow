@@ -131,10 +131,10 @@ import re
 import itertools
 import glob
 import sqlite3
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgatPipelines.PipelineMapping as PipelineMapping
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineRrbs as RRBS
 import pandas as pd
 import cgatPipelines.PipelineTracks as PipelineTracks
@@ -473,8 +473,8 @@ def loadBigWigStats(infiles, outfile):
 @originate("coverage.dir/cpgIslands.bed")
 def makeCpgIslandsBed(outfile):
     infile = PARAMS["methylation_summary_cpgislands"]
-    out = IOTools.openFile(outfile, "w")
-    with IOTools.openFile(infile, "r") as f:
+    out = iotools.openFile(outfile, "w")
+    with iotools.openFile(infile, "r") as f:
         for line in f.readlines():
             # this assumes location of req. values
             contig, start, end = line.split()[1:4]
@@ -494,10 +494,10 @@ def make1basedCpgIslands(infile, outfile):
 
     # outfile, loadfile = outfiles
 
-    out = IOTools.openFile(outfile, "w")
+    out = iotools.openFile(outfile, "w")
     out.write("%s\t%s\t%s\n" % ("contig", "position", "cpgi"))
 
-    with IOTools.openFile(infile, "r") as f:
+    with iotools.openFile(infile, "r") as f:
         lines = f.readlines()
         for line in lines:
             contig, start, stop = line.split()

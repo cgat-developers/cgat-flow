@@ -72,8 +72,8 @@ import sys
 import os
 import glob
 import sqlite3
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 from cgatpipelines.report import run_report
 
 # load options from the config file
@@ -394,7 +394,7 @@ def mergeSailfish(infiles, outfile):
 def loadSailfish(infile, outfile):
     '''
     load Sailfish gene counts data into
-    CSVDB
+    csvDB
     '''
 
     P.load(infile, outfile)
@@ -722,7 +722,7 @@ def cleanQcTable(infile, outfile):
            ".load")
 def loadQcMeasures(infile, outfile):
     '''
-    load QC measures into CSVDB
+    load QC measures into csvDB
     '''
 
     P.load(infile, outfile,
@@ -741,7 +741,7 @@ def get_mapping_stats():
     pass
 
 # --------------------------------------------------- #
-# retrieve metadata and load in to CSVDB
+# retrieve metadata and load in to csvDB
 # --------------------------------------------------- #
 
 
@@ -751,7 +751,7 @@ def get_mapping_stats():
            ".load")
 def loadMetaData(infile, outfile):
     '''
-    load metadata into CSVDB
+    load metadata into csvDB
     '''
 
     P.load(infile, outfile)

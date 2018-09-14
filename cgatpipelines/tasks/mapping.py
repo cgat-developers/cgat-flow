@@ -83,10 +83,10 @@ import glob
 import collections
 import re
 import itertools
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import logging as L
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.GTF as GTF
 import cgat.Fastq as Fastq
 import cgat.IndexedFasta as IndexedFasta
@@ -205,7 +205,7 @@ def mergeAndFilterGTF(infile, outfile, logfile,
 
     c = E.Counter()
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     E.info("filtering by contig and removing long introns")
     contigs = set(IndexedFasta.IndexedFasta(genome).getContigs())
@@ -223,16 +223,16 @@ def mergeAndFilterGTF(infile, outfile, logfile,
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.open_file(rna_file, "r")))
+                GTF.iterator(iotools.open_file(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.open_file(logfile, "w")
+    logf = iotools.open_file(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
     for all_exons in GTF.transcript_iterator(
-            GTF.iterator(IOTools.open_file(infile))):
+            GTF.iterator(iotools.open_file(infile))):
 
         c.input += 1
 
@@ -379,9 +379,9 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.open_file(tmpfile2, "w")
+    outf = iotools.open_file(tmpfile2, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.open_file(tmpfile1 + ".combined.gtf")
+    inf = iotools.open_file(tmpfile1 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -553,7 +553,7 @@ class SequenceCollectionProcessor(object):
 
             elif infile.endswith(".remote"):
                 files = []
-                for line in IOTools.open_file(infile):
+                for line in iotools.open_file(infile):
                     repo, acc = line.strip().split("\t")[:2]
                     if repo == "SRA":
                         statement.append(Sra.prefetch(acc))
@@ -763,7 +763,7 @@ class SequenceCollectionProcessor(object):
 
             elif infile.endswith(".fastq.gz"):
                 format = Fastq.guessFormat(
-                    IOTools.open_file(infile, "r"), raises=False)
+                    iotools.open_file(infile, "r"), raises=False)
                 if 'sanger' not in format and self.convert:
                     statement.append("""gunzip < %(infile)s
                     | cgat fastq2fastq
@@ -852,7 +852,7 @@ class SequenceCollectionProcessor(object):
                         "'%s' for '%s'" % (infile2, infile))
 
                 format = Fastq.guessFormat(
-                    IOTools.open_file(infile), raises=False)
+                    iotools.open_file(infile), raises=False)
 
                 if 'sanger' not in format and qual_format != 'phred64':
                     statement.append("""gunzip < %(infile)s
@@ -1083,7 +1083,7 @@ class FastQC(Mapper):
 
         # read in file and split into adaptor/sequence
         adaptor_dict = {}
-        with IOTools.open_file(contaminants, "r") as ofile:
+        with iotools.open_file(contaminants, "r") as ofile:
             for line in ofile.readlines():
                 if line[0] == '#':
                     pass
@@ -1096,7 +1096,7 @@ class FastQC(Mapper):
 
         # get temporary file name
         outfile = P.get_temp_filename(shared=True)
-        with IOTools.open_file(outfile, "w") as wfile:
+        with iotools.open_file(outfile, "w") as wfile:
             for key, value in list(adaptor_dict.items()):
                 wfile.write("%s\t%s\n" % (key, value))
         wfile.close()
@@ -3431,7 +3431,7 @@ def splitGeneSet(infile):
     outfile = None
     outprefix = P.snip(infile, ".gtf.gz")
 
-    for line in IOTools.open_file(infile):
+    for line in iotools.open_file(infile):
 
         this = line.split("\t")[0]
 
@@ -3443,7 +3443,7 @@ def splitGeneSet(infile):
             if outfile is not None:
                 outfile.close()
 
-            outfile = IOTools.open_file("%s.%s.gtf.gz" % (outprefix, this), "w")
+            outfile = iotools.open_file("%s.%s.gtf.gz" % (outprefix, this), "w")
             outfile.write(line)
 
 

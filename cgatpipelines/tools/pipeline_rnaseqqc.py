@@ -184,13 +184,13 @@ import seaborn as sns
 from rpy2.robjects import r as R
 from rpy2.robjects import pandas2ri
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.mappingqc as mappingqc
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 from cgatpipelines.report import run_report
 
 import json
@@ -367,7 +367,7 @@ def identifyProteinCodingGenes(outfile):
     FROM annotations.%(table)s
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -467,10 +467,10 @@ def buildJunctions(infile, outfile):
 
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     njunctions = 0
     for gffs in GTF.transcript_iterator(
-            GTF.iterator(IOTools.open_file(infile, "r"))):
+            GTF.iterator(iotools.open_file(infile, "r"))):
 
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
@@ -552,7 +552,7 @@ def subsetSequenceData(infile, outfile):
           ignore_pipe_errors=True,
           ignore_errors=True)
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(mkdir("fastq.dir"))
@@ -563,7 +563,7 @@ def identifyHighestDepth(infiles, outfile):
 
     highest_depth = 0
     for count_inf in infiles:
-        for line in IOTools.open_file(count_inf, "r"):
+        for line in iotools.open_file(count_inf, "r"):
             if not line.startswith("nreads"):
                 continue
             nreads = int(line[:-1].split("\t")[1])
@@ -601,7 +601,7 @@ def identifyHighestDepth(infiles, outfile):
     forcesymlink("%s.nreads" % highest_depth_sample,
                  "nreads.dir/highest_depth_sample.nreads")
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @split(identifyHighestDepth,
@@ -613,7 +613,7 @@ def subsetRange(infile, outfiles):
     infile_prefix = P.snip(os.path.basename(infile), ".sentinel")
     nreads_inf = "nreads.dir/%s.nreads" % infile_prefix
 
-    for line in IOTools.open_file(nreads_inf, "r"):
+    for line in iotools.open_file(nreads_inf, "r"):
         if not line.startswith("nreads"):
             continue
         nreads = int(line[:-1].split("\t")[1])
@@ -638,7 +638,7 @@ def subsetRange(infile, outfiles):
           ignore_pipe_errors=True,
           ignore_errors=True)
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(subsetSequenceData)
@@ -852,7 +852,7 @@ def buildBedContext(outfile):
         ON GI.gene_id=GTF.gene_id
         WHERE GI.gene_biotype == "protein_coding"''']
 
-    with IOTools.open_file(tmp_bed_sorted_filename, "w") as tmp_bed_sorted:
+    with iotools.open_file(tmp_bed_sorted_filename, "w") as tmp_bed_sorted:
         for sql_statement in sql_statements:
             state = dbh.execute(sql_statement)
             for line in state:
@@ -1220,7 +1220,7 @@ def plotSailfishSaturation(infiles, outfile):
 
     ''' % locals())
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 ###################################################################
@@ -1298,7 +1298,7 @@ def buildExperimentTable(infiles, outfile):
     d = os.getcwd()
     # TODO: read from config file
     project_id = "unknown"
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("id\tname\tproject_id\tdirectory\ttitle\n")
         outf.write("\t".join(
             ("1",
@@ -1312,7 +1312,7 @@ def buildExperimentTable(infiles, outfile):
        "samples.tsv")
 def buildSamplesTable(infiles, outfile):
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("id\texperiment_id\tsample_name\n")
 
         for sample_id, filename in enumerate(sorted(infiles)):
@@ -1335,7 +1335,7 @@ def buildFactorTable(infiles, outfile):
 
     sampleID2sampleName = {}
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("sample_id\tfactor\tfactor_value\n")
 
         for sample_id, filename in enumerate(sorted(infiles)):
@@ -1360,7 +1360,7 @@ def buildFactorTable(infiles, outfile):
                                   PARAMS["genome"])) + "\n")
 
         if os.path.exists("additional_factors.tsv"):
-            with IOTools.open_file("additional_factors.tsv", "r") as inf:
+            with iotools.open_file("additional_factors.tsv", "r") as inf:
                 header = next(inf)
                 header = header.strip().split("\t")
                 additional_factors = header[1:]
@@ -1620,7 +1620,7 @@ def plotTopGenesHeatmap(outfile):
         plotHeatmap(pandas2ri.py2ri(intersection_pivot),
                     pandas2ri.py2ri(factors_df))
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 ###################################################################
@@ -1686,7 +1686,7 @@ def plotExpression(outfile):
 
         plotDistribution(pandas2ri.py2ri(full_df))
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 ###################################################################
 # Run Salmon To Autodetect Strandedness

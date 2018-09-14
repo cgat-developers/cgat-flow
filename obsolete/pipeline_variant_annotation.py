@@ -120,8 +120,8 @@ import re
 import math
 import collections
 import sqlite3
-import cgatcore.Experiment as E
-import cgatcore.Database as Database
+import cgatcore.experiment as E
+import cgatcore.database as Database
 import scipy.stats
 import cgat.Stats as Stats
 import pysam
@@ -131,7 +131,7 @@ import cgatPipelines.PipelineTracks as PipelineTracks
 ###################################################################
 ###################################################################
 # Pipeline configuration
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(["%s/pipeline.ini" %
                  os.path.splitext(__file__)[0], "../pipeline.ini",
                  "pipeline.ini"])

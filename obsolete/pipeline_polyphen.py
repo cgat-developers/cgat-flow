@@ -33,9 +33,9 @@ import glob
 import os
 import itertools
 import sqlite3
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
-import PipelineGeneset as PGeneset
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import pipelineGeneset as PGeneset
 
 ###################################################################
 ###################################################################

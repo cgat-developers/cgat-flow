@@ -149,14 +149,14 @@ from ruffus import *
 # from rpy2.robjects import r as R
 
 import numpy
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import sys
 import os
 import sqlite3
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import re
 import cgatpipelines.tasks.exome as exome
 from cgatpipelines.report import run_report
@@ -207,9 +207,9 @@ def loadManualAnnotations(infile, outfile):
 
     annotation = P.snip(infile, "_annotations.tsv")
 
-    with IOTools.open_file(tmp, "w") as outf:
+    with iotools.open_file(tmp, "w") as outf:
         outf.write("%s\tgene_id\n" % annotation)
-        with IOTools.open_file(infile, "r") as inf:
+        with iotools.open_file(infile, "r") as inf:
             for line in inf:
                 outf.write("%s\t%s" % (annotation, line))
 
@@ -296,7 +296,7 @@ def buildCoverageStats(infile, outfile):
     mappingqc.buildPicardCoverageStats(
         infile, outfile, modified_baits, modified_baits)
 
-    IOTools.zap_file(modified_baits)
+    iotools.zap_file(modified_baits)
 
 
 @follows(buildCoverageStats)
@@ -338,12 +338,12 @@ def GATKpreprocessing(infile, outfile):
     exome.GATKIndelRealign(outfile1, outfile2, genome,
                                    PARAMS["gatk_threads"])
 
-    IOTools.zap_file(outfile1)
+    iotools.zap_file(outfile1)
 
     exome.GATKBaseRecal(outfile2, outfile, genome,
                                 PARAMS["gatk_dbsnp"],
                                 PARAMS["gatk_solid_options"])
-    IOTools.zap_file(outfile2)
+    iotools.zap_file(outfile2)
 
 
 @transform(GATKpreprocessing,
@@ -400,8 +400,8 @@ def mergeSampleBams(infile, outfile):
     statement += "samtools index %(outfile)s; "
     statement += "rm -rf %(tmpdir_gatk)s ;"
     P.run(statement)
-    IOTools.zap_file(infile)
-    IOTools.zap_file(infile_tumor)
+    iotools.zap_file(infile)
+    iotools.zap_file(infile_tumor)
 
 
 @transform(mergeSampleBams,
@@ -416,7 +416,7 @@ def realignMatchedSample(infile, outfile):
 
     exome.GATKIndelRealign(infile, outfile, genome)
 
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 
 @transform(realignMatchedSample,
@@ -439,7 +439,7 @@ def splitMergedRealigned(infile, outfile):
                    samtools index %(outfile)s;
                    samtools index %(outfile_tumor)s;'''
     P.run(statement)
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 
 @transform(splitMergedRealigned,
@@ -737,7 +737,7 @@ def runMutectOnDownsampled(infiles, outfile):
 def listOfBAMs(infiles, outfile):
     '''generates a file containing a list of BAMs for each patient,
        for use in variant calling'''
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         for infile in infiles:
             infile_tumour = infile.replace(
                 PARAMS["sample_control"], PARAMS["sample_tumour"])

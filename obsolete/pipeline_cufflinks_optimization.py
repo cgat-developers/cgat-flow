@@ -145,9 +145,9 @@ import sqlite3
 from rpy2.robjects import r as R
 import pysam
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 
 ###################################################
 ###################################################
@@ -156,7 +156,7 @@ import cgatcore.IOTools as IOTools
 ###################################################
 
 # load options from the config file
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 from functools import reduce
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
@@ -494,7 +494,7 @@ def countMultiAndSingleExonLincRna(infile, outfile):
     outf = open(outfile, "w")
     outf.write(
         "no_multi_exon_transcripts\tno_single_exon_transcripts\tproportion_single\n")
-    inf = GTF.iterator(IOTools.openFile(infile))
+    inf = GTF.iterator(iotools.openFile(infile))
     c_multi = 0
     c_single = 0
     for gtfs in GTF.transcript_iterator(inf):
@@ -535,7 +535,7 @@ def summariseExonCountsAndLengthOfMultiExonicLincRNA(infile, outfile):
     '''
     outf = open(outfile, "w")
     outf.write("transcript_id\tno_exons\ttranscriptlength\n")
-    inf = GTF.iterator(IOTools.openFile(infile))
+    inf = GTF.iterator(iotools.openFile(infile))
     for gtfs in GTF.transcript_iterator(inf):
         outf.write("\t".join((gtfs[0].transcript_id, str(len(gtfs)), str(
             sum([x.end - x.start for x in gtfs])))) + "\n")

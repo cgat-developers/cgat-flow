@@ -8,9 +8,9 @@ classes and utility functions for pipeline_metagenomecommunities.py
 import os
 import collections
 
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
-import cgatcore.Experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
 from rpy2.robjects import r as R
 import cgat.GTF as GTF
 
@@ -19,7 +19,7 @@ def normaliseKraken(infile, outfile):
     '''
     normalise kraken counts by nreads/million mapped
     '''
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     header = inf.readline().replace("rel_abundance", "rpm")
     mapped = 0
 
@@ -30,9 +30,9 @@ def normaliseKraken(infile, outfile):
         mapped += count
     inf.close()
 
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     inf.readline()
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write(header)
     for line in inf.readlines():
         data = line[:-1].split("\t")
@@ -54,7 +54,7 @@ def countContributingReads(infile, outfile):
     result = collections.OrderedDict()
     for level in levels:
         result[level] = 0
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     header = inf.readline().split("\t")
 
     # column indices
@@ -95,7 +95,7 @@ def readHierarchy(mapfile):
     read hierachy into dictionary
     '''
     hierarchy = collections.defaultdict(list)
-    inf = IOTools.openFile(mapfile)
+    inf = iotools.openFile(mapfile)
     inf.readline()
     for line in inf.readlines():
         data = line.strip("\n").split("\t")
@@ -459,7 +459,7 @@ def annotate(infile, annotation_file, outfile):
 
     E.info("reading annotations file")
     annotations = {}
-    for gtf in GTF.iterator(IOTools.openFile(annotation_file)):
+    for gtf in GTF.iterator(iotools.openFile(annotation_file)):
         if gtf.gene_id in include:
             annotations[gtf.gene_id] = \
                 [gtf.gene_name, gtf.species, gtf.description]
@@ -823,7 +823,7 @@ def annotate(infile, outfile, geneset):
     '''
     annotation = {}
     E.info("loading geneset")
-    anno = IOTools.openFile(geneset)
+    anno = iotools.openFile(geneset)
     for line in anno.readlines():
         data = line[:-1].split("\t")
         nog, funccat = data[1], data[3]
@@ -831,9 +831,9 @@ def annotate(infile, outfile, geneset):
     E.info("finished loading gene set")
 
     E.info("annotating infile")
-    inf = IOTools.openFile(infile)
+    inf = iotools.openFile(infile)
     header = inf.readline()
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write(header[:-1] + "\ttaxa\n")
     for line in inf.readlines():
         data = line[:-1].split("\t")

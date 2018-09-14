@@ -32,11 +32,11 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 from ruffus import *
 import sqlite3
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import gzip
 import cgat.Expression as Expression
 
@@ -81,7 +81,7 @@ def importFromSeries(infiles, outfile):
 
     infile_data, infile_map = infiles
 
-    map_header = IOTools.readMap(open(infile_map, "r"))
+    map_header = iotools.readMap(open(infile_map, "r"))
     if "ID_REF" not in map_header:
         map_header["ID_REF"] = "probeset"
 
@@ -118,7 +118,7 @@ def importFromSeries(infiles, outfile):
 def importCEL(infile, outfiles):
     '''import CEL files.'''
 
-    map_cel = IOTools.readMap(open(infile, "r"), has_header=True)
+    map_cel = iotools.readMap(open(infile, "r"), has_header=True)
 
     indir = PARAMS["datadir"]
 

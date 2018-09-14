@@ -252,9 +252,9 @@ Code
 # load modules
 from ruffus import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import logging as L
-import cgatcore.Database as Database
+import cgatcore.database as Database
 
 import sys
 import os
@@ -268,7 +268,7 @@ import random
 
 import sqlite3
 import cgat.GTF as GTF
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgat.IndexedFasta as IndexedFasta
 import cgat.Tophat as Tophat
 import cgat.Sra as Sra
@@ -280,7 +280,7 @@ import cgatPipelines.PipelineGeneset as PipelineGeneset
 import cgatPipelines.PipelineRnaseq as PipelineRnaseq
 import cgat.Stats as Stats
 import cgatPipelines.PipelineTracks as PipelineTracks
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 ###################################################
 ###################################################
@@ -430,15 +430,15 @@ def mergeAndFilterGTF(infile, outfile, logfile):
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.openFile(rna_file, "r")))
+                GTF.iterator(iotools.openFile(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.openFile(logfile, "w")
+    logf = iotools.openFile(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
-    gtf_it = GTF.transcript_iterator(GTF.iterator(IOTools.openFile(infile)))
+    gtf_it = GTF.transcript_iterator(GTF.iterator(iotools.openFile(infile)))
     for all_exons in gtf_it:
 
         c.input += 1
@@ -607,9 +607,9 @@ def buildReferenceGeneSet(infile, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.openFile(tmpfilename3, "w")
+    outf = iotools.openFile(tmpfilename3, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.openFile(tmpfilename2 + ".combined.gtf")
+    inf = iotools.openFile(tmpfilename2 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -729,7 +729,7 @@ def identifyProteinCodingGenes(outfile):
         E.critical("sqlite3 cannot find table or gene_biotype column. "
                    "Error message: '%s'" % error)
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -783,8 +783,8 @@ def buildCodingTranscriptSet(infile, outfile):
     cc = dbh.cursor()
     transcript_ids = set([x[0] for x in cc.execute(statement)])
 
-    inf = IOTools.openFile(infile)
-    outf = IOTools.openFile(outfile, 'w')
+    inf = iotools.openFile(infile)
+    outf = iotools.openFile(outfile, 'w')
 
     for g in GTF.iterator(inf):
         if g.transcript_id in transcript_ids:
@@ -814,7 +814,7 @@ def buildMaskGtf(infile, outfile):
     entries that have a 'source' match to "rRNA" or 'contig' match to
     "chrM". for use with cufflinks
     '''
-    geneset = IOTools.openFile(infile)
+    geneset = iotools.openFile(infile)
     outf = open(outfile, "wb")
     for entry in GTF.iterator(geneset):
         if re.findall("rRNA",
@@ -1137,7 +1137,7 @@ def loadTranscriptComparison(infile, outfile):
     # PipelineTracks.
     try:
         tracks, result = Tophat.parseTranscriptComparison(
-            IOTools.openFile(infile))
+            iotools.openFile(infile))
 
         tracks = [P.snip(os.path.basename(x), ".gtf.gz") for x in tracks]
 
@@ -1235,7 +1235,7 @@ def loadTranscriptComparison(infile, outfile):
     fn = "%s.tracking.gz" % infile
 
     if os.path.exists(fn):
-        for transfrag in Tophat.iterate_tracking(IOTools.openFile(fn, "r")):
+        for transfrag in Tophat.iterate_tracking(iotools.openFile(fn, "r")):
             # collect transcripts from each transfrag,
             # filter out samples with no transcripts
             numtranscripts = [x for x in transfrag.transcripts if x]
@@ -1316,7 +1316,7 @@ def loadTranscriptComparison(infile, outfile):
                                    "end",
                                    "nexperiments", ) + tuple(tracks)))
 
-    for locus in Tophat.iterate_locus(IOTools.openFile("%s.loci.gz" % infile, "r")):
+    for locus in Tophat.iterate_locus(iotools.openFile("%s.loci.gz" % infile, "r")):
 
         counts = [len(x) for x in locus.transcripts]
         nexperiments = len([x for x in counts if x > 0])
@@ -1370,10 +1370,10 @@ def buildAndLoadFullGeneSetTracking(infiles, outfile):
 
     infile, in_gtf = infiles
 
-    inGTFIt = GTF.transcript_iterator(GTF.iterator(IOTools.openFile(in_gtf)))
+    inGTFIt = GTF.transcript_iterator(GTF.iterator(iotools.openFile(in_gtf)))
 
     kept_transcripts = set([gtf[0].transcript_id for gtf in inGTFIt])
-    inGTFIt = GTF.transcript_iterator(GTF.iterator(IOTools.openFile(in_gtf)))
+    inGTFIt = GTF.transcript_iterator(GTF.iterator(iotools.openFile(in_gtf)))
     kept_genes = set([gtf[0].gene_id for gtf in inGTFIt])
 
     tmpfile = P.getTempFilename(dir=".")
@@ -1429,7 +1429,7 @@ def buildAndLoadFullGeneSetTracking(infiles, outfile):
     fn = "%s.tracking.gz" % infile
 
     if os.path.exists(fn):
-        for transfrag in Tophat.iterate_tracking(IOTools.openFile(fn, "r")):
+        for transfrag in Tophat.iterate_tracking(iotools.openFile(fn, "r")):
             if transfrag.transfrag_id in kept_transcripts:
                 # collect transcripts from each transfrag,
                 # filter out samples with no transcripts
@@ -1512,7 +1512,7 @@ def buildAndLoadFullGeneSetTracking(infiles, outfile):
                                    "end",
                                    "nexperiments", ) + tuple(tracks)))
 
-    for locus in Tophat.iterate_locus(IOTools.openFile("%s.loci.gz" % infile,
+    for locus in Tophat.iterate_locus(iotools.openFile("%s.loci.gz" % infile,
                                                        "r")):
 
         if locus.locus_id in kept_genes:
@@ -1585,9 +1585,9 @@ def buildPrunedGeneSet(infiles, outfile):
                tablename)
         keep = None
 
-    inf = GTF.iterator(IOTools.openFile(abinitio_gtf))
-    outf1 = IOTools.openFile(keep_gtf, "w")
-    outf2 = IOTools.openFile(remove_gtf, "w")
+    inf = GTF.iterator(iotools.openFile(abinitio_gtf))
+    outf1 = iotools.openFile(keep_gtf, "w")
+    outf2 = iotools.openFile(remove_gtf, "w")
 
     c = E.Counter()
     for gtf in inf:
@@ -1642,19 +1642,19 @@ def buildNovelGeneSet(infiles, outfile):
     for section in sections:
         indices[section] = GTF.readAndIndex(
             GTF.iterator_filtered(
-                GTF.iterator(IOTools.openFile(reference_gtf)),
+                GTF.iterator(iotools.openFile(reference_gtf)),
                 source=section),
             with_value=False)
 
     E.info("build indices for %i features" % len(indices))
 
-    repeats = GTF.readAndIndex(GTF.iterator(IOTools.openFile(repeats_gff)),
+    repeats = GTF.readAndIndex(GTF.iterator(iotools.openFile(repeats_gff)),
                                with_value=False)
 
     E.info("build index for repeats")
 
     total_genes, remove_genes = set(), collections.defaultdict(set)
-    with IOTools.openFile(abinitio_gtf) as inf:
+    with iotools.openFile(abinitio_gtf) as inf:
         for gtf in GTF.iterator(inf):
             total_genes.add(gtf.gene_id)
             for section in sections:
@@ -1717,31 +1717,31 @@ def buildLincRNAGeneSet(infiles, outfile):
     indices = {}
     for section in input_sections:
         indices[section] = GTF.readAndIndex(
-            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(IOTools.openFile(reference_gtf))),
+            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(iotools.openFile(reference_gtf))),
                                   source=section),
             with_value=False)
 
     E.info("built indices for %i features" % len(indices))
 
     indices["repeats"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(repeats_gff)), with_value=False)
+        GTF.iterator(iotools.openFile(repeats_gff)), with_value=False)
 
     E.info("added index for repeats")
 
     indices["pseudogenes"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(pseudogenes_gtf)), with_value=False)
+        GTF.iterator(iotools.openFile(pseudogenes_gtf)), with_value=False)
 
     E.info("added index for pseudogenes")
 
     indices["numts"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(numts_gtf)), with_value=False)
+        GTF.iterator(iotools.openFile(numts_gtf)), with_value=False)
 
     E.info("added index for numts")
 
     sections = list(indices.keys())
 
     total_genes, remove_genes = set(), collections.defaultdict(set)
-    inf = GTF.iterator(IOTools.openFile(infile_abinitio))
+    inf = GTF.iterator(iotools.openFile(infile_abinitio))
 
     E.info("collecting genes to remove")
 
@@ -1835,25 +1835,25 @@ def buildAbinitioLincRNAGeneSet(infiles, outfile):
     indices = {}
     for section in input_sections:
         indices[section] = GTF.readAndIndex(
-            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(IOTools.openFile(reference_gtf))),
+            GTF.iterator_filtered(GTF.merged_gene_iterator(GTF.iterator(iotools.openFile(reference_gtf))),
                                   source=section),
             with_value=True)
 
     E.info("built indices for %i features" % len(indices))
 
     indices["numts"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(numts_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(numts_gtf)), with_value=True)
 
     E.info("added index for numts")
 
     indices["pseudogenes"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(pseudogenes_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(pseudogenes_gtf)), with_value=True)
 
     E.info("added index for pseudogenes")
 
     noncoding = {}
     noncoding["noncoding"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(refnoncoding_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(refnoncoding_gtf)), with_value=True)
 
     E.info("created index for known noncoding exons to avoid filtering")
 
@@ -1861,7 +1861,7 @@ def buildAbinitioLincRNAGeneSet(infiles, outfile):
 
     total_transcripts, remove_transcripts = set(), collections.defaultdict(set)
     transcript_length = collections.defaultdict(int)
-    inf = GTF.iterator(IOTools.openFile(infile_abinitio))
+    inf = GTF.iterator(iotools.openFile(infile_abinitio))
 
     E.info("collecting genes to remove")
 
@@ -1906,7 +1906,7 @@ def buildAbinitioLincRNAGeneSet(infiles, outfile):
 
     # write out transcripts that are not in removed set
     outf = gzip.open(outfile, "w")
-    for entry in GTF.iterator(IOTools.openFile(infile_abinitio)):
+    for entry in GTF.iterator(iotools.openFile(infile_abinitio)):
         if entry.transcript_id in remove_transcripts:
             continue
         outf.write("%s\n" % str(entry))
@@ -1948,7 +1948,7 @@ def buildGeneSetStats(infiles, outfile):
 
     to_cluster = True
 
-    infiles = IOTools.flatten(infiles)
+    infiles = iotools.flatten(infiles)
 
     cuffcompare = [
         x + ".combined.gtf.gz" for x in infiles if x.endswith("cuffcompare")]
@@ -2192,7 +2192,7 @@ def buildReproducibility(infile, outfile):
     ##################################################################
     # build table correlating expression values
     ##################################################################
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track1\ttrack2\tcode\tpairs\tnull1\tnull2\t"
                "both_null\tnot_null\tone_null\t%s\n" %
                "\t".join(Stats.CorrelationTest.getHeaders()))

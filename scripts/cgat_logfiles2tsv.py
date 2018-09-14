@@ -52,7 +52,7 @@ import re
 import gzip
 import glob
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgatcore.Logfile as Logfile
 
 

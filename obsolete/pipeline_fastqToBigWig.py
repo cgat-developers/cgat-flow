@@ -127,11 +127,11 @@ from ruffus import *
 import sys
 import glob
 import os
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 import cgatPipelines.PipelineChipseq as PIntervals
 import cgatPipelines.PipelineTracks as PipelineTracks
 import cgatPipelines.PipelineMapping as PipelineMapping
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 USECLUSTER = True
 
@@ -249,7 +249,7 @@ def dedup(infiles, outfile):
 def loadPicardDuplicateStats(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
     # Join data for all tracks into single file
-    outf = IOTools.openFile('dupstats.txt', 'w')
+    outf = iotools.openFile('dupstats.txt', 'w')
     first = True
     for f in infiles:
         track = P.snip(os.path.basename(f), ".dedup.bam")

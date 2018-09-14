@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import random
 import itertools
-from cgatcore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 import json
 import decimal
 from sklearn.cluster import KMeans
@@ -51,7 +51,7 @@ def MakeSNPFreqDict(infiles, outfiles, rs):
         for f in thischrom:
             snpids = []
             anc = f.split("/")[-1].split("_")[3]
-            with IOTools.open_file(f) as inp:
+            with iotools.open_file(f) as inp:
                 for line in inp:
                     line = line.strip().split(" ")
                     snpids.append(line[0])
@@ -97,7 +97,7 @@ def MakeSNPFreqDict(infiles, outfiles, rs):
         anc = bits[3]
         chrom = bits[2]
         snpset = snpdictsam[chrom]
-        with IOTools.open_file(f) as input:
+        with iotools.open_file(f) as input:
             for line in input:
                 line = line.strip().split(" ")
                 if line[0] in snpset:
@@ -116,12 +116,12 @@ def MakeSNPFreqDict(infiles, outfiles, rs):
                     freqdict[anc][line[0]][G3] = F3
 
     # dump dictionary in a json file to resurrect later
-    outf = IOTools.open_file(outfiles[0], "w")
+    outf = iotools.open_file(outfiles[0], "w")
     json.dump(freqdict, outf)
     outf.close()
 
     # store the sampled list of snps
-    out = IOTools.open_file(outfiles[1], "w")
+    out = iotools.open_file(outfiles[1], "w")
     for snp in sam:
         out.write("%s\n" % snp)
     out.close()
@@ -142,8 +142,8 @@ def GenotypeSNPs(infile, snplist, outfile):
         SNPs with more than one ID
         Indels
     '''
-    out = IOTools.open_file(outfile, "w")
-    with IOTools.open_file(infile) as inf:
+    out = iotools.open_file(outfile, "w")
+    with iotools.open_file(infile) as inf:
         for line in inf:
             line = line.strip().split()
             # if the variant passed QC
@@ -195,26 +195,26 @@ def CalculateAncestry(infile, calledsnps, snpdict, outfiles):
     # Record the reference genotype at each of these SNPs
     called = set()
     refs = dict()
-    for line in IOTools.open_file(calledsnps).readlines():
+    for line in iotools.open_file(calledsnps).readlines():
         line = line.strip().split("\t")
         refs[line[0]] = line[1]
         called.add(line[0])
 
     # Record the genotype of the current sample at each SNP
     currents = dict()
-    for line in IOTools.open_file(infile).readlines():
+    for line in iotools.open_file(infile).readlines():
         line = line.strip().split("\t")
         currents[line[0]] = line[3]
 
     # Regenerate the genotype frequency dictionary made earlier
-    s = IOTools.open_file(snpdict)
+    s = iotools.open_file(snpdict)
     snpdict = json.load(s)
     s.close()
     ancs = list(snpdict.keys())
 
     # Build a table of the frequency of the genotype in this sample
     # in each of the hapmap ancestries
-    out = IOTools.open_file(outfiles[0], "w")
+    out = iotools.open_file(outfiles[0], "w")
     out.write("snp\tgenotype\t%s\n" % "\t".join(ancs))
     for snp in called:
         # where a variant hasn't been called in the current sample assume
@@ -235,7 +235,7 @@ def CalculateAncestry(infile, calledsnps, snpdict, outfiles):
         out.write("%s\t%s\t%s\n" % (snp, geno, "\t".join(res)))
 
     out.close()
-    out = IOTools.open_file(outfiles[1], "w")
+    out = iotools.open_file(outfiles[1], "w")
 
     # read the output of the previous step into pandas
     res = pd.read_csv(outfiles[0], sep="\t")
@@ -264,14 +264,14 @@ def MakePEDFile(infiles, outfiles):
     '''
     # Record the chromosome and position of each SNP
     chromposdict = dict()
-    for line in IOTools.open_file(infiles[-1]).readlines():
+    for line in iotools.open_file(infiles[-1]).readlines():
         line = line.strip().split("\t")
         chromposdict[line[0]] = ((line[2], line[3]))
 
     # Generate the PED file - takes the genotype column of the table from
     # the CalculateAncestry step and transposes it across a row
 
-    out = IOTools.open_file(outfiles[0], "w")
+    out = iotools.open_file(outfiles[0], "w")
     for inf in infiles[0:-1]:
         inf = inf[0]
         df = pd.read_csv(inf, sep="\t")
@@ -284,7 +284,7 @@ def MakePEDFile(infiles, outfiles):
 
     # Generate the MAP file - chromosome and position of each SNP in the same
     # order as the PED file
-    mapf = IOTools.open_file(outfiles[1], "w")
+    mapf = iotools.open_file(outfiles[1], "w")
     slist = df['snp']
     for snp in slist:
         mapf.write("%s\t%s\t%s\n" % (chromposdict[snp][0], snp,
@@ -300,7 +300,7 @@ def CalculateFamily(infile, outfile):
     the King documentation, here
     http://people.virginia.edu/~wc9c/KING/manual.html
     '''
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     input = open(infile).readlines()[1:]
     for line in input:
         line = line.strip().split("\t")
@@ -339,7 +339,7 @@ def CalculateSex(infiles, outfile):
         tot = 0
         # Count the homozygous and total variants called on the
         # X chromosome in each input file (after QC)
-        with IOTools.open_file(f) as inf:
+        with iotools.open_file(f) as inf:
             for line in inf:
                 line = line.strip().split("\t")
                 if line[0] == "chrX" and line[4] == "PASS":
@@ -378,7 +378,7 @@ def CalculateSex(infiles, outfile):
         sexes = ["female", "male"]
 
     x = 0
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     for f in infiles:
         # for each input file take the group, the score, the standard deviation
         # of this group, the distance from the cluster centre and the sex

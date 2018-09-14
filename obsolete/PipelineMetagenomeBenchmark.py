@@ -6,9 +6,9 @@ import os
 import collections
 import sqlite3
 
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
-import cgatcore.Experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
 import cgat.FastaIterator as FastaIterator
 import cgat.Fastq as Fastq
 import pysam
@@ -41,7 +41,7 @@ def buildTrueTaxonomicRelativeAbundances(infiles, outfile):
     for i in range(len(levels)):
         total = 0
         result = collections.defaultdict(int)
-        for fastq in Fastq.iterate(IOTools.openFile(infiles[0])):
+        for fastq in Fastq.iterate(iotools.openFile(infiles[0])):
             total += 1
             gi = fastq.identifier.split("|")[1]
             result[gi2taxa[gi][i]] += 1
@@ -189,7 +189,7 @@ def filterByCoverage(infiles, outfile):
                 contigs.add(data[0])
     outf = open(outfile, "w")
     print(contigs)
-    for fasta in FastaIterator.iterate(IOTools.openFile(contig_file)):
+    for fasta in FastaIterator.iterate(iotools.openFile(contig_file)):
         identifier = fasta.title.split(" ")[0]
         if identifier in contigs:
             outf.write(">%s\n%s\n" % (identifier, fasta.sequence))
@@ -260,7 +260,7 @@ def buildExpectedCoverageOverGenomes(infiles, outfile):
     # get the expected genome size
     expected_genome_sizes = collections.defaultdict(int)
     E.info("iterating over fastq file")
-    for fastq in Fastq.iterate(IOTools.openFile(infiles[0])):
+    for fastq in Fastq.iterate(iotools.openFile(infiles[0])):
         gi = fastq.identifier.split("|")[1]
         expected_genome_sizes[gi] += 1
     E.info("iterating over fastq file: DONE")

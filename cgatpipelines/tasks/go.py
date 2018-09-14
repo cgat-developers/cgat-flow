@@ -12,11 +12,11 @@ import os
 import collections
 import sqlite3
 
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import cgat.Stats as Stats
-import cgatcore.IOTools as IOTools
-import cgatcore.CSV as CSV
+import cgatcore.iotools as iotools
+import cgatcore.csv as csv
 
 # set from calling module
 PARAMS = {}
@@ -108,9 +108,9 @@ def createGOFromGeneOntology(infile, outfile):
 
     c = E.Counter()
     found_uniprot, found_genes, notfound_uniprot = set(), set(), set()
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("go_type\tgene_id\tgo_id\tdescription\tevidence\n")
-    for line in IOTools.open_file(filename):
+    for line in iotools.open_file(filename):
         if line.startswith("!"):
             continue
         c.input += 1
@@ -167,7 +167,7 @@ def imputeGO(infile_go, infile_paths, outfile):
     c = E.Counter()
 
     term2ancestors = collections.defaultdict(set)
-    with IOTools.open_file(infile_paths) as inf:
+    with iotools.open_file(infile_paths) as inf:
         for line in inf:
             parts = line[:-1].split()
             term = parts[0]
@@ -178,7 +178,7 @@ def imputeGO(infile_go, infile_paths, outfile):
     goid2description = {}
     gene2goids = collections.defaultdict(list)
     goid2type = {}
-    with IOTools.open_file(infile_go) as inf:
+    with iotools.open_file(infile_go) as inf:
         for line in inf:
             if line.startswith("go_type"):
                 continue
@@ -188,7 +188,7 @@ def imputeGO(infile_go, infile_paths, outfile):
             goid2description[goid] = description
             goid2type[goid] = go_type
 
-    outf = IOTools.open_file(outfile, "w ")
+    outf = iotools.open_file(outfile, "w ")
     for gene_id, in_goids in gene2goids.items():
         c.genes += 1
         out_goids = set(in_goids)
@@ -264,8 +264,8 @@ def getGODescriptions(infile):
         Dictionary mapping GOid to GOtype and GOdescription.
     '''
 
-    with IOTools.open_file(infile) as inf:
-        fields, table = CSV.readTable(inf, as_rows=False)
+    with iotools.open_file(infile) as inf:
+        fields, table = csv.readTable(inf, as_rows=False)
 
     return dict([(y, (x, z)) for x, y, z in zip(
         table[fields.index("go_type")],
@@ -450,7 +450,7 @@ def runGOFromDatabase(outfile,
     bg = set([x[0] for x in cc.execute(statement_bg).fetchall()])
 
     if len(fg) == 0:
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     fg_file = os.path.join(outdir, "foreground")
@@ -480,7 +480,7 @@ def loadGO(infile, outfile, tablename):
     indir = infile + ".dir"
 
     if not os.path.exists(indir):
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     load_statement = P.build_load_statement(

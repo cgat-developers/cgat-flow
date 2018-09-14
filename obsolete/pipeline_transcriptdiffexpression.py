@@ -242,11 +242,11 @@ import pandas as pd
 import numpy as np
 import itertools
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.Expression as Expression
 
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineMapping as PipelineMapping
 import cgatPipelines.PipelineTracks as PipelineTracks
 
@@ -427,7 +427,7 @@ if PARAMS["geneset_auto_generate"]:
             tsl_NA = 0
             tsl_NULL = 0
 
-            with IOTools.openFile(outfile, "w") as outf:
+            with iotools.openFile(outfile, "w") as outf:
                 outf.write("transcript_id\n")
 
                 for entry in select:
@@ -525,7 +525,7 @@ if PARAMS["geneset_auto_generate"]:
 
             select = dbh.execute(select_cmd)
 
-            with IOTools.openFile(outfile, "w") as outf:
+            with iotools.openFile(outfile, "w") as outf:
                 outf.write("transcript_id\n")
                 outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -737,7 +737,7 @@ if PARAMS['simulation_run']:
             select = dbh.execute('''
             SELECT DISTINCT transcript_id, gene_id FROM transcript_info''')
 
-            with IOTools.openFile(genemap, "w") as outf:
+            with iotools.openFile(genemap, "w") as outf:
                 for line in select:
                     outf.write("%s\t%s\n" % (line[0], line[1]))
 
@@ -958,10 +958,10 @@ if PARAMS['simulation_run']:
 
         # note: this expects column order to stay the same
 
-        with IOTools.openFile(infile, "r") as inf:
+        with iotools.openFile(infile, "r") as inf:
             lines = inf.readlines()
 
-            with IOTools.openFile(outfile, "w") as outf:
+            with iotools.openFile(outfile, "w") as outf:
                 outf.write("%s\n" % "\t".join(
                     ("target_id", "length", "tpm", "est_counts")))
 
@@ -978,10 +978,10 @@ if PARAMS['simulation_run']:
 
         # note: this expects column order to stay the same
 
-        with IOTools.openFile(infile, "r") as inf:
+        with iotools.openFile(infile, "r") as inf:
             lines = inf.readlines()
 
-            with IOTools.openFile(outfile, "w") as outf:
+            with iotools.openFile(outfile, "w") as outf:
                 outf.write("%s\n" % "\t".join(
                     ("target_id", "length", "tpm", "est_counts")))
 
@@ -1310,7 +1310,7 @@ def runSleuth(design, outfiles, quantifier, transcripts):
     number_samples = sum(Design.table['include'])
 
     number_transcripts = 0
-    with IOTools.openFile(transcripts, "r") as inf:
+    with iotools.openFile(transcripts, "r") as inf:
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1

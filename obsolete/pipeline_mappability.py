@@ -10,8 +10,8 @@ import sys
 import os
 
 from ruffus import *
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 
 
 ###################################################

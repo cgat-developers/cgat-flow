@@ -115,9 +115,9 @@ import numpy
 import pandas
 from rpy2.robjects import r as R
 
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.mappingqc as mappingqc
@@ -290,7 +290,7 @@ def mergeBackgroundWindows(infiles, outfile):
         # write a dummy file with a dummy chromosome
         # an empty background file would otherwise cause
         # errors downstream in bedtools intersect
-        outf = IOTools.open_file(outfile, "w")
+        outf = iotools.open_file(outfile, "w")
         outf.write("chrXXXX\t1\t2\n")
         outf.close()
         return
@@ -1141,7 +1141,7 @@ def buildWindowsFoldChangesPerInput(infile, outfile):
 
     dataframe = numpy.log2(dataframe)
 
-    dataframe.to_csv(IOTools.open_file(outfile, "w"),
+    dataframe.to_csv(iotools.open_file(outfile, "w"),
                      sep="\t", index_label="Window")
 
 
@@ -1164,7 +1164,7 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
 
     # get all data
     dbhandle = P.connect()
-    tablename = IOTools.snip(os.path.basename(infile), ".load")
+    tablename = iotools.snip(os.path.basename(infile), ".load")
     data = pandas.read_sql("SELECT * FROM {}".format(tablename), dbhandle)
 
     # remove interval_id column
@@ -1180,7 +1180,7 @@ def buildWindowsFoldChangesPerMedian(infile, outfile):
 
     dataframe = numpy.log2(dataframe)
 
-    dataframe.to_csv(IOTools.open_file(outfile, "w"),
+    dataframe.to_csv(iotools.open_file(outfile, "w"),
                      sep="\t", index=False)
 
 
@@ -1443,7 +1443,7 @@ def plotHilbertCurves(infile, outfile):
 
     P.run(statement)
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 def loadMethylationData(infile, design_file):
@@ -1594,7 +1594,7 @@ def loadDESeq(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 # @P.add_doc(windows.runDE)
@@ -1688,7 +1688,7 @@ def loadDESeq2(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(mkdir("spike.dir"))
@@ -1811,7 +1811,7 @@ def loadEdgeR(infile, outfile):
                collapse=0,
                transpose="sample")
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 # @P.add_doc(windows.outputRegionsOfInterest)
@@ -2301,9 +2301,9 @@ def buildMRBed(infile, outfile):
         filename of :term:`bed6` file to write methylated regions
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     c = E.Counter()
-    for row in csv.DictReader(IOTools.open_file(infile),
+    for row in csv.DictReader(iotools.open_file(infile),
                               dialect="excel-tab"):
         c.input += 1
 

@@ -3,7 +3,7 @@ import glob
 
 from cgatReport.Tracker import *
 from cgatReport.Utils import PARAMS as P
-from cgatcore import Pipeline as Pipeline
+from cgatcore import pipeline as Pipeline
 import cgatPipelines.PipelineTracks as PipelineTracks
 ###################################################################
 ###################################################################

@@ -90,8 +90,8 @@ import os
 import re
 import collections
 import sqlite3
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.FastaIterator as FastaIterator
 import cgat.Bed as Bed
 import cgatPipelines.PipelineGeneset as PipelineGeneset
@@ -103,7 +103,7 @@ import cgatPipelines.PipelineGeneset as PipelineGeneset
 ###################################################
 
 # load options from the config file
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
@@ -195,7 +195,7 @@ prf to minimize sum of both errors - derived from minSUM.prf
 //
 '''
 
-    with IOTools.openFile(match_profile, "w") as outf:
+    with iotools.openFile(match_profile, "w") as outf:
         outf.write(prf)
 
     # -u : uniq - only one best match per sequence
@@ -211,7 +211,7 @@ prf to minimize sum of both errors - derived from minSUM.prf
     P.run()
 
     transcript2pos = {}
-    for entry in FastaIterator.iterate(IOTools.openFile(outfile + ".fasta")):
+    for entry in FastaIterator.iterate(iotools.openFile(outfile + ".fasta")):
         transcript_id, contig, start, end, strand = re.match(
             "(\S+)\s+(\S+):(\d+)..(\d+)\s+\((\S)\)", entry.title).groups()
         transcript2pos[transcript_id] = (contig, int(start), int(end), strand)
@@ -248,7 +248,7 @@ prf to minimize sum of both errors - derived from minSUM.prf
 
     offset = PARAMS["tata_search_upstream"]
 
-    outf = IOTools.openFile(outfile + ".table.gz", "w")
+    outf = iotools.openFile(outfile + ".table.gz", "w")
     outf.write("\t".join(("transcript_id", "strand",
                           "start", "end",
                           "relative_start", "relative_end",
@@ -257,11 +257,11 @@ prf to minimize sum of both errors - derived from minSUM.prf
                           "matrix_similarity",
                           "sequence")) + "\n")
 
-    bedf = IOTools.openFile(outfile, "w")
+    bedf = iotools.openFile(outfile, "w")
 
     c = E.Counter()
     found = set()
-    for transcript_id, matches in _grouper(IOTools.openFile(outfile + ".match")):
+    for transcript_id, matches in _grouper(iotools.openFile(outfile + ".match")):
         contig, seq_start, seq_end, strand = transcript2pos[transcript_id]
         c.promotor_with_matches += 1
         nmatches = 0
@@ -320,7 +320,7 @@ prf to minimize sum of both errors - derived from minSUM.prf
     outf.close()
     bedf.close()
 
-    with IOTools.openFile(outfile + ".summary", "w") as outf:
+    with iotools.openFile(outfile + ".summary", "w") as outf:
         outf.write("category\tcounts\n")
         outf.write(c.asTable() + "\n")
 
@@ -355,7 +355,7 @@ def collectCpGIslands(infile, outfile):
     """ % locals()
     E.debug("executing sql statement: %s" % sql)
     cc.execute(sql)
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     for data in cc.fetchall():
         outf.write("\t".join(map(str, data)) + "\n")
 
@@ -377,17 +377,17 @@ def annotateCpGIslands(infiles, outfile):
     '''annotate transcript by absence/presence of CpG islands
     '''
     cpgfile, tssfile = infiles
-    cpg = Bed.readAndIndex(IOTools.openFile(cpgfile))
+    cpg = Bed.readAndIndex(iotools.openFile(cpgfile))
 
     extension_upstream = PARAMS["cpg_search_upstream"]
     extension_downstream = PARAMS["cpg_search_downstream"]
 
     c = E.Counter()
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write(
         "transcript_id\tstrand\tstart\tend\trelative_start\trelative_end\n")
 
-    for tss in Bed.iterator(IOTools.openFile(tssfile)):
+    for tss in Bed.iterator(iotools.openFile(tssfile)):
         c.tss_total += 1
 
         if tss.strand == "+":
@@ -430,7 +430,7 @@ def annotateCpGIslands(infiles, outfile):
 
     outf.close()
 
-    with IOTools.openFile(outfile + ".summary", "w") as outf:
+    with iotools.openFile(outfile + ".summary", "w") as outf:
         outf.write("category\tcounts\n")
         outf.write(c.asTable() + "\n")
 
@@ -514,7 +514,7 @@ def buildGeneOntology(infile, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("go_type\tgene_id\tgo_id\tdescription\tevidence\n")
 
     i = 1

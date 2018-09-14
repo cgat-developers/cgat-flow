@@ -81,9 +81,9 @@ import sys
 import re
 import os
 import shutil
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 
 
 def main(argv=sys.argv):
@@ -171,8 +171,8 @@ def main(argv=sys.argv):
         if fn_src.endswith(".png"):
             shutil.copyfile(fn_src, fn_dest)
         else:
-            with IOTools.open_file(fn_dest, "w") as outfile:
-                with IOTools.open_file(fn_src) as infile:
+            with iotools.open_file(fn_dest, "w") as outfile:
+                with iotools.open_file(fn_src) as infile:
                     for line in infile:
                         outfile.write(rx_reportdir.sub(reportdir,
                                                        rx_template.sub(name, line)))

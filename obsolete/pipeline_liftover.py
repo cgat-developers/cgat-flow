@@ -72,9 +72,9 @@ import os
 import gzip
 from ruffus import *
 
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatPipelines.PipelineTracks as PipelineTracks
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 
 ###################################################
 ###################################################
@@ -321,10 +321,10 @@ def summary(infile, outfile):
                (track,
                 ninput,
                 nmerged,
-                IOTools.prettyPercent(nmerged, ninput),
+                iotools.prettyPercent(nmerged, ninput),
                 nmapped,
-                IOTools.prettyPercent(nmapped, nmerged),
-                IOTools.prettyPercent(nmapped, ninput)))
+                iotools.prettyPercent(nmapped, nmerged),
+                iotools.prettyPercent(nmapped, ninput)))
 
 
 @follows(convertMappedPslToGtf, summary)

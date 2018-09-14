@@ -170,7 +170,7 @@ Code
 # load modules
 from ruffus import *
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 
 import sys
 import os
@@ -178,7 +178,7 @@ import re
 import glob
 
 import sqlite3
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import cgatPipelines.PipelineMapping as PipelineMapping
 # import cgatPipelines.PipelineMetagenomeAssembly as PipelineMetagenomeAssembly
 import cgatPipelines.PipelineMetagenomeCommunities \
@@ -195,7 +195,7 @@ import pandas
 ###################################################
 
 # load options from the config file
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 
 P.getParameters(["pipeline.ini",
                  "%s/pipeline.ini" % os.path.splitext(__file__)[0], ])
@@ -270,7 +270,7 @@ def loadReadCounts(infiles, outfile):
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
         track = P.snip(infile, ".nreads")
-        lines = IOTools.openFile(infile).readlines()
+        lines = iotools.openFile(infile).readlines()
         nreads = int(lines[0][:-1].split("\t")[1])
         outf.write("%s\t%i\n" % (track, nreads))
     outf.close()
@@ -599,7 +599,7 @@ def buildKrakenLevelCounts(infiles, outfiles):
             outname = "counts.dir/" + \
                 track + \
                 ".%s.kraken.counts.tsv.gz" % level
-            outf = IOTools.openFile(outname, "w")
+            outf = iotools.openFile(outname, "w")
             outf.write("taxa\tcount\n")
             for data in cc.execute("""SELECT taxon,
                                       count FROM %s
@@ -787,10 +787,10 @@ def aggregateTaxaMaps(infiles, outfile):
     build a union of taxa mappings from kingdom through species
     '''
     found = []
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("kingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\n")
     for infile in infiles:
-        inf = IOTools.openFile(infile)
+        inf = iotools.openFile(infile)
         # skip header
         header = inf.readline()
         for line in inf.readlines():
@@ -909,7 +909,7 @@ def buildLcaLevelCounts(infiles, outfiles):
         for level in levels:
             outname = "counts.dir/" + \
                 track + ".%s.diamond.counts.tsv.gz" % level
-            outf = IOTools.openFile(outname, "w")
+            outf = iotools.openFile(outname, "w")
             outf.write("taxa\tcount\n")
             for data in cc.execute(
                 """SELECT taxa,
@@ -1520,10 +1520,10 @@ def aggregateAlignmentStats(infiles, outfile):
         os.path.basename(x).split(".")[1] for x in infiles if "genes" not in x]
     tools = [
         os.path.basename(x).split(".")[2] for x in infiles if "genes" not in x]
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("sample\tlevel\ttool\tnreads\tnassigned\tpassigned\n")
     for s, l, t in zip(samples, levels, tools):
-        inf = IOTools.openFile(
+        inf = iotools.openFile(
             "alignment_stats.dir/" + s + "." + l + "." + t + "." + "stats")
         inf.readline()
         result = inf.readline()
@@ -1603,10 +1603,10 @@ def runMetagenomeSeq(infile, outfile):
             restrict_file = PARAMS.get("metagenomeseq_genes_restrict_file")
             temp = P.getTempFile(".")
             genes = set([x[:-1] for x in open(restrict_file).readlines()])
-            inf = IOTools.openFile(infile)
+            inf = iotools.openFile(infile)
             header = inf.readline()
             temp.write(header)
-            for line in IOTools.openFile(infile).readlines():
+            for line in iotools.openFile(infile).readlines():
                 data = line[:-1].split("\t")
                 if data[0] in genes:
                     temp.write(line)
@@ -1621,10 +1621,10 @@ def runMetagenomeSeq(infile, outfile):
             restrict_file = PARAMS.get("metagenomeseq_taxa_restrict_file")
             temp = P.getTempFile(".")
             taxa = set([x[:-1] for x in open(restrict_file).readlines()])
-            inf = IOTools.openFile(infile)
+            inf = iotools.openFile(infile)
             header = inf.readline()
             temp.write(header)
-            for line in IOTools.openFile(infile).readlines():
+            for line in iotools.openFile(infile).readlines():
                 data = line[:-1].split("\t")
                 if data[0] in taxa:
                     temp.write(line)
@@ -1656,7 +1656,7 @@ def runDESeq2(infile, outfile):
     # build design as a temporary file
     design = P.getTempFile(".")
     design.write("track\tgroup\tinclude\tpair\n")
-    samples = IOTools.openFile(infile).readline()[:-1].split("\t")
+    samples = iotools.openFile(infile).readline()[:-1].split("\t")
     samples = samples[1:]
     conditions = [x.split("-")[1] for x in samples]
     for i in range(len(samples)):
@@ -1716,7 +1716,7 @@ def splitResultsByKingdom(infiles, outfiles):
     # need to do it for both the results
     # table and the normalised matrix file
     for inf in [result, matrix]:
-        header = IOTools.openFile(inf).readline()
+        header = iotools.openFile(inf).readline()
         for kingdom, taxa in hierarchy.items():
             if kingdom == "NA":
                 kingdom = "other"
@@ -1738,9 +1738,9 @@ def splitResultsByKingdom(infiles, outfiles):
                 taxon_ind = 8
             if suffix:
                 outf = outf.replace(".diff.tsv", suffix)
-            outf = IOTools.openFile(outf, "w")
+            outf = iotools.openFile(outf, "w")
             outf.write(header)
-            for line in IOTools.openFile(inf).readlines():
+            for line in iotools.openFile(inf).readlines():
                 data = line.strip("\n").split("\t")
                 taxon = data[taxon_ind].replace('"', '')
                 if taxon in taxa:
@@ -1900,7 +1900,7 @@ def runPCA(infile, outfile):
     else:
         inf = P.snip(infile, ".diff.tsv") + ".norm.matrix"
         rownames = len(open(inf).readline().strip("\n").split("\t"))
-    if len(IOTools.openFile(inf).readlines()) <= 2:
+    if len(iotools.openFile(inf).readlines()) <= 2:
         E.warn("Empty matrix %s: Check this is correct" % inf)
         P.touch(outfile)
         P.touch(outfile.replace(".tsv", ".ve.tsv"))
@@ -1971,7 +1971,7 @@ def runPermanova(infile, outfile):
         rownames = len(open(inf).readline().strip("\n").split("\t"))
 
     # only run if the file is not empty
-    if len(IOTools.openFile(inf).readlines()) == 1:
+    if len(iotools.openFile(inf).readlines()) == 1:
         E.warn("Empty matrix %s: Check this is correct" % inf)
         P.touch(outfile)
     else:

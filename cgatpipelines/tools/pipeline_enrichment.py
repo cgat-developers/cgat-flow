@@ -300,12 +300,12 @@ from ruffus import *
 from ruffus.combinatorics import *
 import os
 import sqlite3
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import sys
 import cgatpipelines.tasks.gsenrichment as enrichment
 import cgatpipelines.tasks.enrichmentgsea as gsea
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 from cgatpipelines.report import run_report
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -603,7 +603,7 @@ def makeCytoscapeInputs(infiles, outfile):
     P.run(statement)
     typ = infile.split("_")[-3]
     keep = [line.strip() for line in
-            IOTools.open_file(PARAMS['cytoscape_%s' % typ]).readlines()]
+            iotools.open_file(PARAMS['cytoscape_%s' % typ]).readlines()]
     tab = pd.read_csv(T, sep="\t")
     tab = tab[tab['term_id'].isin(keep)]
     tab.columns = ['ID', 'Description', 'pvalue', 'padj', 'Phenotype']

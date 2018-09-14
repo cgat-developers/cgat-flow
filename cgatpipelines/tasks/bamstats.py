@@ -34,17 +34,17 @@ import pysam
 import pandas as pd
 
 # load cgat specific modules
-import cgatcore.Experiment as E
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
-import cgatcore.Pipeline as P
+import cgatcore.pipeline as P
 
 PICARD_MEMORY = "12G"
 
 
 def getNumReadsFromReadsFile(infile):
     '''get number of reads from a .nreads file.'''
-    with IOTools.open_file(infile) as inf:
+    with iotools.open_file(infile) as inf:
         line = inf.readline()
         if not line.startswith("nreads"):
             raise ValueError(
@@ -73,7 +73,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectInsertSizeMetrics
@@ -151,7 +151,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectMultipleMetrics
@@ -183,7 +183,7 @@ def buildPicardDuplicationStats(infile, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     # currently, MarkDuplicates cannot handle split alignments from gsnap
@@ -236,7 +236,7 @@ def buildPicardDuplicateStats(infile, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s MarkDuplicates
@@ -270,7 +270,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectHsMetrics
@@ -301,7 +301,7 @@ def buildPicardGCStats(infile, outfile, genome_file):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectGcBiasMetrics
@@ -339,9 +339,9 @@ def defineBedFeatures(infile, outfile):
                     '-Deu': 'repeats'}
 
     '''Read genomic context file'''
-    infile = IOTools.open_file(infile)
+    infile = iotools.open_file(infile)
     '''Create processed genomic context file'''
-    outfile = IOTools.open_file(outfile, "w")
+    outfile = iotools.open_file(outfile, "w")
     '''Start processing of genomic context file'''
     for line in infile:
         line_copy = line.split("\t")
@@ -577,7 +577,7 @@ def loadCountReads(infiles, outfile,
             E.warn("File %s missing" % filename)
             continue
 
-        lines = IOTools.open_file(filename, "r").readlines()
+        lines = iotools.open_file(filename, "r").readlines()
 
         for line in lines:
             count = line.split("\t")[1]
@@ -630,7 +630,7 @@ def loadPicardMetrics(infiles, outfile, suffix,
             E.warn("File %s missing" % filename)
             continue
 
-        lines = IOTools.open_file(filename, "r").readlines()
+        lines = iotools.open_file(filename, "r").readlines()
 
         # extract metrics part
         rx_start = re.compile("## METRICS CLASS")
@@ -1164,16 +1164,16 @@ def mergeAndFilterGTF(infile, outfile, logfile,
                    rna_file)
         else:
             rna_index = GTF.readAndIndex(
-                GTF.iterator(IOTools.open_file(rna_file, "r")))
+                GTF.iterator(iotools.open_file(rna_file, "r")))
             E.info("removing ribosomal RNA in %s" % rna_file)
 
     gene_ids = {}
 
-    logf = IOTools.open_file(logfile, "w")
+    logf = iotools.open_file(logfile, "w")
     logf.write("gene_id\ttranscript_id\treason\n")
 
     for all_exons in GTF.transcript_iterator(
-            GTF.iterator(IOTools.open_file(infile))):
+            GTF.iterator(iotools.open_file(infile))):
 
         c.input += 1
 
@@ -1313,9 +1313,9 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     # reset gene_id and transcript_id to ENSEMBL ids
     # cufflinks patch:
     # make tss_id and p_id unique for each gene id
-    outf = IOTools.open_file(tmpfile2, "w")
+    outf = iotools.open_file(tmpfile2, "w")
     map_tss2gene, map_pid2gene = {}, {}
-    inf = IOTools.open_file(tmpfile1 + ".combined.gtf")
+    inf = iotools.open_file(tmpfile1 + ".combined.gtf")
 
     def _map(gtf, key, val, m):
         if val in m:
@@ -1384,7 +1384,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     statement = '''picard %(picard_opts)s CollectRnaSeqMetrics

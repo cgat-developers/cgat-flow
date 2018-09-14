@@ -46,7 +46,7 @@ Command line options
 import os
 import sys
 
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 
 
 def getNodes(nodes=None):

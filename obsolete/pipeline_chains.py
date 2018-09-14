@@ -80,9 +80,9 @@ import re
 import glob
 import os
 from ruffus import *
-import cgatcore.Experiment as E
-from cgatcore import Pipeline as P
-import cgatcore.IOTools as IOTools
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgatcore.iotools as iotools
 import cgat.IndexedFasta as IndexedFasta
 
 ###################################################
@@ -129,7 +129,7 @@ def writeContigSizes(genome, outfile):
     '''write contig sizes to outfile for UCSC tools.
     '''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     fasta = IndexedFasta.IndexedFasta(
         os.path.join(PARAMS["genome_dir"], genome))
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():

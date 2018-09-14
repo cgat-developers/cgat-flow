@@ -92,11 +92,11 @@ formatted ontology available on this site.
 """
 
 from ruffus import *
-from cgatcore import Pipeline as P
+from cgatcore import pipeline as P
 import os
 import sys
 import cgatpipelines.tasks.geneinfo as geneinfo
-import cgatcore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import pandas as pd
 
 
@@ -167,7 +167,7 @@ def GetAndTranslateAllGenes(outfile):
                             species=PARAMS['entrez_host'], submit=True)
 
     # Make output gene list
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     for gene in genesymbols:
         outf.write("%s\n" % gene)
     outf.close()

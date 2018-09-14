@@ -36,7 +36,7 @@ TEMPLATE_PIPELINEMODULE = '''
 
 import glob
 import os
-import cgatcore.Experiment as E
+import cgatcore.experiment as E
 
 if __name__ == "__main__":
 

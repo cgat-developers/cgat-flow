@@ -1892,7 +1892,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         '''
 
         if len(infiles) == 1:
-            if os.path.isfile(os.path.join(infiles[0], outfile)):
+            if not os.path.isfile(os.path.join(infiles[0], outfile)):
                 E.info(
                     "%(outfile)s: only one file for merging - creating "
                     "softlink" % locals())

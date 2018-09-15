@@ -35,7 +35,7 @@ import sys
 import os
 import importlib
 
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 
 
 def main(argv=None):

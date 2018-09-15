@@ -53,7 +53,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -142,7 +142,7 @@ ToDo: make exome sequencing example
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 Requirements:
@@ -173,9 +173,9 @@ import re
 import shutil
 import decimal
 import pandas as pd
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.exome as exome
@@ -324,7 +324,7 @@ def GATKReadGroups(infile, outfile):
     exome.GATKReadGroups(infile, outfile, genome,
                                  library, platform,
                                  platform_unit, track)
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################
@@ -338,7 +338,7 @@ def GATKReadGroups(infile, outfile):
 def RemoveDuplicatesLane(infile, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
     mappingqc.buildPicardDuplicateStats(infile, outfile)
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 ###############################################################################
 
@@ -363,7 +363,7 @@ def GATKIndelRealignLane(infile, outfile):
     padding = PARAMS["roi_padding"]
     exome.GATKIndelRealign(infile, outfile, genome, intervals, padding,
                                    threads)
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 ###############################################################################
 
@@ -386,7 +386,7 @@ def GATKBaseRecal(infile, outfile):
     else:
         exome.GATKBaseRecal(infile, outfile, genome, intervals,
                                     padding, dbsnp, solid_options)
-    IOTools.zap_file(infile)
+    iotools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################
@@ -400,7 +400,7 @@ def GATKBaseRecal(infile, outfile):
 def mergeBAMs(infiles, outfile):
     '''merges BAMs for a single sample over multiple lanes'''
     inputfiles = " INPUT=".join(infiles)
-    outf = IOTools.open_file(outfile + ".count", "w")
+    outf = iotools.open_file(outfile + ".count", "w")
     outf.write(str(len(infiles)))
     outf.close()
     statement = ("picard MergeSamFiles "
@@ -412,7 +412,7 @@ def mergeBAMs(infiles, outfile):
     P.run(statement, job_memory="8G")
 
     for inputfile in infiles:
-        IOTools.zap_file(inputfile)
+        iotools.zap_file(inputfile)
 
 ###############################################################################
 ###############################################################################
@@ -433,7 +433,7 @@ def RemoveDuplicatesSample(infiles, outfile):
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
-        IOTools.zap_file(infile)
+        iotools.zap_file(infile)
 
 
 ###############################################################################
@@ -469,7 +469,7 @@ def GATKIndelRealignSample(infiles, outfile):
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
-#    IOTools.zap_file(infile)
+#    iotools.zap_file(infile)
 
 ###############################################################################
 ###############################################################################
@@ -728,7 +728,7 @@ def loadTableSnpEff(infile, outfile):
 @merge(GATKIndelRealignSample, "gatk/all_samples.list")
 def listOfBAMs(infiles, outfile):
     '''generates a file containing a list of BAMs for use in VQSR'''
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         for infile in infiles:
             outf.write(infile + '\n')
 
@@ -1015,7 +1015,7 @@ def makeAnnotationsTables(infiles, outfile):
     cols = []
     colds = []
     cols2 = []
-    for line in IOTools.open_file(TF).readlines():
+    for line in iotools.open_file(TF).readlines():
         if line.split("\t")[0] != "Samples":
             cols.append("[%%%s]" % line.split("\t")[0])
             colds.append(line.split("\t")[1].strip().replace(" ", "_"))
@@ -1094,7 +1094,7 @@ def getSampleGenotypes(infiles, outfile):
         Indels
     '''
     snps = set([line.strip()
-                for line in IOTools.open_file(infiles[1][1]).readlines()])
+                for line in iotools.open_file(infiles[1][1]).readlines()])
     exomeancestry.GenotypeSNPs(infiles[0], snps, outfile, submit=True)
 
 
@@ -1107,12 +1107,12 @@ def concatenateSNPs(infiles, outfile):
     '''
     snps = set()
     for f in infiles:
-        with IOTools.open_file(f) as inp:
+        with iotools.open_file(f) as inp:
             for line in inp:
                 line = line.strip().split("\t")
                 snps.add("%s\t%s\t%s\t%s" % (line[0], line[4],
                                              line[1], line[2]))
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     for snp in snps:
         out.write("%s\n" % (snp))
     out.close()
@@ -1149,12 +1149,12 @@ def mergeAncestry(infiles, outfile):
     large diamonds represent the best match and small triangles the second
     best match
     '''
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     for f in infiles:
         infile = f[1]
         scores = []
         ancs = []
-        for line in IOTools.open_file(infile).readlines():
+        for line in iotools.open_file(infile).readlines():
             line = line.strip().split("\t")
             anc = line[0]
             score = decimal.Decimal(line[1])
@@ -1340,14 +1340,14 @@ def familyFilterVariants(infiles, outfiles):
 
         # figure out who is related to who
         families = [line.strip().split("\t")[:2]
-                    for line in IOTools.open_file(infiles[1]).readlines()]
+                    for line in iotools.open_file(infiles[1]).readlines()]
         infam = [line[0] for line in families] + [line[1] for line in families]
 
         # no relatives - copy the input file to the output file and generate
         # a blank "failed" file
         if infilenam not in infam or PARAMS['filtering_family'] == 0:
             shutil.copy(infile, outfiles[0])
-            o = IOTools.open_file(outfiles[1], "w")
+            o = iotools.open_file(outfiles[1], "w")
             o.close()
         else:
             for line in families:
@@ -1361,7 +1361,7 @@ def familyFilterVariants(infiles, outfiles):
     else:
         infile = infiles[0][0]
         shutil.copy(infile, outfiles[0])
-        out = IOTools.open_file(outfiles[1], "w")
+        out = iotools.open_file(outfiles[1], "w")
         out.close()
 
 
@@ -1388,7 +1388,7 @@ def makeGeneLists(infiles, outfiles):
     P.run(statement)
 
     geneids = set()
-    with IOTools.open_file(outfile) as inp:
+    with iotools.open_file(outfile) as inp:
         for line in inp:
             line = line.strip().split("\t")
             details = line[11].split(";")
@@ -1397,7 +1397,7 @@ def makeGeneLists(infiles, outfiles):
                 if r:
                     geneid = detail.split(" ")[-1]
                     geneids.add(geneid.replace("\"", ""))
-    out = IOTools.open_file(outfiles[0], "w")
+    out = iotools.open_file(outfiles[0], "w")
     for geneid in geneids:
         out.write("%s\n" % geneid)
     out.close()
@@ -1442,10 +1442,12 @@ def findGenes(infile, outfile):
 # Tabulation
 
 
-TABULATION_INPUT = {0: annotateVariantsVEP, 1: findGenes}
+TABULATION_INPUT = {'': annotateVariantsVEP,
+                    0: annotateVariantsVEP,
+                    1: findGenes}
 
 
-@transform(TABULATION_INPUT[PARAMS["annotation_add_genes_of_interest"]],
+@transform(TABULATION_INPUT[PARAMS.get("annotation_add_genes_of_interest", 0)],
            regex(r"variants/all_samples.(snpsift|genes).vcf"),
            r"variants/all_samples.snpsift.table")
 def vcfToTable(infile, outfile):
@@ -1571,7 +1573,7 @@ def deNovoVariants(infiles, outfile):
     genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
-        IOTools.open_file(pedfile), delimiter='\t', fieldnames=[
+        iotools.open_file(pedfile), delimiter='\t', fieldnames=[
             'family', 'sample', 'father', 'mother', 'sex', 'status'])
     for row in pedigree:
         if row['status'] == '2':
@@ -1615,7 +1617,7 @@ def lowerStringencyDeNovos(infiles, outfile):
     genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
-        IOTools.open_file(pedfile), delimiter='\t', fieldnames=[
+        iotools.open_file(pedfile), delimiter='\t', fieldnames=[
             'family', 'sample', 'father', 'mother', 'sex', 'status'])
     for row in pedigree:
         if row['status'] == '2':

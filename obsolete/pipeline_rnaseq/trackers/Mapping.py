@@ -4,7 +4,7 @@ import re
 import types
 import itertools
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from RnaseqReport import *
 
 

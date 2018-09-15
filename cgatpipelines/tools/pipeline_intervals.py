@@ -20,7 +20,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -175,11 +175,11 @@ from ruffus import transform, follows, mkdir, merge, regex, suffix, add_inputs,\
 
 from ruffus.task import task_decorator
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
-import CGAT.MatrixTools as MatrixTools
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgatcore.iotools as iotools
+import cgat.Bed as Bed
+import cgat.MatrixTools as MatrixTools
 import cgatpipelines.tasks.intervals as intervals
 import cgatpipelines.tasks.motifs as motifs
 import cgatpipelines.tasks.windows as windows
@@ -336,7 +336,7 @@ def prepareIntervals(infile, outfile):
 @merge(prepareIntervals, "preprocess.tsv.gz")
 def buildProcessingSummary(infiles, outfile):
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     for infile in infiles:
         before = os.path.join(
@@ -361,7 +361,7 @@ def indexIntervals(infile, outfile):
 
     # patch for Jenkins - make sure file exists. Some files
     # seem to appear with a lag.
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
     statement = '''zcat %(infile)s
     | sort -k1,1 -k2,2n
@@ -420,7 +420,7 @@ def loadIntervals(infile, outfile):
     c = E.Counter()
 
     # count tags
-    for bed in Bed.iterator(IOTools.open_file(infile, "r")):
+    for bed in Bed.iterator(iotools.open_file(infile, "r")):
 
         c.input += 1
 
@@ -494,7 +494,7 @@ def exportPeakLocations(infile, outfile):
     '''
 
     dbh = P.connect()
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     table = P.to_table(infile)
     for x in dbh.execute(
             """SELECT contig, peakcenter, peakcenter+1, interval_id, peakval
@@ -783,8 +783,8 @@ def buildTranscriptsByIntervalsProfiles(infile, outfile):
         E.info("%s: associated bamfiles = %s" % (track, bamfiles))
     else:
         E.warn("%s: no bamfiles associated - target skipped" % (track))
-        IOTools.touch_file(outfile)
-        IOTools.touch_file(outfile[:-len(".tsv.gz")] + ".geneprofile.counts.tsv.gz")
+        iotools.touch_file(outfile)
+        iotools.touch_file(outfile[:-len(".tsv.gz")] + ".geneprofile.counts.tsv.gz")
         return
 
     if len(bamfiles) > 1:
@@ -822,7 +822,7 @@ def loadByIntervalProfiles(infile, outfile):
     if os.path.exists(countsfile):
         P.load(countsfile, outfile, "--add-index=gene_id --allow-empty-file")
     else:
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 @follows(loadIntervals)
@@ -846,7 +846,7 @@ def buildPeakShapeTable(infile, outfile):
         E.info("%s: associated bamfiles = %s" % (track, bamfiles))
     else:
         E.warn("%s: no bamfiles associated - target skipped" % (track))
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     if len(bamfiles) > 1:
@@ -955,7 +955,7 @@ def exportMotifSequences(infile, outfile):
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 ############################################################
@@ -1024,7 +1024,7 @@ def loadMemeSummary(infiles, outfile):
     outf.write("track\n")
 
     for infile in infiles:
-        if IOTools.is_empty(infile):
+        if iotools.is_empty(infile):
             continue
         motif = P.snip(infile, ".meme")
         outf.write("%s\n" % motif)
@@ -1066,7 +1066,7 @@ def loadMotifInformation(infiles, outfile):
     outf.write("motif\n")
 
     for infile in infiles:
-        if IOTools.is_empty(infile):
+        if iotools.is_empty(infile):
             continue
         motif = P.snip(infile, ".motif")
         outf.write("%s\n" % motif)
@@ -1103,7 +1103,7 @@ def loadTomTom(infile, outfile):
 
     if not os.path.exists(xml_file):
         E.warn("no tomtom output - skipped loading ")
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     # get the motif name from the xml file
@@ -1123,7 +1123,7 @@ def loadTomTom(infile, outfile):
     tmpfile = P.get_temp_file(".")
 
     # parse the text file
-    for line in IOTools.open_file(infile):
+    for line in iotools.open_file(infile):
         if line.startswith("#Query"):
             tmpfile.write('\t'.join(
                 ("target_name", "query_id", "target_id",
@@ -1519,8 +1519,8 @@ def summarizeGAT(infiles, outfile):
 
     # output qvalues
     column = "qvalue"
-    with IOTools.open_file(outfile + "." + column + ".gz", "w") as outf:
-        IOTools.write_matrix(outf, qval_matrix, qval_row_headers, col_headers)
+    with iotools.open_file(outfile + "." + column + ".gz", "w") as outf:
+        iotools.write_matrix(outf, qval_matrix, qval_row_headers, col_headers)
 
     ncols = len(infiles)
     min_qvalue = PARAMS["gat_fdr"]
@@ -1574,10 +1574,10 @@ def summarizeGAT(infiles, outfile):
 
         col_headers = [P.snip(os.path.basename(x), ".gat.tsv.gz")
                        for x in infiles]
-        with IOTools.open_file(outfile + "." + column + ".gz", "w") as outf:
-            IOTools.write_matrix(outf, matrix, row_headers, col_headers)
+        with iotools.open_file(outfile + "." + column + ".gz", "w") as outf:
+            iotools.write_matrix(outf, matrix, row_headers, col_headers)
 
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @follows(loadGAT, summarizeGAT)
@@ -1669,7 +1669,7 @@ def summarizeReadCounts(infile, outfile):
 def viewIntervals(infiles, outfiles):
 
     outfile_bed, outfile_code = outfiles
-    outs = IOTools.open_file(outfile_bed, "w")
+    outs = iotools.open_file(outfile_bed, "w")
     version = PARAMS["version"]
     for infile in infiles:
 
@@ -1679,7 +1679,7 @@ def viewIntervals(infiles, outfiles):
             '''track name="interval_%(track)s_%(version)s" description="Intervals in %(track)s - version %(version)s" visibility=2\n''' %
             locals())
 
-        with IOTools.open_file(infile, "r") as f:
+        with iotools.open_file(infile, "r") as f:
             for bed in Bed.iterator(f):
                 # MACS intervals might be less than 0
                 if bed.start <= 0:
@@ -1699,7 +1699,7 @@ def viewIntervals(infiles, outfiles):
 
     filename = re.sub("^.*/ucsc_tracks/", "", dest)
 
-    outs = IOTools.open_file(outfile_code, "w")
+    outs = iotools.open_file(outfile_code, "w")
     outs.write("#paste the following into the UCSC browser:\n")
     outs.write(
         "http://wwwfgu.anat.ox.ac.uk/~andreas/ucsc_tracks/%(filename)s\n" %

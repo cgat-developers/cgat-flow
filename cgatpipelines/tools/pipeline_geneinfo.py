@@ -92,11 +92,11 @@ formatted ontology available on this site.
 """
 
 from ruffus import *
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 import os
 import sys
 import cgatpipelines.tasks.geneinfo as geneinfo
-import CGATCore.IOTools as IOTools
+import cgatcore.iotools as iotools
 import pandas as pd
 
 
@@ -167,7 +167,7 @@ def GetAndTranslateAllGenes(outfile):
                             species=PARAMS['entrez_host'], submit=True)
 
     # Make output gene list
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     for gene in genesymbols:
         outf.write("%s\n" % gene)
     outf.close()
@@ -247,7 +247,7 @@ def AnnotateWithHomologene(infile, outfile):
 
 
 @follows(AnnotateWithHomologene)
-@active_if(int(PARAMS['homologues_mousepathway']) == 1)
+@active_if(int(PARAMS.get('homologues_mousepathway', 0) == 1))
 @transform('ensemblg2symbol_10090$geneid.load', suffix(".load"),
            'ensemblg2mousepathway\$annot.load')
 def AnnotateWithMousePathway(infile, outfile):
@@ -267,7 +267,7 @@ def AnnotateWithMousePathway(infile, outfile):
 
 
 @follows(AnnotateWithHomologene)
-@active_if(int(PARAMS['homologues_mgi']) == 1)
+@active_if(int(PARAMS.get('homologues_mgi', 0)) == 1)
 @transform('ensemblg2symbol_10090$geneid.load', suffix(".load"),
            'ensemblg2mgi\$annot.load')
 def AnnotateWithMGI(infile, outfile):
@@ -286,7 +286,7 @@ def AnnotateWithMGI(infile, outfile):
 
 
 @follows(AnnotateWithHomologene)
-@active_if(int(PARAMS['homologues_hpo']) == 1)
+@active_if(int(PARAMS.get('homologues_hpo', 0)) == 1)
 @transform('ensemblg2symbol_9606$geneid.load', suffix(".load"),
            'ensemblg2hpo\$annot.load')
 def AnnotateWithHPO(infile, outfile):
@@ -322,7 +322,7 @@ def annotate(infile, outfile):
 
 @follows(mkdir('genesetdbs.dir'))
 @follows(annotate)
-@active_if(int(PARAMS['db_subset']) == 1)
+@active_if(PARAMS.get('db_subset', 0) == 1)
 @transform("genelists.dir/*.tsv", regex("genelists.dir/(.*).tsv"),
            r"genesetdbs.dir/\1")
 def MakeSubDBs(infile, outfile):

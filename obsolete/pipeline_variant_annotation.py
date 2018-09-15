@@ -22,7 +22,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -68,7 +68,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -120,18 +120,18 @@ import re
 import math
 import collections
 import sqlite3
-import CGATCore.Experiment as E
-import CGATCore.Database as Database
+import cgatcore.experiment as E
+import cgatcore.database as Database
 import scipy.stats
-import CGAT.Stats as Stats
+import cgat.Stats as Stats
 import pysam
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 ###################################################################
 ###################################################################
 ###################################################################
 # Pipeline configuration
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(["%s/pipeline.ini" %
                  os.path.splitext(__file__)[0], "../pipeline.ini",
                  "pipeline.ini"])

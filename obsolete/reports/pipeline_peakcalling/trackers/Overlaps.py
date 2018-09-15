@@ -5,10 +5,10 @@ import types
 import itertools
 import numpy
 
-import CGAT.Stats as Stats
-import CGAT.IndexedGenome as IndexedGenome
+import cgat.Stats as Stats
+import cgat.IndexedGenome as IndexedGenome
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from PeakcallingReport import *
 
 ##########################################################################

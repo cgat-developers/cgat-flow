@@ -1,7 +1,7 @@
 """test_scripts.py
 ==================
 
-nose test script for CGAT scripts
+nose test script for cgat scripts
 
 This script builds test cases from directories in the :file:`tests`
 subdirectories. Test data for scripts are contained in a directory
@@ -11,10 +11,10 @@ within that directory.
 To permit the parallelization of running tests, tests can be run in
 chunks (tasks). The script will look for the following environment variables:
 
-CGAT_TASK_ID
+cgat_TASK_ID
    The starting number of this task starting at 1
 
-CGAT_TASK_STEPSIZE
+cgat_TASK_STEPSIZE
    The number of tests to run within a chunk
 
 """
@@ -36,7 +36,7 @@ SUBDIRS = ("gpipe", "optic")
 
 # Setup logging
 LOGFILE = open("test_scripts.log", "a")
-DEBUG = os.environ.get("CGAT_DEBUG", False)
+DEBUG = os.environ.get("cgat_DEBUG", False)
 
 
 def check_main(script):
@@ -213,8 +213,8 @@ def test_scripts():
     scriptdirs.sort()
 
     # restrict tests run according to chunk parameters
-    starting_test_number = os.getenv('CGAT_TASK_ID', None)
-    test_increment = os.getenv('CGAT_TASK_STEPSIZE', None)
+    starting_test_number = os.getenv('cgat_TASK_ID', None)
+    test_increment = os.getenv('cgat_TASK_STEPSIZE', None)
 
     try:
         starting_test_number, test_increment = \

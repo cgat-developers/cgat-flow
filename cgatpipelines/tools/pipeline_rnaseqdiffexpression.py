@@ -125,7 +125,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -197,7 +197,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------+----------+------------------------------------+
@@ -297,7 +297,7 @@ ChangeLog
 15.10.2015  Charlotte George, Sebastian Luna-Valero
             SCRUM Oct 2015. Updating documentation.
 
-10.10.2016  CGAT Fellows. SCRUM Oct 2016. Complete re-write of
+10.10.2016  cgat Fellows. SCRUM Oct 2016. Complete re-write of
             pipeline and modules to simplify workflow and add alignment-free
             methods
 
@@ -323,8 +323,8 @@ Code
 from ruffus import *
 from ruffus.combinatorics import *
 
-import CGATCore.Experiment as E
-# import CGAT.scrum_expression as SE
+import cgatcore.experiment as E
+# import cgat.scrum_expression as SE
 
 import sys
 import os
@@ -332,16 +332,16 @@ import re
 import glob
 import pandas as pd
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgatcore.iotools as iotools
 
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 from cgatpipelines.report import run_report
 
-import CGAT.Expression as Expression
+import cgat.Expression as Expression
 # levels of cuffdiff analysis
 # (no promotor and splice -> no lfold column)
 CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
@@ -569,7 +569,7 @@ def buildSailfishIndex(infile, outfile):
 def getTranscript2GeneMap(outfile):
     ''' Extract a 1:1 map of transcript_id to gene_id from the geneset '''
 
-    iterator = GTF.iterator(IOTools.open_file(PARAMS['geneset']))
+    iterator = GTF.iterator(iotools.open_file(PARAMS['geneset']))
     transcript2gene_dict = {}
 
     for entry in iterator:
@@ -584,7 +584,7 @@ def getTranscript2GeneMap(outfile):
         else:
             transcript2gene_dict[entry.transcript_id] = entry.gene_id
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("transcript_id\tgene_id\n")
         for key, value in sorted(transcript2gene_dict.items()):
             outf.write("%s\t%s\n" % (key, value))
@@ -699,7 +699,7 @@ def runFeatureCounts(infiles, outfiles):
 def runGTF2Table(infiles, outfiles):
     '''
     Compute read counts and coverage of transcripts and genes using the
-    CGAT gtf2table tools.
+    cgat gtf2table tools.
 
     Takes a list of :term:`bam` files defined in "BAM_TRACKS" and a
     :term:`gtf` file containing transcript and gene level annotations
@@ -1290,7 +1290,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
     # to estimate sleuth memory, we need to know the number of
     # samples, transcripts and boostraps
     number_transcripts = 0
-    with IOTools.open_file(transcripts, "r") as inf:
+    with iotools.open_file(transcripts, "r") as inf:
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1
@@ -1475,7 +1475,7 @@ def NormaliseExpression():
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(DETARGETS, "differential_expression.load")
 def loadDifferentialExpression(infiles, outfiles):
-    for infile in IOTools.flatten(infiles):
+    for infile in iotools.flatten(infiles):
         outfile = P.snip(infile, ".tsv") + ".load"
         P.load(infile, outfile)
 
@@ -1485,7 +1485,7 @@ def loadDifferentialExpression(infiles, outfiles):
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(NORMTARGETS, "normalised_expression.load")
 def loadNormalisedExpression(infiles, outfiles):
-    for infile in IOTools.flatten(infiles):
+    for infile in iotools.flatten(infiles):
         outfile = P.snip(infile, ".tsv.gz") + ".load"
         P.load(infile, outfile)
 

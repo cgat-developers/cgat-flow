@@ -7,14 +7,14 @@ PipelineLncRNA.py - functions and classes for use with the lincRNA pipeline
 import re
 import sys
 import os
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
+import cgat.GTF as GTF
+import cgatcore.iotools as iotools
 import gzip
 import collections
-import CGAT.IndexedGenome as IndexedGenome
-import CGAT.IndexedFasta as IndexedFasta
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
+import cgat.IndexedGenome as IndexedGenome
+import cgat.IndexedFasta as IndexedFasta
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
 import sqlite3
 import tempfile
 import string
@@ -48,13 +48,13 @@ def buildCodingGeneSet(abinitio_coding, reference, outfile):
     novel, the default behaviour is to produce a set that
     is composed of 'complete' transcripts
     '''
-    inf = IOTools.openFile(abinitio_coding)
+    inf = iotools.openFile(abinitio_coding)
     outf = gzip.open(outfile, "w")
 
     coding = {}
     coding["protein_coding"] = GTF.readAndIndex(GTF.iterator_filtered(
         GTF.iterator(
-            IOTools.openFile(
+            iotools.openFile(
                 reference)), source="protein_coding"), with_value=False)
 
     for gtf in GTF.iterator(inf):
@@ -72,11 +72,11 @@ def buildRefcodingGeneSet(coding_set, refcoding_set, outfile):
 
     '''
     keep_genes = set()
-    for gtf in GTF.iterator(IOTools.openFile(coding_set)):
+    for gtf in GTF.iterator(iotools.openFile(coding_set)):
         keep_genes.add(gtf.gene_name)
 
     outf = gzip.open(outfile, "w")
-    for gtf in GTF.iterator(IOTools.openFile(refcoding_set)):
+    for gtf in GTF.iterator(iotools.openFile(refcoding_set)):
         if gtf.gene_name in keep_genes:
             outf.write("%s\n" % gtf)
     outf.close()
@@ -157,17 +157,17 @@ def buildLncRNAGeneSet(abinitio_lincrna,
     for section in input_sections:
         indices[section] = GTF.readAndIndex(
             GTF.iterator_filtered(GTF.iterator(
-                IOTools.openFile(reference_gtf)), source=section),
+                iotools.openFile(reference_gtf)), source=section),
             with_value=True)
     E.info("built indices for %i features" % len(indices))
 
     # add psuedogenes and numts to dictionary of indices
     indices["numts"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(numts_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(numts_gtf)), with_value=True)
     E.info("added index for numts")
 
     indices["pseudogenes"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(pseudogenes_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(pseudogenes_gtf)), with_value=True)
     E.info("added index for pseudogenes")
 
     # iterate through assembled transcripts, identify those that intersect
@@ -177,7 +177,7 @@ def buildLncRNAGeneSet(abinitio_lincrna,
     E.info("collecting genes to remove")
     for gtf in GTF.transcript_iterator(
             GTF.iterator(
-                IOTools.openFile(infile_abinitio))):
+                iotools.openFile(infile_abinitio))):
         # remove those transcripts too short to be classified as lncRNAs
         l = sum([x.end - x.start for x in gtf])
         if l < min_length:
@@ -208,12 +208,12 @@ def buildLncRNAGeneSet(abinitio_lincrna,
     # strand. Instead, any removed transcript that also intersects a
     # lncRNA on the same strand is now output to a separate gtf.
     noncoding = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(refnoncoding_gtf)), with_value=True)
+        GTF.iterator(iotools.openFile(refnoncoding_gtf)), with_value=True)
     rej_gtf = os.path.join(os.path.dirname(outfile),
                            "lncrna_removed_nc_intersect.gtf.gz")
-    rej_gtf = IOTools.openFile(rej_gtf, "w")
+    rej_gtf = iotools.openFile(rej_gtf, "w")
     for gtf in GTF.transcript_iterator(GTF.iterator(
-            IOTools.openFile(infile_abinitio))):
+            iotools.openFile(infile_abinitio))):
         if gtf[0].transcript_id in list(remove_transcripts.keys()):
             for exon in gtf:
                 if noncoding.contains(exon.contig, exon.start, exon.end):
@@ -221,7 +221,7 @@ def buildLncRNAGeneSet(abinitio_lincrna,
                                        list(noncoding.get(exon.contig,
                                                           exon.start,
                                                           exon.end))]:
-                        for exon2 in IOTools.flatten(gtf):
+                        for exon2 in iotools.flatten(gtf):
                             rej_gtf.write(str(exon2) + "\n")
                         break
     rej_gtf.close()
@@ -234,7 +234,7 @@ def buildLncRNAGeneSet(abinitio_lincrna,
 
     # write out transcripts that are not in removed set
     temp = P.getTempFile(".")
-    for entry in GTF.iterator(IOTools.openFile(infile_abinitio)):
+    for entry in GTF.iterator(iotools.openFile(infile_abinitio)):
         if entry.transcript_id in remove_transcripts:
             continue
         temp.write("%s\n" % str(entry))
@@ -272,7 +272,7 @@ def buildFilteredLncRNAGeneSet(flagged_gtf,
 
     E.info("indexing previously identified lncRNA")
     for prev in genesets_previous:
-        inf = IOTools.openFile(prev)
+        inf = iotools.openFile(prev)
         for transcript in GTF.transcript_iterator(GTF.iterator(inf)):
             # use an indexed genome to assess novelty of lncRNA
             if len(transcript) > 1:
@@ -299,7 +299,7 @@ def buildFilteredLncRNAGeneSet(flagged_gtf,
     # iterate over the flagged GTF - flagged for exon status
     E.info("checking for overlap with previously identified sets")
     for transcript in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(flagged_gtf))):
+            GTF.iterator(iotools.openFile(flagged_gtf))):
         gene_id = transcript[0].gene_id
         # check if there is overlap in the known sets in order to add
         # gene_status attribute
@@ -340,7 +340,7 @@ def buildFilteredLncRNAGeneSet(flagged_gtf,
     E.info("writing %i assembled novel" % len(novel))
 
     # write out ones to keep from assembled data
-    for gtf in GTF.iterator(IOTools.openFile(flagged_gtf)):
+    for gtf in GTF.iterator(iotools.openFile(flagged_gtf)):
         if gtf.gene_id in known and gtf.exon_status == "m":
             gtf.setAttribute("gene_status", "known")
             temp.write("%s\n" % gtf)
@@ -357,7 +357,7 @@ def buildFilteredLncRNAGeneSet(flagged_gtf,
     done = IndexedGenome.IndexedGenome()
     known_count = 0
     for prev in genesets_previous:
-        inf = IOTools.openFile(prev)
+        inf = iotools.openFile(prev)
         for gene in GTF.flat_gene_iterator(GTF.iterator(inf)):
             gene_id = gene[0].gene_id
 
@@ -413,7 +413,7 @@ def buildFinalLncRNAGeneSet(filteredLncRNAGeneSet,
 
         remove = set()
         outf_coding = gzip.open("gtfs/cpc_removed.gtf.gz", "w")
-        for gtf in GTF.iterator(IOTools.openFile(filteredLncRNAGeneSet)):
+        for gtf in GTF.iterator(iotools.openFile(filteredLncRNAGeneSet)):
             if gtf.transcript_id in coding_set:
                 remove.add(gtf.gene_id)
                 outf_coding.write("%s\n" % gtf)
@@ -428,7 +428,7 @@ def buildFinalLncRNAGeneSet(filteredLncRNAGeneSet,
     # get temporary file for known lncrna
     temp2 = P.getTempFile(".")
 
-    for gtf in GTF.iterator(IOTools.openFile(filteredLncRNAGeneSet)):
+    for gtf in GTF.iterator(iotools.openFile(filteredLncRNAGeneSet)):
         if gtf.gene_id in remove:
             continue
         if gtf.transcript_id.find("TCONS") != -1:
@@ -483,7 +483,7 @@ class CounterExons:
 
     def __init__(self, gtffile):
 
-        self.gtffile = GTF.iterator(IOTools.openFile(gtffile))
+        self.gtffile = GTF.iterator(iotools.openFile(gtffile))
 
     def count(self):
         c = 0
@@ -594,7 +594,7 @@ def flagExonStatus(gtf_file, outfile):
 
     tmpf1 = P.getTempFilename(".")
     tmpf2 = P.getTempFilename(".")
-    outf = IOTools.openFile(tmpf2, "w")
+    outf = iotools.openFile(tmpf2, "w")
 
     # sort infile
     statement = ("zcat %(gtf_file)s |"
@@ -606,7 +606,7 @@ def flagExonStatus(gtf_file, outfile):
 
     # create dictionary where key is transcript_id,
     # value is a list of gtf_proxy objects
-    for gene in GTF.gene_iterator(GTF.iterator(IOTools.openFile(tmpf1))):
+    for gene in GTF.gene_iterator(GTF.iterator(iotools.openFile(tmpf1))):
         trans_dict = collections.defaultdict(list)
         # load current gene into dictionary
         for transcript in gene:
@@ -678,7 +678,7 @@ def classifyLncRNA(lincRNA_gtf, reference, outfile, dist=2):
     # index the reference geneset
     ref = {}
     ref["ref"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(reference)), with_value=True)
+        GTF.iterator(iotools.openFile(reference)), with_value=True)
 
     # create index for intronic intervals
     intron = IndexedGenome.IndexedGenome()
@@ -692,7 +692,7 @@ def classifyLncRNA(lincRNA_gtf, reference, outfile, dist=2):
     # iterate over reference transcripts and create intervals in memory
     outf = open("introns.bed", "w")
     for transcript in GTF.transcript_iterator(GTF.iterator(
-            IOTools.openFile(reference))):
+            iotools.openFile(reference))):
         start = transcript[0].end
         for i in range(1, len(transcript)):
             intron.add(
@@ -728,7 +728,7 @@ def classifyLncRNA(lincRNA_gtf, reference, outfile, dist=2):
     # iterate over lincRNA transcripts
     transcript_class = {}
     for transcript in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(lincRNA_gtf))):
+            GTF.iterator(iotools.openFile(lincRNA_gtf))):
         transcript_id = transcript[0].transcript_id
         for gtf in transcript:
 
@@ -818,7 +818,7 @@ def classifyLncRNA(lincRNA_gtf, reference, outfile, dist=2):
 
     outf = gzip.open(outfile, "w")
     outf_unclassified = gzip.open("lncrna_unclassified.gtf.gz", "w")
-    for gtf in GTF.iterator(IOTools.openFile(lincRNA_gtf)):
+    for gtf in GTF.iterator(iotools.openFile(lincRNA_gtf)):
         if gtf.transcript_id in transcript_class:
             gtf.source = transcript_class[gtf.transcript_id]
             outf.write("%s\n" % gtf)
@@ -837,7 +837,7 @@ def classifyLncRNAGenes(lincRNA_gtf, reference, outfile, dist=2):
     # index the reference geneset
     ref = {}
     ref["ref"] = GTF.readAndIndex(
-        GTF.iterator(IOTools.openFile(reference)), with_value=True)
+        GTF.iterator(iotools.openFile(reference)), with_value=True)
 
     # create index for intronic intervals
     intron = IndexedGenome.IndexedGenome()
@@ -850,7 +850,7 @@ def classifyLncRNAGenes(lincRNA_gtf, reference, outfile, dist=2):
 
     # iterate over reference transcripts and create intervals in memory
     for transcript in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(reference))):
+            GTF.iterator(iotools.openFile(reference))):
         start = transcript[0].end
         for i in range(1, len(transcript)):
             intron.add(
@@ -890,7 +890,7 @@ def classifyLncRNAGenes(lincRNA_gtf, reference, outfile, dist=2):
     gene_class = {}
 
     for gtf in GTF.merged_gene_iterator(GTF.iterator(
-            IOTools.openFile(lincRNA_gtf))):
+            iotools.openFile(lincRNA_gtf))):
         gene_id = gtf.gene_id
 
         # the first classification resolves any gene
@@ -961,7 +961,7 @@ def classifyLncRNAGenes(lincRNA_gtf, reference, outfile, dist=2):
             gene_class[gene_id] = "intergenic"
 
     outf = gzip.open(outfile, "w")
-    for gtf in GTF.iterator(IOTools.openFile(lincRNA_gtf)):
+    for gtf in GTF.iterator(iotools.openFile(lincRNA_gtf)):
         if gtf.gene_id in gene_class:
             gtf.source = gene_class[gtf.gene_id]
             outf.write("%s\n" % gtf)
@@ -1017,7 +1017,7 @@ def reClassifyLncRNAGenes(lncRNA_gtf,
 
     # index exons in the reference gene-set
     ref_index = IndexedGenome.IndexedGenome()
-    for exon in GTF.iterator(IOTools.openFile(reference_gtf)):
+    for exon in GTF.iterator(iotools.openFile(reference_gtf)):
         ref_index.add(exon.contig, exon.start, exon.end, str(exon).split())
 
     # create index for all other intervals to be classified
@@ -1028,7 +1028,7 @@ def reClassifyLncRNAGenes(lncRNA_gtf,
     minus_down = IndexedGenome.IndexedGenome()
 
     # iterate over reference transcripts and create intervals in memory
-    ref_file = IOTools.openFile(reference_gtf)
+    ref_file = iotools.openFile(reference_gtf)
     for transcript in GTF.transcript_iterator(GTF.iterator(ref_file)):
         start = transcript[0].end
         for i in range(1, len(transcript)):
@@ -1097,7 +1097,7 @@ def reClassifyLncRNAGenes(lncRNA_gtf,
     temp_count = {}
     for handle in temp_file_names:
         temp_count[handle] = 0
-        temp_files[handle] = IOTools.openFile(os.path.join(tempdir,
+        temp_files[handle] = iotools.openFile(os.path.join(tempdir,
                                                            handle), "w")
 
     # iterate through the representative (i.e. merged) lncRNA transcripts
@@ -1105,7 +1105,7 @@ def reClassifyLncRNAGenes(lncRNA_gtf,
     # In situations where a lncRNA fits > 1 classification, priority is:
     # (sense > antisense)
     # & (overlap_exons > overlap_introns > downstream > upstream > intergenic)
-    lnc_file = IOTools.openFile(merged_lncRNA_gtf)
+    lnc_file = iotools.openFile(merged_lncRNA_gtf)
     gene_class = {}  # dictionary of gene_id : classification
     input_transcripts = 0  # keep track of # transcripts in lncRNA_gtf
     for transcript in GTF.transcript_iterator(GTF.iterator(lnc_file)):
@@ -1483,8 +1483,8 @@ def reClassifyLncRNAGenes(lncRNA_gtf,
         temp_files[handle].close()
 
     # write the genes plus their classification to the outfile
-    outf = IOTools.openFile(outfile, "w")
-    for gtf in GTF.iterator(IOTools.openFile(lncRNA_gtf)):
+    outf = iotools.openFile(outfile, "w")
+    for gtf in GTF.iterator(iotools.openFile(lncRNA_gtf)):
         if gtf.gene_id in gene_class:
             gtf.source = gene_class[gtf.gene_id]
             outf.write(str(gtf) + "\n")
@@ -2051,7 +2051,7 @@ def sort_block_components_by_block(block1, block2):
 
 
 ##########################################################################
-# CGAT functions for extracting MAF alignments
+# cgat functions for extracting MAF alignments
 ##########################################################################
 
 def gtfToBed12(infile, outfile, model):
@@ -2059,10 +2059,10 @@ def gtfToBed12(infile, outfile, model):
     Convert a gtf file to bed12 format.
     """
     model = "gene"
-    outfile = IOTools.openFile(outfile, "w")
+    outfile = iotools.openFile(outfile, "w")
 
     for all_exons in GTF.transcript_iterator(
-            GTF.iterator(IOTools.openFile(infile, "r"))):
+            GTF.iterator(iotools.openFile(infile, "r"))):
         chrom = all_exons[0].contig
         # GTF.iterator returns start co-ordinates as zero-based
         start = str(all_exons[0].start)
@@ -2157,11 +2157,11 @@ def extractGeneBlocks(bedfile,
     MAF file is indexed on the fly using bx.align.maf.MultiIndexed
     """
     index, index_filename = build_maf_index(maf_file)
-    output = IOTools.openFile(outfile, "w")
+    output = iotools.openFile(outfile, "w")
     regions_extracted = 0
 
     # iterate through intervals
-    for line_count, line in enumerate(IOTools.openFile(bedfile).readlines()):
+    for line_count, line in enumerate(iotools.openFile(bedfile).readlines()):
         try:
             # retrieve exon starts & ends, plus all gtf fields
             starts, ends, fields = get_starts_ends_fields_from_gene_bed(line)
@@ -2242,11 +2242,11 @@ def extractMAFGeneBlocks(bedfile,
     MAF file is indexed on the fly using bx.align.maf.MultiIndexed
     """
     index, index_filename = build_maf_index(maf_file)
-    output = IOTools.openFile(outfile, "w")
+    output = iotools.openFile(outfile, "w")
     regions_extracted = 0
 
     # iterate through intervals
-    for line_count, line in enumerate(IOTools.openFile(bedfile).readlines()):
+    for line_count, line in enumerate(iotools.openFile(bedfile).readlines()):
         try:
             # retrieve exon starts & ends, plus all gtf fields
             starts, ends, fields = get_starts_ends_fields_from_gene_bed(line)
@@ -2332,7 +2332,7 @@ def splitAlignedFasta(infile, out_stub, name_dict):
     Identifiers must be in format >species.interval_id
     name_dict specifies the format for the outfile identifiers
     """
-    infile = IOTools.openFile(infile).readlines()
+    infile = iotools.openFile(infile).readlines()
 
     current_id = ""
     line_number = 0
@@ -2439,10 +2439,10 @@ def parsePhyloCSF(infile, outfile):
     """
     Write phyloCSF result file out in a more readable format.
     """
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("gene_id\ttranscript_id\tscore\tstart\tend\n")
 
-    for line in IOTools.openFile(infile).readlines():
+    for line in iotools.openFile(infile).readlines():
         line = line.split()
         gene_id_transcript_id = P.snip(os.path.basename(line[0]), ".phyloCSF")
         gene_id, transcript_id = gene_id_transcript_id.split("__")

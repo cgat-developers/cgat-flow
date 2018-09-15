@@ -22,7 +22,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning`
-on general information how to use CGAT pipelines.
+on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -77,7 +77,7 @@ fastq.1.gz, fastq2.2.gz
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +---------------+----------+------------------------------------------------+
@@ -131,13 +131,13 @@ import re
 import itertools
 import glob
 import sqlite3
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATPipelines.PipelineMapping as PipelineMapping
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineRrbs as RRBS
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatPipelines.PipelineMapping as PipelineMapping
+from cgatcore import pipeline as P
+import cgatPipelines.PipelineRrbs as RRBS
 import pandas as pd
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 import numpy as np
 ###################################################
@@ -473,8 +473,8 @@ def loadBigWigStats(infiles, outfile):
 @originate("coverage.dir/cpgIslands.bed")
 def makeCpgIslandsBed(outfile):
     infile = PARAMS["methylation_summary_cpgislands"]
-    out = IOTools.openFile(outfile, "w")
-    with IOTools.openFile(infile, "r") as f:
+    out = iotools.openFile(outfile, "w")
+    with iotools.openFile(infile, "r") as f:
         for line in f.readlines():
             # this assumes location of req. values
             contig, start, end = line.split()[1:4]
@@ -494,10 +494,10 @@ def make1basedCpgIslands(infile, outfile):
 
     # outfile, loadfile = outfiles
 
-    out = IOTools.openFile(outfile, "w")
+    out = iotools.openFile(outfile, "w")
     out.write("%s\t%s\t%s\n" % ("contig", "position", "cpgi"))
 
-    with IOTools.openFile(infile, "r") as f:
+    with iotools.openFile(infile, "r") as f:
         lines = f.readlines()
         for line in lines:
             contig, start, stop = line.split()

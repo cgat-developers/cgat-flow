@@ -20,7 +20,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -129,7 +129,7 @@ The pipeline requires the information from the following pipelines:
    set the configuration variable :py:data:`annotations_database` and 
    :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -184,26 +184,26 @@ import shutil
 
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 import logging as L
-import CGATCore.Database as Database
-import CGAT.IndexedGenome as IndexedGenome
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
+import cgatcore.database as Database
+import cgat.IndexedGenome as IndexedGenome
+import cgatcore.iotools as iotools
+import cgat.Bed as Bed
 import pysam
 import numpy
 
-import CGATPipelines.PipelineChipseq as PipelineChipseq
-import CGATPipelines.PipelineMotifs as PipelineMotifs
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMapping as PipelineMapping
+import cgatPipelines.PipelineChipseq as PipelineChipseq
+import cgatPipelines.PipelineMotifs as PipelineMotifs
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMapping as PipelineMapping
 
 ###################################################
 ###################################################
 ###################################################
 # Pipeline configuration
 ###################################################
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
@@ -373,7 +373,7 @@ def loadReadCounts(infiles, outfile):
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
         track = P.snip(infile, ".nreads")
-        lines = IOTools.openFile(infile).readlines()
+        lines = iotools.openFile(infile).readlines()
         nreads = int(lines[0][:-1].split("\t")[1])
         outf.write("%s\t%i\n" % (track, nreads))
     outf.close()
@@ -458,9 +458,9 @@ def makeMask(infile, outfile):
 
         if PARAMS["calling_filter_regions"]:
             regions_to_filter += Bed.iterator(
-                IOTools.openFile(PARAMS["calling_filter_regions"]))
+                iotools.openFile(PARAMS["calling_filter_regions"]))
 
-        fh = IOTools.openFile(outfile, "w")
+        fh = iotools.openFile(outfile, "w")
 
         for bed in itertools.chain(regions_to_filter):
             fh.write("%s\n" %
@@ -530,10 +530,10 @@ if PARAMS["calling_normalize"] is True:
         counts = []
         countfiles = glob.glob("*.prep.count")
         for cf in countfiles:
-            fh = IOTools.openFile(cf, "r")
+            fh = iotools.openFile(cf, "r")
             counts.append(int(fh.read()))
             fh.close()
-        fh = IOTools.openFile(outfile, "w")
+        fh = iotools.openFile(outfile, "w")
         fh.write(str(min(counts)))
         fh.close
 
@@ -548,7 +548,7 @@ if PARAMS["calling_normalize"] is True:
     files have approximately the same number of 
     reads.
     '''
-        fh = IOTools.openFile("minreads")
+        fh = iotools.openFile("minreads")
         minreads = int(fh.read())
         fh.close
         PipelineChipseq.buildSimpleNormalizedBAM(infiles,
@@ -605,7 +605,7 @@ def makeReadCorrelationTable(infiles, outfile):
     '''
 
     correlation_cutoff = 5
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track\tcutoff\tpositions\tcoefficient\n")
 
     if len(infiles) < 2:
@@ -632,7 +632,7 @@ def makeReadCorrelationTable(infiles, outfile):
                 yield data
 
     for infile in infiles:
-        mat = numpy.array([x for x in selector(IOTools.openFile(infile, "r"))])
+        mat = numpy.array([x for x in selector(iotools.openFile(infile, "r"))])
         if len(mat) == 0:
             continue
 
@@ -1009,7 +1009,7 @@ def loadIntervalsFromBed(infile, outfile):
     c = E.Counter()
 
     # count tags
-    for bed in Bed.iterator(IOTools.openFile(infile, "r")):
+    for bed in Bed.iterator(iotools.openFile(infile, "r")):
 
         c.input += 1
 
@@ -1223,7 +1223,7 @@ def peakCoverage(infiles, outfile):
     '''uses coverageBed to count the total number of reads under peaks'''
 
     bamfile, bedfile = infiles
-    if IOTools.isEmpty(bedfile):
+    if iotools.isEmpty(bedfile):
         P.touch(outfile)
     else:
         statement = '''coverageBed -abam %(bamfile)s -b %(bedfile)s | gzip > %(outfile)s '''
@@ -1238,7 +1238,7 @@ def peakCoverage(infiles, outfile):
 def buildReadCoverageTable(infiles, outfile):
     '''Counts reads from .coverage files and writes out a matrix of the results from all .bed vs. all .bam files'''
 
-    out = IOTools.openFile(outfile, "w")
+    out = iotools.openFile(outfile, "w")
 
     bams = []
     beds = []
@@ -1250,7 +1250,7 @@ def buildReadCoverageTable(infiles, outfile):
         bam = name[0]
         bed = name[2]
         value = 0
-        for line in (IOTools.openFile(coverageFile).readlines()):
+        for line in (iotools.openFile(coverageFile).readlines()):
             value += int(line.split("\t")[5])
 
         if bam not in bams:
@@ -1575,7 +1575,7 @@ def makeReproducibility(infiles, outfile):
                 nexons_overlapping[x] += 1
                 nbases_overlapping[x] += ovl
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
     outs.write(
         "peakval\tnexons1\tnexons2\tnexons_union\tnexons_ovl\tpexons_ovl\tpexons_union\tnbases1\tnbases2\tnbases_union\tnbases_ovl\tpbases_ovl\tpbases_union\n")
     total_bases = nbases1[0] + nbases2[0] - nbases_overlapping[0]
@@ -1587,16 +1587,16 @@ def makeReproducibility(infiles, outfile):
                               str(nexons2[x]),
                               str(exons_union),
                               str(nexons_overlapping[x]),
-                              IOTools.prettyPercent(
+                              iotools.prettyPercent(
                                   nbases_overlapping[x], bases_union),
-                              IOTools.prettyPercent(bases_union, total_bases),
+                              iotools.prettyPercent(bases_union, total_bases),
                               str(nbases1[x]),
                               str(nbases2[x]),
                               str(bases_union),
                               str(nbases_overlapping[x]),
-                              IOTools.prettyPercent(
+                              iotools.prettyPercent(
                                   nbases_overlapping[x], bases_union),
-                              IOTools.prettyPercent(bases_union, total_bases),
+                              iotools.prettyPercent(bases_union, total_bases),
                               )) + "\n")
 
     outs.close()
@@ -1674,8 +1674,8 @@ def buildReferenceMotifs(infile, outfile):
 
     tmpdir = tempfile.mkdtemp()
     tmpname = os.path.join(tmpdir, "tmpfile")
-    tmpfile = IOTools.openFile(tmpname, "w")
-    for line in IOTools.openFile(infile, "r"):
+    tmpfile = iotools.openFile(tmpname, "w")
+    for line in iotools.openFile(infile, "r"):
         tmpfile.write(re.sub("[ \t]+", "_", line))
     tmpfile.close()
 
@@ -1773,7 +1773,7 @@ if PARAMS["tomtom_master_motif"] != "":
              "overlap", "query_consensus",
              "target_consensus", "orientation")) + "\n")
 
-        for line in IOTools.openFile(infile, "r"):
+        for line in iotools.openFile(infile, "r"):
             if line.startswith("#Query"):
                 continue
             data = line[:-1].split("\t")
@@ -1814,7 +1814,7 @@ if PARAMS["tomtom_master_motif"] != "":
 
         selected = []
         max_pvalue = float(PARAMS["tomtom_filter_pvalue"])
-        for line in IOTools.openFile(infile, "r"):
+        for line in iotools.openFile(infile, "r"):
             if line.startswith("#Query"):
                 continue
             (query_id, target_id,
@@ -1872,7 +1872,7 @@ def loadMotifInformation(infiles, outfile):
     outf.write("motif\n")
 
     for infile in infiles:
-        if IOTools.isEmpty(infile):
+        if iotools.isEmpty(infile):
             continue
         motif = P.snip(infile, ".motif")
         outf.write("%s\n" % motif)
@@ -2173,7 +2173,7 @@ def loadIntervalCounts(infile, outfile):
 @files_re(exportBigwig, combine("(.*).bigwig"), "bigwig.view")
 def viewBigwig(infiles, outfile):
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
     outs.write("# paste the following into the UCSC browser: \n")
 
     try:
@@ -2204,7 +2204,7 @@ def viewBigwig(infiles, outfile):
 def viewIntervals(infiles, outfiles):
 
     outfile_bed, outfile_code = outfiles
-    outs = IOTools.openFile(outfile_bed, "w")
+    outs = iotools.openFile(outfile_bed, "w")
     version = PARAMS["version"]
     for infile in infiles:
 
@@ -2213,7 +2213,7 @@ def viewIntervals(infiles, outfiles):
         outs.write(
             '''track name="interval_%(track)s_%(version)s" description="Intervals in %(track)s - version %(version)s" visibility=2\n''' % locals())
 
-        with IOTools.openFile(infile, "r") as f:
+        with iotools.openFile(infile, "r") as f:
             for bed in Bed.iterator(f):
                 # MACS intervals might be less than 0
                 if bed.start <= 0:
@@ -2233,7 +2233,7 @@ def viewIntervals(infiles, outfiles):
 
     filename = re.sub("^.*/ucsc_tracks/", "", dest)
 
-    outs = IOTools.openFile(outfile_code, "w")
+    outs = iotools.openFile(outfile_code, "w")
     outs.write("#paste the following into the UCSC browser:\n")
     outs.write(
         "http://wwwfgu.anat.ox.ac.uk/~andreas/ucsc_tracks/%(filename)s\n" % locals())

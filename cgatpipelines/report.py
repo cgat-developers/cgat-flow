@@ -9,15 +9,15 @@ import os
 import sys
 import ruffus
 
-import CGATCore.Experiment as E
-import CGATCore.Pipeline as P
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.pipeline as P
+import cgatcore.iotools as iotools
 
 
 def run_report(clean=True,
                with_pipeline_status=True,
                pipeline_status_format="svg"):
-    '''run CGATreport.
+    '''run cgatreport.
 
     This will also run ruffus to create an svg image of the pipeline
     status unless *with_pipeline_status* is set to False. The image
@@ -46,14 +46,14 @@ def run_report(clean=True,
     report_engine = params.get("report_engine", "cgatreport")
     assert report_engine in ('sphinxreport', 'cgatreport')
 
-    docdir = os.path.join(dirname, "pipeline_docs", IOTools.snip(basename, ".py"))
+    docdir = os.path.join(dirname, "pipeline_docs", iotools.snip(basename, ".py"))
     themedir = os.path.join(dirname, "pipeline_docs", "themes")
     relpath = os.path.relpath(docdir)
     trackerdir = os.path.join(docdir, "trackers")
 
     # use a fake X display in order to avoid windows popping up
     # from R plots.
-    xvfb_command = IOTools.which("xvfb-run")
+    xvfb_command = iotools.which("xvfb-run")
 
     # permit multiple servers using -d option
     if xvfb_command:

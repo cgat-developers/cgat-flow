@@ -131,10 +131,10 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 See :ref:`Tutorials` for a comprehensive introduction of how to run a
-CGATPipeline.
+cgatPipeline.
 
 
 Pipeline Input
@@ -245,13 +245,13 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.peakcalling as peakcalling
-import CGAT.BamTools.bamtools as Bamtools
-import CGATCore.Database as DB
+import cgat.BamTools.bamtools as Bamtools
+import cgatcore.database as DB
 from cgatpipelines.report import run_report
 
 #########################################################################
@@ -485,7 +485,7 @@ def loadFragmentLengthDistributions(infiles, outfile):
     only be computed if sample is paired-end if samples are not this function
     is not run'''
     infile = infiles[0].replace(".bam", ".fraglengths")
-    if len(IOTools.open_file(infile).readlines()) > 2:
+    if len(iotools.open_file(infile).readlines()) > 2:
         P.load(infile, outfile)
     else:
         os.system("touch %s" % outfile)
@@ -626,7 +626,7 @@ def buildBigWig(infile, outfile):
 
 
 # These steps are required for IDR and are only run if IDR is requested
-if int(PARAMS['IDR_run']) == 1:
+if PARAMS.get('IDR_run', False):
     @follows(mkdir("pooled_bams.dir"))
     @split(filterChipBAMs,
            r"pooled_bams.dir/*_pooled_filtered.bam")
@@ -708,7 +708,7 @@ else:
         pass
 
 
-if int(PARAMS['IDR_run']) == 1:
+if PARAMS.get('IDR_run', False):
     @follows(mkdir("peakcalling_bams.dir"))
     @subdivide((filterChipBAMs, makePooledBams),
                regex("(.*)_bams.dir/(.*).bam"),
@@ -787,7 +787,7 @@ elif PARAMS['IDR_poolinputs'] == "all":
         peakcalling.mergeSortIndex(infiles, outfile)
 
 
-elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
+elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS.get('IDR_run', False):
     @active_if(PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
     @split(filterInputBAMs, r'IDR_inputs.dir/*.bam')
@@ -823,9 +823,18 @@ elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] != 1:
             peakcalling.mergeSortIndex(innames, out)
 
 
-elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS['IDR_run'] == 1:
+elif PARAMS['IDR_poolinputs'] == "condition" and PARAMS.get('IDR_run'):
     @active_if(PARAMS["have_input"] != 0)
     @follows(mkdir('IDR_inputs.dir'))
+    @transform(makePooledInputs, regex("IDR_inputs.dir/(.*).bam"),
+               r'IDR_inputs.dir/\1.bam')
+    def makeIDRInputBams(infiles, outfiles):
+        '''
+        If IDR is going to be run, pooled inputs are generated above so
+        they don't need to be generated again if requested.
+        '''
+
+else:
     @follows(mkdir('IDR_inputs.dir'))
     @transform(makePooledInputs, regex("IDR_inputs.dir/(.*).bam"),
                r'IDR_inputs.dir/\1.bam')
@@ -854,7 +863,7 @@ def makeBamInputTable(outfile):
 
     '''
     ks = inputD.keys()
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     out.write('ChipBam\tInputBam\n')
     bamfiles = os.listdir("peakcalling_bams.dir")
 
@@ -900,10 +909,10 @@ def mergeInsertSizes(infiles, outfile):
     '''
     Combines insert size outputs into one file
     '''
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
     out.write("filename\tmode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
     for infile in infiles:
-        res = IOTools.open_file(infile).readlines()
+        res = iotools.open_file(infile).readlines()
         out.write("%s\t%s\n" % (infile, res[-1].strip()))
     out.close()
 
@@ -1139,7 +1148,8 @@ PEAKCALLERS = []
 # single peakcaller at a time
 IDRPEAKCALLERS = []
 # create dictionary of peakcallers and thier functions
-mapToPeakCallers = {'macs2': (callMacs2peaks,),
+mapToPeakCallers = {'': (callMacs2peaks,),
+                    'macs2': (callMacs2peaks,),
                     'sicer': (runSicer,), }
 
 # Call the peakcallers specified in the list
@@ -1183,14 +1193,13 @@ else:
 @active_if(IDR_ON)
 @follows(peakcalling_tasks)
 @follows(mkdir("peaks_for_IDR.dir"))
-@transform(mapToPeakCallers[PARAMS['peakcalling_idrpeakcaller']],
+@transform(mapToPeakCallers[PARAMS.get('peakcalling_idrpeakcaller', 'macs2')],
            regex("(.*)/(.*)"),
            r"peaks_for_IDR.dir/\2.IDRpeaks")
 def getIDRInputs(infile, outfile):
-    '''
-    Get the resulting peaks file from peakcalling
-    and place them in IDR.dir so they can all be
-    easilly found and indentified for IDR analysis
+    '''Get the resulting peaks file from peakcalling and place them in
+    IDR.dir so they can all be easily found and indentified for IDR
+    analysis
 
     inputs
     ======
@@ -1258,7 +1267,7 @@ def splitForIDR(infile, outfiles):
 
         pairstring = "%s_v_%s" % (p1, p2)
 
-        out = IOTools.open_file("IDR.dir/%s.dummy" % pairstring, "w")
+        out = iotools.open_file("IDR.dir/%s.dummy" % pairstring, "w")
         out.write("%s\n" % "\n".join(p))
         out.close()
 
@@ -1278,7 +1287,7 @@ def runIDR(infile, outfile):
     means?
 
     '''
-    lines = [line.strip() for line in IOTools.open_file(infile).readlines()]
+    lines = [line.strip() for line in iotools.open_file(infile).readlines()]
     infile1, infile2, setting, oraclefile, condition, tissue = lines
     options = PARAMS['IDR_options']
 
@@ -1302,7 +1311,7 @@ def runIDR(infile, outfile):
         idrPARAMS, options, oraclefile, test=True)
 
     P.run(statement)
-    lines = IOTools.open_file(T).readlines()
+    lines = iotools.open_file(T).readlines()
     os.remove(T)
     os.remove('%s.log' % T)
 
@@ -1322,7 +1331,7 @@ def runIDR(infile, outfile):
         IDR failed for %(infile1)s vs %(infile2)s - fewer than 20\
         peaks in the merged peak list\
         *******************************************************""" % locals())
-        out = IOTools.open_file(outfile, "w")
+        out = iotools.open_file(outfile, "w")
         out.write("IDR FAILED - NOT ENOUGH PEAKS IN MERGED PEAK LIST")
         out.close()
 
@@ -1426,7 +1435,7 @@ def filterIDR(infile, outfiles):
     else:
         T = ((0, 0, 0, 0, 0, "FALSE"))
 
-    out = IOTools.open_file(outfiles[1], "w")
+    out = iotools.open_file(outfiles[1], "w")
     out.write("%s\n" % "\t".join(H))
     out.write("%s\n" % "\t".join([str(t) for t in T]))
 

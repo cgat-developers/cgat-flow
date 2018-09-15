@@ -48,8 +48,8 @@ import sys
 import time
 import datetime
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 def main(argv=None):
@@ -76,7 +76,7 @@ def main(argv=None):
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H:%M:%S')
     filename = "CWD_%s" % st
     E.info("outputting directory state to %s" % filename)
-    with IOTools.openFile(filename, "w") as outf:
+    with iotools.openFile(filename, "w") as outf:
         outf.write("##contents of cwd on %s\n\n" % st)
         for directory, files in dir2files.items():
             for file in files:

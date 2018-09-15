@@ -132,15 +132,15 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
-import CGATCore.Database as Database
+import cgatcore.experiment as E
+import cgatcore.database as Database
 import sys
 import os
 import glob
 import sqlite3
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 ###################################################
 ###################################################
@@ -784,7 +784,7 @@ def buildJunctionsDB(infiles, outfile):
             E.warn("can't find junctions file '%s'" % junctions_file)
             continue
 
-        inf = IOTools.openFile(junctions_file)
+        inf = iotools.openFile(junctions_file)
         for line in inf:
             if line.startswith("#"):
                 continue
@@ -969,7 +969,7 @@ def loadMissedReadCounts(infiles, outfile):
     '''load summary table of numbers of missed reads.'''
 
     def _getlines(inf):
-        return len(IOTools.openFile(inf).readlines()) - 1
+        return len(iotools.openFile(inf).readlines()) - 1
 
     tmpfile = P.getTempFile()
 

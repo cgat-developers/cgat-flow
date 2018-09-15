@@ -37,8 +37,8 @@ Command line options
 import os
 import sys
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 def main(argv=None):
@@ -68,11 +68,11 @@ def main(argv=None):
     for filename in filenames:
         c.checked += 1
         if os.path.exists(filename + ".log"):
-            if IOTools.isComplete(filename + ".log"):
+            if iotools.isComplete(filename + ".log"):
                 c.complete += 1
                 continue
 
-        if IOTools.isComplete(filename):
+        if iotools.isComplete(filename):
             c.complete += 1
             continue
 

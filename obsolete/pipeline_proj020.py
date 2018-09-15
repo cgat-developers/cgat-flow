@@ -16,7 +16,7 @@ The project 020 pipeline processes reads from a gene trap screen experiment to i
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -69,7 +69,7 @@ set the configuration variables:
    :py:data:`annotations_database` 
    :py:data:`annotations_dir`
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -121,10 +121,10 @@ import gzip
 import sqlite3
 import io
 import fileinput
-import CGAT.Fastq as fq
+import cgat.Fastq as fq
 import logging as L
-import CGATCore.Experiment as E
-import CGATPipelines.PipelineMapping as PipelineMapping
+import cgatcore.experiment as E
+import cgatPipelines.PipelineMapping as PipelineMapping
 from ruffus import *
 
 
@@ -132,7 +132,7 @@ from ruffus import *
 ###################################################################
 ###################################################################
 # Pipeline configuration
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(["pipeline.ini"])
 PARAMS = P.PARAMS
 USECLUSTER = True
@@ -304,7 +304,7 @@ def trimGeneTrapVectorRead1(infile, outfile):
 
     #contaminant_file = PARAMS["trim_contaminants"]
     #adaptors = []
-    # for entry in FastaIterator.FastaIterator( IOTools.openFile( contaminant_file ) ):
+    # for entry in FastaIterator.FastaIterator( iotools.openFile( contaminant_file ) ):
     #    adaptors.append( "-a %s" % entry.sequence )
     #adaptors= " ".join(adaptors)
 

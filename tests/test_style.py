@@ -1,4 +1,4 @@
-'''test_style - test coding style confirmation of CGAT code
+'''test_style - test coding style confirmation of cgat code
 ===========================================================
 
 :Author: Andreas Heger
@@ -9,7 +9,7 @@
 Purpose
 -------
 
-This script runs pep8 on all scripts in the CGAT
+This script runs pep8 on all scripts in the cgat
 code collection.
 
 This script is best run within nosetests::
@@ -26,8 +26,8 @@ from nose.tools import ok_
 EXPRESSIONS = (
     ('tests', 'tests/*.py'),
     ('scripts', 'scripts/*.py'),
-    ('CGATPipelines', 'CGATPipelines/*.py'),
-    ('trackers', 'CGATPipelines/pipeline_docs/*/trackers/*.py'))
+    ('cgatPipelines', 'CGATPipelines/*.py'),
+    ('trackers', 'cgatPipelines/pipeline_docs/*/trackers/*.py'))
 
 # Codes to ignore in the pep8 BaseReport
 IGNORE = set(('E101',  # indentation contains mixed spaces and tabs

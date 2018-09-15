@@ -34,7 +34,7 @@ Both are prefixed by ``#`` to mark them as comments::
   # timeit_header                           : None
   # timeit_name                             : all
   BuildingPipelines.rst  InstallingPipelines.rst  PipelineReports.rst      Reference.rst  UsingPipelines.rst  _static     cgatreport.log  conf.py       images     modules      out           pipelinemodules  plots   scripts
-  CGATPipelines.rst      Makefile                 PipelinesBackground.rst  Release.rst    _build              _templates  collect.py      glossary.rst  index.rst  modules.rst  pipeline.log  pipelines        python  scripts.rst
+  cgatPipelines.rst      Makefile                 PipelinesBackground.rst  Release.rst    _build              _templates  collect.py      glossary.rst  index.rst  modules.rst  pipeline.log  pipelines        python  scripts.rst
   # job finished in 0 seconds at Mon Sep 14 17:00:05 2015 --  0.06  0.05  0.00  0.01 -- 1bbb4ad7-c20b-4259-9dee-df2ad69d197f
 
 The header contains information about:
@@ -74,7 +74,7 @@ Command line options
 import os
 import sys
 import subprocess
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 
 
 def main(argv=None):

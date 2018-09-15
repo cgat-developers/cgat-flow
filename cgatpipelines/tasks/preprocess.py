@@ -35,13 +35,13 @@ Reference
 import re
 import os
 import sqlite3
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
-import CGATCore.IOTools as IOTools
-import CGAT.Fastq as Fastq
+import cgatcore.iotools as iotools
+import cgat.Fastq as Fastq
 import cgatpipelines.tasks.mapping as Mapping
-import CGAT.Sra as Sra
-import CGATCore.Experiment as E
+import cgat.Sra as Sra
+import cgatcore.experiment as E
 
 
 def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
@@ -102,11 +102,11 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
             E.warn("No table found for {}".format(t))
 
     if len(found_contaminants) == 0:
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     # read contaminants from existing file
-    with IOTools.open_file(contaminants_file, "r") as inf:
+    with iotools.open_file(contaminants_file, "r") as inf:
         known_contaminants = [l.split() for l in inf
                               if not l.startswith("#") and l.strip()]
         known_contaminants = {" ".join(x[:-1]): x[-1]
@@ -116,7 +116,7 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
     # in the list of known contaminants, otherwise don't report!
 
     matched_contaminants = set()
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         for found_source, found_seq in found_contaminants:
             possible_source = found_source.split(" (")[0]
 

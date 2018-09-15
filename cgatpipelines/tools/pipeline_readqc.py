@@ -15,7 +15,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning`
-on general information how to use CGAT pipelines.
+on general information how to use cgat pipelines.
 
 When pre-processing reads before mapping, the workflow of the pipeline
 is as follows:
@@ -125,13 +125,13 @@ import shutil
 import sqlite3
 import glob
 
-# import modules from the CGAT code collection
-import CGATCore.Experiment as E
+# import modules from the cgat code collection
+import cgatcore.experiment as E
 import cgatpipelines.tasks.mapping as mapping
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 import cgatpipelines.tasks.readqc as readqc
 import cgatpipelines.tasks.preprocess as preprocess
-import CGATCore.IOTools as IOTools
+import cgatcore.iotools as iotools
 from cgatpipelines.report import run_report
 
 
@@ -173,7 +173,7 @@ def unprocessReads(infiles, outfiles):
 if P.get_params().get("preprocessors", None):
     if P.get_params()["auto_remove"]:
         # check if FastQC has been run
-        for x in IOTools.flatten([glob.glob(y) for y in
+        for x in iotools.flatten([glob.glob(y) for y in
                                   P.get_params()["input_globs"].get("default", INPUT_FORMATS)]):
             f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
@@ -220,7 +220,7 @@ if P.get_params().get("preprocessors", None):
                    regex(SEQUENCEFILES_REGEX),
                    r"fasta.dir/\1.fasta")
         def aggregateAdaptors(infile, outfile):
-            IOTools.touch_file(outfile)
+            iotools.touch_file(outfile)
 
     @follows(mkdir("processed.dir"),
              aggregateAdaptors)
@@ -379,7 +379,7 @@ def summarizeFastQC(infiles, outfiles):
     for key, df in dfs.items():
         fn = re.sub("basic_statistics", key, outfiles[0])
         E.info("writing to {}".format(fn))
-        with IOTools.open_file(fn, "w") as outf:
+        with iotools.open_file(fn, "w") as outf:
             df.to_csv(outf, sep="\t", index=True)
 
 
@@ -454,7 +454,7 @@ def runFastqScreen(infiles, outfile):
 
     tempdir = P.get_temp_dir(".")
     conf_fn = os.path.join(tempdir, "fastq_screen.conf")
-    with IOTools.open_file(conf_fn, "w") as f:
+    with iotools.open_file(conf_fn, "w") as f:
         for i, k in P.get_params().items():
             if i.startswith("fastq_screen_database"):
                 f.write("DATABASE\t%s\t%s\n" % (i[22:], k))
@@ -463,7 +463,7 @@ def runFastqScreen(infiles, outfile):
     statement = m.build((infiles,), outfile)
     P.run(statement, job_memory="8G")
     shutil.rmtree(tempdir)
-    IOTools.touch_file(outfile)
+    iotools.touch_file(outfile)
 
 
 @active_if(P.get_params()["fastq_screen_run"] == 1)
@@ -472,11 +472,11 @@ def runFastqScreen(infiles, outfile):
 def summarizeFastqScreen(infiles, outfiles):
     all_files = []
     for infile in infiles:
-        all_files.extend(glob.glob(IOTools.snip(infile, "screen") + "*_screen.txt"))
+        all_files.extend(glob.glob(iotools.snip(infile, "screen") + "*_screen.txt"))
     if len(all_files) == 0:
         E.warn("no fastqcscreen results to concatenate")
         for x in outfiles:
-            IOTools.touch_file(x)
+            iotools.touch_file(x)
         return
     df_summary, df_details = readqc.read_fastq_screen(
         all_files)

@@ -57,13 +57,13 @@ except ImportError:
     pass
 
 ##########################
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.IndexedGenome as IndexedGenome
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools as BamTools
-import CGAT.Bed as Bed
-import CGAT.WrapperMACS as WrapperMACS
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgat.IndexedGenome as IndexedGenome
+import cgatcore.iotools as iotools
+import cgat.BamTools as BamTools
+import cgat.Bed as Bed
+import cgat.WrapperMACS as WrapperMACS
 
 
 def getPeakShiftFromMacs(infile):
@@ -81,7 +81,7 @@ def getPeakShiftFromMacs(infile):
     '''
 
     shift = None
-    with IOTools.openFile(infile, "r") as ins:
+    with iotools.openFile(infile, "r") as ins:
         rx = re.compile("#2 predicted fragment length is (\d+) bps")
         r2 = re.compile("#2 Use (\d+) as shiftsize, \d+ as fragment length")
         r3 = re.compile("#1 fragment size = (\d+)")
@@ -134,7 +134,7 @@ def getPeakShiftFromZinba(infile):
     # $offset
     # [1] 125
 
-    with IOTools.openFile(infile, "r") as ins:
+    with iotools.openFile(infile, "r") as ins:
         lines = ins.readlines()
         for i, line in enumerate(lines):
             if line.startswith("$offset"):
@@ -162,7 +162,7 @@ def getPeakShiftFromSPP(infile):
 
     # search for
     # shift\t125
-    with IOTools.openFile(infile, "r") as ins:
+    with iotools.openFile(infile, "r") as ins:
         lines = ins.readlines()
         for i, line in enumerate(lines):
             if line.startswith("shift\t"):
@@ -476,7 +476,7 @@ def buildNormalizedBAM(infiles, outfile, normalize=True):
 
     pysam_out.close()
 
-    logs = IOTools.openFile(outfile + ".log", "w")
+    logs = iotools.openFile(outfile + ".log", "w")
     logs.write("# min_reads=%i, threshold= %5.2f\n" %
                (min_reads, threshold))
     logs.write("set\tcounts\tpercent\n")
@@ -647,7 +647,7 @@ def summarizeMACS(infiles, outfile):
 
     keys = [x[1] for x in map_targets]
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     headers = []
     for k in keys:
@@ -659,7 +659,7 @@ def summarizeMACS(infiles, outfile):
 
     for infile in infiles:
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with iotools.openFile(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -783,14 +783,14 @@ def summarizeMACSFDR(infiles, outfile):
 
     fdr_thresholds = numpy.arange(0, 1.05, 0.05)
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track\t%s\n" % "\t".join(map(str, fdr_thresholds)))
 
     for infile in infiles:
         called = []
         track = P.snip(os.path.basename(infile), ".macs")
         infilename = infile + "_peaks.xls.gz"
-        inf = IOTools.openFile(infilename)
+        inf = iotools.openFile(infilename)
         peaks = list(WrapperMACS.iterateMacsPeaks(inf))
 
         for threshold in fdr_thresholds:
@@ -919,7 +919,7 @@ def summarizeMACS2(infiles, outfile):
 
     keys = [x[1] for x in map_targets]
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     headers = []
     for k in keys:
@@ -931,7 +931,7 @@ def summarizeMACS2(infiles, outfile):
 
     for infile in infiles:
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with iotools.openFile(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -978,14 +978,14 @@ def summarizeMACS2FDR(infiles, outfile):
     # PARAMS accessed here - should be passed as paprmeter to function
     fdr_threshold = PARAMS["macs2_max_qvalue"]  # numpy.arange( 0, 1.05, 0.05 )
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track\t%s\n" % str(fdr_threshold))
 
     for infile in infiles:
         called = []
         track = P.snip(os.path.basename(infile), ".macs2")
         infilename = infile + "_peaks.xls.gz"
-        inf = IOTools.openFile(infilename)
+        inf = iotools.openFile(infilename)
         peaks = list(WrapperMACS.iterateMacs2Peaks(inf))
 
         # for threshold in fdr_thresholds:
@@ -1038,7 +1038,7 @@ def bedGraphToBigwig(infile, contigsfile, outfile,
 
     P.run()
 
-    if os.path.exists(outfile) and not IOTools.isEmpty(outfile):
+    if os.path.exists(outfile) and not iotools.isEmpty(outfile):
         os.remove(infile)
 
 
@@ -1319,7 +1319,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
     id = 0
 
     counter = E.Counter()
-    with IOTools.openFile(filename_bed, "r") as ins:
+    with iotools.openFile(filename_bed, "r") as ins:
         for peak in WrapperMACS.iterateMacsPeaks(ins):
 
             if peak.fdr > max_qvalue:
@@ -1344,7 +1344,7 @@ def loadMACS(infile, outfile, bamfile, controlfile=None):
 
     ###################################################################
     # output filtering summary
-    outf = IOTools.openFile("%s.tsv.gz" % outfile, "w")
+    outf = iotools.openFile("%s.tsv.gz" % outfile, "w")
     outf.write("category\tcounts\n")
     outf.write("%s\n" % counter.asTable())
     outf.close()
@@ -1520,7 +1520,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
     id = 0
 
     counter = E.Counter()
-    with IOTools.openFile(filename_bed, "r") as ins:
+    with iotools.openFile(filename_bed, "r") as ins:
         for peak in WrapperMACS.iterateMacs2Peaks(ins):
 
             if peak.qvalue > max_qvalue:
@@ -1545,7 +1545,7 @@ def loadMACS2(infile, outfile, bamfile, controlfile=None):
 
     ###################################################################
     # output filtering summary
-    outf = IOTools.openFile("%s.tsv.gz" % outfile, "w")
+    outf = iotools.openFile("%s.tsv.gz" % outfile, "w")
     outf.write("category\tcounts\n")
     outf.write("%s\n" % counter.asTable())
     outf.close()
@@ -1699,7 +1699,7 @@ def loadZinba(infile, outfile, bamfile,
     #######################################################################
     if not os.path.exists(infilename):
         E.warn("could not find %s" % infilename)
-    elif IOTools.isEmpty(infile):
+    elif iotools.isEmpty(infile):
         E.warn("no data in %s" % infilename)
     else:
 
@@ -1927,7 +1927,7 @@ def summarizeSICER(infiles, outfile):
 
     keys = [x[1] for x in map_targets]
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     # build headers
     headers = []
@@ -1942,7 +1942,7 @@ def summarizeSICER(infiles, outfile):
 
     for infile in infiles:
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with iotools.openFile(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -2098,7 +2098,7 @@ def summarizePeakRanger(infiles, outfile):
 
     keys = [x[1] for x in map_targets]
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     # build headers
     headers = []
@@ -2113,7 +2113,7 @@ def summarizePeakRanger(infiles, outfile):
 
     for infile in infiles:
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile + "_details") as f:
+        with iotools.openFile(infile + "_details") as f:
             for line in f:
                 if "#region_chr" in line:
                     break
@@ -2287,7 +2287,7 @@ def loadSPP(infile, outfile, bamfile, controlfile=None):
 def summarizeSPP(infiles, outfile):
     '''summarize SPP results by parsing spp output file.'''
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
 
     outf.write(
         "track\ttreatment\ttreatment_nreads\tcontrol\tcontrol_nreads\tshift\tfdr\tthreshold\tnpeaks\n")
@@ -2296,7 +2296,7 @@ def summarizeSPP(infiles, outfile):
 
         track = P.snip(os.path.basename(infile), ".spp")
 
-        with IOTools.openFile(infile) as inf:
+        with iotools.openFile(infile) as inf:
             files, reads = [], []
             for line in inf:
                 if line.startswith("opened"):
@@ -2443,9 +2443,9 @@ def createBedgraphFile(infile, outfile, windows_file, overlap):
 
 
 def removeBackground(sample_bedgraph, input_bedgraph, outfile):
-    inf = IOTools.openFile(sample_bedgraph, "r").readlines()
-    contf = IOTools.openFile(input_bedgraph, "r").readlines()
-    outf = IOTools.openFile(outfile, "w")
+    inf = iotools.openFile(sample_bedgraph, "r").readlines()
+    contf = iotools.openFile(input_bedgraph, "r").readlines()
+    outf = iotools.openFile(outfile, "w")
 
     for i in range(0, len(inf)):
         line_inf = inf[i].split()
@@ -2583,10 +2583,10 @@ def summarizeBroadPeak(infiles, outfile, intervals=False):
         P.warn("Pipeline for summarizing supervised broadpeak runs"
                " has not yet been written... summary file will be"
                " empty")
-        IOTools.openFile(oufitle, "w").close()
+        iotools.openFile(oufitle, "w").close()
 
     else:
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         outf.write("track\tnpeaks\tp\tq\ts1\ts2\n")
         for infile in infiles:
             for root, dirs, filenames in os.walk(infile):
@@ -2630,10 +2630,10 @@ def makeIntervalCorrelation(infiles, outfile, field, reference):
             ix.add(contig, start, end, peakval)
         idx.append(ix)
         tracks.append(track)
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
     outs.write("contig\tstart\tend\tid\t" + "\t".join(tracks) + "\n")
 
-    for bed in Bed.iterator(infile=IOTools.openFile(reference, "r")):
+    for bed in Bed.iterator(infile=iotools.openFile(reference, "r")):
 
         row = []
         for ix in idx:
@@ -2756,7 +2756,7 @@ def loadIntervalsFromBed(bedfile, track, outfile,
 
     # count tags
     for bed in Bed.iterator(
-            IOTools.openFile(bedfile, "r")):
+            iotools.openFile(bedfile, "r")):
 
         c.input += 1
 

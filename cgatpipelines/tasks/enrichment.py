@@ -11,8 +11,8 @@ import os
 import tempfile
 import collections
 import shutil
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 import sqlite3
 
 

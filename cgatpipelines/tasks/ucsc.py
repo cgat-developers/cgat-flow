@@ -29,10 +29,10 @@ Reference
 import os
 import collections
 import sqlalchemy
-import CGATCore.Experiment as E
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
+import cgatcore.experiment as E
+import cgat.GTF as GTF
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 
 
 def connectToUCSC(host="genome-mysql.cse.ucsc.edu",
@@ -193,7 +193,7 @@ def getRefSeqFromUCSC(dbhandle, outfile, remove_duplicates=False):
     ORDER by chrom, cdsStart
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     cc = dbhandle.execute(statement)
 
@@ -281,13 +281,13 @@ def getCpGIslandsFromUCSC(dbhandle, outfile):
     E.debug("executing sql statement: %s" % sql)
     try:
         cc = dbhandle.execute(sql)
-        outfile = IOTools.open_file(outfile, "w")
+        outfile = iotools.open_file(outfile, "w")
         for data in cc.fetchall():
             outfile.write("\t".join(map(str, data)) + "\n")
         outfile.close()
     except Exception:
         E.warn("Failed to connect to table %s. %s is empty" % (table, outfile))
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 def readUCSCFile(infile):

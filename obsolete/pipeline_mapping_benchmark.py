@@ -9,7 +9,7 @@ Read Mapping parameter titration pipeline
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -41,11 +41,11 @@ Code
 """
 import sys
 import os
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 from ruffus import *
 import pysam
-import CGATPipelines.PipelineMapping as PipelineMapping
-from CGATCore import Pipeline as P
+import cgatPipelines.PipelineMapping as PipelineMapping
+from cgatcore import pipeline as P
 
 USECLUSTER = True
 

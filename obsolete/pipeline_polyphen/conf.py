@@ -15,23 +15,23 @@
 import sys
 import os
 
-import CGAT.Pipeline as P
-import CGATPipelines
+import cgat.Pipeline as P
+import cgatPipelines
 
 ################################################################
-# Options related to CGAT pipelines
+# Options related to cgat pipelines
 
 # path were documentation source resides.
 # Use environment variable SPHINX_DOCSDIR.
-# If unset, take the location of CGATPipelines
+# If unset, take the location of cgatPipelines
 docsdir = os.environ.get("SPHINX_DOCSDIR",
-                         os.path.join(os.path.dirname(CGATPipelines.__file__),
+                         os.path.join(os.path.dirname(cgatPipelines.__file__),
                                       'pipeline_docs'))
 
 if not os.path.exists(docsdir):
     raise ValueError("documentation directory '%s' not found" % docsdir)
 
-themedir = os.path.join(os.path.dirname(CGATPipelines.__file__),
+themedir = os.path.join(os.path.dirname(cgatPipelines.__file__),
                         'pipeline_docs',
                         'themes')
 logopath = os.path.join(themedir, "cgat_logo.png")
@@ -41,11 +41,11 @@ logopath = os.path.join(themedir, "cgat_logo.png")
 # directory and the common one.
 
 # PATH were code for pipelines is stored
-pipelinesdir = os.path.dirname(CGATPipelines.__file__)
+pipelinesdir = os.path.dirname(cgatPipelines.__file__)
 
 # The default configuration file - 'inifile' is read by
 # sphinx-report.
-inifile = os.path.join(os.path.dirname(CGATPipelines.__file__),
+inifile = os.path.join(os.path.dirname(cgatPipelines.__file__),
                        'configuration',
                        'pipeline.ini')
 
@@ -108,12 +108,12 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.pngmath',
               'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
-              'CGATReport.only_directives',
-              'CGATReport.report_directive',
+              'cgatReport.only_directives',
+              'cgatReport.report_directive',
               'sphinx.ext.inheritance_diagram',
-              'CGATReport.errors_directive',
-              'CGATReport.warnings_directive',
-              'CGATReport.roles']
+              'cgatReport.errors_directive',
+              'cgatReport.warnings_directive',
+              'cgatReport.roles']
 
 if P.CONFIG.has_section('intersphinx'):
     intersphinx_mapping = dict(
@@ -122,9 +122,9 @@ if P.CONFIG.has_section('intersphinx'):
 
 # Included at the end of each rst file
 rst_epilog = '''
-.. _CGAT Training Programme: http://www.cgat.org
-.. _CGAT Pipelines: https://www.cgat.org/downloads/public/cgat/documentation/Pipelines.html#pipelines
-.. _CGAT Scripts: https://www.cgat.org/downloads/public/cgat/documentation/cgat.html#cgat
+.. _cgat Training Programme: http://www.cgat.org
+.. _cgat Pipelines: https://www.cgat.org/downloads/public/cgat/documentation/Pipelines.html#pipelines
+.. _cgat Scripts: https://www.cgat.org/downloads/public/cgat/documentation/cgat.html#cgat
 .. _pysam: http://code.google.com/p/pysam/
 .. _samtools: http://samtools.sourceforge.net/
 .. _tabix: http://samtools.sourceforge.net/tabix.shtml/
@@ -166,7 +166,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = 'test'
-copyright = '2014, %CGAT%'
+copyright = '2014, %cgat%'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -323,7 +323,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('index', 'test.tex', 'test Documentation',
-     '\\%CGAT\\%', 'manual'),
+     '\\%cgat\\%', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -353,7 +353,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'test', 'test Documentation',
-     ['%CGAT%'], 1)
+     ['%cgat%'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -367,7 +367,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'test', 'test Documentation',
-     '%CGAT%', 'test', 'One line description of project.',
+     '%cgat%', 'test', 'One line description of project.',
      'Miscellaneous'),
 ]
 

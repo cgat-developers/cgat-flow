@@ -6,10 +6,10 @@ intervalannotation.py - Tasks associated with annotation of genomic intervals
 import shutil
 import os
 import sqlite3
-import CGATCore.IOTools as IOTools
-import CGAT.IndexedGenome as IndexedGenome
-import CGAT.Bed as Bed
-from CGATCore import Pipeline as P
+import cgatcore.iotools as iotools
+import cgat.IndexedGenome as IndexedGenome
+import cgat.Bed as Bed
+from cgatcore import pipeline as P
 
 ############################################################
 ############################################################
@@ -30,7 +30,7 @@ def exportIntervalsAsBed(database, query, outfile):
     cc = dbhandle.cursor()
     cc.execute(query)
 
-    outs = IOTools.open_file(outfile, "w")
+    outs = iotools.open_file(outfile, "w")
     for result in cc:
         contig, start, end, interval_id, score = result
         outs.write("%s\t%i\t%i\t%s\t%s\n" %
@@ -72,8 +72,8 @@ def BedFileVenn(infiles, outfile):
 
     elif len(infiles) == 2:
 
-        if IOTools.is_empty(infiles[0]) or IOTools.isEmpty(infiles[1]):
-            IOTools.touch_file(outfile)
+        if iotools.is_empty(infiles[0]) or iotools.isEmpty(infiles[1]):
+            iotools.touch_file(outfile)
         else:
             statement = '''
         intersectBed -u -a %s -b %s 
@@ -89,16 +89,16 @@ def BedFileVenn(infiles, outfile):
 
         # need to merge incrementally
         fn = infiles[0]
-        if IOTools.is_empty(infiles[0]):
-            IOTools.touch_file(outfile)
+        if iotools.is_empty(infiles[0]):
+            iotools.touch_file(outfile)
             return
 
         statement = '''mergeBed -i %(fn)s > %(tmpfile)s'''
         P.run(statement)
 
         for fn in infiles[1:]:
-            if IOTools.is_empty(infiles[0]):
-                IOTools.touch_file(outfile)
+            if iotools.is_empty(infiles[0]):
+                iotools.touch_file(outfile)
                 os.unlink(tmpfile)
                 return
 
@@ -136,7 +136,7 @@ def makeIntervalCorrelation(infiles, outfile, field, reference):
             ix.add(contig, start, end, peakval)
         idx.append(ix)
         tracks.append(track)
-    outs = IOTools.open_file(outfile, "w")
+    outs = iotools.open_file(outfile, "w")
     outs.write("contig\tstart\tend\tid\t" + "\t".join(tracks) + "\n")
 
     for bed in Bed.iterator(infile=open(reference, "r")):

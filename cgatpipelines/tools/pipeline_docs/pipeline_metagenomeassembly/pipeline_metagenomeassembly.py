@@ -44,7 +44,7 @@ and the expected complexity of the sample. We make no effort here to advise on k
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -88,7 +88,7 @@ Optional inputs
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -145,12 +145,12 @@ import re
 import sys
 
 import sqlite3
-import IOTools
+import iotools
 from rpy2.robjects import r as R
-import PipelineMapping
-import PipelineGenomeAssembly
-import PipelineMapping
-import PipelineMappingQC
+import pipelineMapping
+import pipelineGenomeAssembly
+import pipelineMapping
+import pipelineMappingQC
 
 ###################################################
 ###################################################
@@ -159,7 +159,7 @@ import PipelineMappingQC
 ###################################################
 
 # load options from the config file
-import Pipeline as P
+import pipeline as P
 P.getParameters( 
     "pipeline.ini" )
 
@@ -170,7 +170,7 @@ PARAMS = P.PARAMS
 ###################################################################
 ## Helper functions mapping tracks to conditions, etc
 ###################################################################
-import PipelineTracks
+import pipelineTracks
 
 # collect fastq.gz tracks
 TRACKS = PipelineTracks.Tracks( PipelineTracks.Sample3 ).loadFromDirectory( 
@@ -237,7 +237,7 @@ def loadReadCounts( infiles, outfile ):
     outf.write( "track\ttotal_reads\n")
     for infile in infiles:
         track = P.snip(infile, ".nreads")
-        lines = IOTools.openFile( infile ).readlines()
+        lines = iotools.openFile( infile ).readlines()
         nreads = int( lines[0][:-1].split("\t")[1])
         outf.write( "%s\t%i\n" % (track,nreads))
     outf.close()

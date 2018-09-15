@@ -15,7 +15,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -78,7 +78,7 @@ The pipeline requires the information from the following pipelines:
    set the configuration variable :py:data:`annotations_database` and
    :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -132,8 +132,8 @@ from ruffus import *
 import sqlite3
 import xml.etree.ElementTree
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 import cgatpipelines.tasks.motifs as motifs
 import cgatpipelines.tasks.tracks as tracks
@@ -144,7 +144,7 @@ from cgatpipelines.report import run_report
 ###################################################
 # Pipeline configuration
 ###################################################
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 P.get_parameters(
     ["%s/pipeline.yml" % os.path.splitext(__file__)[0],
      "../pipeline.yml",
@@ -335,7 +335,7 @@ def exportPeakLocations(infile, outfile):
     '''
 
     dbh = connect()
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     cc = dbh.cursor()
     table = P.to_table(infile)
     for x in cc.execute("""SELECT contig, peakcenter,
@@ -391,7 +391,7 @@ def exportMotifDiscoverySequences(infile, outfile):
 
     if nseq == 0:
         E.warn("%s: no sequences - meme skipped" % outfile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 @follows(mkdir("motifs"))
@@ -457,7 +457,7 @@ def loadMemeSummary(infiles, outfile):
     outf.write("track\n")
 
     for infile in infiles:
-        if IOTools.is_empty(infile):
+        if iotools.is_empty(infile):
             continue
         motif = P.snip(infile, ".meme")
         outf.write("%s\n" % motif)
@@ -532,7 +532,7 @@ def buildDiscoverySequences(infile, outfile, npeaks, width, masker):
 
     if nseq == 0:
         E.warn("%s: no sequences in foreground" % outfile)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
 
 
 @follows(loadIntervals, mkdir("discovery.dir"))
@@ -560,7 +560,7 @@ def buildBackgroundSequences(infile, outfile, npeaks, width, masker):
 
     if nseq == 0:
         E.warn("%s: no sequences in background" % outfile_background)
-        # IOTools.touch_file( outfile )
+        # iotools.touch_file( outfile )
 
 
 @transform(buildBackgroundSequences,
@@ -659,7 +659,7 @@ def loadMemeChipSummary(infiles, outfile):
     outf.write("track\tnpeaks\twidth\tmasking\tpath\n")
 
     for infile in infiles:
-        if IOTools.is_empty(infile):
+        if iotools.is_empty(infile):
             continue
         fn = P.snip(os.path.basename(infile), ".memechip")
 
@@ -704,7 +704,7 @@ def loadMotifInformation(infiles, outfile):
     outf.write("motif\n")
 
     for infile in infiles:
-        if IOTools.is_empty(infile):
+        if iotools.is_empty(infile):
             continue
         motif = P.snip(infile, ".motif")
         outf.write("%s\n" % motif)
@@ -734,7 +734,7 @@ def loadTomTom(infile, outfile):
 
     if not os.path.exists(xml_file):
         E.warn("no tomtom output - skipped loading ")
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     # get the motif name from the xml file
@@ -751,7 +751,7 @@ def loadTomTom(infile, outfile):
     tmpfile = P.get_temp_file(".")
 
     # parse the text file
-    for line in IOTools.open_file(infile):
+    for line in iotools.open_file(infile):
         if line.startswith("#Query"):
             tmpfile.write(
                 "target_name\tquery_id\ttarget_id\toptimal_offset\tpvalue\tevalue\tqvalue\tOverlap\tquery_consensus\ttarget_consensus\torientation\n")

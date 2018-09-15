@@ -112,7 +112,7 @@ Reference
 #             }
 
 #     .. note::
-#        This function is CGAT specific.
+#        This function is cgat specific.
 
 #     '''
 
@@ -290,7 +290,7 @@ Reference
 
 #     will create a hub file at
 #     :file:`<uploaddir>/OBFUSID/mapping/ucsc.hub`, where
-#     OBFUSID is the obfuscated directory entry in the CGAT
+#     OBFUSID is the obfuscated directory entry in the cgat
 #     download directory for a particular project.
 
 #     If you want to create group tracks and get them to inherit from a
@@ -368,7 +368,7 @@ Reference
 
 #     # the import is located here to avoid cyclical dependencies
 #     # between Local.py, Pipeline.py and PipelineUCSC.py
-#     import CGATPipelines.PipelineUCSC as PipelineUCSC
+#     import cgatPipelines.PipelineUCSC as PipelineUCSC
 
 #     if not prefix:
 #         prefix = PARAMS.get("report_prefix", "")
@@ -400,22 +400,22 @@ Reference
 #     trackrelpath = os.path.join(PARAMS["genome"], "trackDb.txt")
 
 #     if os.path.exists(hubfile):
-#         with IOTools.openFile(hubfile) as infile:
+#         with iotools.openFile(hubfile) as infile:
 #             hubdata = PipelineUCSC.readUCSCFile(infile)
 #     else:
-#         hubdata = [('hub', "CGAT-" + project_name),
-#                    ('shortLabel', "CGAT-" + project_name),
-#                    ('longLabel', "Data for CGAT project %s" % project_name),
+#         hubdata = [('hub', "cgat-" + project_name),
+#                    ('shortLabel', "cgat-" + project_name),
+#                    ('longLabel', "Data for cgat project %s" % project_name),
 #                    ('genomesFile', "genomes.txt"),
 #                    ('email', 'andreas.heger@gmail.com')]
 
 #     E.info("writing to %s" % hubfile)
-#     with IOTools.openFile(hubfile, "w") as outfile:
+#     with iotools.openFile(hubfile, "w") as outfile:
 #         PipelineUCSC.writeUCSCFile(outfile, hubdata)
 
 #     # create the genomes.txt file - append to it if necessary.
 #     if os.path.exists(genomesfile):
-#         with IOTools.openFile(genomesfile) as infile:
+#         with iotools.openFile(genomesfile) as infile:
 #             genomes = PipelineUCSC.readUCSCFile(infile)
 #     else:
 #         genomes = []
@@ -425,7 +425,7 @@ Reference
 #         genomes.append(("trackDb", trackrelpath))
 
 #     E.info("writing to %s" % genomesfile)
-#     with IOTools.openFile(genomesfile, "w") as outfile:
+#     with iotools.openFile(genomesfile, "w") as outfile:
 #         PipelineUCSC.writeUCSCFile(outfile, genomes)
 
 #     # create the track data
@@ -434,7 +434,7 @@ Reference
 
 #     if os.path.exists(trackfile):
 #         E.debug('reading existing tracks from %s' % trackfile)
-#         with IOTools.openFile(trackfile) as infile:
+#         with iotools.openFile(trackfile) as infile:
 #             tracks = PipelineUCSC.readTrackFile(infile)
 #     else:
 #         tracks = []
@@ -538,7 +538,7 @@ Reference
 #                         tracks[group_trackname] += (("color", rgb),)
 
 #     E.info("writing to %s" % trackfile)
-#     with IOTools.openFile(trackfile, "w") as outfile:
+#     with iotools.openFile(trackfile, "w") as outfile:
 #         PipelineUCSC.writeTrackFile(outfile, list(tracks.items()))
 
 #     E.info(

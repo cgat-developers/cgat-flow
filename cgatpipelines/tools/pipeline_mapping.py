@@ -40,7 +40,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -93,7 +93,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +---------+------------+------------------------------------------------+
@@ -207,16 +207,15 @@ import re
 import sqlite3
 import collections
 
-
 # required for 'butter' mapper
 import shutil
-import CGAT.Sra as Sra
+import cgat.Sra as Sra
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.GTF as GTF
-import CGATCore.IOTools as IOTools
-import CGAT.BamTools.bamtools as BamTools
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgat.GTF as GTF
+import cgatcore.iotools as iotools
+import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
@@ -377,7 +376,7 @@ def identifyProteinCodingGenes(outfile):
     FROM annotations.%(table)s
     WHERE gene_biotype = 'protein_coding'""" % locals())
 
-    with IOTools.open_file(outfile, "w") as outf:
+    with iotools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
@@ -641,10 +640,10 @@ def buildJunctions(infile, outfile):
 
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     njunctions = 0
     for gffs in GTF.transcript_iterator(
-            GTF.iterator(IOTools.open_file(infile, "r"))):
+            GTF.iterator(iotools.open_file(infile, "r"))):
 
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
@@ -1106,7 +1105,7 @@ def buildTophatStats(infiles, outfile):
 
         raise ValueError("pattern '%s' not found %s" % (pattern, lines))
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("\t".join(("track",
                           "reads_in",
                           "reads_removed",
@@ -1335,7 +1334,7 @@ def buildSTARStats(infiles, outfile):
         if not os.path.exists(fn):
             raise ValueError("incomplete run: %s" % infile)
 
-        for line in IOTools.open_file(fn):
+        for line in iotools.open_file(fn):
             if "|" not in line:
                 continue
             header, value = line.split("|")
@@ -1343,7 +1342,7 @@ def buildSTARStats(infiles, outfile):
             data[header.strip()].append(value.strip())
 
     keys = list(data.keys())
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     outf.write("track\t%s\n" % "\t".join(keys))
     for x, infile in enumerate(infiles):
         track = P.snip(os.path.basename(infile), ".bam")
@@ -1939,14 +1938,14 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         nreads = 0
         for infile in infiles:
-            with IOTools.open_file(infile, "r") as inf:
+            with iotools.open_file(infile, "r") as inf:
                 for line in inf:
                     if not line.startswith("nreads"):
                         continue
                     E.info("%s" % line[:-1])
                     nreads += int(line[:-1].split("\t")[1])
 
-        outf = IOTools.open_file(outfile, "w")
+        outf = iotools.open_file(outfile, "w")
         outf.write("nreads\t%i\n" % nreads)
         outf.close()
 
@@ -1985,7 +1984,7 @@ def loadReadCounts(infiles, outfile):
     outf.write("track\ttotal_reads\n")
     for infile in infiles:
         track = os.path.basename(P.snip(infile, ".nreads"))
-        line = IOTools.open_file(infile).readline()
+        line = iotools.open_file(infile).readline()
         nreads = int(line[:-1].split("\t")[1])
         outf.write("%s\t%i\n" % (track, nreads))
     outf.close()
@@ -2135,7 +2134,7 @@ def buildIGVSampleInformation(infiles, outfile):
        Output filename in :term:`tsv` format
     '''
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
     first = True
     for fn in infiles:
         fn = os.path.basename(fn)

@@ -8,11 +8,11 @@ import re
 import os
 import collections
 
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
 
-import CGATCore.Database as Database
-import CGATCore.IOTools as IOTools
+import cgatcore.database as Database
+import cgatcore.iotools as iotools
 
 from rpy2.robjects import r as R
 import rpy2.robjects as ro
@@ -47,7 +47,7 @@ def buildDMRStats(tables, method, outfile, dbhandle):
 
     keys_status = "OK", "NOTEST", "FAIL", "NOCALL"
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("\t".join(("tileset", "design", "track1", "track2", "tested",
                           "\t".join(["status_%s" % x for x in keys_status]),
                           "significant",

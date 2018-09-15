@@ -21,7 +21,7 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.extend([os.path.abspath('../scripts'),
-                 os.path.abspath('../CGATPipelines'),
+                 os.path.abspath('../cgatPipelines'),
                  os.path.abspath('python')])
 
 # The data directory
@@ -40,7 +40,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.inheritance_diagram',
               'sphinx.ext.intersphinx',
               'sphinx.ext.napoleon',
-              'CGATReport.report_directive']
+              'cgatReport.report_directive']
 
 intersphinx_mapping = {
     'python': ('http://docs.python.org/2.7', None),
@@ -71,14 +71,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'cgatflow'
-copyright = '2011, 2012, 2013, 2014, 2015 2016 2017 CGAT'
+copyright = '2011, 2012, 2013, 2014, 2015 2016 2017 cgat'
 
 
 # Included at the end of each rst file
 rst_epilog = '''
-.. _CGAT Training Programme: http://www.cgat.org
-.. _CGAT Pipeline Collection: https://www.cgat.org/downloads/public/CGATPipelines/documentation/
-.. _CGAT Code Collection: https://www.cgat.org/downloads/public/cgat/documentation/
+.. _cgat Training Programme: http://www.cgat.org
+.. _cgat Pipeline Collection: https://www.cgat.org/downloads/public/CGATPipelines/documentation/
+.. _cgat Code Collection: https://www.cgat.org/downloads/public/cgat/documentation/
 .. _pysam: https://github.com/pysam-developers/pysam
 .. _samtools: http://samtools.sourceforge.net/
 .. _htslib: http://www.htslib.org/
@@ -90,7 +90,7 @@ rst_epilog = '''
 .. _pyximport: http://www.prescod.net/pyximport/
 .. _sphinx: http://sphinx-doc.org/
 .. _ruffus: http://www.ruffus.org.uk/
-.. _cgatreport: https://github.com/AndreasHeger/CGATReport/
+.. _cgatreport: https://github.com/AndreasHeger/cgatReport/
 .. _sqlite: http://www.sqlite.org/
 .. _make: http://www.gnu.org/software/make
 .. _UCSC: http://genome.ucsc.edu
@@ -171,7 +171,7 @@ html_theme = 'sphinx_rtd_theme'
 '''
 html_theme_options = {
     # Navigation bar title. (Default: ``project`` value)
-    'navbar_title': "CGAT-flow",
+    'navbar_title': "cgat-flow",
 
     # Tab name for entire site. (Default: "Site")
     'navbar_site_name': "Site navigation",

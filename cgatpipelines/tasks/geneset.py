@@ -18,11 +18,11 @@ import collections
 import sqlite3
 import pandas as pd
 
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-import CGAT.GTF as GTF
-import CGAT.IndexedFasta as IndexedFasta
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
+import cgat.GTF as GTF
+import cgat.IndexedFasta as IndexedFasta
 
 # When importing this module, set PARAMS to your parameter
 # dictionary
@@ -398,10 +398,10 @@ def loadEnsemblTranscriptInformation(ensembl_gtf, geneset_gtf,
 
     table = P.to_table(outfile)
 
-    gtf_file = IOTools.open_file(geneset_gtf, "rb")
+    gtf_file = iotools.open_file(geneset_gtf, "rb")
     gtf_iterator = GTF.transcript_iterator(GTF.iterator(gtf_file))
 
-    ensembl_file = IOTools.open_file(ensembl_gtf, "rb")
+    ensembl_file = iotools.open_file(ensembl_gtf, "rb")
     ensembl_iterator = GTF.transcript_iterator(GTF.iterator(ensembl_file))
 
     # parse the two gtfs, creating keys from the GTF entries
@@ -1213,10 +1213,10 @@ def buildPseudogenes(infiles, outfile, dbhandle):
 
     P.run(statement)
 
-    if IOTools.is_empty(tmpfile1):
+    if iotools.is_empty(tmpfile1):
         E.warn("no pseudogenes found")
         os.unlink(tmpfile1)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     model = "protein2dna"
@@ -1242,7 +1242,7 @@ def buildPseudogenes(infiles, outfile, dbhandle):
 
     os.unlink(tmpfile1)
 
-    inf = IOTools.open_file("%s.links.gz" % outfile)
+    inf = iotools.open_file("%s.links.gz" % outfile)
     best_matches = {}
     for line in inf:
         peptide_id, transcript_id, score = line[:-1].split("\t")
@@ -1274,8 +1274,8 @@ def buildPseudogenes(infiles, outfile, dbhandle):
 
     c = E.Counter()
 
-    outf = IOTools.open_file(outfile, "w")
-    inf = GTF.iterator(IOTools.open_file(infile_gtf))
+    outf = iotools.open_file(outfile, "w")
+    inf = GTF.iterator(iotools.open_file(infile_gtf))
     for gtf in inf:
         c.input += 1
         if gtf.transcript_id not in all_pseudos:
@@ -1303,7 +1303,7 @@ def buildNUMTs(infile, outfile):
     '''
     if not PARAMS["numts_mitochrom"]:
         E.info("skipping numts creation")
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     fasta = IndexedFasta.IndexedFasta(
@@ -1311,7 +1311,7 @@ def buildNUMTs(infile, outfile):
 
     if PARAMS["numts_mitochrom"] not in fasta:
         E.warn("mitochondrial genome %s not found" % PARAMS["numts_mitochrom"])
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     tmpfile_mito = P.get_temp_filename(".")
@@ -1326,10 +1326,10 @@ def buildNUMTs(infile, outfile):
 
     P.run(statement)
 
-    if IOTools.is_empty(tmpfile_mito):
+    if iotools.is_empty(tmpfile_mito):
         E.warn("mitochondrial genome empty.")
         os.unlink(tmpfile_mito)
-        IOTools.touch_file(outfile)
+        iotools.touch_file(outfile)
         return
 
     format = ("qi", "qS", "qab", "qae",
@@ -1362,8 +1362,8 @@ def buildNUMTs(infile, outfile):
     P.run(statement)
 
     # convert to gtf
-    inf = IOTools.open_file("%s.links.gz" % outfile)
-    outf = IOTools.open_file(outfile, "w")
+    inf = iotools.open_file("%s.links.gz" % outfile)
+    outf = iotools.open_file(outfile, "w")
 
     min_score = PARAMS["numts_score"]
 
@@ -1470,7 +1470,7 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles, job_memory="4G"):
     outfile_bed, outfile_tsv = outfiles
 
     gene2region = {}
-    for gtf in GTF.iterator(IOTools.open_file(gtffile, "r")):
+    for gtf in GTF.iterator(iotools.open_file(gtffile, "r")):
         gid = gtf.gene_id.split(":")
         for g in gid:
             gene2region[g] = (gtf.contig, gtf.start, gtf.end, gtf.strand)
@@ -1500,7 +1500,7 @@ def buildGenomicFunctionalAnnotation(gtffile, dbh, outfiles, job_memory="4G"):
 
     P.run(statement, job_memory=job_memory)
 
-    outf = IOTools.open_file(outfile_tsv, "w")
+    outf = iotools.open_file(outfile_tsv, "w")
     outf.write("term\tdescription\n")
     for term, description in term2description.items():
         outf.write("%s\t%s\n" % (term, description))

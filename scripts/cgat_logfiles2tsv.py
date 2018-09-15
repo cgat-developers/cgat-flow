@@ -10,7 +10,7 @@ about execution times. This can be useful for post-mortem
 benchmark analysis.
 
 This script uses the ``# job finished`` tag that is added by scripts
-using the module :mod:`CGAT.Experiment`.
+using the module :mod:`cgat.Experiment`.
 
 Usage
 -----
@@ -52,8 +52,8 @@ import re
 import gzip
 import glob
 
-import CGATCore.Experiment as E
-import CGATCore.Logfile as Logfile
+import cgatcore.experiment as E
+import cgatcore.Logfile as Logfile
 
 
 def main(argv=None):

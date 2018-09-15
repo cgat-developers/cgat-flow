@@ -58,7 +58,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -82,7 +82,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +----------+-----------+---------------------------+
@@ -113,11 +113,11 @@ import os
 import sqlite3
 import pandas
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.SetTools as SetTools
-import CGATPipelines.PipelineGO as PipelineGO
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatcore.database as Database
+import cgat.SetTools as SetTools
+import cgatPipelines.PipelineGO as PipelineGO
 
 ###################################################
 ###################################################
@@ -126,7 +126,7 @@ import CGATPipelines.PipelineGO as PipelineGO
 ###################################################
 
 # load options from the config file
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 PARAMS = P.getParameters(
     ["%s/pipeline.ini" % os.path.splitext(__file__)[0],
      "../pipeline.ini",
@@ -141,7 +141,7 @@ PARAMS.update(P.peekParameters(
 
 # Update the PARAMS dictionary in any PipelineModules
 # e.g.:
-# import CGATPipelines.PipelineGeneset as PipelineGeneset
+# import cgatPipelines.PipelineGeneset as PipelineGeneset
 # PipelineGeneset.PARAMS = PARAMS
 
 
@@ -187,7 +187,7 @@ def buildGeneListMatrix(infiles, outfile):
     headers = []
     for infile in infiles:
         genelist = pandas.read_csv(
-            IOTools.openFile(infile),
+            iotools.openFile(infile),
             index_col=0,
             sep='\t')
 
@@ -227,19 +227,19 @@ def buildGeneListMatrix(infiles, outfile):
                                      len(backgrounds[-1])))
 
     E.info("writing gene list matrix")
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         SetTools.writeSets(outf, genesets, labels=headers)
-    with IOTools.openFile(outfile + ".bg.tsv.gz", "w") as outf:
+    with iotools.openFile(outfile + ".bg.tsv.gz", "w") as outf:
         SetTools.writeSets(outf, backgrounds, labels=headers)
 
     E.info("writing intersection/union matrix")
     # build set intersection matrix
     matrix = SetTools.unionIntersectionMatrix(genesets)
-    with IOTools.openFile(outfile + ".matrix.gz", "w") as outf:
-        IOTools.writeMatrix(outf, matrix, headers, headers)
+    with iotools.openFile(outfile + ".matrix.gz", "w") as outf:
+        iotools.writeMatrix(outf, matrix, headers, headers)
     matrix = SetTools.unionIntersectionMatrix(backgrounds)
-    with IOTools.openFile(outfile + ".bg.matrix.gz", "w") as outf:
-        IOTools.writeMatrix(outf, matrix, headers, headers)
+    with iotools.openFile(outfile + ".bg.matrix.gz", "w") as outf:
+        iotools.writeMatrix(outf, matrix, headers, headers)
 
 
 @transform(buildGeneListMatrix,

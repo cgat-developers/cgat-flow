@@ -143,7 +143,7 @@ Mootha, Lindgren, et al. (2003, Nat Genet 34, 267-273).
 import pandas as pd
 import sqlite3
 import os
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 import numpy as np
 import csv
 import os

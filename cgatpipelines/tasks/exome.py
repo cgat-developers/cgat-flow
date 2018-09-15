@@ -8,14 +8,14 @@ Reference
 """
 # Import modules
 import os
-import CGATCore.IOTools as IOTools
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-from CGATCore.Pipeline import cluster_runnable
+import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
+from cgatcore.pipeline import cluster_runnable
 import numpy as np
 import pandas as pd
-import CGATCore.CSV as csv
-import CGAT.VCF as VCF
+import cgatcore.csv as csv
+import cgat.VCF as VCF
 import collections
 import re
 from urllib.request import urlopen
@@ -189,7 +189,7 @@ def mutectSNPCaller(infile, outfile, mutect_log, genome, cosmic,
                     gatk_key=None,
                     artifact=False):
     '''Call SNVs using Broad's muTect'''
-    # TS. this is currently CGAT specific. How to generalise?
+    # TS. this is currently cgat specific. How to generalise?
 
     job_memory_java = job_memory.lower()
     job_threads = 1
@@ -366,7 +366,7 @@ def selectVariants(infile, outfile, genome, select):
 def buildSelectStatementfromPed(filter_type, pedfile, template):
     '''Build a select statement from a template and a pedigree file'''
     pedigree = csv.DictReader(
-        IOTools.open_file(pedfile), delimiter='\t', fieldnames=[
+        iotools.open_file(pedfile), delimiter='\t', fieldnames=[
             'family', 'sample', 'father', 'mother', 'sex', 'status'])
     affecteds = []
     unaffecteds = []
@@ -452,8 +452,8 @@ def filterMutect(infile, outfile, logfile,
         comp_dict = {"C": "G", "G": "C", "A": "T", "T": "A"}
         return comp_dict[base]
 
-    with IOTools.open_file(outfile, "w") as outf:
-        with IOTools.open_file(infile, "r") as inf:
+    with iotools.open_file(outfile, "w") as outf:
+        with iotools.open_file(infile, "r") as inf:
             for line in inf.readlines():
                 # need to find location of control and tumor columns
                 if line.startswith('#CHROM'):
@@ -507,7 +507,7 @@ def filterMutect(infile, outfile, logfile,
                     else:
                         reasons["Mutect_reject"] += 1
 
-    with IOTools.open_file(logfile, "w") as outf:
+    with iotools.open_file(logfile, "w") as outf:
         outf.write("%s\n" % "\t".join(("reason", "count")))
         for reason in reasons:
             outf.write("%s\t%i\n" % (reason, reasons[reason]))
@@ -538,7 +538,7 @@ def compileMutationalSignature(infiles, outfiles):
         return P.snip(os.path.basename(infile),
                       ".mutect.snp.annotated.filtered.vcf")
 
-    outfile1 = IOTools.open_file(outfiles[0], "w")
+    outfile1 = iotools.open_file(outfiles[0], "w")
     mutations = ["C:T", "C:A", "C:G", "A:C", "A:T", "A:G"]
 
     outfile1.write("%s\t%s\t%s\t%s\t%s\n" % ("patient_id", "base_change",
@@ -551,7 +551,7 @@ def compileMutationalSignature(infiles, outfiles):
         for comb in mutations:
             mut_dict[comb] = 0
 
-        with IOTools.open_file(infile, "r") as f:
+        with iotools.open_file(infile, "r") as f:
             for line in f.readlines():
                 if line.startswith('#'):
                     continue
@@ -576,7 +576,7 @@ def compileMutationalSignature(infiles, outfiles):
                                                      [mutation]))
     outfile1.close()
 
-    outfile2 = IOTools.open_file(outfiles[1], "w")
+    outfile2 = iotools.open_file(outfiles[1], "w")
     outfile2.write("%s\t%s\n" % ("patient_id",
                                  "\t".join(mutations)))
     for infile in infiles:
@@ -599,7 +599,7 @@ def parseMutectCallStats(infile, outfile):
     single_dict = collections.defaultdict(int)
     combinations_dict = collections.defaultdict(int)
 
-    with IOTools.open_file(infile, "rb") as infile:
+    with iotools.open_file(infile, "rb") as infile:
         lines = infile.readlines()
         for i, line in enumerate(lines):
             if i < 2:
@@ -659,7 +659,7 @@ def defineEBioStudies(cancer_types, outfile):
                         genetic_profile = values[0]
                         study2table_dict[study] = genetic_profile
 
-    outf = IOTools.open_file(outfile, "w")
+    outf = iotools.open_file(outfile, "w")
 
     for cancer_type, study_id in type2study_dict.items():
         for study in study_id:
@@ -677,7 +677,7 @@ def extractEBioinfo(eBio_ids, vcfs, outfile):
     genes = set()
 
     for vcf in vcfs:
-        infile = VCF.VCFFile(IOTools.open_file(vcf))
+        infile = VCF.VCFFile(iotools.open_file(vcf))
         for vcf_entry in infile:
             # assumes all vcf entries without "REJECT" are "PASS"
             if vcf_entry.filter != "REJECT":
@@ -686,7 +686,7 @@ def extractEBioinfo(eBio_ids, vcfs, outfile):
                     if "SNPEFF_GENE_NAME" in entry:
                         genes.update((entry.split("=")[1],))
 
-    eBio_ids = IOTools.open_file(eBio_ids, "r")
+    eBio_ids = iotools.open_file(eBio_ids, "r")
 
     tissue_counts = collections.defaultdict(
         lambda: collections.defaultdict(
@@ -743,7 +743,7 @@ def extractEBioinfo(eBio_ids, vcfs, outfile):
                     tissue_counts[tissue][gene][
                         "mutations"] += int(tmp_df.count(1)) - 1
 
-    out = IOTools.open_file(outfile, "w")
+    out = iotools.open_file(outfile, "w")
 
     tissues = list(tissue_counts.keys())
 
@@ -776,7 +776,7 @@ def intersectionHeatmap(infiles, outfile):
         name = P.snip(os.path.basename(inf)).split(".")[0]
         name = name.replace(".", "_")
 
-        with IOTools.open_file(inf, "r") as f:
+        with iotools.open_file(inf, "r") as f:
             genes = set()
 
             for line in f:
@@ -845,7 +845,7 @@ def filterQuality(infile, qualstr, qualfilter, outfiles):
     Currently only implemented to filter numeric columns.  "." is assumed
     to mean pass.
     '''
-    columns = IOTools.open_file(infile).readline()
+    columns = iotools.open_file(infile).readline()
     columns = columns.split("\t")
     qualparams = qualstr.split(",")
     qualdict = dict()
@@ -867,7 +867,7 @@ def filterQuality(infile, qualstr, qualfilter, outfiles):
         ind = columns.index(col)
         i = 0
         iset = set([0, 1])
-        with IOTools.open_file(infile) as input:
+        with iotools.open_file(infile) as input:
             for line in input:
                 # rows one and two are headers
                 if i > 1:
@@ -896,9 +896,9 @@ def filterQuality(infile, qualstr, qualfilter, outfiles):
     elif qualfilter == "any":
         allqual = set.union(*list(qualdict.values()))
     i = 0
-    out = IOTools.open_file(outfiles[0], "w")
-    out2 = IOTools.open_file(outfiles[1], "w")
-    with IOTools.open_file(infile) as input:
+    out = iotools.open_file(outfiles[0], "w")
+    out2 = iotools.open_file(outfiles[1], "w")
+    with iotools.open_file(infile) as input:
         for line in input:
             if i in allqual:
                 out.write(line)
@@ -931,7 +931,7 @@ def FilterExacCols(infile, exac_suffs, exac_thresh):
     '''
     # read columns from the input VCF
     exac_suffs = exac_suffs.split(",")
-    cols = IOTools.open_file(infile).readline().strip().split("\t")
+    cols = iotools.open_file(infile).readline().strip().split("\t")
     nD = dict()
     afdict = dict()
     for e in exac_suffs:
@@ -945,7 +945,7 @@ def FilterExacCols(infile, exac_suffs, exac_thresh):
         nlist = set()
         n = 0
         AFS = []
-        with IOTools.open_file(infile) as input:
+        with iotools.open_file(infile) as input:
             for line in input:
                 if n > 1:
                     line = line.strip().split("\t")
@@ -1012,7 +1012,7 @@ def FilterFreqCols(infile, thresh, fcols):
     '''
     fcols = fcols.split(",")
     # read the column headings from the variant table
-    cols = IOTools.open_file(infile).readline().strip().split("\t")
+    cols = iotools.open_file(infile).readline().strip().split("\t")
     # store allele frequency columns
     AFdict = dict()
     # store low frequency indices
@@ -1023,7 +1023,7 @@ def FilterFreqCols(infile, thresh, fcols):
         n = 0
         nlist = set()
         AFS = []
-        with IOTools.open_file(infile) as input:
+        with iotools.open_file(infile) as input:
             for line in input:
                 if n > 1:
                     line = line.strip().split("\t")
@@ -1072,8 +1072,8 @@ def WriteFreqFiltered(infile, exacdict, exacinds, otherdict, otherinds,
     in this specific sample.
     '''
     x = 0
-    out = IOTools.open_file(outfiles[0], "w")
-    out2 = IOTools.open_file(outfiles[1], "w")
+    out = iotools.open_file(outfiles[0], "w")
+    out2 = iotools.open_file(outfiles[1], "w")
 
     exaccols = list(exacdict.keys())
     othercols = list(otherdict.keys())
@@ -1082,7 +1082,7 @@ def WriteFreqFiltered(infile, exacdict, exacinds, otherdict, otherinds,
     exacnewcols = ["%s_calc" % c for c in exaccols]
     othernewcols = ["%s_calc" % c for c in othercols]
 
-    with IOTools.open_file(infile) as infile:
+    with iotools.open_file(infile) as infile:
         for line in infile:
             line = line.strip()
             if x <= 1:
@@ -1133,7 +1133,7 @@ def filterDamage(infile, damagestr, outfiles):
 
     '''
     damaging = damagestr.split(",")
-    cols = IOTools.open_file(infile).readline().strip().split("\t")
+    cols = iotools.open_file(infile).readline().strip().split("\t")
 
     D = dict()
     # parses the "damage string" from the pipeline.yml
@@ -1148,9 +1148,9 @@ def filterDamage(infile, damagestr, outfiles):
         D[col] = ((res, i))
 
     x = 0
-    out = IOTools.open_file(outfiles[0], "w")
-    out2 = IOTools.open_file(outfiles[1], "w")
-    with IOTools.open_file(infile) as input:
+    out = iotools.open_file(outfiles[0], "w")
+    out2 = iotools.open_file(outfiles[1], "w")
+    with iotools.open_file(infile) as input:
         for line in input:
             if x > 1:
                 # grep for specific strings within this column of this
@@ -1184,7 +1184,7 @@ def filterFamily(infile, infile2, outfiles):
     cps2 = set()
 
     # make a list of variants in infile1
-    with IOTools.open_file(infile) as input:
+    with iotools.open_file(infile) as input:
         for line in input:
             line = line.strip().split("\t")
             chrom = line[0]
@@ -1193,7 +1193,7 @@ def filterFamily(infile, infile2, outfiles):
             cps1.add(cp)
 
     # make a list of variants in infile2
-    with IOTools.open_file(infile2) as input:
+    with iotools.open_file(infile2) as input:
         for line in input:
             line = line.strip().split("\t")
             chrom = line[0]
@@ -1204,9 +1204,9 @@ def filterFamily(infile, infile2, outfiles):
     # only variants in both are of interest
     cps = cps1 & cps2
 
-    out = IOTools.open_file(outfiles[0], "w")
-    out2 = IOTools.open_file(outfiles[1], "w")
-    with IOTools.open_file(infile) as input:
+    out = iotools.open_file(outfiles[0], "w")
+    out2 = iotools.open_file(outfiles[1], "w")
+    with iotools.open_file(infile) as input:
         for line in input:
             line = line.strip().split("\t")
             if "%s_%s" % (line[0], line[1]) in cps:
@@ -1257,9 +1257,9 @@ def CleanVariantTables(genes, variants, cols, outfile):
 
     Ls = []
     for gene in [line.strip()
-                 for line in IOTools.open_file(genes[0]).readlines()]:
+                 for line in iotools.open_file(genes[0]).readlines()]:
         cp = []
-        with IOTools.open_file(genes[1]) as infile:
+        with iotools.open_file(genes[1]) as infile:
             for line in infile:
                 r = re.search(gene, line)
                 if r:

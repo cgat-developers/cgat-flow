@@ -6,10 +6,10 @@ Reference
 ---------
 '''
 
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 from rpy2.robjects import r as R
-import CGATCore.IOTools as IOTools
-import CGAT.Biomart as Biomart
+import cgatcore.iotools as iotools
+import cgat.Biomart as Biomart
 import re
 
 
@@ -72,7 +72,7 @@ def importKEGGAssignments(outfile, mart, host, biomart_dataset):
     pathid2name = dict(list(zip(pathnames.names, R.unlist(pathnames))))
     E.info("Done")
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("ontology\tgene_id\tkegg_ID\tkegg_name\tevidence\n")
 
     # rx2 did not work in rpy2 2.4.2 - workaround uses

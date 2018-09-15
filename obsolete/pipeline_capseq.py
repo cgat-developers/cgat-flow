@@ -18,7 +18,7 @@ performs the following tasks:
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -71,7 +71,7 @@ set the configuration variables:
    :py:data:`annotations_database` 
    :py:data:`annotations_dir`
 
-On top of the default CGAT setup, the pipeline requires the following software to be in the 
+On top of the default cgat setup, the pipeline requires the following software to be in the 
 path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -138,23 +138,23 @@ import collections
 import gzip
 import sqlite3
 import pysam
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.IndexedGenome as IndexedGenome
-import CGAT.FastaIterator as FastaIterator
-import CGAT.Genomics as Genomics
-import CGATCore.IOTools as IOTools
-import CGAT.MAST as MAST
-import CGAT.GTF as GTF
-import CGAT.Bed as Bed
+import cgat.IndexedFasta as IndexedFasta
+import cgat.IndexedGenome as IndexedGenome
+import cgat.FastaIterator as FastaIterator
+import cgat.Genomics as Genomics
+import cgatcore.iotools as iotools
+import cgat.MAST as MAST
+import cgat.GTF as GTF
+import cgat.Bed as Bed
 import io
 import numpy
-import CGAT.Masker as Masker
+import cgat.Masker as Masker
 import fileinput
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 import logging as L
-import CGATPipelines.PipelineChipseq as PIntervals
-import CGATPipelines.PipelineTracks as PipelineTracks
-import CGATPipelines.PipelineMapping as PipelineMapping
+import cgatPipelines.PipelineChipseq as PIntervals
+import cgatPipelines.PipelineTracks as PipelineTracks
+import cgatPipelines.PipelineMapping as PipelineMapping
 from ruffus import *
 from rpy2.robjects import r as R
 import rpy2.robjects as ro
@@ -163,7 +163,7 @@ import rpy2.robjects as ro
 ###################################################################
 ###################################################################
 # Pipeline configuration
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 P.getParameters(["pipeline_capseq.ini"])
 PARAMS = P.PARAMS
 USECLUSTER = True

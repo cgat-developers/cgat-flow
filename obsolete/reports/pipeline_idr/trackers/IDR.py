@@ -7,8 +7,8 @@ import glob
 import pandas
 import pandas.rpy.common
 
-from CGATReport.Tracker import *
-from CGATReport.Utils import PARAMS as P
+from cgatReport.Tracker import *
+from cgatReport.Utils import PARAMS as P
 from collections import OrderedDict as odict
 
 ##########################################################################

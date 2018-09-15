@@ -7,7 +7,7 @@ bechmark pipeline
 Usage
 =====
 
-See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use CGAT pipelines.
+See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -60,7 +60,7 @@ import os
 import sys
 
 import sqlite3
-import IOTools
+import iotools
 from rpy2.robjects import r as R
 import FastaIterator
 import Bed
@@ -75,7 +75,7 @@ import sqlite3
 ###################################################
 
 # load options from the config file
-import Pipeline as P
+import pipeline as P
 P.getParameters( 
     "pipeline.ini" )
 
@@ -194,7 +194,7 @@ def buildTrueTaxonomicRelativeAbundances(infile, outfile):
 
     total = 0
     rel_abundance = collections.defaultdict(int)
-    for fastq in Fastq.iterate(IOTools.openFile(infile)):
+    for fastq in Fastq.iterate(iotools.openFile(infile)):
         total += 1
         gi = fastq.identifier.split("|")[1]
         rel_abundance[gi] += 1
@@ -500,7 +500,7 @@ def buildAlignmentSizes(infiles, outfile):
     for infile in infiles:
         genome = P.snip(os.path.basename(infile), ".bed.gz")
         c = 0
-        inf = IOTools.openFile(infile)
+        inf = iotools.openFile(infile)
         for bed in Bed.iterator(inf):
             c += bed.end - bed.start
         outf.write("%s\t%s\n" % (genome, str(c)))
@@ -521,7 +521,7 @@ def collectGenomeSizes(infile, outfile):
     outf = open(outfile, "w")
     outf.write("genome\tlength\n")
     # assume single fasta entry
-    for fasta in FastaIterator.iterate(IOTools.openFile(infile)):
+    for fasta in FastaIterator.iterate(iotools.openFile(infile)):
         name = P.snip(os.path.basename(infile), ".fna")
         length = len(list(fasta.sequence))
         outf.write("%s\t%s\n" % (name, str(length)))
@@ -626,7 +626,7 @@ def plotCoverageOverGenomes(infile, outfile):
 #     coordfiles = [infile for infile in infiles if infile.endswith(".coords")]
 
 #     E.info("reading contigs into memory")
-#     contigs = [fasta.title for fasta in FastaIterator.iterate(IOTools.openFile(contigs))]
+#     contigs = [fasta.title for fasta in FastaIterator.iterate(iotools.openFile(contigs))]
 #     total_contigs = len(contigs)
 
 #     E.info("reading coordinate files")

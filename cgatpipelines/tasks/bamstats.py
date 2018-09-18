@@ -39,8 +39,6 @@ import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.pipeline as P
 
-PICARD_MEMORY = "20G"
-
 
 def getNumReadsFromReadsFile(infile):
     '''get number of reads from a .nreads file.'''
@@ -55,7 +53,8 @@ def getNumReadsFromReadsFile(infile):
     return nreads
 
 
-def buildPicardInsertSizeStats(infile, outfile, genome_file):
+def buildPicardInsertSizeStats(infile, outfile, genome_file,
+                               picardmem):
     '''run Picard:CollectInsertSizeMetrics
     Collect insert size statistics.
     Arguments
@@ -67,7 +66,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     genome_file : string
         Filename with genomic sequence.
     '''
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -84,7 +83,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file):
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run(statement, job_memory=PICARD_MEMORY)
+    P.run(statement, job_memory=picardmem)
 
 
 def addPseudoSequenceQuality(infile, outfile):
@@ -133,7 +132,8 @@ def copyBamFile(infile, outfile):
     P.run(statement)
 
 
-def buildPicardAlignmentStats(infile, outfile, genome_file):
+def buildPicardAlignmentStats(infile, outfile, genome_file,
+                              picardmem):
     '''run picard:CollectMultipleMetrics
     Arguments
     ---------
@@ -145,7 +145,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
         Filename with genomic sequence.
     '''
 
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -165,7 +165,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     P.run(statement)
 
 
-def buildPicardDuplicationStats(infile, outfile):
+def buildPicardDuplicationStats(infile, outfile, picardmem):
     '''run picard:MarkDuplicates
     Record duplicate metrics using Picard, the marked records
     are discarded.
@@ -177,7 +177,7 @@ def buildPicardDuplicationStats(infile, outfile):
         Output filename with picard output.
     '''
 
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -214,7 +214,7 @@ def buildPicardDuplicationStats(infile, outfile):
         os.unlink(tmpfile_name)
 
 
-def buildPicardDuplicateStats(infile, outfile):
+def buildPicardDuplicateStats(infile, outfile, picardmem):
     '''run picard:MarkDuplicates
     Record duplicate metrics using Picard and keep the dedupped .bam
     file.
@@ -230,7 +230,7 @@ def buildPicardDuplicateStats(infile, outfile):
     outfile : string
         Output filename with picard output.
     '''
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -250,7 +250,8 @@ def buildPicardDuplicateStats(infile, outfile):
     P.run(statement)
 
 
-def buildPicardCoverageStats(infile, outfile, baits, regions):
+def buildPicardCoverageStats(infile, outfile, baits, regions,
+                             picardmem):
     '''run picard:CollectHSMetrics
     Generate coverage statistics for regions of interest from a bed
     file using Picard.
@@ -264,7 +265,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
     regions : :term:`bed` formatted file of target regions
     '''
 
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -282,7 +283,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions):
     P.run(statement)
 
 
-def buildPicardGCStats(infile, outfile, genome_file):
+def buildPicardGCStats(infile, outfile, genome_file, picardmem):
     """picard:CollectGCBiasMetrics
     Collect GC bias metrics.
     Arguments
@@ -295,7 +296,7 @@ def buildPicardGCStats(infile, outfile, genome_file):
         Filename with genomic sequence.
     """
 
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
 
@@ -1362,7 +1363,7 @@ def resetGTFAttributes(infile, genome, gene_ids, outfile):
     os.unlink(tmpfile2)
 
 
-def buildPicardRnaSeqMetrics(infiles, strand, outfile):
+def buildPicardRnaSeqMetrics(infiles, strand, outfile, picardmem):
     '''run picard:RNASeqMetrics
 
 
@@ -1377,7 +1378,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile):
         Output filename with picard output.
 
     '''
-    job_memory = PICARD_MEMORY
+    job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
     infile, genome = infiles

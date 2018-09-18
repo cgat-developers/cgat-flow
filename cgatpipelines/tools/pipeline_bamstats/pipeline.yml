@@ -13,8 +13,8 @@
 ################################################################
 
 
-# genome is ucsc convention
-genome: hg19
+# genome is ucsc convention (e.g. hg38)
+genome: !?
 
 # directory where exported data is located
 exportdir: export
@@ -30,6 +30,9 @@ version: ''
 
 # directory for publishing results on the web
 web_dir: ../web
+
+# Memory allocated for Picard tools (must be nG, number followed by G)
+picard_memory: 12G
 
 ################################################################
 ## bam file parameters
@@ -50,14 +53,14 @@ database:
     url: sqlite:///./csvdb
 
     ################################################################
-    ## Location of database following the running pipeline_gtf_subset.py 
+    ## Location of pipeline_genesets database 
     ################################################################
 gtf:
 
     #database location 
-    database: /ifs/mirror/annotations/hg19_ensembl75_hierarchical/csvdb
+    database: !?
 
     # location that pipeline_genesets.py was ran in
-    dir: /ifs/mirror/annotations/hg19_ensembl75_hierarchical
+    dir: !?
 
 

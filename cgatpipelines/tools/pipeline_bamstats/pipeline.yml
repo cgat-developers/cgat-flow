@@ -34,6 +34,9 @@ web_dir: ../web
 # Memory allocated for Picard tools (must be nG, number followed by G)
 picard_memory: 12G
 
+# strandedness for Picard tools (R, RF (Illumina), FR, F, or empty)
+strandedness: 
+
 ################################################################
 ## bam file parameters
 ################################################################

@@ -630,11 +630,11 @@ def buildTranscriptProfiles(infiles, outfile):
            r"Picard_stats.dir/\1.picard_rna_metrics")
 def buildPicardRnaSeqMetrics(infiles, outfile):
     '''Get duplicate stats from picard RNASeqMetrics '''
-    # convert strandness to tophat-style library type
-    if PARAMS["strandness"] == ("RF" or "R"):
-        strand = "FIRST_READ_TRANSCRIPTION_STRAND"
-    elif PARAMS["strandness"] == ("FR" or "F"):
+    # convert strandedness to PICARD library type
+    if PARAMS["strandedness"] == ("RF" or "R"):
         strand = "SECOND_READ_TRANSCRIPTION_STRAND"
+    elif PARAMS["strandedness"] == ("FR" or "F"):
+        strand = "FIRST_READ_TRANSCRIPTION_STRAND"
     else:
         strand = "NONE"
     bamstats.buildPicardRnaSeqMetrics(infiles, strand, outfile,

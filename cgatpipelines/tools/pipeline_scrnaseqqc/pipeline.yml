@@ -103,7 +103,7 @@ annotations:
 
 mapping:
     # SQLite database with mapping stats
-    db: ?!
+    database_url: ?!
 
     # context stats table name
     context_stats: ?!

@@ -531,9 +531,6 @@ def quantify_expression():
 # fetch tables from mapping pipeline to use for QC
 
 
-MAPPINGDB = PARAMS['mapping_db']
-
-
 @follows(mkdir("stats.dir"))
 @originate("stats.dir/context_stats.tsv")
 def getContextStats(outfile):

@@ -381,25 +381,6 @@ def identifyProteinCodingGenes(outfile):
         outf.write("\n".join((x[0] for x in select)) + "\n")
 
 
-@active_if(SPLICED_MAPPING)
-@follows(mkdir("geneset.dir"))
-@merge(PARAMS["annotations_interface_geneset_all_gtf"],
-       "geneset.dir/refflat.txt")
-def buildRefFlat(infile, outfile):
-    '''build flat geneset for Picard RnaSeqMetrics.
-    '''
-
-    tmpflat = P.get_temp_filename(".")
-
-    statement = '''
-    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;
-    paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
-    > %(outfile)s
-    '''
-    P.run(statement)
-    os.unlink(tmpflat)
-
-
 @transform(buildReferenceGeneSet,
            suffix("reference.gtf.gz"),
            add_inputs(identifyProteinCodingGenes),

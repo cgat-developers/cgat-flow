@@ -191,11 +191,6 @@ PARAMS.update(P.peek_parameters(
 # Utility functions
 
 PICARD_MEMORY = PARAMS["picard_memory"]
-if not bool(re.search("\d+G", PICARD_MEMORY)):
-    raise ValueError(
-        "Picard Memory defined inappropriately. "
-        "Requires format nG where n is any number. "
-        "'%s' provided" % PICARD_MEMORY)
 
 
 def connect():

@@ -14,7 +14,7 @@
 
 
 # genome is ucsc convention (e.g. hg38)
-genome: !?
+genome: hg38
 
 # directory where exported data is located
 exportdir: export
@@ -58,9 +58,9 @@ database:
 gtf:
 
     #database location 
-    database: !?
+    database: /path/to/dir
 
     # location that pipeline_genesets.py was ran in
-    dir: !?
+    dir: /path/to/dir
 
 

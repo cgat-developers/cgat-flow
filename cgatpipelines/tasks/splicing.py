@@ -57,7 +57,7 @@ import random
 import itertools
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.experiment as E
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 from cgatcore import pipeline as P
 
 

@@ -341,7 +341,7 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 from cgatpipelines.report import run_report
 
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 # levels of cuffdiff analysis
 # (no promotor and splice -> no lfold column)
 CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")

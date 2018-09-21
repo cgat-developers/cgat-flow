@@ -461,7 +461,7 @@ from rpy2.robjects import r as R
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 
 import cgatPipelines.PipelineGeneset as PipelineGeneset
 import cgatPipelines.PipelineMapping as PipelineMapping

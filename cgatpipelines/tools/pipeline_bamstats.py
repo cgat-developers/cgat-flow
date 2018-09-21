@@ -156,6 +156,7 @@ Code
 
 # load modules for use in the pipeline
 
+import re
 import sys
 import os
 import sqlite3
@@ -189,6 +190,8 @@ PARAMS.update(P.peek_parameters(
 # -----------------------------------------------
 # Utility functions
 
+PICARD_MEMORY = PARAMS["picard_memory"]
+
 
 def connect():
     '''utility function to connect to database.
@@ -216,6 +219,7 @@ def connect():
     return dbh
 
 # Determine whether the gemone is paired
+
 
 SPLICED_MAPPING = PARAMS["bam_paired_end"]
 
@@ -272,10 +276,10 @@ def intBam(infile, outfile):
 
     if PARAMS["bam_sequence_stripped"] is True:
         bamstats.addPseudoSequenceQuality(infile,
-                                                  outfile)
+                                          outfile)
     else:
         bamstats.copyBamFile(infile,
-                                     outfile)
+                             outfile)
 
 
 @follows(mkdir("Picard_stats.dir"))
@@ -295,8 +299,9 @@ def buildPicardStats(infiles, outfile):
         reffile = "refcoding.fa"
 
     bamstats.buildPicardAlignmentStats(infile,
-                                               outfile,
-                                               reffile)
+                                       outfile,
+                                       reffile,
+                                       PICARD_MEMORY)
 
 
 @P.add_doc(bamstats.buildPicardDuplicationStats)
@@ -305,7 +310,8 @@ def buildPicardStats(infiles, outfile):
            r"Picard_stats.dir/\1.picard_duplication_metrics")
 def buildPicardDuplicationStats(infile, outfile):
     '''Get duplicate stats from picard MarkDuplicates '''
-    bamstats.buildPicardDuplicationStats(infile, outfile)
+    bamstats.buildPicardDuplicationStats(infile, outfile,
+                                         PICARD_MEMORY)
 
 
 @follows(mkdir("BamStats.dir"))
@@ -624,14 +630,15 @@ def buildTranscriptProfiles(infiles, outfile):
            r"Picard_stats.dir/\1.picard_rna_metrics")
 def buildPicardRnaSeqMetrics(infiles, outfile):
     '''Get duplicate stats from picard RNASeqMetrics '''
-    # convert strandness to tophat-style library type
-    if PARAMS["strandness"] == ("RF" or "R"):
+    # convert strandedness to PICARD library type
+    if PARAMS["strandedness"] == ("RF" or "R"):
         strand = "SECOND_READ_TRANSCRIPTION_STRAND"
-    elif PARAMS["strandness"] == ("FR" or "F"):
+    elif PARAMS["strandedness"] == ("FR" or "F"):
         strand = "FIRST_READ_TRANSCRIPTION_STRAND"
     else:
         strand = "NONE"
-    bamstats.buildPicardRnaSeqMetrics(infiles, strand, outfile)
+    bamstats.buildPicardRnaSeqMetrics(infiles, strand, outfile,
+                                      PICARD_MEMORY)
 
 
 ##########################################################################

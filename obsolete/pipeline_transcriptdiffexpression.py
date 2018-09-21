@@ -244,7 +244,7 @@ import itertools
 
 import cgatcore.experiment as E
 import cgatcore.iotools as iotools
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 
 from cgatcore import pipeline as P
 import cgatPipelines.PipelineMapping as PipelineMapping

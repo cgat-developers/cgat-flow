@@ -14,8 +14,8 @@ Code
 
 '''
 
-import cgat.Expression as Expression
-import cgat.Counts as Counts
+import cgatpipelines.tasks.expression as Expression
+import cgatpipelines.tasks.counts as Counts
 import cgatcore.iotools as iotools
 
 from cgatcore import pipeline as P

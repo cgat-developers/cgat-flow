@@ -25,7 +25,7 @@ import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.iotools as iotools
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 import cgat.Bed as Bed
 
 

@@ -38,7 +38,7 @@ from ruffus import *
 import sqlite3
 import cgatcore.iotools as iotools
 import gzip
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 
 from rpy2.robjects import r as R
 

@@ -1148,7 +1148,7 @@ def runDESeq2(infiles, outfiles, design_name):
             design_name))
 
     statement = '''
-    cgat counts2table
+    python -m cgatpipelines.tasks.counts2table
     --tag-tsv-file=%(transcripts)s
     --design-tsv-file=%(design)s
     --method=deseq2
@@ -1165,7 +1165,7 @@ def runDESeq2(infiles, outfiles, design_name):
     P.run(statement)
 
     statement = '''
-    cgat counts2table
+    python -m cgatpipelines.tasks.counts2table
     --tag-tsv-file=%(genes)s
     --design-tsv-file=%(design)s
     --method=deseq2
@@ -1221,7 +1221,7 @@ def runEdgeR(infiles, outfiles, design_name):
             design_name))
 
     statement = '''
-    cgat counts2table
+    python -m cgatpipelines.tasks.counts2table
     --tag-tsv-file=%(transcripts)s
     --design-tsv-file=%(design)s
     --method=edger
@@ -1237,7 +1237,7 @@ def runEdgeR(infiles, outfiles, design_name):
     P.run(statement)
 
     statement = '''
-    cgat counts2table
+    python -m cgatpipelines.tasks.counts2table
     --tag-tsv-file=%(genes)s
     --design-tsv-file=%(design)s
     --method=edger
@@ -1303,7 +1303,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
         number_samples, number_transcripts)
 
     statement = '''
-    cgat counts2table
+    python -m cgatpipelines.tasks.counts2table
     --design-tsv-file=%(design)s
     --output-filename-pattern=%(transcript_prefix)s
     --log=%(transcript_log)s
@@ -1338,7 +1338,7 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
             2 * number_samples, number_transcripts)
 
         statement = '''
-        cgat counts2table
+        python -m cgatpipelines.tasks.counts2table
         --design-tsv-file=%(design)s
         --output-filename-pattern=%(gene_prefix)s
         --log=%(gene_log)s

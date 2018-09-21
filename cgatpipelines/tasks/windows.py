@@ -332,7 +332,7 @@ def normalizeTagCounts(infile, outfile, method):
     '''
     statement = '''
     zcat %(infile)s
-    | cgat counts2counts
+    | python -m cgatpipelines.tasks.counts2counts
     --method=normalize
     --normalization-method=%(method)s
     --log=%(outfile)s.log
@@ -591,7 +591,7 @@ def outputRegionsOfInterest(design_file, counts_file, outfile,
             --log=%(outfile)s.log
             "(%(upper_levelA)s and %(sum_levelB)s) or
              (%(upper_levelB)s and %(sum_levelA)s)"
-    | cgat runExpression
+    | python -m cgatpipelines.tasks.expression_runner
             --log=%(outfile)s.log
             --design-tsv-file=%(design_file)s
             --tags-tsv-file=-
@@ -674,7 +674,7 @@ def runDE(design_file,
     --output-filename-pattern=%(outdir)s/%%s
     --subdirs
     --output-regex-header="^test_id"
-    "cgat runExpression
+    "python -m cgatpipelines.tasks.expression_runner
               --method=%(method)s
               --tags-tsv-file=%%STDIN%%
               --design-tsv-file=%(design_file)s

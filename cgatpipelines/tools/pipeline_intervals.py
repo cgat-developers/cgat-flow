@@ -1642,7 +1642,7 @@ def summarizeReadCounts(infile, outfile):
 
     prefix = P.snip(outfile, ".tsv")
     job_memory = "32G"
-    statement = '''cgat runExpression
+    statement = '''python -m cgatpipelines.tasks.expression_runner
               --method=summary
               --tags-tsv-file=%(infile)s
               --output-filename-pattern=%(prefix)s_

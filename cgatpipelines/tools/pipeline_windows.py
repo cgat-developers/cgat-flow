@@ -1221,7 +1221,7 @@ def summarizeAllWindowsTagCounts(infile, outfile):
     prefix = P.snip(outfile, ".tsv")
     job_memory = "32G"
 
-    statement = '''cgat runExpression
+    statement = '''python -m cgatpipelines.tasks.expression_runner
     --method=summary
     --tags-tsv-file=%(infile)s
     --output-filename-pattern=%(prefix)s_
@@ -1252,7 +1252,7 @@ def summarizeWindowsTagCounts(infiles, outfile):
 
     design_file, counts_file = infiles
     prefix = P.snip(outfile, ".tsv")
-    statement = '''cgat runExpression
+    statement = '''python -m cgatpipelines.tasks.expression_runner
     --method=summary
     --design-tsv-file=%(design_file)s
     --tags-tsv-file=%(counts_file)s
@@ -1286,7 +1286,7 @@ def dumpWindowsTagCounts(infiles, outfile):
     '''
     design_file, counts_file = infiles
 
-    statement = '''cgat runExpression
+    statement = '''python -m cgatpipelines.tasks.expression_runner
               --method=dump
               --design-tsv-file=%(design_file)s
               --tags-tsv-file=%(counts_file)s
@@ -1716,7 +1716,7 @@ def buildSpikeIns(infiles, outfile):
     design = P.snip(design_file, ".tsv")
     statement = '''
     zcat %(counts_file)s
-    | cgat runExpression
+    | python -m cgatpipelines.tasks.expression_runner
             --log=%(outfile)s.log
             --design-tsv-file=%(design_file)s
             --tags-tsv-file=-

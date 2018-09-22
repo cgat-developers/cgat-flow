@@ -52,9 +52,9 @@ import rpy2.robjects as ro
 import rpy2.rinterface as ri
 
 import cgat.BamTools.bamtools as BamTools
-import cgat.Counts as Counts
+import cgatpipelines.tasks.counts as Counts
 import cgatcore.database as Database
-import cgat.Expression as Expression
+import cgatpipelines.tasks.expression as Expression
 import cgat.GTF as GTF
 import cgatcore.iotools as iotools
 from cgatcore import pipeline as P

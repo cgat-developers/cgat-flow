@@ -207,6 +207,10 @@ import re
 import sqlite3
 import collections
 
+# required for 'butter' mapper
+import shutil
+import cgat.Sra as Sra
+
 import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgat.GTF as GTF
@@ -375,25 +379,6 @@ def identifyProteinCodingGenes(outfile):
     with iotools.open_file(outfile, "w") as outf:
         outf.write("gene_id\n")
         outf.write("\n".join((x[0] for x in select)) + "\n")
-
-
-@active_if(SPLICED_MAPPING)
-@follows(mkdir("geneset.dir"))
-@merge(PARAMS["annotations_interface_geneset_all_gtf"],
-       "geneset.dir/refflat.txt")
-def buildRefFlat(infile, outfile):
-    '''build flat geneset for Picard RnaSeqMetrics.
-    '''
-
-    tmpflat = P.get_temp_filename(".")
-
-    statement = '''
-    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;
-    paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
-    > %(outfile)s
-    '''
-    P.run(statement)
-    os.unlink(tmpflat)
 
 
 @transform(buildReferenceGeneSet,
@@ -1633,7 +1618,7 @@ def mapReadsWithBWA(infile, outfile):
             strip_sequence=PARAMS["strip_sequence"],
             set_nh=PARAMS["bwa_set_nh"])
     else:
-        raise ValueError("bwa algorithm '%s' not known" % algorithm)
+        raise ValueError("bwa algorithm '%s' not known" % PARAMS["bwa_algorithm"])
 
     statement = m.build((infile,), outfile)
     P.run(statement)
@@ -1741,7 +1726,7 @@ def mapReadsWithButter(infile, outfile):
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
         outdir = P.get_temp_dir()
-        f = Sra.sneak(infile, outdir)
+        f = Sra.peek(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
         paired end data,Butter does not support paired end reads''')
@@ -1809,7 +1794,7 @@ def mapReadsWithShortstack(infile, outfile):
     # easier to check whether infiles are paired reads here
     if infile.endswith(".sra"):
         outdir = P.get_temp_dir()
-        f = Sra.sneak(infile, outdir)
+        f = Sra.peek(infile, outdir)
         shutil.rmtree(outdir)
         assert len(f) == 1, NotImplementedError('''The sra archive contains
         paired end data,shortstack does not support paired end reads''')
@@ -1888,12 +1873,18 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         '''
 
         if len(infiles) == 1:
-            E.info(
-                "%(outfile)s: only one file for merging - creating "
-                "softlink" % locals())
-            os.symlink(infiles[0], outfile)
-            os.symlink(infiles[0] + ".bai", outfile + ".bai")
-            return
+            if not os.path.isfile(os.path.join(infiles[0], outfile)):
+                E.info(
+                    "%(outfile)s: only one file for merging - creating "
+                    "softlink" % locals())
+                os.symlink(os.path.basename(infiles[0]), outfile)
+                os.symlink(os.path.basename(infiles[0]) + ".bai", outfile + ".bai")
+                return
+            else:
+                E.info(
+                    "%(outfile)s: only one file for merging - softlink "
+                    "already exists" % locals())
+                return
 
         infiles = " ".join(infiles)
         statement = '''

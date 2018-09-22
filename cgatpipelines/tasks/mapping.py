@@ -1408,13 +1408,17 @@ class SubsetHead(Mapper):
                 | gzip
                 > %(output_filename)s;''' % locals())
         elif len(infiles) > 1:
-            for x, f in enumerate(infiles):
-                output_filename = output_prefix + ".fastq.%i.gz" % (x + 1)
+            for x, f in enumerate(infiles, 1):
+                output_filename = output_prefix + ".fastq.%i.gz" % x
                 statement.append(
                     '''zcat %(f)s
                     | awk 'NR > %(limit)i {exit} {print}'
                     | gzip
-                    > %(output_filename)s;''' % locals())
+                    > %(output_filename)s''' % locals())
+                if x == len(infiles):
+                    statement.append(';')
+                else:
+                    statement.append('&&')
         return " ".join(statement)
 
 

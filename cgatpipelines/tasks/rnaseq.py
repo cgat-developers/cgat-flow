@@ -470,7 +470,6 @@ class SalmonQuantifier(AF_Quantifier):
     '''quantifier class to run salmon'''
     def run_transcript(self):
         fastqfile = self.infile
-        print(fastqfile)
         index = self.annotations
         job_threads = self.job_threads
         job_memory = self.job_memory

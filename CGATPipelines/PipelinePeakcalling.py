@@ -1,8 +1,8 @@
-import os
 import re
 import collections
 import itertools
 import CGATCore.Experiment as E
+import os
 from CGATCore import Pipeline as P
 import CGATCore.IOTools as IOTools
 import CGAT.BamTools.bamtools as BamTools
@@ -92,8 +92,8 @@ def trackFilters(filtername, bamfile, tabout):
     in the filtered bam file to the table tabout.
 
     Example Fragment:
-    echo unpaired >> K9-13-2_counts.tsv;
-    samtools view -c ctmpPGGJro.bam >> K9-13-2_counts.tsv;
+    echo unpaired >> K9-13-2_counts.tsv &&
+    samtools view -c ctmpPGGJro.bam >> K9-13-2_counts.tsv &&
 
     Parameters
     ----------
@@ -104,8 +104,8 @@ def trackFilters(filtername, bamfile, tabout):
     tabout: str
         path to table to write the output to
     '''
-    return """echo %(filtername)s >> %(tabout)s;
-              samtools view -c %(bamfile)s.bam >> %(tabout)s; """ % locals()
+    return """echo %(filtername)s >> %(tabout)s &&
+              samtools view -c %(bamfile)s.bam >> %(tabout)s && """ % locals()
 
 
 def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
@@ -126,8 +126,8 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
     lowqual: -q qual removes reads with quality scores < qual
 
     Example Fragment:
-    samtools view -b -q 40 ctmpPGGJro.bam > ctmpnV2rQY.bam;
-    rm -f ctmpPGGJro.bam; rm -f ctmpPGGJro;
+    samtools view -b -q 40 ctmpPGGJro.bam > ctmpnV2rQY.bam &&
+    rm -f ctmpPGGJro.bam && rm -f ctmpPGGJro &&
 
     The original input file is deleted on the assumption that this is part of
     a list of filters which are applied to a series of temporary files
@@ -188,7 +188,7 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
                 outT = P.get_temp_filename(".")
             # filter to a temporary file, remove the original temporary file
             statement += """samtools view -b %(string)s %(inT)s.bam
-            > %(outT)s.bam; rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+            > %(outT)s.bam && rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
             statement += trackFilters(filt, outT, tabout)
             i += 1
         else:
@@ -218,9 +218,9 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
     OUTPUT=ctmphJw7oO.bam
     METRICS_FILE=/dev/null
     VALIDATION_STRINGENCY=SILENT
-    2> K9-13-2_filtered_duplicates.log;
-    rm -f ctmp87pq2s.bam;
-    rm -f ctmp87pq2s;
+    2> K9-13-2_filtered_duplicates.log &&
+    rm -f ctmp87pq2s.bam &&
+    rm -f ctmp87pq2s &&
 
     The original input file is deleted on the assumption that this is part of
     a list of filters which are applied to a series of temporary files
@@ -255,7 +255,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
         OUTPUT=%(outT)s.bam \
         METRICS_FILE=/dev/null \
         VALIDATION_STRINGENCY=SILENT \
-        >& %(log)s; rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+        >& %(log)s && rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
 
         statement += trackFilters("duplicates", outT, tabout)
         statement = statement.replace("\n", "")
@@ -270,11 +270,11 @@ def appendBlacklistFilter(statement, inT, tabout, bedfiles, blthresh, pe):
     from bedtools.
 
     Example Fragment:
-    samtools sort -n ctmpnV2rQY.bam -o ctmpL7A2ni.bam;
-    rm -f ctmpnV2rQY.bam;
-    rm -f ctmpnV2rQY;
+    samtools sort -n ctmpnV2rQY.bam -o ctmpL7A2ni.bam &&
+    rm -f ctmpnV2rQY.bam &&
+    rm -f ctmpnV2rQY &&
     pairToBed -abam ctmpL7A2ni.bam -b chr14.bed -f 0.00000010 -type neither
-    > ctmpXbXeki.bam; rm -f ctmpL7A2ni.bam;
+    > ctmpXbXeki.bam && rm -f ctmpL7A2ni.bam &&
 
     By default a read is removed if it has any overlap with any blacklisted
     region on either end.
@@ -301,21 +301,21 @@ def appendBlacklistFilter(statement, inT, tabout, bedfiles, blthresh, pe):
     '''
     outT = P.get_temp_filename("./filtered_bams.dir")
     if pe is True:
-        statement += """samtools sort -n %(inT)s.bam -o %(outT)s.bam;
-                        rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+        statement += """samtools sort -n %(inT)s.bam -o %(outT)s.bam &&
+                        rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
         for bedfile in bedfiles:
             inT = outT
             outT = P.get_temp_filename("./filtered_bams.dir")
             statement += """pairToBed -abam %(inT)s.bam
                                       -b %(bedfile)s
                                       -f %(blthresh)f10 -type neither
-                            > %(outT)s.bam;
-                            rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+                            > %(outT)s.bam &&
+                            rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
             statement += trackFilters(bedfile, outT, tabout)
             inT = outT
         outT = P.get_temp_filename("./filtered_bams.dir")
-        statement += """samtools sort %(inT)s.bam -o %(outT)s.bam;
-                        rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+        statement += """samtools sort %(inT)s.bam -o %(outT)s.bam &&
+                        rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
 
     else:
         for bedfile in bedfiles:
@@ -323,8 +323,8 @@ def appendBlacklistFilter(statement, inT, tabout, bedfiles, blthresh, pe):
             statement += """bedtools intersect -abam %(inT)s.bam
                                       -b %(bedfile)s
                                       -f %(blthresh)f10 -v
-                            > %(outT)s.bam;
-                            rm -f %(inT)s.bam; rm -f %(inT)s; """ % locals()
+                            > %(outT)s.bam &&
+                            rm -f %(inT)s.bam && rm -f %(inT)s && """ % locals()
             statement += trackFilters(bedfile, outT, tabout)
             inT = outT
 
@@ -367,10 +367,10 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
 
     outT = P.get_temp_filename("./filtered_bams.dir")
 
-    statement += """samtools index %(inT)s.bam;
-                    samtools view -b %(inT)s.bam %(keep_contigs)s > %(outT)s.bam;
-                    rm -f %(inT)s.bam; rm -f %(inT)s;
-                    rm -f %(inT)s.bam.bai;""" % locals()
+    statement += """samtools index %(inT)s.bam &&
+                    samtools view -b %(inT)s.bam %(keep_contigs)s > %(outT)s.bam &&
+                    rm -f %(inT)s.bam && rm -f %(inT)s &&
+                    rm -f %(inT)s.bam.bai && """ % locals()
 
     statement += trackFilters('contigs', outT, tabout)
     statement = statement.replace("\n", "")
@@ -393,15 +393,15 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     trackFilters function.
 
     Example Statement:
-    samtools sort K9-13-2.bam -o ctmp87pq2s.bam;
-    echo none >> K9-13-2_counts.tsv;
-    samtools view -c ctmp87pq2s.bam >> K9-13-2_counts.tsv;
+    samtools sort K9-13-2.bam -o ctmp87pq2s.bam &&
+    echo none >> K9-13-2_counts.tsv &&
+    samtools view -c ctmp87pq2s.bam >> K9-13-2_counts.tsv &&
     ...
-    samtools sort ctmpXbXeki.bam -o ctmpWm5mq9.bam;
-    rm -f ctmpXbXeki.bam;
-    rm -f ctmpXbXeki;
-    mv ctmpWm5mq9.bam K9-13-2_filtered.bam;
-    rm -f ctmpWm5mq9;
+    samtools sort ctmpXbXeki.bam -o ctmpWm5mq9.bam &&
+    rm -f ctmpXbXeki.bam &&
+    rm -f ctmpXbXeki &&
+    mv ctmpWm5mq9.bam K9-13-2_filtered.bam &&
+    rm -f ctmpWm5mq9 &&
 
     ... represents the statement fragments generated by the filtering functions
 
@@ -437,17 +437,18 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         os.mkdir("filtered_bams.dir")
     outT = P.get_temp_filename("./filtered_bams.dir")
 
-    if filters == ['']:
+    if filters == [''] or filters == []:
         cwd = os.getcwd()
         index = inT + '.bai'
         index_out = bamout + '.bai'
-        statement = """ln -s %(cwd)s/%(inT)s %(bamout)s; """
-        statement += """ln -s %(cwd)s/%(index)s %(index_out)s; """
+        statement = """ln -s %(cwd)s/%(inT)s %(bamout)s && """ % locals()
+        statement += """ln -s %(cwd)s/%(index)s %(index_out)s && """ % locals()
         statement += trackFilters("none", P.snip(inT), tabout)
+        statement += """ echo 'link created for %(inT)s' """ % locals()
         P.run(statement)
 
     else:
-        statement = """samtools sort %(inT)s -o %(outT)s.bam; """ % locals()
+        statement = """samtools sort %(inT)s -o %(outT)s.bam && """ % locals()
         inT = outT
 
         statement += trackFilters("none", inT, tabout)
@@ -480,20 +481,20 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         #                     -I %(inT)s.bam
         #                     --strip-method=all
         #                     --method=strip-sequence
-        #                     --log=%(bamout)s.log -S %(outT)s.bam;
-        #                     rm -f %(inT)s; """ % locals()
+        #                     --log=%(bamout)s.log -S %(outT)s.bam &&
+        #                     rm -f %(inT)s && """ % locals()
 
         #     inT = outT
-        statement += """mv %(inT)s.bam %(bamout)s;
-                        rm -f %(inT)s;
+        statement += """mv %(inT)s.bam %(bamout)s &&
+                        rm -f %(inT)s &&
                         samtools index %(bamout)s""" % locals()
 
         statement = statement.replace("\n", "\n")
 
         if int(keep_intermediates) == 1:
-            statement = re.sub("rm -f \S+.bam;", "", statement)
+            statement = re.sub("rm -f \S+.bam && ", "", statement)
 
-        P.run(statement, job_memory="8G")
+        P.run(statement, job_memory="12G")
 
     # reformats the read counts into a table
     inf = [line.strip() for line in open(tabout).readlines()]
@@ -517,7 +518,10 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     # remove reads whose mate has been filtered out elsewhere
 
     T = P.get_temp_filename(".")
-    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True)
+
+
+    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True, job_memory='12G')
+
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
     shutil.move("%s.bam" % T, bamout)
@@ -754,6 +758,186 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         map(str, (mode, mean, std, tagsize))) + "\n")
     outf.close()
 
+########################################################################
+# Downsampling functions
+########################################################################
+
+def round_down_reads(input_number, nearest_x):
+    '''take input number and round it down to the nearest denominator
+    e.g. 456655 '''
+    y = input_number // nearest_x
+    rounded_number = y*nearest_x
+    return(rounded_number)
+
+
+
+@cluster_runnable
+def downSampleBams(infile, outfile, downsample_size, paired_end, randomseed):
+    '''
+    Generates downsampled bam files by subsampling reads.
+    Each read in the input bam is assigned
+    to downsampled bam at random.
+    If reads are paired end both reads in the pair are assigned
+    to the same bam file.
+
+    if file has less reads then the downsampled number - origional file will 
+    be copied - TODO warning will be thrown
+
+    takes paired end  and single end reads!!!
+    Parameters
+    ----------
+    infile: str
+        path to input bam file
+    outfiles: str
+        paths to the output bam file
+    downsample_size: int
+        number of reads want in the downsampled bam
+    randomseed: int
+        seed to use to generate random numbers
+    '''
+
+
+    # get name sorted bam
+    tmp_bam_filename = P.get_temp_filename(".") + ".bam"
+    statement = "samtools sort -n %(infile)s -o %(tmp_bam_filename)s" % locals()
+    P.run(statement)
+
+    # read in sorted bamfile
+    sorted_bamfile = pysam.AlignmentFile(tmp_bam_filename, "rb")
+
+    # for single end, count the reads, for paired end, halve number of reads
+    # then generate a random list of 0s and 1s of this length
+    # 0 = go to pseudo bam 0, 1 = go to pseudo bam 1
+
+    orig_bamfile = pysam.AlignmentFile(infile, "rb")
+    bamlength = orig_bamfile.count()
+    orig_bamfile.close()
+
+    # is pe count fragments, if se count individual reads
+    if paired_end is True:
+        num_input_reads = bamlength/2
+    else:
+        num_input_reads = bamlength
+
+
+
+    # get downsampling number
+
+    if downsample_size <= num_input_reads:
+    
+        outf = pysam.AlignmentFile(outfile, "wb", template=sorted_bamfile)
+
+        # think here about counting pairs rather then individual reads
+        num_of_reads_to_remove = int(num_input_reads - downsample_size)
+
+        # init the generator and set the seed
+        randomgen = np.random.RandomState()
+        randomgen.seed(randomseed)
+
+        # create a array of 1's for the number of pairs of reads (pe) or
+        # indiv reads (se) wanted after downsampling
+        # length of list == number of fragments/reads wanted after downsampling
+        wanted_list = np.ones((1,int(downsample_size)),dtype=np.int8)
+
+        # create a array of 0's for the number of pairs of reads to be removed by downsampling
+        # length of list == number of pairs to be removed by downsampling
+        remove_list = np.zeros((1,int(num_of_reads_to_remove)),dtype=np.int8)
+
+        # combine the list of 1 & 0 & shuffle - check list length == input bam
+        full_list = np.concatenate((wanted_list,remove_list),axis =1)[0]
+
+        # here is the random shuffle bit
+        randomgen.shuffle(full_list)
+
+
+        if len(full_list) != num_input_reads:
+            raise ValueError('length of list to randomly downsample reads is %s but length of file is %s' % (len(full_list),num_input_reads))
+            #E.info('length of list to randomly downsample reads is %s but length of file is %s' % (len(full_list),num_input_reads))
+
+
+        # J counts where are in bam, i counts the possition in the full_list of 1&0 to
+        # tell it to include read or not
+        j = int(0)
+        i = int(0)
+
+
+        if paired_end is True:
+            print('AAA')
+            for read in sorted_bamfile:
+
+                # if j is even
+                if j % 2 == 0:
+                    # take item i from intlist
+                    include = full_list[i]
+                    i += 1
+
+                j += 1
+
+                # write to output bam
+                if include == 1:
+                    outf.write(read)
+
+                else:
+                    continue
+
+        else:
+           for read in sorted_bamfile:
+               include = full_list[i]
+               i += 1
+
+               if include == 1:
+                    outf.write(read)
+
+        outf.close()
+        sortIndex(outfile)
+        
+    else:
+        E.info('%(infile)s , %(outfile)s' % locals())
+        E.info('''WARNING: %(infile)s reads < downsample_size %(downsample_size)s''' % locals())
+
+        makeBamLink(infile, outfile)
+
+    os.remove(tmp_bam_filename)
+
+
+@cluster_runnable
+def summariseDownsampling(infiles,outfile):
+    ''' take list of infiles and generate tsv summarising number of 
+        reads in resulting file '''
+        
+    reads= collections.defaultdict(list)
+        
+    for file in infiles:
+        orig_bamfile = file.split('/')[-1]
+        filtered_filename = P.snip(orig_bamfile,'_downsampled.bam')
+        reads['Input_Filename'].append(filtered_filename)
+        reads['downsampled_bam'].append(orig_bamfile)
+            
+        num_reads = BamTools.getNumReads(file)
+        reads['downsampled_read_total'].append(num_reads)
+ 
+    df = pd.DataFrame(reads)
+    df.to_csv(outfile,sep='\t', index=None)
+
+@cluster_runnable
+def summariseDownsamplingForPooledBams(infiles,outfile):
+    ''' take list of infiles and generate tsv summarising number of 
+        reads in resulting file '''
+        
+    reads= collections.defaultdict(list)
+        
+    for file in infiles:
+        orig_bamfile = file.split('/')[-1]
+        filtered_filename = P.snip(orig_bamfile,'_downsampled_pooled_filtered.bam')
+        reads['Input_Filename'].append(filtered_filename)
+        reads['downsampled_pooled_filtered_bam'].append(orig_bamfile)
+            
+        num_reads = BamTools.getNumReads(file)
+        reads['downsampled_pooled_filtered_read_total'].append(num_reads)
+ 
+    df = pd.DataFrame(reads)
+    df.to_csv(outfile,sep='\t', index=None)
+
 
 @cluster_runnable
 def makePseudoBams(infile, outfiles, pe, randomseed, filters):
@@ -894,11 +1078,11 @@ def mergeSortIndex(bamfiles, out):
 
     Example Statement:
     samtools merge ctmpljriXY.bam K9-13-1_filtered.bam K9-13-2_filtered.bam
-    K9-13-3_filtered.bam;
-    samtools sort ctmpljriXY.bam -o ctmpYH6llm.bam;
-    samtools index ctmpYH6llm.bam;
-    mv ctmpYH6llm.bam 13_Heart_pooled_filtered.bam;
-    mv ctmpYH6llm.bam.bai 13_Heart_pooled_filtered.bam.bai;
+    K9-13-3_filtered.bam &&
+    samtools sort ctmpljriXY.bam -o ctmpYH6llm.bam &&
+    samtools index ctmpYH6llm.bam &&
+    mv ctmpYH6llm.bam 13_Heart_pooled_filtered.bam &&
+    mv ctmpYH6llm.bam.bai 13_Heart_pooled_filtered.bam.bai &&
 
     Parameters
     ----------
@@ -915,7 +1099,7 @@ def mergeSortIndex(bamfiles, out):
         "samtools sort %(T1)s.bam -o %(out)s && "
         "samtools index %(out)s && "
         "rm -f %(T1)s.bam" % locals())
-    P.run(statement)
+    P.run(statement, job_memory='100G')
 
 
 def sortIndex(bamfile):
@@ -925,9 +1109,9 @@ def sortIndex(bamfile):
     Generates and runs a command line statement.
 
     Example Statement:
-    samtools sort K9-10-1_filtered.bam -o ctmpvHoczK.bam;
-    samtools index ctmpvHoczK.bam;
-    mv ctmpvHoczK.bam K9-10-1_filtered.bam;
+    samtools sort K9-10-1_filtered.bam -o ctmpvHoczK.bam &&
+    samtools index ctmpvHoczK.bam &&
+    mv ctmpvHoczK.bam K9-10-1_filtered.bam &&
     mv ctmpvHoczK.bam.bai K9-10-1_filtered.bam.bai
 
     The input bam file is replaced by the sorted bam file.
@@ -960,10 +1144,11 @@ def makeBamLink(currentname, newname):
         path to link location
     '''
     cwd = os.getcwd()
+    
+    E.info("""
+    ln -s %(cwd)s/%(currentname)s %(cwd)s/%(newname)s && ln -s %(cwd)s/%(currentname)s.bai %(cwd)s/%(newname)s.bai""" % locals())
     os.system("""
-    ln -s %(cwd)s/%(currentname)s %(cwd)s/%(newname)s;
-    ln -s %(cwd)s/%(currentname)s.bai %(cwd)s/%(newname)s.bai;
-    """ % locals())
+    ln -s %(cwd)s/%(currentname)s %(cwd)s/%(newname)s && ln -s %(cwd)s/%(currentname)s.bai %(cwd)s/%(newname)s.bai""" % locals())
 
 
 def makeLink(currentname, newname):
@@ -980,7 +1165,7 @@ def makeLink(currentname, newname):
     '''
     cwd = os.getcwd()
     os.system("""
-    ln -s %(cwd)s/%(currentname)s %(cwd)s/%(newname)s;
+    ln -s %(cwd)s/%(currentname)s %(cwd)s/%(newname)s &&
     """ % locals())
 
 
@@ -1231,8 +1416,8 @@ class Macs2Peakcaller(Peakcaller):
         --qvalue=0.01 --bdg --SPMR --mfold 10 30 --gsize mm
         --broad --broad-cutoff 0.1
         --control IDR_inputs.dir/K9-IN-1_filtered.bam --tsize 75
-        >& K9-13-2_filtered_pseudo_2.macs2;
-        mv K9-13-2_filtered_pseudo_2.macs2 K9-13-2_filtered_pseudo_2.macs2.log;
+        >& K9-13-2_filtered_pseudo_2.macs2 &&
+        mv K9-13-2_filtered_pseudo_2.macs2 K9-13-2_filtered_pseudo_2.macs2.log &&
 
         Output files have the same stem but various suffixes.  Details are
         here: https://github.com/taoliu/MACS
@@ -1326,20 +1511,20 @@ class Macs2Peakcaller(Peakcaller):
         Example Statement:
         bedGraphToBigWig K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bdg
         assembly.dir/contigs.tsv
-        K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bw;
-        rm -rf K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bdg;
+        K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bw &&
+        rm -rf K9-13-2_filtered_pseudo_2.macs2_treat_pileup.bdg &&
 
         bedGraphToBigWig K9-13-2_filtered_pseudo_2.macs2_control_lambda.bdg
         assembly.dir/contigs.tsv
-        K9-13-2_filtered_pseudo_2.macs2_control_lambda.bw;
-        rm -rf K9-13-2_filtered_pseudo_2.macs2_control_lambda.bdg;
+        K9-13-2_filtered_pseudo_2.macs2_control_lambda.bw &&
+        rm -rf K9-13-2_filtered_pseudo_2.macs2_control_lambda.bdg &&
 
         grep -v "^$" < K9-13-2_filtered_pseudo_2.macs2_peaks.xls |
-        bgzip > K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz;
+        bgzip > K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz &&
         x=$(zgrep "[#|log]" K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz |
-        wc -l);
-        tabix -f -b 2 -e 3 -S $x K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz;
-        rm -f K9-13-2_filtered_pseudo_2.macs2_peaks.xls;
+        wc -l) &&
+        tabix -f -b 2 -e 3 -S $x K9-13-2_filtered_pseudo_2.macs2_peaks.xls.gz &&
+        rm -f K9-13-2_filtered_pseudo_2.macs2_peaks.xls &&
 
         Output files from the callPeaks step are compressed as follows:
         .macs2_treat_pileup.bdg > .macs2_treat_pileup.bw
@@ -1427,7 +1612,7 @@ class Macs2Peakcaller(Peakcaller):
         --output-bed-headers=contig,start,end,interval_id,
         -log10\(pvalue\),fold,-log10\(qvalue\),macs_nprobes,macs_peakname
         --log=K9-13-2_filtered_pseudo_2.macs2.log
-        > K9-13-2_filtered_pseudo_2.macs;
+        > K9-13-2_filtered_pseudo_2.macs &&
 
         cat macs2.dir/K9-13-2_filtered_pseudo_2.macs2_peaks.broadPeak |
         awk '/Chromosome/ {next; } {printf("%s\t%i\t%i\t%i\t%i\n",
@@ -1441,7 +1626,7 @@ class Macs2Peakcaller(Peakcaller):
         --output-all-fields
         --output-bed-headers=contig,start,end,interval_id,Height
         --log=K9-13-2_filtered_pseudo_2.macs2.log
-        > K9-13-2_filtered_pseudo_2.broadpeaks.macs_peaks.bed;
+        > K9-13-2_filtered_pseudo_2.broadpeaks.macs_peaks.bed &&
 
         Parameters
         ----------
@@ -2047,7 +2232,7 @@ def makePairsForIDR(infiles, outfile, useoracle, df):
     E.debug("pseudo_reps: {}".format(pseudo_reps))
     E.debug("notpseudo_pooled: {}".format(notpseudo_pooled))
     E.debug("notpseudo_reps: {}".format(notpseudo_reps))
-            
+
     # The "oracle peaks" file is the notpseudo_pooled file for each condition
     # and tissue combination
     oracledict = dict()
@@ -2227,7 +2412,7 @@ def buildIDRStatement(infile1, infile2, outfile,
 
     if test is True:
         # this statement only returns the merged peak list to check length
-        statement.append("""idr --version >>%(log)s;
+        statement.append("""idr --version >>%(log)s &&
                             idr
                             --samples %(infile1)s %(infile2)s
                             --output-file %(outfile)s
@@ -2242,7 +2427,7 @@ def buildIDRStatement(infile1, infile2, outfile,
                          """ % locals())
 
     else:
-        statement.append("""idr --version >>%(log)s;
+        statement.append("""idr --version >>%(log)s &&
                             idr
                             --samples %(infile1)s %(infile2)s
                             --output-file %(outfile)s
@@ -2651,7 +2836,7 @@ def runCHIPQC(infile, outfiles, rdir):
 # Pipeline Specific Functions
 
 
-def readDesignTable(infile, poolinputs):
+def readDesignTable(infile, poolinputs='none'):
     '''
     This function reads a design table named "design.tsv"  and generates
     objects to be used to match peaks called in samples to the appropriate

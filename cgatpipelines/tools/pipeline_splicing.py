@@ -274,7 +274,7 @@ def countDEXSeq(infiles, outfile):
     -s %(strandedness)s
     -r pos
     -f bam  %(gfffile)s %(infile)s %(outfile)s'''
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")
 
 
 @collate(countDEXSeq,

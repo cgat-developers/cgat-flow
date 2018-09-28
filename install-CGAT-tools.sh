@@ -446,6 +446,10 @@ curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRA
 
 conda env update --quiet --file pipeline-peakcalling-sicer.yml
 
+curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-splicing.yml
+
+conda env update --quiet --file pipelines-splicing.yml
+
 }
 
 

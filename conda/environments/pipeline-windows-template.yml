@@ -26,3 +26,6 @@ dependencies:
 - ucsc-bedgraphtobigwig
 - ucsc-bedtobigbed
 - zlib
+- bioconductor-deseq
+- bioconductor-deseq2
+- bioconductor-edger

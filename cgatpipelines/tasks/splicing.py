@@ -117,7 +117,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     > %(outdir)s/%(designfile)s.log
     '''
 
-    P.run(statement)
+    P.run(statement, job_condaenv="macs2")
 
 
 def rmats2sashimi(infile, designfile, FDR, outfile):

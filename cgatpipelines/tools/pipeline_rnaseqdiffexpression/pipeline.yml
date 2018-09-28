@@ -1,3 +1,5 @@
+# input directory: 0 = pipeline directory, 1 = data.dir
+input: 0
 
 # genome ID
 genome: hg38

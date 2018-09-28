@@ -869,7 +869,7 @@ def runKallisto(infiles, outfiles):
 
     transcript_outfile, gene_outfile = outfiles
     Quantifier = rnaseq.KallistoQuantifier(
-        infile=fastqfile[0],
+        infile=fastqfile,
         transcript_outfile=transcript_outfile,
         gene_outfile=gene_outfile,
         annotations=index,
@@ -933,7 +933,7 @@ def runSailfish(infiles, outfiles):
 
     transcript_outfile, gene_outfile = outfiles
     Quantifier = rnaseq.SailfishQuantifier(
-        infile=fastqfile[0],
+        infile=fastqfile,
         transcript_outfile=transcript_outfile,
         gene_outfile=gene_outfile,
         annotations=index,
@@ -996,7 +996,7 @@ def runSalmon(infiles, outfiles):
 
     transcript_outfile, gene_outfile = outfiles
     Quantifier = rnaseq.SalmonQuantifier(
-        infile=fastqfile[0],
+        infile=fastqfile,
         transcript_outfile=transcript_outfile,
         gene_outfile=gene_outfile,
         annotations=index,

@@ -17,6 +17,9 @@ dependencies:
 - bioconductor-cummerbund=2.20.0
 - bioconductor-hilbertvis=1.36.0
 - bioconductor-hpar=1.20.0
+- bioconductor-deseq
+- bioconductor-deseq2
+- bioconductor-edger
 - biopython=1.70
 - bismark=0.19.0
 - bowtie=1.2.2

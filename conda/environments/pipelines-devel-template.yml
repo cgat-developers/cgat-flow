@@ -59,6 +59,9 @@ dependencies:
 - bioconductor-cummerbund
 - bioconductor-hilbertvis
 - bioconductor-hpar
+- bioconductor-deseq
+- bioconductor-edger
+- bioconductor-deseq2
 # Misc dependencies
 # WARNING: macs2 is Py2 only. Please install it on a separate conda env
 # WARNING: sicer is Py2 only. Please install it on a separate conda env

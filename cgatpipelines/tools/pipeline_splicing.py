@@ -152,11 +152,7 @@ PARAMS.update(P.peek_parameters(
     restrict_interface=True))  # add config values from associated pipelines
 
 # The DEXSeq R directory contains important python helper functions
-PYTHONSCRIPTSDIR = R('''
-    f = function(){
-    pythonScriptsDir = system.file("python_scripts", package="DEXSeq")
-    }
-    f()''').tostring()
+PYTHONSCRIPTSDIR = R('''system.file("python_scripts", package="DEXSeq")''')[0]
 
 
 ###################################################################
@@ -278,7 +274,7 @@ def countDEXSeq(infiles, outfile):
     -s %(strandedness)s
     -r pos
     -f bam  %(gfffile)s %(infile)s %(outfile)s'''
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")
 
 
 @collate(countDEXSeq,

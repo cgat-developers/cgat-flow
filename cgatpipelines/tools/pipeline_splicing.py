@@ -124,6 +124,7 @@ import sqlite3
 import pandas as pd
 from rpy2.robjects import r as R
 import cgat.BamTools.bamtools as BamTools
+import cgatcore.iotools as iotools
 import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
@@ -226,7 +227,7 @@ def buildGff(infile, outfile):
     ps = PYTHONSCRIPTSDIR
     statement = '''python %(ps)s/dexseq_prepare_annotation.py
                 %(tmpgff)s %(outfile)s'''
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")
 
     os.unlink(tmpgff)
 
@@ -465,7 +466,8 @@ def collateMATS(infiles, outfile):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] < PARAMS['MATS_fdr']])))
+        collate.append(str(len(temp[temp['FDR'] <
+                                    float(PARAMS['MATS_fdr'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))

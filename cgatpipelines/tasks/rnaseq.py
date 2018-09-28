@@ -548,10 +548,10 @@ def makeExpressionSummaryPlots(counts_inf, design_inf, logfile):
                              colour="group", shape="group")
 
         # Z-score normalise the expression for the heatmap visualisation
-        counts_log10.zNormalise(inplace=True)
+        # counts_log10.zNormalise(inplace=True)
 
-        log.write("plot heatmap: %s\n" % heatmap_outfile)
-        counts_log10.heatmap(heatmap_outfile, zscore=True)
+        # log.write("plot heatmap: %s\n" % heatmap_outfile)
+        # counts_log10.heatmap(heatmap_outfile, zscore=True)
 
 
 def getAlignmentFreeNormExp(transcript_infiles, basename, column,

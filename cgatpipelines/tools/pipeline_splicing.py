@@ -152,11 +152,7 @@ PARAMS.update(P.peek_parameters(
     restrict_interface=True))  # add config values from associated pipelines
 
 # The DEXSeq R directory contains important python helper functions
-PYTHONSCRIPTSDIR = R('''
-    f = function(){
-    pythonScriptsDir = system.file("python_scripts", package="DEXSeq")
-    }
-    f()''').tostring()
+PYTHONSCRIPTSDIR = R('''system.file("python_scripts", package="DEXSeq")''')[0]
 
 
 ###################################################################

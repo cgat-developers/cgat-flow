@@ -54,7 +54,6 @@ Requirements
 
 import os
 import random
-import itertools
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.experiment as E
 import cgatpipelines.tasks.expression as Expression
@@ -86,9 +85,9 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
 
     design = Expression.ExperimentalDesign(designfile)
     if permute == 1:
-        design.table.group = random.choice(list(
-                             itertools.permutations(design.table.group)))
-
+        permutelist = design.table.group.tolist()
+        random.shuffle(permutelist)
+        design.table.group = permutelist
     group1 = ",".join(
         ["%s.bam" % x for x in design.getSamplesInGroup(design.groups[0])])
     with open(outdir + "/b1.txt", "w") as f:

@@ -580,7 +580,8 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] < PARAMS['MATS_fdr']])))
+        collate.append(str(len(temp[temp['FDR'] <
+                                    float(PARAMS['MATS_fdr'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))

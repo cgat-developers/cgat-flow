@@ -158,10 +158,14 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     group1name = Design.groups[0]
     group2name = Design.groups[1]
     event = os.path.basename(os.path.normpath(outfile))
+    if "MXE" in infile:
+        column = "22"
+    else:
+        column = "20"
 
     statement = '''cat
     %(infile)s|grep -v NA|
-    awk '$20 < %(FDR)s' > %(infile)s_sig.txt;
+    awk '$%(column)s < %(FDR)s' > %(infile)s_sig.txt;
     rmats2sashimiplot
     --b1 %(group1)s
     --b2 %(group2)s
@@ -173,4 +177,4 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     > %(outfile)s/%(event)s.log
     ''' % locals()
 
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")

@@ -299,7 +299,7 @@ def aggregateExonCounts(infiles, outfile):
         as rows and tracks as the columns - this is a `tsv.gz` file      '''
 
     infiles = " ".join(infiles)
-    statement = '''python %(scriptsdir)s/combine_tables.py
+    statement = '''cgat combine_tables
     --columns=1
     --take=2
     --use-file-prefix
@@ -312,13 +312,14 @@ def aggregateExonCounts(infiles, outfile):
     P.run(statement)
 
 
+'''
 @follows(aggregateExonCounts)
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
            r"results.dir/DEXSeq/\1_results.tsv")
 def runDEXSeq(infile, outfile):
-    ''' run DEXSeq command
+     run DEXSeq command
 
     DEXSeq is run using the counts2table from the
     cgat code collection. Output is standardised to
@@ -341,7 +342,7 @@ def runDEXSeq(infile, outfile):
     DEXSeq_refgroup_% : string
        :term:`PARAMS`. Specifies model, contrast and reference
        group for DEXSeq analysis
-    '''
+    
 
     outdir = os.path.dirname(outfile)
     countsdir = "counts.dir/"
@@ -352,8 +353,8 @@ def runDEXSeq(infile, outfile):
     contrast = PARAMS["DEXSeq_contrast_%s" % design]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
 
-    statement = '''
-    python %%(scriptsdir)s/counts2table.py
+    statement = 
+    python -m cgatpipelines.tasks.counts2table
     --design-tsv-file=%(infile)s
     --output-filename-pattern=%(outdir)s/%(design)s
     --log=%(outdir)s/%(design)s_DEXSeq.log
@@ -365,10 +366,10 @@ def runDEXSeq(infile, outfile):
     -r %(refgroup)s
     --dexseq-flattened-file=%(gfffile)s
     > %(outfile)s;
-    ''' % locals()
+     % locals()
 
     P.run(statement)
-
+'''
 
 ###################################################################
 ###################################################################
@@ -671,7 +672,7 @@ def runSashimi(infiles, outfile):
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,
-         runDEXSeq)
+         aggregateExonCounts)
 def full():
     pass
 

@@ -26,8 +26,8 @@ web_dir: ../web
 version: ''
 
 # Should be 1 if you have 'input' bam files (e.g. ChIP input control)
-input: 1
 have_input: 1
+# Should be 1 if you wish to use 'input' bam files for IDR
 use_input: 1
 ################################################################
 #

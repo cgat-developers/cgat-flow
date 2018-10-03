@@ -27,6 +27,8 @@ version: ''
 
 # Should be 1 if you have 'input' bam files (e.g. ChIP input control)
 input: 1
+have_input: 1
+use_input: 1
 ################################################################
 #
 # Location of annotation database

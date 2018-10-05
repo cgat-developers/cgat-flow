@@ -14,7 +14,6 @@ import cgatcore.experiment as E
 from cgatcore.pipeline import cluster_runnable
 import numpy as np
 import pandas as pd
-import cgatcore.csv as csv
 import cgat.VCF as VCF
 import collections
 import re

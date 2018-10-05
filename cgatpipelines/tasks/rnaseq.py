@@ -34,7 +34,7 @@ Reference
 """
 
 import cgatcore.experiment as E
-import cgatcore.csv as CSV
+import cgatcore.csvutils as CSV
 import cgat.Sra as Sra
 
 import collections
@@ -1650,7 +1650,7 @@ def buildUTRExtension(infile, outfile):
 
     # read gene coordinates
     geneinfos = {}
-    for x in csv.DictReader(iotools.open_file(infile), dialect='excel-tab'):
+    for x in CSV.DictReader(iotools.open_file(infile), dialect='excel-tab'):
         contig, strand, start, end = x['contig'], x[
             'strand'], int(x['start']), int(x['end'])
         geneinfos[x['gene_id']] = (contig, strand,

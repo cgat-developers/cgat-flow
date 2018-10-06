@@ -1294,6 +1294,7 @@ def mapReadsWithSTAR(infile, outfile):
 
 
 @active_if(SPLICED_MAPPING)
+@active_if("star2pass" in P.as_list(PARAMS["mappers"]))
 @follows(mkdir("star2pass.dir"))
 @transform(SEQUENCEFILES,
            SEQUENCEFILES_REGEX,

@@ -37,7 +37,7 @@ import cgatcore.experiment as E
 import cgatpipelines.tasks.expression as Expression
 import cgatcore.iotools as iotools
 import cgat.IndexedFasta as IndexedFasta
-import cgatcore.csv as csv
+import cgatcore.csvutils as CSV
 import cgat.BamTools as BamTools
 
 
@@ -219,8 +219,8 @@ def main(argv=None):
     if "convert" in options.toolset:
 
         results = []
-        for line in csv.DictReader(options.stdin,
-                                   dialect="excel-tab"):
+        for line in CSV.DictReader(options.stdin,
+                       	           dialect="excel-tab"):
             if line['edgeR.p.value'] == "NA":
                 continue
 

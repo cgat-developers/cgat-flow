@@ -36,7 +36,7 @@ import re
 import os
 import sqlite3
 from cgatcore import pipeline as P
-import cgatpipelines.tasks.tracks as tracks
+import cgatpipelines.tasks.tracks as ptracks
 import cgatcore.iotools as iotools
 import cgat.Fastq as Fastq
 import cgatpipelines.tasks.mapping as Mapping
@@ -82,15 +82,15 @@ def makeAdaptorFasta(infile, outfile, track, dbh, contaminants_file):
     found_contaminants = []
 
     for t in tracks:
-        table = tracks.AutoSample(os.path.basename(t)).asTable()
+        table = ptracks.AutoSample(os.path.basename(t)).asTable()
 
         # if sample name starts with a number, sql table will have
         # prepended "_"
         if re.match("^\d+.*", table):
             table = "_" + table
 
-        query = '''SELECT Possible_Source, Sequence FROM
-        %s_fastqc_Overrepresented_sequences;''' % table
+        query = '''SELECT "Possible Source", "Sequence" FROM
+        fastqc_overrepresented_sequences WHERE "track" == "%s";''' % table
 
         cc = dbh.cursor()
 

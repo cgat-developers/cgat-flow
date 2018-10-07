@@ -175,7 +175,7 @@ if P.get_params().get("preprocessors", None):
         # check if FastQC has been run
         for x in iotools.flatten([glob.glob(y) for y in
                                   P.get_params()["input_globs"].get("default", INPUT_FORMATS)]):
-            f = re.match(REGEX_TRACK, x).group(1) + ".fastqc"
+            f = "fastqc.dir/" + re.match(REGEX_TRACK, x).group(1) + ".fastqc"
             if not os.path.exists(f):
                 raise ValueError(
                     "file %s missing, "

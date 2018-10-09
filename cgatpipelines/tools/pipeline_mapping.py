@@ -173,6 +173,13 @@ Glossary
    star
       star_ - a read mapper for RNASEQ data
 
+   star2pass
+      2-pass mapping for star_ read mapper. Mapping twice allows to
+      collect splice junctions from all samples and feed these back
+      to the second run for increased splice coverage. Recommended
+      for RNASEQ data and by the GATK pipeline. See STAR docs for
+      more info.
+
    bismark
       bismark_ - a read mapper for RRBS data
 
@@ -1294,7 +1301,82 @@ def mapReadsWithSTAR(infile, outfile):
 
 
 @active_if(SPLICED_MAPPING)
-@merge(mapReadsWithSTAR, "star_stats.tsv")
+@active_if("star2pass" in P.as_list(PARAMS["mappers"]))
+@follows(mkdir("star2pass.dir"))
+@transform(SEQUENCEFILES,
+           SEQUENCEFILES_REGEX,
+           add_inputs(mapReadsWithSTAR),
+           r"star2pass.dir/\1.star.bam")
+def mapReadsWithSTAR2nd(infiles, outfile):
+    '''
+    Maps reads using STAR (spliced reads).
+
+    Parameters
+    ----------
+    infile: str
+        filename of reads file
+        can be :term:`fastq`, :term:`sra`, csfasta
+
+    star_memory: str
+        :term:`PARAMS`
+        memory required for STAR job
+
+    star_threads: int
+        :term:`PARAMS`
+        number of threads with which to run STAR
+
+    star_genome: str
+        :term:`PARAMS`
+        path to genome if using a splice junction database sjdb
+
+    genome: str
+        :term:`PARAMS`
+        path to genome if not using a splice junction database
+
+    star_executable: str
+        :term:`PARAMS`
+        path to star executable
+
+    star_index_dir: str
+        :term:`PARAMS`
+        path to directory containing star indices.
+
+    strip_sequence: bool
+        :term:`PARAMS`
+        if set, strip read sequence and quality information
+
+    outfile: str
+        :term:`bam` filename to write the mapped reads in bam format.
+
+    '''
+
+    infile = infiles[0]
+    junctions = infiles[1:]
+
+    job_threads = PARAMS["star_threads"]
+    job_memory = PARAMS["star_memory"]
+
+    star_mapping_genome = PARAMS["star_genome"] or PARAMS["genome"]
+    junctions = " ".join(junctions).replace(".bam", ".bam.junctions")
+
+    try:
+        star_options_2ndpass
+    except NameError:
+        star_options = " --sjdbFileChrStartEnd %s" % junctions
+    else:
+        star_options = star_options_2ndpass + " --sjdbFileChrStartEnd %s" % junctions
+
+    m = mapping.STAR(
+        executable=P.substitute_parameters(**locals())["star_executable"],
+        strip_sequence=PARAMS["strip_sequence"])
+
+    statement = m.build((infile,), outfile)
+    P.run(statement)
+
+
+@active_if(SPLICED_MAPPING)
+@collate([mapReadsWithSTAR, mapReadsWithSTAR2nd],
+         regex(r"(.+).dir/.*"), r"\1_stats.tsv")
 def buildSTARStats(infiles, outfile):
     '''Compile statistics from STAR run
 
@@ -1830,6 +1912,7 @@ mapToMappingTargets = {'tophat': (mapReadsWithTophat, loadTophatStats),
                        (mapReadsWithBowtieAgainstTranscriptome,),
                        'gsnap': (mapReadsWithGSNAP,),
                        'star': (mapReadsWithSTAR, loadSTARStats),
+                       'star2pass': (mapReadsWithSTAR2nd, loadSTARStats),
                        'butter': (mapReadsWithButter,),
                        'shortstack': (mapReadsWithShortstack,),
                        'hisat': (mapReadsWithHisat,)

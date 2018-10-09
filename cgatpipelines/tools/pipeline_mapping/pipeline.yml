@@ -34,13 +34,14 @@ max_intron_size: 2000000
 # bowtie2
 # bwa
 # star
+# star2pass
 # stampy
 # shortstack
 # butter
 # hisat  
 # (bfast)
 # (shrimp)
-mappers: [bwa,tophat2,star]
+mappers: [bwa,tophat2,star,star2pass]
 
 # Strand Assignment for spliced mapping
 # Using HISAT nomenclature, more detail available at
@@ -286,6 +287,7 @@ star:
     # freed properly causing unrelated jobs to fail unexpectedly with
     # "out of memory" faults.
     options: ''
+    options_2ndpass: ''
 
     # number of threads to use
     threads: 12

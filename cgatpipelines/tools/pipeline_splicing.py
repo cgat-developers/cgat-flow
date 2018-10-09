@@ -124,6 +124,7 @@ import sqlite3
 import pandas as pd
 from rpy2.robjects import r as R
 import cgat.BamTools.bamtools as BamTools
+import cgatcore.iotools as iotools
 import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
@@ -226,7 +227,7 @@ def buildGff(infile, outfile):
     ps = PYTHONSCRIPTSDIR
     statement = '''python %(ps)s/dexseq_prepare_annotation.py
                 %(tmpgff)s %(outfile)s'''
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")
 
     os.unlink(tmpgff)
 
@@ -298,7 +299,7 @@ def aggregateExonCounts(infiles, outfile):
         as rows and tracks as the columns - this is a `tsv.gz` file      '''
 
     infiles = " ".join(infiles)
-    statement = '''python %(scriptsdir)s/combine_tables.py
+    statement = '''cgat combine_tables
     --columns=1
     --take=2
     --use-file-prefix
@@ -311,13 +312,14 @@ def aggregateExonCounts(infiles, outfile):
     P.run(statement)
 
 
+'''
 @follows(aggregateExonCounts)
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
            r"results.dir/DEXSeq/\1_results.tsv")
 def runDEXSeq(infile, outfile):
-    ''' run DEXSeq command
+     run DEXSeq command
 
     DEXSeq is run using the counts2table from the
     cgat code collection. Output is standardised to
@@ -340,7 +342,7 @@ def runDEXSeq(infile, outfile):
     DEXSeq_refgroup_% : string
        :term:`PARAMS`. Specifies model, contrast and reference
        group for DEXSeq analysis
-    '''
+    
 
     outdir = os.path.dirname(outfile)
     countsdir = "counts.dir/"
@@ -351,8 +353,8 @@ def runDEXSeq(infile, outfile):
     contrast = PARAMS["DEXSeq_contrast_%s" % design]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
 
-    statement = '''
-    python %%(scriptsdir)s/counts2table.py
+    statement = 
+    python -m cgatpipelines.tasks.counts2table
     --design-tsv-file=%(infile)s
     --output-filename-pattern=%(outdir)s/%(design)s
     --log=%(outdir)s/%(design)s_DEXSeq.log
@@ -364,10 +366,10 @@ def runDEXSeq(infile, outfile):
     -r %(refgroup)s
     --dexseq-flattened-file=%(gfffile)s
     > %(outfile)s;
-    ''' % locals()
+     % locals()
 
     P.run(statement)
-
+'''
 
 ###################################################################
 ###################################################################
@@ -465,7 +467,8 @@ def collateMATS(infiles, outfile):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] < PARAMS['MATS_fdr']])))
+        collate.append(str(len(temp[temp['FDR'] <
+                                    float(PARAMS['MATS_fdr'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))
@@ -578,7 +581,8 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] < PARAMS['MATS_fdr']])))
+        collate.append(str(len(temp[temp['FDR'] <
+                                    float(PARAMS['MATS_fdr'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))
@@ -668,7 +672,7 @@ def runSashimi(infiles, outfile):
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,
-         runDEXSeq)
+         aggregateExonCounts)
 def full():
     pass
 

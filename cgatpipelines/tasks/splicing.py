@@ -54,7 +54,6 @@ Requirements
 
 import os
 import random
-import itertools
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.experiment as E
 import cgatpipelines.tasks.expression as Expression
@@ -86,9 +85,9 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
 
     design = Expression.ExperimentalDesign(designfile)
     if permute == 1:
-        design.table.group = random.choice(list(
-                             itertools.permutations(design.table.group)))
-
+        permutelist = design.table.group.tolist()
+        random.shuffle(permutelist)
+        design.table.group = permutelist
     group1 = ",".join(
         ["%s.bam" % x for x in design.getSamplesInGroup(design.groups[0])])
     with open(outdir + "/b1.txt", "w") as f:
@@ -159,10 +158,14 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     group1name = Design.groups[0]
     group2name = Design.groups[1]
     event = os.path.basename(os.path.normpath(outfile))
+    if "MXE" in infile:
+        column = "22"
+    else:
+        column = "20"
 
     statement = '''cat
     %(infile)s|grep -v NA|
-    awk '$20 < %(FDR)s' > %(infile)s_sig.txt;
+    awk '$%(column)s < %(FDR)s' > %(infile)s_sig.txt;
     rmats2sashimiplot
     --b1 %(group1)s
     --b2 %(group2)s
@@ -174,4 +177,4 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     > %(outfile)s/%(event)s.log
     ''' % locals()
 
-    P.run(statement)
+    P.run(statement, job_condaenv="splicing")

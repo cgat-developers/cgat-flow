@@ -10,3 +10,4 @@ dependencies:
 - python=2.7
 - bioconductor-dexseq
 - htseq
+- scipy

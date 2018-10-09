@@ -173,6 +173,13 @@ Glossary
    star
       star_ - a read mapper for RNASEQ data
 
+   star2pass
+      2-pass mapping for star_ read mapper. Mapping twice allows to
+      collect splice junctions from all samples and feed these back
+      to the second run for increased splice coverage. Recommended
+      for RNASEQ data and by the GATK pipeline. See STAR docs for
+      more info.
+
    bismark
       bismark_ - a read mapper for RRBS data
 

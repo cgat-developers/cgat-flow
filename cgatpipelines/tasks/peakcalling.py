@@ -747,6 +747,15 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
                 "# predicted fragment length is (\d+)",
                 line[0]).groups()[0]
             std = 'na'
+        # Execute the R script produced by MACS2
+        pdffile = "%s.pdf" % os.path.basename(P.snip(outfile))
+        statement = '''
+        cd %(outfile)s.dir &&
+        Rscript predictd &&
+        cp predictd_model.pdf ../%(pdffile)s
+        '''
+        P.run(statement, job_condaenv="macs2")
+        # Remove the sample's predictd output directory
         shutil.rmtree("%s.dir" % outfile)
     outf = iotools.open_file(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")

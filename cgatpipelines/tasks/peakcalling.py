@@ -202,7 +202,7 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
     return statement, outT
 
 
-def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
+def appendPicardFilters(statement, inT, tabout, filters, pe, outfile, jvm_mem="-Xmx10g"):
     '''
     Appends a fragment to an existing command line statement to
     filter bam files using Picard.
@@ -248,7 +248,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
         log = outfile.replace(".bam", "_duplicates.log")
         outT = P.get_temp_filename("./filtered_bams.dir")
         statement += """
-        picard MarkDuplicates \
+        picard %(jvm_mem)s MarkDuplicates \
         INPUT=%(inT)s.bam \
         ASSUME_SORTED=true \
         REMOVE_DUPLICATES=true \
@@ -379,7 +379,7 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
 
 @cluster_runnable
 def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
-               contigs_to_remove, keep_intermediates=False):
+               contigs_to_remove, keep_intermediates=False, job_memory="20G"):
     '''Builds a statement which applies various filters to bam files.
 
     The file is sorted then filters are applied.
@@ -493,7 +493,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         if int(keep_intermediates) == 1:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
-        P.run(statement, job_memory="8G")
+        P.run(statement, job_memory=job_memory)
 
     # reformats the read counts into a table
     inf = [line.strip() for line in open(tabout).readlines()]
@@ -515,12 +515,22 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     # check the filtering is done correctly - write a log file
     # if unpaired is specified in bamfilters in the pipeline.yml
     # remove reads whose mate has been filtered out elsewhere
-
+    print("before checkBams")
+    print(os.listdir("."))
+    print(os.listdir("filtered_bams.dir"))
     T = P.get_temp_filename(".")
-    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True)
+    print("T = %s" % T)
+    # "bamout" was generated above as part of the main statement
+    # here, check it one more time while writing/copying "bamout" to <T>.bam
+    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True, job_memory=job_memory)
+    print("after checkBams")
+    print(os.listdir("."))
+    print(os.listdir("filtered_bams.dir"))
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
+    print("mv %s.bam %s" % (T, bamout))
     shutil.move("%s.bam" % T, bamout)
+    print("mv %s.filteringlog %s" % (T, bamout.replace(".bam", ".filteringlog")))
     shutil.move("%s.filteringlog" % (T),
                 bamout.replace(".bam", ".filteringlog"))
 
@@ -755,7 +765,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         cp predictd_model.pdf ../%(pdffile)s
         '''
         P.run(statement, job_condaenv="macs2")
-        # Remove the sample's predictd output directory
+        # Remove the directory
         shutil.rmtree("%s.dir" % outfile)
     outf = iotools.open_file(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")

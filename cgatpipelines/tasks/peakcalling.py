@@ -490,7 +490,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
 
         statement = statement.replace("\n", "\n")
 
-        if int(keep_intermediates) == 1:
+        if int(keep_intermediates) == 0:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
         P.run(statement, job_memory="8G")

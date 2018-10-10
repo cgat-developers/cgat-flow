@@ -320,9 +320,6 @@ else:
 ########################################################################
 # Check if reads are paired end
 ########################################################################
-print(df)
-print(INPUTBAMS)
-print(CHIPBAMS)
 if CHIPBAMS and Bamtools.is_paired(CHIPBAMS[0]):
     PARAMS['paired_end'] = True
 else:

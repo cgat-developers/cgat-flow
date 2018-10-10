@@ -397,7 +397,25 @@ def buildFastQCSummaryStatus(infiles, outfile):
            suffix(".tsv.gz"), ".load")
 def loadFastQC(infile, outfile):
     '''load FASTQC stats into database.'''
-    P.load(infile, outfile, options="--add-index=track")
+
+    # a check to make sure file isnt empty
+    n = 0
+    with iotools.open_file(infile) as f:
+        for i, line in enumerate(f):
+            n =+ i
+    if n > 0:
+        P.load(infile, outfile, options="--add-index=track")
+    else:
+        table_name = infile.replace(".tsv.gz", "")
+        database_sql = P.get_params()["database"]["url"]
+        database_name = os.path.basename(database_sql)
+        statement = """sqlite3 %(database_name)s
+                       'CREATE TABLE %(table_name)s
+                       ("track" text PRIMARY KEY, "Sequence" text,
+                       "Count" integer, "Percentage" integer, "Possible Source" text);'
+                       'INSERT INTO %(table_name)s VALUES ("NA", "NA", 0, 0, "NA");'"""
+
+        P.run(statement)
 
 
 @follows(mkdir("experiment.dir"), loadFastQC)

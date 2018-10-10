@@ -378,7 +378,8 @@ def filterInputBAMs(infile, outfiles):
                                    PARAMS['filters_qual'],
                                    PARAMS['filters_contigs_to_remove'],
                                    PARAMS['filters_keepint'],
-                                   job_memory="450G")
+                                   PARAMS['filters_memory'],
+                                   PARAMS['filters_picard_options'])
 
 
 @follows(mkdir("filtered_bams.dir"))
@@ -407,7 +408,8 @@ def filterChipBAMs(infile, outfiles):
                                    PARAMS['filters_qual'],
                                    PARAMS['filters_contigs_to_remove'],
                                    PARAMS['filters_keepint'],
-                                   job_memory="50G")
+                                   PARAMS['filters_memory'],
+                                   PARAMS['filters_picard_options'])
 
 
 # ############################################################################

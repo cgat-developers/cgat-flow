@@ -202,7 +202,7 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
     return statement, outT
 
 
-def appendPicardFilters(statement, inT, tabout, filters, pe, outfile, jvm_mem="-Xmx10g"):
+def appendPicardFilters(statement, inT, tabout, filters, pe, outfile, picard_options=""):
     '''
     Appends a fragment to an existing command line statement to
     filter bam files using Picard.
@@ -248,7 +248,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile, jvm_mem="-
         log = outfile.replace(".bam", "_duplicates.log")
         outT = P.get_temp_filename("./filtered_bams.dir")
         statement += """
-        picard %(jvm_mem)s MarkDuplicates \
+        picard %(picard_options)s MarkDuplicates \
         INPUT=%(inT)s.bam \
         ASSUME_SORTED=true \
         REMOVE_DUPLICATES=true \
@@ -379,7 +379,8 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
 
 @cluster_runnable
 def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
-               contigs_to_remove, keep_intermediates=False, job_memory="20G"):
+               contigs_to_remove, keep_intermediates=False,
+               job_memory="50G", picard_options=""):
     '''Builds a statement which applies various filters to bam files.
 
     The file is sorted then filters are applied.
@@ -454,7 +455,8 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
 
         statement, inT = appendPicardFilters(statement, inT,
                                              tabout, filters, pe,
-                                             bamout)
+                                             bamout,
+                                             picard_options)
         statement, inT = appendSamtoolsFilters(statement, inT,
                                                tabout, filters,
                                                qual, pe)
@@ -490,7 +492,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
 
         statement = statement.replace("\n", "\n")
 
-        if int(keep_intermediates) == 1:
+        if int(keep_intermediates) == 0:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
         P.run(statement, job_memory=job_memory)

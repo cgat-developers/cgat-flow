@@ -9,7 +9,8 @@ We have developed a set of ruffus_ based pipelines in comparative genomics
 and NGS analysis.
 
 We are working on improving the existing documentation and portability of the code
-to release a set of production pipelines soon so please stay tuned.
+to release a set of production pipelines soon so please stay tuned. However, to view our
+current documentation please see `here <https://www.cgat.org/downloads/public/cgatpipelines/documentation/>`_
 
 We are currently testing a script to automate the installation with conda_. Feel
 free to give it a go::

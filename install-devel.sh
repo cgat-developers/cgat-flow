@@ -141,7 +141,7 @@ fi # if travis install
 CONDA_INSTALL_DIR=$CGAT_HOME/conda-install
 
 # set conda environment name
-[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-f"
+[[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-flow"
 
 } # get_cgat_env
 
@@ -340,9 +340,6 @@ if [[ -z ${TRAVIS_INSTALL} ]] ; then
 
       # Set up other environment variables
       setup_env_vars
-
-      # brute force: modify console_scripts variable/entry point for cgat command
-      sed -i'' -e 's/CGATScripts/scripts/g' setup.py
 
       # install cgat-core
       install_cgat_core

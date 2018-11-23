@@ -212,8 +212,7 @@ if [[ -n "$UNINSTALL_DIR" ]] ; then
    echo
    echo " Installation is aborted."
    echo
-   # TODO: reactivate
-   # exit 1
+   exit 1
 fi
 
 # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
@@ -255,8 +254,8 @@ log "downloading miniconda"
 curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
-# TODO: reactivae
-# bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
+
+bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
 source ${CONDA_INSTALL_DIR}/bin/activate
 hash -r
 
@@ -274,17 +273,18 @@ log "installing conda CGAT environment"
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
 
-curl -o env-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
+curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
-curl -o env-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
+curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
-curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
+curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
-[[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
+[[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
-conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-pipelines.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-apps.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-core.yml
+
+conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-core.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-apps.yml
+conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
 # activate cgat environment
 source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV

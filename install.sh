@@ -14,7 +14,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-# set -o xtrace
+set -o xtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
@@ -89,7 +89,7 @@ detect_cgat_installation() {
 get_cgat_env() {
 
     # minimum pinning pipeline
-    CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel-template.yml"
+    CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
 
     if [[ ! $CONDA_INSTALL  ]] ; then
 	# set installation folder
@@ -237,11 +237,11 @@ conda_install() {
     pip install cgat
 
     log "installing pipeline dependencies for cgat-flow"
-    curl -o env-pipelines.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
+    curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
     
-    [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-pipelines.yml
+    [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
-    conda env update --name ${CONDA_INSTALL_ENV} --file env-pipelines.yml
+    conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
     # install extra deps
     install_extra_deps

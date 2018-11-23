@@ -714,6 +714,10 @@ do
     esac
 done
 
+if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL) ]] ; then
+    FULL_INSTALL=1
+fi
+
 # sanity check: make sure there is space available in the destination folder (20 GB) in 512-byte blocks
 [[ -z ${TRAVIS_INSTALL} ]] && \
     mkdir -p ${CGAT_HOME} && \

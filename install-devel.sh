@@ -281,10 +281,14 @@ curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/c
 
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
+log "creating conda environment dependencies"
+conda env create --name ${CONDA_INSTALL_ENV} --file env-cgat-core.yml
 
-conda env create --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-core.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-apps.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
+log "updating with cgat-apps dependencies"
+conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-apps.yml
+
+log "updating with cgat-flow dependencies"
+conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
 # activate cgat environment
 source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
@@ -411,12 +415,12 @@ log "install extra deps"
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
 
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
+conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
+conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
 if [[ ${INSTALL_IDE} -eq 1 ]] ; then
    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-ide.yml
-   conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-ide.yml
+   conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-ide.yml
 fi
 
 }
@@ -429,20 +433,19 @@ log "install Python 2 deps"
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-macs2.yml
 
-conda env update --quiet --file pipelines-macs2.yml
+conda env update --file pipelines-macs2.yml
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-tophat2.yml
 
-conda env update --quiet --file pipelines-tophat2.yml
-
+conda env update --file pipelines-tophat2.yml
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipeline-peakcalling-sicer.yml
 
-conda env update --quiet --file pipeline-peakcalling-sicer.yml
+conda env update --file pipeline-peakcalling-sicer.yml
 
 curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-splicing.yml
 
-conda env update --quiet --file pipelines-splicing.yml
+conda env update --file pipelines-splicing.yml
 
 }
 

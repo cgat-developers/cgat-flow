@@ -14,7 +14,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-#set -o xtrace
+set -o xtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
@@ -91,16 +91,16 @@ get_cgat_env() {
 if [[ $TRAVIS_INSTALL ]] ; then
 
    CGAT_HOME=$TRAVIS_BUILD_DIR
-   CONDA_INSTALL_TYPE_PIPELINES="pipelines-nosetests.yml"
-   CONDA_INSTALL_TYPE_APPS="apps-nosetests.yml"
-   CONDA_INSTALL_TYPE_CORE="core-production.yml"
+   CONDA_INSTALL_TYPE_PIPELINES="cgat-flow-tests.yml"
+   CONDA_INSTALL_TYPE_APPS="cgat-apps-tests.yml"
+   CONDA_INSTALL_TYPE_CORE="cgat-core.yml"
 
 elif [[ $JENKINS_INSTALL ]] ; then
 
    CGAT_HOME=$WORKSPACE
-   CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-   CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
-   CONDA_INSTALL_TYPE_CORE="core-production.yml"
+   CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
+   CONDA_INSTALL_TYPE_APPS="cgat-apps.yml"
+   CONDA_INSTALL_TYPE_CORE="cgat-core.yml"
 
 else
 
@@ -108,14 +108,10 @@ else
       CGAT_HOME=$HOME/cgat-install
    fi
 
-   if [[ $INSTALL_PRODUCTION ]] ; then
-      CONDA_INSTALL_TYPE_PIPELINES="pipelines-production.yml"
-      CONDA_INSTALL_TYPE_APPS="apps-production.yml"
-      CONDA_INSTALL_TYPE_CORE="core-production.yml"
-   elif [[ $INSTALL_DEVEL ]] ; then
-      CONDA_INSTALL_TYPE_PIPELINES="pipelines-devel.yml"
-      CONDA_INSTALL_TYPE_APPS="apps-devel.yml"
-      CONDA_INSTALL_TYPE_CORE="core-devel.yml"
+   if [[ $INSTALL_DEVEL ]] ; then
+      CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
+      CONDA_INSTALL_TYPE_APPS="cgat-apps.yml"
+      CONDA_INSTALL_TYPE_CORE="cgat-core.yml"
    elif [[ $INSTALL_TEST ]] || [[ $INSTALL_UPDATE ]] ; then
       if [[ -d $CGAT_HOME/conda-install ]] ; then
          AUX=`find $CGAT_HOME/conda-install/envs/cgat-* -maxdepth 0`
@@ -216,8 +212,8 @@ if [[ -n "$UNINSTALL_DIR" ]] ; then
    echo
    echo " Installation is aborted."
    echo
-   exit 1
-
+   # TODO: reactivate
+   # exit 1
 fi
 
 # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
@@ -259,7 +255,8 @@ log "downloading miniconda"
 curl -O https://repo.continuum.io/miniconda/${MINICONDA}
 
 log "installing miniconda"
-bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
+# TODO: reactivae
+# bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
 source ${CONDA_INSTALL_DIR}/bin/activate
 hash -r
 
@@ -924,8 +921,7 @@ TRAVIS_INSTALL=
 # jenkins testing
 JENKINS_INSTALL=
 # conda installation type
-INSTALL_PRODUCTION=
-INSTALL_DEVEL=
+INSTALL_DEVEL=1
 # test current installation
 INSTALL_TEST=
 # update current installation
@@ -1004,16 +1000,6 @@ case $key in
     test_git_ssh
     ;;
 
-    --production)
-    INSTALL_PRODUCTION=1
-    shift
-    ;;
-
-    --devel)
-    INSTALL_DEVEL=1
-    shift
-    ;;
-
     --test)
     INSTALL_TEST=1
     shift
@@ -1087,16 +1073,8 @@ case $key in
 esac
 done
 
-# sanity check 1: don't mix production and development installs
-if [[ $INSTALL_PRODUCTION ]] && [[ $INSTALL_DEVEL ]] ; then
-
-   report_error " Incorrect input arguments: mixing --production and --devel is not permitted. "
-
-fi
-
 # sanity check 2: make sure one installation option is selected
 if [[ -z $INSTALL_TEST ]] && \
-   [[ -z $INSTALL_PRODUCTION ]] && \
    [[ -z $INSTALL_DEVEL ]] && \
    [[ -z $TRAVIS_INSTALL ]] && \
    [[ -z $JENKINS_INSTALL ]] ; then

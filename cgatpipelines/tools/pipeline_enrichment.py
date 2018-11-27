@@ -393,7 +393,7 @@ def preprocessGsea(infile, outfile):
 @follows(preprocessGsea)
 @transform(preprocessGsea,
            regex("gsea_processed.dir/(.*).processed$"),
-           r"\1.dir/cgat_Gene_set_details.tsv")
+           r"results.dir/\1.dir/cgat_Gene_set_details.tsv")
 def runGsea(infile, outfile):
     '''
     Perform the enrichment analysis, by using gene set enrichment analysis
@@ -414,7 +414,7 @@ def runGsea(infile, outfile):
     statement = ("cd {resultsdir} && "
                  "xvfb-run -d "
                  "cgat runGSEA "
-                 "-f ../{infile} -g {geneset} -m {min_size} -x {max_size} "
+                 "-f ../../{infile} -g {geneset} -m {min_size} -x {max_size} "
                  "-s {seed} -n {no} -d {p_no} -l {l_no} "
                  ">& {output_fn}.log ".format(**locals()))
     # ignore xvfb-run error

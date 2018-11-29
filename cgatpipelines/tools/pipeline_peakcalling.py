@@ -24,7 +24,7 @@ Functionality
   (e.g. ChIP-Seq or ATAC-Seq samples and their appropriate 'input' controls).
 - Runs peakcallers
 - Runs ChIPQC R package for QC statistics
-- Runs AtacQC R package for ATAC-seq QC statistics - TODO 
+- Runs AtacQC R package for ATAC-seq QC statistics - TODO
 - Produces peak lists in bed files to takeforward for downstream analysis.
 
 
@@ -405,9 +405,9 @@ def filterChipBAMs(infile, outfiles):
                                    PARAMS['filters_qual'],
                                    PARAMS['filters_contigs_to_remove'],
                                    PARAMS['filters_keepint'])
-                                   
-                                   
-                                   
+
+
+
 
 
 
@@ -561,9 +561,9 @@ def loadPicardStats(infiles, outfile):
 def filtering():
     ''' dummy task to allow all the filtering of bams & collection of stats
     '''
-    
+
 ###################################################################
-##### Downsample Bams - optional 
+##### Downsample Bams - optional
 ###################################################################
 
 
@@ -574,62 +574,62 @@ if PARAMS['downsampling_downsample_bams'] == 1:
                r'downsampled_bams.dir/\1_downsampled.bam')
     def makeDownsampledBams(infiles, outfile):
         '''
-        this function downsamples a bam file to a set number of reads 
-        handles both paired_end and single end reads 
-        
-        there are 3 different methods for downsampling 
-        
+        this function downsamples a bam file to a set number of reads
+        handles both paired_end and single end reads
+
+        there are 3 different methods for downsampling
+
         TODO: if bamfile has under the set number of reads an error is raised
-        
-        input: 
+
+        input:
             bamfile: str
         output
             downsampled bamfile: str
-            
+
         '''
-        
-       
+
+
         # get bam file
         infile = infiles[0]
-        
+
         E.info(infile,outfile)
-        
-        if PARAMS['downsampling_downsample_method'] == 'specific_number': 
+
+        if PARAMS['downsampling_downsample_method'] == 'specific_number':
             target_depth = PARAMS['downsampling_downsample_read_number']
-        
+
         else:
-        
-            # read in table of all file sizes and subset to the total_reads and file_name columns 
+
+            # read in table of all file sizes and subset to the total_reads and file_name columns
             post_filter_check_df = pd.read_csv('post_filtering_check.tsv', sep='\t')
             new_df = post_filter_check_df[['total_reads', 'Input_Filename']].copy()
-            
+
             # add column for origional sample name
             new_df['SampleID'] = new_df['Input_Filename'].str.split('_filtered').str[0]
-        
+
             # read in design.tsv
             design_df = pd.read_csv('./design.tsv', sep='\t')
 
             # merge design and filtered read numbers table
             merged_df = pd.merge(new_df,design_df,on='SampleID',how='left')
 
-            # get origional sample name of filtered bam 
+            # get origional sample name of filtered bam
             bam = infile.split('/')[-1]
             filtered_filename = P.snip(bam,'.bam')
-       
+
             if PARAMS['downsampling_downsample_method'] == 'smallest_overall_bam':
                 smallest_bam = int(merged_df['total_reads'].min())
                 if PARAMS['paired_end'] == True:
-                   smallest_bam = smallest_bam/2 
-                
+                   smallest_bam = smallest_bam/2
+
                 target_depth = PipelinePeakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
 
-            elif PARAMS['downsampling_downsample_method'] == 'smallest_condition_bam': 
+            elif PARAMS['downsampling_downsample_method'] == 'smallest_condition_bam':
                 design_values = {}
                 filtered_df = None
-                count = 0 
+                count = 0
 
                 # filter design file to find number of reads to downsample to
-                for item in PARAMS['downsampling_group_samples_for_downsampling_on']: 
+                for item in PARAMS['downsampling_group_samples_for_downsampling_on']:
                     # get tissue, cond, factor and treatment etc for input file from design table
                     design_values[item] = merged_df[merged_df['Input_Filename'] == filtered_filename][item].iloc[0]
 
@@ -638,58 +638,59 @@ if PARAMS['downsampling_downsample_bams'] == 1:
                         filtered_df = merged_df[(merged_df)[item] == design_values[item]].copy()
                     else:
                         filtered_df = filtered_df[(filtered_df)[item] == design_values[item]].copy()
-        
-        
+
+
                # get minimum_read_depth
                 smallest_bam = filtered_df[['total_reads']].min()[0]
-               # if paired get number of pairs of reads 
+               # if paired get number of pairs of reads
                 if PARAMS['paired_end'] == True:
-                    smallest_bam = smallest_bam/2 
-            
+                    smallest_bam = smallest_bam/2
+
                 target_depth = PipelinePeakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
 
         print(infile,outfile, target_depth)
-        PipelinePeakcalling.downSampleBams(infile, 
-                                   outfile, 
+        PipelinePeakcalling.downSampleBams(infile,
+                                   outfile,
                                    target_depth,
                                    PARAMS['paired_end'],
                                    PARAMS['downsampling_random_seed'])
-                                   
-                                   
-                                   
-    @merge(makeDownsampledBams, 'downsampled_bam_read_counts.tsv')                               
+
+
+
+    @merge(makeDownsampledBams, 'downsampled_bam_read_counts.tsv')
     def summariseDownsampling(infiles, outfile):
         ''' summarises number of reads in each downsampled bam file into
             .tsv file '''
-            
+
         print(infiles)
         PipelinePeakcalling.summariseDownsampling(infiles,outfile)
-        
-        
+
+
     @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
     @transform(summariseDownsampling, suffix(".tsv"), ".load")
     def loadDownsamplingSummary(infile, outfile):
         '''load downsampling stats to database '''
         P.load(infile, outfile)
-        
-        
+
+
 else:
     @follows(filtering)
     def loadDownsamplingSummary(infile,outfile):
         ''' dummy task '''
         pass
-        
-        
+
+
 @follows(loadDownsamplingSummary)
 def downsampling():
     '''dummy task'''
-    pass 
-    
-    
+    pass
+
+
 # ############################################################################
 # ##### Run ATACQC
 # ############################################################################
 
+# TODO this section does not have any tests!
 
 if PARAMS['ATACseqQC_run_ATACseqQC'] == 1:
     @follows(filtering)
@@ -697,75 +698,75 @@ if PARAMS['ATACseqQC_run_ATACseqQC'] == 1:
     @transform((filterChipBAMs, filterInputBAMs), regex("filtered_bams.dir/(.*)_filtered.bam"),
                 r'ATACseqQC.dir/\1_atacseqqc.bam')
     def generateATACseqQCBam(infiles,outfile):
-        ''' takes input bam - downsamples to X number of reads and runs 
+        ''' takes input bam - downsamples to X number of reads and runs
         R script to generate ATACseqQC plots/diagnositics for each bam
-        
+
         note recommended number of reads is 3 million - from ATACseqQC paper
-        
+
         Arguments
         ---------
         infiles : tuple
             tuple of bam file and counts.tsv from bam filtering step
         outfile : string
             outfile. infile_ataseqqc.bam'''
-        
-        
+
+
         # get bam file
         infile = infiles[0]
         target_depth = PARAMS['ATACseqQC_reads_for_atacseqqc']
         if PARAMS['paired_end'] == 1:
             target_depth = int(target_depth/2)
-                
-        PipelinePeakcalling.downSampleBams(infile, 
-                                   outfile, 
+
+        PipelinePeakcalling.downSampleBams(infile,
+                                   outfile,
                                    target_depth,
                                    PARAMS['paired_end'],
-                                   PARAMS['downsampling_random_seed'])        
-        
-        
+                                   PARAMS['downsampling_random_seed'])
+
+
     @transform(generateATACseqQCBam, regex("ATACseqQC.dir/(.*)_atacseqqc.bam"),
                 r'ATACseqQC.dir/\1_report.html')
     def runATACseqQC(infile,outfile):
         ''' runs atacseqqc rmd file'''
-        
+
         print(infile,outfile)
-        
+
         # r needs full file path to bam file annoyingly
         cwd = os.getcwd()
         bam_path = '%(cwd)s/%(infile)s' % locals()
         print(bam_path)
         sample_bam = infile.split('/')[-1]
         sample_name = P.snip(sample_bam,'.bam')
-        
+
         output_dir = outfile.split('/')[0]
         output_path = '%(cwd)s/%(output_dir)s' % locals()
-        
+
         path_to_rmarkdown = PARAMS['ATACseqQC_rmd_file_path']
         print(path_to_rmarkdown)
         genome = PARAMS['genome']
-        
-         
-        statement = '''Rscript -e 
-                       "rmarkdown::render('%(path_to_rmarkdown)s', 
+
+
+        statement = '''Rscript -e
+                       "rmarkdown::render('%(path_to_rmarkdown)s',
                                            params=list( genome='%(genome)s', bamfile='%(bam_path)s', sample_name='%(sample_name)s', output_path='%(output_path)s'),
                                            output_file='%(cwd)s/%(outfile)s' )"''' % locals()
-                                           
+
         P.run(statement, job_memory='50G')
-        
-else: 
+
+else:
     @follows(filtering)
     def runATACseqQC():
         ''' dummy task '''
         pass
-        
-        
-        
+
+
+
 
 @follows(runATACseqQC)
 def ATACseqQC():
     '''dummy task'''
     pass
-        
+
 
 # ############################################################################
 # #### Make bigwigs of filtered bam files ####################################
@@ -826,8 +827,8 @@ def buildBigWig(infile, outfile):
     -bg
     -scale %(scale)f
     > %(tmpfile)s &&
-    sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s && 
-    bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s && 
+    sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s &&
+    bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s &&
     rm -f %(tmpfile)s
     '''
     P.run(statement)

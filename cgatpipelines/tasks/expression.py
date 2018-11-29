@@ -54,7 +54,6 @@ import collections
 import itertools
 import re
 import pandas
-import ggplot
 import copy
 import numpy as np
 from scipy.stats import ttest_ind
@@ -3306,18 +3305,19 @@ def plotDETagStats(infile, outfile_prefix,
             # see https://github.com/yhat/ggplot/issues/393
             E.warn(msg)
 
-    _dplot(table,
-           outfile_prefix + ".densities_tags_control.png",
-           "log10_control_mean")
-    _dplot(table,
-           outfile_prefix + ".densities_tags_treatment.png",
-           "log10_treatment_mean")
-    _bplot(table,
-           outfile_prefix + ".boxplot_tags_control.png",
-           "log10_control_mean")
-    _bplot(table,
-           outfile_prefix + ".boxplot_tags_treatment.png",
-           "log10_treatment_mean")
+    # TODO: ggplot not supported, replace with plotnine
+    # _dplot(table,
+    #        outfile_prefix + ".densities_tags_control.png",
+    #        "log10_control_mean")
+    # _dplot(table,
+    #        outfile_prefix + ".densities_tags_treatment.png",
+    #        "log10_treatment_mean")
+    # _bplot(table,
+    #        outfile_prefix + ".boxplot_tags_control.png",
+    #        "log10_control_mean")
+    # _bplot(table,
+    #        outfile_prefix + ".boxplot_tags_treatment.png",
+    #        "log10_treatment_mean")
 
     if additional_columns:
         for column in additional_columns:

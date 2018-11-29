@@ -5,9 +5,9 @@ import types
 import itertools
 import math
 import numpy
-import IOTools
+import iotools
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from cpgReport import *
 
 ##########################################################################
@@ -37,8 +37,8 @@ class PeakShapeTracker(Tracker):
         if not os.path.exists(fn):
             return
 
-        x = IOTools.openFile(fn)
-        matrix, rownames, colnames = IOTools.readMatrix(x)
+        x = iotools.openFile(fn)
+        matrix, rownames, colnames = iotools.readMatrix(x)
 
         nrows = len(rownames)
         if nrows == 0:

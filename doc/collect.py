@@ -36,18 +36,18 @@ TEMPLATE_PIPELINEMODULE = '''
 
 import glob
 import os
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 
 if __name__ == "__main__":
 
     E.Start()
 
     dirs = (("../scripts/*.py", TEMPLATE_SCRIPT, 'scripts'),
-            ("../CGAT/*.py", TEMPLATE_MODULE, 'modules'),
-            ("../CGATPipelines/pipeline*.py",
+            ("../cgat/*.py", TEMPLATE_MODULE, 'modules'),
+            ("../cgatPipelines/pipeline*.py",
              TEMPLATE_PIPELINE,
              'pipelines'),
-            ("../CGATPipelines/[A-Z]*.py",
+            ("../cgatPipelines/[A-Z]*.py",
              TEMPLATE_PIPELINEMODULE,
              'pipelinemodules'))
 

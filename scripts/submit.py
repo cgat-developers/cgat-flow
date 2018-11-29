@@ -31,13 +31,13 @@ import sys
 import re
 import glob
 import subprocess
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 def checkPythonRuns(filename):
     """returns true if a python run is complete."""
-    last_line = IOTools.getLastLine(filename)
+    last_line = iotools.getLastLine(filename)
     return re.match("# job finished", last_line)
 
 

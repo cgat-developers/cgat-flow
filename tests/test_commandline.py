@@ -1,4 +1,4 @@
-'''test_commandline - test coding style confirmation of CGAT code
+'''test_commandline - test coding style confirmation of cgat code
 ===========================================================
 
 :Author: Andreas Heger
@@ -10,7 +10,7 @@ Purpose
 -------
 
 This script test the command line usage of all scripts in the
-CGAT code collection.
+cgat code collection.
 
 This script is best run within nosetests::
 
@@ -36,8 +36,8 @@ import copy
 import platform
 
 from nose.tools import ok_
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 import TestUtils
 
 # handle to original E.Start function
@@ -86,7 +86,7 @@ def filter_files(files):
                 if "manifest" in values:
                     # take scripts defined in the MANIFEST.in file
                     scriptdirs = [x for x in open("MANIFEST.in")
-                                  if x.startswith("include CGAT/tools") and
+                                  if x.startswith("include cgat/tools") and
                                   x.endswith(".py\n")]
 
                     take = set([re.sub("include\s*", "",
@@ -161,8 +161,8 @@ def test_cmdline():
         ORIGINAL_START = E.start
 
     # read the first two columns
-    map_option2action = IOTools.read_map(
-        IOTools.open_file(FILENAME_OPTIONLIST),
+    map_option2action = iotools.read_map(
+        iotools.open_file(FILENAME_OPTIONLIST),
         columns=(0, 1),
         has_header=True)
 
@@ -193,7 +193,7 @@ def test_cmdline():
 
         fail_.description = script_name
         # check if script contains getopt
-        with IOTools.open_file(script_name) as inf:
+        with iotools.open_file(script_name) as inf:
             if "getopt" in inf.read():
                 yield (fail_,
                        "script uses getopt directly: %s" % script_name)

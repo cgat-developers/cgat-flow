@@ -1,6 +1,6 @@
 
 
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 import sqlite3
 
 

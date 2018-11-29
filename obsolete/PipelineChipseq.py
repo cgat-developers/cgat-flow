@@ -17,14 +17,14 @@ import collections
 import sqlite3
 import pysam
 import numpy
-import CGATCore.Experiment as E
-from CGATCore import Pipeline as P
-import CGAT.IndexedGenome as IndexedGenome
-import CGATCore.IOTools as IOTools
-import CGAT.Bed as Bed
-import CGAT.BamTools as BamTools
-import CGAT.WrapperMACS as WrapperMACS
-import CGAT.WrapperZinba as WrapperZinba
+import cgatcore.experiment as E
+from cgatcore import pipeline as P
+import cgat.IndexedGenome as IndexedGenome
+import cgatcore.iotools as iotools
+import cgat.Bed as Bed
+import cgat.BamTools as BamTools
+import cgat.WrapperMACS as WrapperMACS
+import cgat.WrapperZinba as WrapperZinba
 
 
 def getPeakShiftFromMacs(infile):
@@ -33,7 +33,7 @@ def getPeakShiftFromMacs(infile):
     returns None if no shift found'''
 
     shift = None
-    with IOTools.openFile(infile, "r") as ins:
+    with iotools.openFile(infile, "r") as ins:
         rx = re.compile("#2 predicted fragment length is (\d+) bps")
         r2 = re.compile("#2 Use (\d+) as shiftsize, \d+ as fragment length")
         for line in ins:
@@ -62,7 +62,7 @@ def getPeakShiftFromZinba(infile):
     # $offset
     # [1] 125
 
-    with IOTools.openFile(infile, "r") as ins:
+    with iotools.openFile(infile, "r") as ins:
         lines = ins.readlines()
         for i, line in enumerate(lines):
             if line.startswith("$offset"):
@@ -87,7 +87,7 @@ def getPeakShift(track):
 
 def getMappedReads(infile):
     '''return number of reads mapped. '''
-    for lines in IOTools.openFile(infile, "r"):
+    for lines in iotools.openFile(infile, "r"):
         data = lines[:-1].split("\t")
         if data[1].startswith("without duplicates"):
             return int(data[0])
@@ -119,7 +119,7 @@ def getExonLocations(filename):
     '''return a list of exon locations as Bed entries
     from a file contain a one ensembl gene ID per line
     '''
-    fh = IOTools.openFile(filename, "r")
+    fh = iotools.openFile(filename, "r")
     ensembl_ids = []
     for line in fh:
         ensembl_ids.append(line.strip())
@@ -189,7 +189,7 @@ def buildQuicksectMask(bed_file):
     mask = IndexedGenome.Quicksect()
 
     n_regions = 0
-    for bed in Bed.iterator(IOTools.openFile(bed_file)):
+    for bed in Bed.iterator(iotools.openFile(bed_file)):
         # it is neccessary to extend the region to make an accurate mask
         mask.add(bed.contig, (bed.start - 1), (bed.end + 1), 1)
         n_regions += 1
@@ -270,7 +270,7 @@ def buildSimpleNormalizedBAM(infiles, outfile, nreads):
 
     pysam_in = pysam.Samfile(infile, "rb")
 
-    fh = IOTools.openFile(countfile, "r")
+    fh = iotools.openFile(countfile, "r")
     readcount = int(fh.read())
     fh.close()
 
@@ -343,7 +343,7 @@ def buildNormalizedBAM(infiles, outfile, normalize=True):
 
     pysam_out.close()
 
-    logs = IOTools.openFile(outfile + ".log", "w")
+    logs = iotools.openFile(outfile + ".log", "w")
     logs.write("# min_reads=%i, threshold= %5.2f\n" %
                (min_reads, threshold))
     logs.write("set\tcounts\tpercent\n")
@@ -383,7 +383,7 @@ def buildBAMStats(infile, outfile):
 
     # no bedToBigBed
     # to_cluster = True
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
     outs.write("reads\tcategory\n")
     for line in pysam.flagstat(infile):
         data = line[:-1].split(" ")
@@ -391,10 +391,10 @@ def buildBAMStats(infile, outfile):
 
     pysam_in = pysam.Samfile(infile, "rb")
 
-    outs_dupl = IOTools.openFile(outfile + ".duplicates", "w")
+    outs_dupl = iotools.openFile(outfile + ".duplicates", "w")
     outs_dupl.write("contig\tpos\tcounts\n")
 
-    outs_hist = IOTools.openFile(outfile + ".histogram", "w")
+    outs_hist = iotools.openFile(outfile + ".histogram", "w")
     outs_hist.write("duplicates\tcounts\tcumul\tfreq\tcumul_freq\n")
 
     last_contig, last_pos = None, None
@@ -465,7 +465,7 @@ def exportIntervalsAsBed(infile, outfile):
     statement = "SELECT contig, start, end, interval_id, peakval FROM %s ORDER by contig, start" % tablename
     cc.execute(statement)
 
-    outs = IOTools.openFile("%s.bed" % track, "w")
+    outs = iotools.openFile("%s.bed" % track, "w")
 
     for result in cc:
         contig, start, end, interval_id, peakval = result
@@ -537,7 +537,7 @@ def exportPeaksAsBed(infile, outfile):
                           interval_id, peakval FROM %(track)s_intervals ORDER by contig, start''' % locals()
     cc.execute(statement)
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     for result in cc:
         contig, start, end, interval_id, peakval = result
@@ -646,7 +646,7 @@ def intersectBedFiles(infiles, outfile):
 
     elif len(infiles) == 2:
 
-        if IOTools.isEmpty(infiles[0]) or IOTools.isEmpty(infiles[1]):
+        if iotools.isEmpty(infiles[0]) or iotools.isEmpty(infiles[1]):
             P.touch(outfile)
         else:
             statement = '''
@@ -663,7 +663,7 @@ def intersectBedFiles(infiles, outfile):
 
         # need to merge incrementally
         fn = infiles[0]
-        if IOTools.isEmpty(infiles[0]):
+        if iotools.isEmpty(infiles[0]):
             P.touch(outfile)
             return
 
@@ -671,7 +671,7 @@ def intersectBedFiles(infiles, outfile):
         P.run()
 
         for fn in infiles[1:]:
-            if IOTools.isEmpty(infiles[0]):
+            if iotools.isEmpty(infiles[0]):
                 P.touch(outfile)
                 os.unlink(tmpfile)
                 return
@@ -698,10 +698,10 @@ def subtractBedFiles(infile, subtractfile, outfile):
     and store in *outfile*.
     '''
 
-    if IOTools.isEmpty(subtractfile):
+    if iotools.isEmpty(subtractfile):
         shutil.copyfile(infile, outfile)
         return
-    elif IOTools.isEmpty(infile):
+    elif iotools.isEmpty(infile):
         P.touch(outfile)
         return
 
@@ -754,7 +754,7 @@ def summarizeMACS(infiles, outfile):
 
     keys = [x[1] for x in map_targets]
 
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     headers = []
     for k in keys:
@@ -766,7 +766,7 @@ def summarizeMACS(infiles, outfile):
 
     for infile in infiles:
         results = collections.defaultdict(list)
-        with IOTools.openFile(infile) as f:
+        with iotools.openFile(infile) as f:
             for line in f:
                 if "diag:" in line:
                     break
@@ -872,14 +872,14 @@ def summarizeMACSFDR(infiles, outfile):
 
     fdr_thresholds = numpy.arange(0, 1.05, 0.05)
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("track\t%s\n" % "\t".join(map(str, fdr_thresholds)))
 
     for infile in infiles:
         called = []
         track = P.snip(os.path.basename(infile), ".macs")
         infilename = infile + "_peaks.xls.gz"
-        inf = IOTools.openFile(infilename)
+        inf = iotools.openFile(infilename)
         peaks = list(WrapperMACS.iteratePeaks(inf))
 
         for threshold in fdr_thresholds:
@@ -977,7 +977,7 @@ def loadMACS(infile, outfile, bamfile, tablename=None):
     min_pvalue = float(PARAMS["macs_min_pvalue"])
 
     counter = E.Counter()
-    with IOTools.openFile(infilename, "r") as ins:
+    with iotools.openFile(infilename, "r") as ins:
         for peak in WrapperMACS.iteratePeaks(ins):
 
             if peak.fdr > max_qvalue:
@@ -1004,7 +1004,7 @@ def loadMACS(infile, outfile, bamfile, tablename=None):
     outtemp.close()
 
     # output filtering summary
-    outf = IOTools.openFile("%s.tsv.gz" % outfile, "w")
+    outf = iotools.openFile("%s.tsv.gz" % outfile, "w")
     outf.write("category\tcounts\n")
     outf.write("%s\n" % counter.asTable())
     outf.close()
@@ -1202,7 +1202,7 @@ def loadZinba(infile, outfile, bamfile,
 
     if not os.path.exists(infilename):
         E.warn("could not find %s" % infilename)
-    elif IOTools.isEmpty(infilename):
+    elif iotools.isEmpty(infilename):
         E.warn("no data in %s" % infilename)
     else:
         # filter peaks
@@ -1229,7 +1229,7 @@ def loadZinba(infile, outfile, bamfile,
         # get thresholds
         max_qvalue = float(PARAMS["zinba_fdr_threshold"])
 
-        with IOTools.openFile(infilename, "r") as ins:
+        with iotools.openFile(infilename, "r") as ins:
             for peak in WrapperZinba.iteratePeaks(ins):
 
                 # filter by qvalue
@@ -1270,7 +1270,7 @@ def loadZinba(infile, outfile, bamfile,
     outtemp.close()
 
     # output filtering summary
-    outf = IOTools.openFile("%s.tsv.gz" % outfile, "w")
+    outf = iotools.openFile("%s.tsv.gz" % outfile, "w")
     outf.write("category\tcounts\n")
     outf.write("%s\n" % counter.asTable())
     outf.close()
@@ -1323,10 +1323,10 @@ def makeIntervalCorrelation(infiles, outfile, field, reference):
             ix.add(contig, start, end, peakval)
         idx.append(ix)
         tracks.append(track)
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
     outs.write("contig\tstart\tend\tid\t" + "\t".join(tracks) + "\n")
 
-    for bed in Bed.iterator(infile=IOTools.openFile(reference, "r")):
+    for bed in Bed.iterator(infile=iotools.openFile(reference, "r")):
 
         row = []
         for ix in idx:
@@ -1449,7 +1449,7 @@ def loadIntervalsFromBed(bedfile, track, outfile,
     c = E.Counter()
 
     # count tags
-    for bed in Bed.iterator(IOTools.openFile(infile, "r")):
+    for bed in Bed.iterator(iotools.openFile(infile, "r")):
 
         c.input += 1
 

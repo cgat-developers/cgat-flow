@@ -10,7 +10,7 @@ Purpose
 -------
 
 This script attempts to import all the python libraries and
-pipeline scripts in the CGAT code collection.
+pipeline scripts in the cgat code collection.
 
 Importing a script/module is a pre-requisite for building
 documentation with sphinx. A script/module that can not be imported
@@ -25,15 +25,14 @@ This script is best run within nosetests::
 import os
 import glob
 import traceback
+import sys
 import imp
-
-from nose.tools import ok_
 
 # DIRECTORIES to examine for python modules/scripts
 EXPRESSIONS = (
     ('tests', 'tests/*.py'),
-    ('scripts', 'scripts/*.py'),
-    ('CGATPipelines', 'CGATPipelines/*.py'))
+    ('cgatpipelinestasks', 'cgatpipelines/tasks/*.py'),
+    ('cgatpipelinestools', 'cgatpipelines/tools/*.py'))
 
 # Scripts to exclude as they fail imports.
 EXCLUDE = (
@@ -54,6 +53,9 @@ def check_import(filename, outfile):
     if os.path.exists(prefix + ".pyc"):
         os.remove(prefix + ".pyc")
 
+    # truncate sys.argv to avoid bleeding pytest options into
+    # the pipeline modules
+    sys.argv = sys.argv[:1]
     # ignore script with pyximport for now, something does not work
     pyxfile = os.path.join(dirname, "_") + basename + "x"
     if os.path.exists(pyxfile):
@@ -66,17 +68,15 @@ def check_import(filename, outfile):
         outfile.write("FAIL %s\n%s\n" % (basename, msg))
         outfile.flush()
         traceback.print_exc(file=outfile)
-        ok_(False, '%s scripts/modules - ImportError: %s' %
-            (basename, msg))
+        assert False, '%s scripts/modules - ImportError: %s' % (basename, msg)
     except Exception as msg:
         outfile.write("FAIL %s\n%s\n" % (basename, msg))
         outfile.flush()
 
         traceback.print_exc(file=outfile)
-        ok_(False, '%s scripts/modules - Exception: %s' %
-            (basename, str(msg)))
+        assert False, '%s scripts/modules - Exception: %s' % (basename, str(msg))
 
-    ok_(True)
+    assert True
 
 
 def test_imports():

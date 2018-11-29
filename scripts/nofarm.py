@@ -36,7 +36,7 @@ import re
 import subprocess
 import farm
 
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 
 
 def main(argv=None):

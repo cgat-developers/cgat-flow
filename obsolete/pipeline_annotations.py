@@ -49,7 +49,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -79,7 +79,7 @@ file :file:`pipeline.ini` and download annotations using mysql.
 Running
 -------
 
-The pipeline can be run as any other CGAT pipeline, but as its purpose
+The pipeline can be run as any other cgat pipeline, but as its purpose
 is to provide a set of shared annotation between multiple projects
 there is an etiquette to be followed:
 
@@ -135,7 +135,7 @@ particular, consider the following questions:
    file are ideal for intervals with a single annotation. If multiple
    annotations are assigned with a feature, use :term:`gff`. For genes,
    use :term:`gtf`. Do not provide the same information with different
-   formats - formats can be easily interconverted using CGAT tools.
+   formats - formats can be easily interconverted using cgat tools.
 
 Known problems
 --------------
@@ -569,17 +569,17 @@ from ruffus import follows, transform, merge, mkdir, files, jobs_limit,\
 
 import pyBigWig
 import sqlite3
-import CGAT.Experiment as E
-import CGATPipelines.Pipeline as P
-import CGAT.IndexedFasta as IndexedFasta
-import CGAT.IOTools as IOTools
-import CGAT.Database as Database
-import CGAT.Biomart as Biomart
-import CGATPipelines.PipelineGeneset as PipelineGeneset
-import CGATPipelines.PipelineGO as PipelineGO
-import CGATPipelines.PipelineUCSC as PipelineUCSC
-import CGATPipelines.PipelineKEGG as PipelineKEGG
-import CGAT.Intervals as Intervals
+import cgat.Experiment as E
+import cgatPipelines.Pipeline as P
+import cgat.IndexedFasta as IndexedFasta
+import cgat.iotools as iotools
+import cgat.Database as Database
+import cgat.Biomart as Biomart
+import cgatPipelines.PipelineGeneset as PipelineGeneset
+import cgatPipelines.PipelineGO as PipelineGO
+import cgatPipelines.PipelineUCSC as PipelineUCSC
+import cgatPipelines.PipelineKEGG as PipelineKEGG
+import cgat.Intervals as Intervals
 
 
 ###################################################
@@ -683,7 +683,7 @@ def buildContigBed(infile, outfile):
     '''
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs = IOTools.openFile(outfile, "w")
+    outs = iotools.openFile(outfile, "w")
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
         outs.write("%s\t%i\t%i\n" % (contig, 0, size))
@@ -721,8 +721,8 @@ def buildUngappedContigBed(infile, outfiles):
 
     prefix = P.snip(infile, ".fasta")
     fasta = IndexedFasta.IndexedFasta(prefix)
-    outs_nogap = IOTools.openFile(outfiles[0], "w")
-    outs_gap = IOTools.openFile(outfiles[1], "w")
+    outs_nogap = iotools.openFile(outfiles[0], "w")
+    outs_gap = iotools.openFile(outfiles[1], "w")
     min_gap_size = PARAMS["assembly_gaps_min_size"]
 
     for contig, size in fasta.getContigSizes(with_synonyms=False).items():
@@ -768,7 +768,7 @@ def buildUngappedContigBed(infile, outfiles):
 def buildGenomeInformation(infile, outfile):
     '''
     Compute genome composition information, such as length
-    and CpG density.  Uses the CGAT script `fasta2table`.
+    and CpG density.  Uses the cgat script `fasta2table`.
 
     Parameters
     ----------
@@ -815,7 +815,7 @@ def loadGenomeInformation(infile, outfile):
 def buildGenomeGCSegmentation(infile, outfile):
     '''
     Segments the genome into isochores - windows according to G+C
-    content.  Uses `CGAT` script `fasta2bed` to generate fixed-width
+    content.  Uses `cgat` script `fasta2bed` to generate fixed-width
     windows with their G+C content as a score.  This is then used
     as the input for `bed2bed` which merges together adjacent or
     overlapping intervals with the same number of bases into bins
@@ -866,7 +866,7 @@ def buildGenomeGCSegmentation(infile, outfile):
 def buildCpGBed(infile, outfile):
     '''
     Output a :term:`BED` file that contains the location of all CpGs
-    in the input genome using `CGAT` script `fasta2bed`.
+    in the input genome using `cgat` script `fasta2bed`.
 
     Parameters
     ----------
@@ -1013,7 +1013,7 @@ def buildLincRNAExonTranscripts(infile, outfile):
         PipelineGeneset.buildLincRNAExons(infile, outfile)
     except Exception:
         if os.path.exists(outfile):
-            assert len(IOTools.openFile(outfile).readlines()) == 0
+            assert len(iotools.openFile(outfile).readlines()) == 0
         else:
             raise Exception("Failed to create %s" % outfile)
 
@@ -1821,7 +1821,7 @@ def buildMapableRegions(infiles, outfile):
         if start is not None:
             yield start, this_end
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
 
     for contig, size in contigs.items():
 
@@ -1933,7 +1933,7 @@ if PARAMS["genome"].startswith("hg"):
           :term:`BED` format file of GWAS catalog entries
         '''
 
-        reader = csv.DictReader(IOTools.openFile(infile),
+        reader = csv.DictReader(iotools.openFile(infile),
                                 dialect="excel-tab")
 
         tracks = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -1978,7 +1978,7 @@ if PARAMS["genome"].startswith("hg"):
         extension = PARAMS["gwas_extension"]
 
         c = E.Counter()
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         for disease, pp in tracks.items():
 
             for contig, positions in pp.items():
@@ -1996,7 +1996,7 @@ if PARAMS["genome"].startswith("hg"):
 
         outf.close()
 
-        outf = IOTools.openFile(outfile + ".log", "w")
+        outf = iotools.openFile(outfile + ".log", "w")
         outf.write("category\tcounts\n%s\n" % c.asTable())
         outf.close()
 
@@ -2072,7 +2072,7 @@ if PARAMS["genome"].startswith("hg"):
         contigsizes = fasta.getContigSizes()
 
         c = E.Counter()
-        for line in IOTools.openFile(track + "_snps.tsv.gz"):
+        for line in iotools.openFile(track + "_snps.tsv.gz"):
             pubmed_id, rs, pvalue, block, ensgenes, short, icd10 = line[
                 :-1].split("\t")
             c.input += 1
@@ -2093,7 +2093,7 @@ if PARAMS["genome"].startswith("hg"):
             c.parsed += 1
 
         intervals.sort()
-        outf = IOTools.openFile(outfile, "w")
+        outf = iotools.openFile(outfile, "w")
         cc = E.Counter()
         for k, x in itertools.groupby(intervals, key=lambda x: x):
             outf.write("%s\t%i\t%i\t%s\n" % k)
@@ -2102,7 +2102,7 @@ if PARAMS["genome"].startswith("hg"):
         outf.close()
         E.info(c)
 
-        outf = IOTools.openFile(outfile + ".log", "w")
+        outf = iotools.openFile(outfile + ".log", "w")
         outf.write("category\tcounts\n%s\n" % cc.asTable())
         outf.close()
 
@@ -2204,7 +2204,7 @@ def imputeGO(infiles, outfile):
 # THIS IS CURRRENTLY FAILYING - NEED TO CHECK R CODE
 # AND FIX
 
-# I have fixed it in a commit to cgat/CGAT/Biomart.py - KB
+# I have fixed it in a commit to cgat/cgat/Biomart.py - KB
 
 
 @jobs_limit(PARAMS.get("jobs_limit_R", 1), "R")

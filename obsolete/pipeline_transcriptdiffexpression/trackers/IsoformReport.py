@@ -1,4 +1,4 @@
-from CGATReport.Tracker import TrackerSQL
+from cgatReport.Tracker import TrackerSQL
 
 
 class IsoformTracker(TrackerSQL):

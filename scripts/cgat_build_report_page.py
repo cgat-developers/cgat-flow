@@ -33,8 +33,8 @@ import sys
 import re
 import subprocess
 
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
 
 
 def main(argv=None):
@@ -76,7 +76,7 @@ def main(argv=None):
     files = stdout.split('\n')
     files.sort()
 
-    outfile = IOTools.openFile(os.path.join(options.dest, "index.html"), "w")
+    outfile = iotools.openFile(os.path.join(options.dest, "index.html"), "w")
 
     outfile.write('''
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -85,7 +85,7 @@ def main(argv=None):
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>CGAT project reports</title>
+    <title>cgat project reports</title>
     <link rel="stylesheet" href="cgat.css" type="text/css" />
     <link rel="stylesheet" href="pygments.css" type="text/css" />
     <link rel="shortcut icon" href="http://cgatwiki.anat.ox.ac.uk/favicon.ico">
@@ -96,7 +96,7 @@ def main(argv=None):
     <div class="related">
       <h3>Navigation</h3>
       <ul>
-        <li><a href="index.html">CGAT Projects Overview</a> &raquo;</li>
+        <li><a href="index.html">cgat Projects Overview</a> &raquo;</li>
       </ul>
     </div>
 
@@ -105,11 +105,11 @@ def main(argv=None):
         <div class="bodywrapper">
           <div class="body">
  <div class="section" id="cgat-pipelines">
-<H1>CGAT exported project pages</H1>
+<H1>cgat exported project pages</H1>
 
 <p> 
 This page is for internal use only. Do not distribute outside of
-CGAT and do not make this page available on the world wide web.
+cgat and do not make this page available on the world wide web.
 </p>
 
 <table class="sortable">\n''')
@@ -125,7 +125,7 @@ CGAT and do not make this page available on the world wide web.
         relpath = re.sub('.*proj\d+/', '', f)
         report = re.sub('^[^/]*/', '', os.path.dirname(relpath))
 
-        lines = IOTools.openFile(f).readlines()
+        lines = iotools.openFile(f).readlines()
         titles = [x for x in lines if "<title>" in x]
         if titles:
             title = re.search("<title>(.*)</title>", titles[0]).groups()[0]

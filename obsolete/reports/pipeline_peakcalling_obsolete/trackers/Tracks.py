@@ -7,7 +7,7 @@ import types
 import itertools
 import glob
 from PeakcallingReport import *
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 
 
 class TrackerTracks(TrackerSQL):

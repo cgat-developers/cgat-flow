@@ -36,13 +36,13 @@ import re
 import sqlite3
 import itertools
 import copy
-from CGATCore import Pipeline as P
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGAT.FastaIterator as FastaIterator
-import CGAT.IndexedFasta as IndexedFasta
+from cgatcore import pipeline as P
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgat.FastaIterator as FastaIterator
+import cgat.IndexedFasta as IndexedFasta
 import pandas as pd
-from CGATCore.Pipeline import cluster_runnable
+from cgatcore.pipeline import cluster_runnable
 import numpy as np
 from rpy2.robjects import r
 from rpy2.robjects.packages import importr
@@ -214,10 +214,10 @@ def fasta2CpG(infile, outfile):
     # to do: paramterise (digestion site, read length, PE/SE)
 
     # AH: Use FastaIterator
-    fasta = FastaIterator.FastaIterator(IOTools.openFile(infile, "r"))
+    fasta = FastaIterator.FastaIterator(iotools.openFile(infile, "r"))
     temp_contig = next(fasta)
 
-    outfile = IOTools.openFile(outfile, "w")
+    outfile = iotools.openFile(outfile, "w")
     outfile.write("contig\tposition\tstrand\tread_position\n")
 
     while len(temp_contig.seq) > 1:
@@ -392,7 +392,7 @@ def categorisePromoterCpGs(outfile, genome_fasta, annotations_database):
     geneset_all_gtf_genome_coordinates'''
     select = connect.execute(select_cmd)
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         outf.write("%s\n" % "\t".join(
             ("contig", "position", "feature", "CpG_density")))
 
@@ -446,11 +446,11 @@ def findRepeatCpGs(outfile, genome_fasta, repeats_gff):
     IxFA = IndexedFasta.PysamIndexedFasta(genome_fasta)
     IxFA.mConverter = nullConvert
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         outf.write("%s\n" % "\t".join(
             ("contig", "position", "feature", "CpG_density")))
 
-        with IOTools.openFile(repeats_gff, "r") as inf:
+        with iotools.openFile(repeats_gff, "r") as inf:
             for line in inf:
                 line = line.strip().split("\t")
                 contig = line[0]
@@ -489,11 +489,11 @@ def findCpGsFromBed(outfile, genome_fasta, bed, feature, both_strands=True):
     IxFA = IndexedFasta.PysamIndexedFasta(genome_fasta)
     IxFA.mConverter = nullConvert
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         outf.write("%s\n" % "\t".join(
             ("contig", "position", "feature", "CpG_density")))
 
-        with IOTools.openFile(bed, "r") as inf:
+        with iotools.openFile(bed, "r") as inf:
             for line in inf:
                 line = line.strip().split("\t")
                 contig, start, stop = line[0:3]
@@ -727,10 +727,10 @@ def calculateCoverage(infile, outfile):
     ''' calculate the coverage at CpG islands
     and non-CpG Islands '''
 
-    with IOTools.openFile(outfile, "w") as outf:
+    with iotools.openFile(outfile, "w") as outf:
         outf.write("\t".join(("coverage", "cpgi")) + "\n")
 
-        with IOTools.openFile(infile) as inf:
+        with iotools.openFile(infile) as inf:
 
             header = inf.next().strip().split("\t")
             coverage_cols = ["meth" in x for x in header]

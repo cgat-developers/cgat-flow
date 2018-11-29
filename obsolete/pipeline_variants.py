@@ -21,7 +21,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -67,7 +67,7 @@ The pipeline requires the results from
 :doc:`pipeline_annotations`. Set the configuration variable
 :py:data:`annotations_database` and :py:data:`annotations_dir`.
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 +--------------------+-------------------+------------------------------------------------+
@@ -117,29 +117,29 @@ import glob
 import gzip
 import os
 import itertools
-import CGATCore.CSV as CSV
+import cgatcore.csv as CSV
 import re
 import math
 import collections
 import numpy
 import sqlite3
-import CGAT.GTF as GTF
-import CGATCore.Experiment as E
-import CGATCore.IOTools as IOTools
-import CGATCore.Database as Database
-import CGAT.Biomart as Biomart
-import CGAT.FastaIterator as FastaIterator
-import CGATPipelines.PipelineEnrichment as PEnrichment
-import CGATPipelines.PipelineUCSC as PipelineUCSC
+import cgat.GTF as GTF
+import cgatcore.experiment as E
+import cgatcore.iotools as iotools
+import cgatcore.database as Database
+import cgat.Biomart as Biomart
+import cgat.FastaIterator as FastaIterator
+import cgatPipelines.PipelineEnrichment as PEnrichment
+import cgatPipelines.PipelineUCSC as PipelineUCSC
 import scipy.stats
-import CGAT.Stats as Stats
+import cgat.Stats as Stats
 import pysam
 
 # only update R if called as pipeline
 # otherwise - failure with sphinx
 from rpy2.robjects import r as R
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+from cgatcore import pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 ###################################################
 ###################################################
@@ -344,8 +344,8 @@ if "refseq_filename_gtf" in PARAMS:
         if 0:
             outf = open(tmpfilename1, "w")
 
-            reader = CSV.DictReader(
-                IOTools.openFile(infile_ensembl), dialect="excel-tab")
+            reader = csv.DictReader(
+                iotools.openFile(infile_ensembl), dialect="excel-tab")
             c = E.Counter()
 
             outf.write(
@@ -1099,7 +1099,7 @@ def mergeEffects(infiles, outfile):
     '''load transcript effects into single table.'''
 
     tablename = P.toTable(outfile)
-    outf = IOTools.openFile('effects.tsv.gz', 'w')
+    outf = iotools.openFile('effects.tsv.gz', 'w')
     first = True
     for f in infiles:
         track = P.snip(os.path.basename(f), ".effects.gz")
@@ -1124,7 +1124,7 @@ def mergeEffects(infiles, outfile):
 
     for suffix in ("cds", "intron", "splicing", "translation"):
 
-        outf = IOTools.openFile('effects_' + suffix + '.tsv.gz', 'w')
+        outf = iotools.openFile('effects_' + suffix + '.tsv.gz', 'w')
         first = True
         for f in infiles:
             track = P.snip(os.path.basename(f), ".effects.gz")
@@ -1502,11 +1502,11 @@ def setupMultipleAlignment(infiles, outfile):
 
     targetdir = os.path.join(PARAMS["scratchdir"], "malis.dir")
 
-    filepool_gtf = IOTools.FilePoolMemory(
+    filepool_gtf = iotools.FilePoolMemory(
         "%(targetdir)s/cluster_%%s.dir/cluster_%%s.gtf" % locals())
-    filepool_pep = IOTools.FilePoolMemory(
+    filepool_pep = iotools.FilePoolMemory(
         "%(targetdir)s/cluster_%%s.dir/cluster_%%s_pep.fasta" % locals())
-    filepool_cds = IOTools.FilePoolMemory(
+    filepool_cds = iotools.FilePoolMemory(
         "%(targetdir)s/cluster_%%s.dir/cluster_%%s_cds.fasta" % locals())
 
     outf = open(outfile, "w")
@@ -1520,7 +1520,7 @@ def setupMultipleAlignment(infiles, outfile):
         track = infile[:-len(".alleles")]
         E.info("adding track %s" % track)
 
-        reader = CSV.DictReader(
+        reader = csv.DictReader(
             open(infile + ".table", "rU"), dialect="excel-tab")
         for row in reader:
             counts.input += 1
@@ -2646,7 +2646,7 @@ def runGATOnQTLs(infiles, outfile):
     Jonathan Flint's group.
     '''
 
-    segments = IOTools.flatten(infiles)
+    segments = iotools.flatten(infiles)
 
     workspaces = ["workspace_cds.bed", ]
 
@@ -2683,7 +2683,7 @@ def runGATOnQTLsSmall(infiles, outfile):
     Jonathan Flint's group.
     '''
 
-    segments = IOTools.flatten(infiles)
+    segments = iotools.flatten(infiles)
 
     workspaces = ["workspace_cds.bed", ]
 

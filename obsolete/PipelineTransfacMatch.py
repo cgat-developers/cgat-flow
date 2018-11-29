@@ -12,14 +12,14 @@ import re
 import os
 import sqlite3
 import collections
-from CGATCore import Pipeline as P
+from cgatcore import pipeline as P
 import numpy as np
 from rpy2.robjects import r as R
 import rpy2.robjects as robjects
 import random
 import pickle
-import CGAT.FastaIterator as FastaIterator
-import CGATCore.Experiment as E
+import cgat.FastaIterator as FastaIterator
+import cgatcore.experiment as E
 from math import factorial
 
 ########################################

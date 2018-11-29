@@ -17,11 +17,11 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects import r as R
 import rpy2.robjects as ro
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 import sklearn.metrics.cluster.supervised as supervised
 from math import log
 import random
-import CGAT.Timeseries as Timeseries
+import cgat.Timeseries as Timeseries
 
 ###########
 # Functions

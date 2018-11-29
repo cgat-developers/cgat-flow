@@ -19,7 +19,7 @@ Usage
 =====
 
 See :ref:`PipelineSettingUp` and :ref:`PipelineRunning` on general
-information how to use CGAT pipelines.
+information how to use cgat pipelines.
 
 Configuration
 -------------
@@ -35,7 +35,7 @@ directory. The pipeline expects the following naming convention:
 Requirements
 ------------
 
-On top of the default CGAT setup, the pipeline requires the following
+On top of the default cgat setup, the pipeline requires the following
 software to be in the path:
 
 Pipeline output
@@ -57,13 +57,13 @@ Code
 # load modules
 from ruffus import *
 
-import CGATCore.Experiment as E
+import cgatcore.experiment as E
 import sys
 import os
 import glob
 import sqlite3
-from CGATCore import Pipeline as P
-import CGATPipelines.PipelineTracks as PipelineTracks
+from cgatcore import pipeline as P
+import cgatPipelines.PipelineTracks as PipelineTracks
 
 # load options from the config file
 P.getParameters(["%s/pipeline.ini" % __file__[:-len(".py")],
@@ -110,7 +110,7 @@ def buildSummaryMapping(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
 
     table = "bam_stats"
 
@@ -141,7 +141,7 @@ def buildSummaryCalledDMRs(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("metatrack\ttest\tntested\tnok\tnsignificant\tn2fold\n")
 
     for track in TRACKS:
@@ -174,7 +174,7 @@ def buildSummaryCpGCoverage(infiles, outfile):
     dbh = connect()
     cc = dbh.cursor()
 
-    outf = IOTools.openFile(outfile, "w")
+    outf = iotools.openFile(outfile, "w")
     outf.write("metatrack\ttrack\tcoverage\tncovered\tpcovered\n")
 
     for track in TRACKS:

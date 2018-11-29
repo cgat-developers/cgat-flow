@@ -4,7 +4,7 @@ The data are specific for each caller.
 '''
 
 import os
-from CGATReport.Tracker import *
+from cgatReport.Tracker import *
 from PeakcallingReport import *
 
 

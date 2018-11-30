@@ -624,7 +624,7 @@ if PARAMS['downsampling_downsample_bams'] == 1:
                 if PARAMS['paired_end'] == True:
                    smallest_bam = smallest_bam/2
 
-                target_depth = PipelinePeakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
+                target_depth = peakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
 
             elif PARAMS['downsampling_downsample_method'] == 'smallest_condition_bam':
                 design_values = {}
@@ -649,10 +649,10 @@ if PARAMS['downsampling_downsample_bams'] == 1:
                 if PARAMS['paired_end'] == True:
                     smallest_bam = smallest_bam/2
 
-                target_depth = PipelinePeakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
+                target_depth = peakcalling.round_down_reads(smallest_bam,PARAMS['downsampling_downsampling_denominantor'])
 
         print(infile,outfile, target_depth)
-        PipelinePeakcalling.downSampleBams(infile,
+        peakcalling.downSampleBams(infile,
                                    outfile,
                                    target_depth,
                                    PARAMS['paired_end'],
@@ -666,7 +666,7 @@ if PARAMS['downsampling_downsample_bams'] == 1:
             .tsv file '''
 
         print(infiles)
-        PipelinePeakcalling.summariseDownsampling(infiles,outfile)
+        peakcalling.summariseDownsampling(infiles,outfile)
 
 
     @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -720,7 +720,7 @@ if PARAMS['ATACseqQC_run_ATACseqQC'] == 1:
         if PARAMS['paired_end'] == 1:
             target_depth = int(target_depth/2)
 
-        PipelinePeakcalling.downSampleBams(infile,
+        peakcalling.downSampleBams(infile,
                                    outfile,
                                    target_depth,
                                    PARAMS['paired_end'],
@@ -754,7 +754,7 @@ if PARAMS['ATACseqQC_run_ATACseqQC'] == 1:
                                            params=list( genome='%(genome)s', bamfile='%(bam_path)s', sample_name='%(sample_name)s', output_path='%(output_path)s'),
                                            output_file='%(cwd)s/%(outfile)s' )"''' % locals()
 
-        P.run(statement, job_memory='50G')
+        P.run(statement, job_memory='50G', job_condaenv=PARAMS['conda_atacsqeqc'])
 
 else:
     @follows(filtering)

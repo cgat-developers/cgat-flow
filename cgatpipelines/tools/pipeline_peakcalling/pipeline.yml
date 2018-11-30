@@ -1,19 +1,13 @@
-################################################################
-#
-#
-# Pipeline pipeline_IDR.py configuration file for sphinxreport
-#
-# 
-################################################################
-## general options
-
+# Pipeline pipeline_IDR.py configuration file
+# general options
 
 # the genome to use
 genome: hg19
+
 # directory where exported data is located
 exportdir: export
 
-# location of indexed genome 
+# location of indexed genome
 genome_dir: /ifs/mirror/genomes/index
 
 # scratchdir for data not to be backed up
@@ -51,15 +45,17 @@ conda:
 
     sicer: sicer
 
+    atacseqqc: pj44
+
     ################################################################
     #
     # IDR options
     #
     ###NOTE###
-    # MACS2 IS RECOMDNDED FOR IDR BY AUTHORS SO CURRENTLY ONLY THIS IS IMPLIMENTED 
+    # MACS2 IS RECOMDNDED FOR IDR BY AUTHORS SO CURRENTLY ONLY THIS IS IMPLIMENTED
     # WITH IDR
     #
-    # MANY IDR SETTINGS ARE SPECIFIC TO THE PEAK CALLER USED - PLEASE CONFIGURE 
+    # MANY IDR SETTINGS ARE SPECIFIC TO THE PEAK CALLER USED - PLEASE CONFIGURE
     # THESE SETTINGS IN THE APPROPRIATE PEAKCALLER SPECIFIC SECTION BELOW
     #
     ################################################################
@@ -78,7 +74,7 @@ IDR:
     #   "all" = to pool all
     #   "none" =  use inputs as specified in the design table
     #   "condition" to pool inputs by condition
-    #poolinputs=none,all,condition 
+    #poolinputs=none,all,condition
     poolinputs: none
 
     # turn on the --peak-list parameter for the IDR
@@ -126,14 +122,14 @@ filters:
     #    secondary - remove secondary aligned reads
     #    unpaired - remove unpaired and not properly paired -
     #                     samtools -f 1 -f 2 and remove any secondary mapped reads
-    #    lowqual - remove reads based on MAPQ with samtools -bQ 
+    #    lowqual - remove reads based on MAPQ with samtools -bQ
     #    contigs - remove all reads mapping to certain contigs
     #    blacklist  -remove all reads falling within blacklist region specified in bed
     bamfilters: [unmapped,secondary,unpaired,duplicates,lowqual,contigs,blacklist]
 
     # minimum mapping quality (MAPQ) of reads to take to the next stage
     # note this depends on the mapper used
-    # integer - all MAPQ values *below* (not including) this value will be excluded! 
+    # integer - all MAPQ values *below* (not including) this value will be excluded!
     qual: 30
 
     # comma seperated list of bed files of blacklisted regions
@@ -159,6 +155,51 @@ filters:
 
     # JVM options Picard jobs (e.g. "-Xmx10g" to set the maximal memory)
     picard_options: -Xmx10g
+
+     #########################################################
+     # Generate Downsampled Bams
+     #########################################################
+downsampling:
+     # generate downsampled bams 1 = on, 0 = off
+     downsample_bams: 1
+
+     # random seed for downsampling e.g. 1
+     random_seed: 1
+
+     # method to downsample - options are:
+     # specific_number : set specific number of reads (single-end)
+     #                   or fragments (paired-end) to downsample to
+     # smallest_overall_bam : downsample all bams to the smallest one in design file
+     # smallest_condition_bam : downsample bams to match the smallest one
+     #                          based on groups in the design file
+     downsample_method: smallest_overall_bam
+
+     # if smallest_condition_bam is set - choose how to group samples in the design file
+     # specify list of columns to group bams by e.g. ['Tissue','Factor','Condition']
+     # not names in list must correspond to columns in design file
+     group_samples_for_downsampling_on: [Tissue,Factor,Condition,Treatment]
+
+
+     # set the number of reads to downsample to - only need to set for 'specific_number'
+     downsample_read_number: 1000000
+
+     # round downsampling value to nearest number of reads e.g. 1000
+     downsampling_denominantor: 1
+
+
+     ########################################################
+     # Run ATACseqQC rpackage
+     ########################################################
+ATACseqQC:
+     # turn on (1) or off (0) options to run ATACseqQC
+     run_ATACseqQC: 1
+
+     # specify the number of reads (single-end) or fragments (paired-end)
+     # to run ATACseqQC on. NB 3 million = recommended number from manuscript
+     reads_for_atacseqqc: 3000000
+
+     # location of rmd vignette for atacseqqc
+     rmd_file_path: /ifs/devel/charlotteg/0_R_projects/atac_packages_test/atac_qc_vignette_for_pipeline.Rmd
 
     ########################################################
     #
@@ -209,7 +250,7 @@ macs2:
     contigsfile: /ifs/mirror/annotations/hg19_ensembl75_hierarchical/assembly.dir/contigs.tsv
 
     # Specify whether options include running with --broad --broad-cutoff
-    # if this option is turned on you need to put --broad/--broad-cutoff flags in 
+    # if this option is turned on you need to put --broad/--broad-cutoff flags in
     # options section below
     broad_peak: 1
 
@@ -228,7 +269,7 @@ macs2:
     #	default = 300
     # --gsize see [macs] section above for gsize advice
     # --qvalue@: default is 0.01
-    # --pvalue: if qvalue is specified this overrides qvalue 
+    # --pvalue: if qvalue is specified this overrides qvalue
     #           For idr set min pvalue to 0.1
     # --mfold 10 30 --gsize mm
     options: --keep-dup all --gsize hs --broad
@@ -253,7 +294,7 @@ macs2:
     # options for running SICER
     # These come into effect if SICER is chosen as peak caller
     # Please note that two separate SICER analyses are run
-    # to allow for simultaneous calling of narrower and 
+    # to allow for simultaneous calling of narrower and
     # broader regions
     #######################################################
 
@@ -274,7 +315,7 @@ sicer:
 
     # min and max fragment size for merging
     # The minimum must be 2 times the read length
-    # The maximum can be set to a value 
+    # The maximum can be set to a value
     min_insert_size: 300
     max_insert_size: 1000000
 

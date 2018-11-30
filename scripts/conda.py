@@ -40,20 +40,20 @@ def run_command(statement):
                  .format(statement, err))
         raise Exception(issue)
 
-    return out, err
+    return out.decode("utf-8"), err.decode("utf-8")
 
 
 statement = "conda info --json"
 (out, err) = run_command(statement)
 cmd_out = json.loads(out)
 install_folder = cmd_out['conda_prefix']
-#print(install_folder)
+# print(install_folder)
 
 statement = "conda env list --json"
 (out, err) = run_command(statement)
 cmd_out = json.loads(out)
 envs = cmd_out['envs']
-#print(envs)
+# print(envs)
 
 for env_folder in envs:
     if env_folder.startswith(install_folder) and \

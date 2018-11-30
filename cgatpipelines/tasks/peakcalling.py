@@ -519,9 +519,11 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     # if unpaired is specified in bamfilters in the pipeline.yml
     # remove reads whose mate has been filtered out elsewhere
     T = P.get_temp_filename(".")
+
     # "bamout" was generated above as part of the main statement
     # here, check it one more time while writing/copying "bamout" to <T>.bam
     checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True, job_memory=job_memory)
+
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
     shutil.move("%s.bam" % T, bamout)

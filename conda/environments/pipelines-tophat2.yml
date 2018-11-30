@@ -1,0 +1,11 @@
+
+name: tophat2
+
+channels:
+- bioconda
+- conda-forge
+- defaults
+
+dependencies:
+- tophat=2.1.1
+- samtools=1.7

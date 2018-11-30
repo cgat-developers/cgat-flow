@@ -281,7 +281,7 @@ curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/c
 
 [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
-log "creating conda environment dependencies"
+log "creating environment with cgat-core dependencies"
 conda env create --name ${CONDA_INSTALL_ENV} --file env-cgat-core.yml
 
 log "updating with cgat-apps dependencies"

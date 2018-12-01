@@ -25,7 +25,7 @@ mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
 
 db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats;')
 
-db <- db[,grep("track|alignments", names(db))]
+db_1 <- db[,grep("track|alignments", names(db))]
 
 DT::datatable(as.data.frame(db_1, class = 'cell-border stripe'))
 

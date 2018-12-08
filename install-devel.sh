@@ -22,7 +22,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-# set -o xtrace
+set -o xtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
@@ -1061,7 +1061,7 @@ if [[ ! -z $INSTALL_DEVEL ]] && \
 fi
 
 if [[ -z "$CGATFLOW_REPO" ]] ; then
-    $CGATFLOW_REPO=$(readlink -f "$CGATFLOW_REPO")
+    CGATFLOW_REPO=$(readlink -f "$CGATFLOW_REPO")
     if [[ ! -e "$CGATFLOW_REPO/setup.py" ]] ; then
 	report_error "No setup.py present in $CGATFLOW_REPO"
     fi

@@ -109,7 +109,6 @@ get_cgat_env() {
 	    AUX=`find $CGAT_HOME/conda-install/envs/cgat-* -maxdepth 0`
 	    CONDA_INSTALL_TYPE_PIPELINES=`basename $AUX`
 	else
-	    echo
 	    echo " The location of the CGAT code was not found (function: get_cgat_env). "
 	    echo " Please install it first or use --location option with full path to your installation. "
 	    echo
@@ -156,6 +155,7 @@ print_env_vars() {
     echo " LIBRARY_PATH: "$LIBRARY_PATH
     echo " LD_LIBRARY_PATH: "$LD_LIBRARY_PATH
     echo " CGAT_HOME: "$CGAT_HOME
+    echo " CGATFLOW_REPO: "$CGATFLOW_REPO
     echo " CONDA_INSTALL_DIR: "$CONDA_INSTALL_DIR
     echo " CONDA_INSTALL_TYPE_CORE:"$CONDA_INSTALL_TYPE_CORE
     echo " CONDA_INSTALL_TYPE_APPS: "$CONDA_INSTALL_TYPE_APPS
@@ -291,6 +291,15 @@ conda_install() {
     # install Python 2 deps
     install_py2_deps
 
+    # Set up other environment variables
+    setup_env_vars
+
+    # install cgat-core
+    install_cgat_core
+
+    # install cgat-apps
+    install_cgat_apps
+
     # make sure you are in the CGAT_HOME folder
     cd $CGAT_HOME
 
@@ -320,21 +329,13 @@ conda_install() {
 
 	# make sure you are in the CGAT_HOME/cgat-flow folder
 	cd $CGAT_HOME/cgat-flow
-
+    else
+	log "using existing cgat-flow repo in $CGATFLOW_REPO"
+	cd "$CGATFLOW_REPO"
     fi
-
-    # Set up other environment variables
-    setup_env_vars
-
-    # install cgat-core
-    install_cgat_core
-
-    # install cgat-apps
-    install_cgat_apps
 
     # Python preparation
     log "linking cgat-flow code into conda environment"
-    cd $CGAT_HOME/cgat-flow    
     sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
     sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
     python setup.py develop
@@ -846,7 +847,7 @@ help_message() {
     echo " The default install folder will be: $HOME/cgat-install"
     echo
     echo " It is also possible to install/test a specific branch of the code on GitHub:"
-    echo " ./install-CGAT-tools.sh --devel --pipelines-branch <branch> --scripts-branch <branch> --core-branch <branch>"
+    echo " ./install-CGAT-tools.sh --devel --pipelines-branch <branch> --scripts-branch <branch> --core-banch <branch>"
     echo
     echo " This will create an isolated Conda environment with both the pipelines and the scripts from:"
     echo " https://github.com/cgat-developers/cgat-apps"
@@ -895,6 +896,8 @@ fi
 INSTALL_DEVEL=
 # whether or not to clone from repo
 CLONE_FROM_REPO=
+# pre-existing directory of a cgat-flow repo
+CGATFLOW_REPO=
 # test current installation
 RUN_TESTS=
 # update current installation
@@ -989,6 +992,11 @@ do
 	    shift 2
 	    ;;
 
+	--use-repo)
+	    CGATFLOW_REPO="$2"
+	    shift 2
+	    ;;
+	
 	--pipelines-branch)
 	    PIPELINES_BRANCH="$2"
 	    test_mix_branch_release
@@ -1038,16 +1046,29 @@ do
 done
 
 
-# sanity check 2: make sure one installation option is selected
+# sanity check: make sure one installation option is selected
 if [[ -z $RUN_TESTS ]] && \
        [[ -z $INSTALL_DEVEL ]] && \
        [[ -z $INSTALL_TRAVIS ]] ; then
-
     report_error " You need to select either --run-tests or  "
-
 fi
 
-# sanity check 3: make sure there is space available in the destination folder (20 GB) in 512-byte blocks
+# sanity check: make sure one installation option for repo is selected
+if [[ ! -z $INSTALL_DEVEL ]] && \
+       [[ -z $CGATFLOW_REPO ]] && \
+       [[ -z $CLONE_FROM_REPO ]] ; then
+    report_error " You need to select either --clone-from-repo or --use-repo XYZ "
+fi
+
+if [[ -z "$CGATFLOW_REPO" ]] ; then
+    $CGATFLOW_REPO=$(readlink -f "$CGATFLOW_REPO")
+    if [[ ! -e "$CGATFLOW_REPO/setup.py" ]] ; then
+	report_error "No setup.py present in $CGATFLOW_REPO"
+    fi
+fi
+       
+
+# sanity check: make sure there is space available in the destination folder (20 GB) in 512-byte blocks
 [[ -z ${TRAVIS_INSTALL} ]] && \
     mkdir -p ${CGAT_HOME} && \
     [[ `df -P ${CGAT_HOME} | awk '/\// {print $4}'` -lt 41943040 ]] && \

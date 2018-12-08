@@ -1060,13 +1060,12 @@ if [[ ! -z $INSTALL_DEVEL ]] && \
     report_error " You need to select either --clone-from-repo or --use-repo XYZ "
 fi
 
-if [[ -z "$CGATFLOW_REPO" ]] ; then
+if [[ ! -z "$CGATFLOW_REPO" ]] ; then
     CGATFLOW_REPO=$(readlink -f "$CGATFLOW_REPO")
     if [[ ! -e "$CGATFLOW_REPO/setup.py" ]] ; then
 	report_error "No setup.py present in $CGATFLOW_REPO"
     fi
 fi
-       
 
 # sanity check: make sure there is space available in the destination folder (20 GB) in 512-byte blocks
 [[ -z ${TRAVIS_INSTALL} ]] && \

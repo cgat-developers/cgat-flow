@@ -333,6 +333,8 @@ conda_install() {
     install_cgat_apps
 
     # Python preparation
+    log "linking cgat-flow code into conda environment"
+    cd $CGAT_HOME/cgat-flow    
     sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
     sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
     python setup.py develop

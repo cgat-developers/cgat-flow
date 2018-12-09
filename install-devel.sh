@@ -100,6 +100,10 @@ get_cgat_env() {
 	CGAT_HOME=$HOME/cgat-install
     fi
 
+    if [[ -z $CGATFLOW_REPO ]] ; then
+	CGATFLOW_REPO="$CGAT_HOME/cgat-flow"
+    fi
+    
     if [[ $INSTALL_DEVEL ]] ; then
 	CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
 	CONDA_INSTALL_TYPE_APPS="cgat-apps.yml"
@@ -155,6 +159,7 @@ print_env_vars() {
     echo " LIBRARY_PATH: "$LIBRARY_PATH
     echo " LD_LIBRARY_PATH: "$LD_LIBRARY_PATH
     echo " CGAT_HOME: "$CGAT_HOME
+    echo " CGATFLOW_DIR: "$CGATFLOW_DIR
     echo " CGATFLOW_REPO: "$CGATFLOW_REPO
     echo " CONDA_INSTALL_DIR: "$CONDA_INSTALL_DIR
     echo " CONDA_INSTALL_TYPE_CORE:"$CONDA_INSTALL_TYPE_CORE
@@ -313,22 +318,22 @@ conda_install() {
 	    rm $PIPELINES_BRANCH.zip
 	    if [[ ${RELEASE} ]] ; then
 		NEW_NAME=`echo $PIPELINES_BRANCH | sed 's/^v//g'`
-		mv cgat-flow-$NEW_NAME/ cgat-flow/
+		mv cgat-flow-$NEW_NAME/ $CGATFLOW_REPO
 	    else
-		mv cgat-flow-$PIPELINES_BRANCH/ cgat-flow/
+		mv cgat-flow-$PIPELINES_BRANCH/ $CGATFLOW_REPO
 	    fi
 	elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
 	    # get latest version from Git Hub with git clone
-	    git clone --branch=$PIPELINES_BRANCH https://github.com/cgat-developers/cgat-flow.git
+	    git clone --branch=$PIPELINES_BRANCH https://github.com/cgat-developers/cgat-flow.git $CGATFLOW_REPO
 	elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
 	    # get latest version from Git Hub with git clone
-	    git clone --branch=$PIPELINES_BRANCH git@github.com:cgat-developers/cgat-flow.git
+	    git clone --branch=$PIPELINES_BRANCH git@github.com:cgat-developers/cgat-flow.git $CGATFLOW_REPO
 	else
 	    report_error " Unknown download type for CGAT code... "
 	fi
 
 	# make sure you are in the CGAT_HOME/cgat-flow folder
-	cd $CGAT_HOME/cgat-flow
+	cd $CGATFLOW_REPO
     else
 	log "using existing cgat-flow repo in $CGATFLOW_REPO"
 	cd "$CGATFLOW_REPO"
@@ -605,7 +610,7 @@ conda_test() {
 	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
 	    # make sure you are in the CGAT_HOME/cgat-flow folder
-	    cd $CGAT_HOME/cgat-flow
+	    cd $CGATFLOW_REPO
 
 	    OUTPUT_DIR=`pwd`
 

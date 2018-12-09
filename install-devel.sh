@@ -935,6 +935,12 @@ CLUSTER=1
 # Install a released version?
 RELEASE=
 
+if [[ `uname` == "Darwin" ]] ; then
+    READLINK=greadlink
+else
+    READLINK=readlink
+fi
+
 # parse input parameters
 # https://stackoverflow.com/questions/402377/using-getopts-in-bash-shell-script-to-get-long-and-short-command-line-options
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -1066,7 +1072,7 @@ if [[ ! -z $INSTALL_DEVEL ]] && \
 fi
 
 if [[ ! -z "$CGATFLOW_REPO" ]] ; then
-    CGATFLOW_REPO=$(readlink -f "$CGATFLOW_REPO")
+    CGATFLOW_REPO=$("$READLINK" -f "$CGATFLOW_REPO")
     if [[ ! -e "$CGATFLOW_REPO/setup.py" ]] ; then
 	report_error "No setup.py present in $CGATFLOW_REPO"
     fi

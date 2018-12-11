@@ -293,6 +293,11 @@ conda_install() {
     # install extra deps
     install_extra_deps
 
+    # install the pipeline dependencies
+    if [[ ${INSTALL_PIPELINES} -eq 1 ]] ; then
+	install_pipeline_deps
+    fi
+    
     # install Python 2 deps
     install_py2_deps
 
@@ -401,13 +406,20 @@ install_extra_deps() {
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
-    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
-    conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
 }
 
+# install dependencies for running the pipelines
+install_pipeline_deps() {
+    
+    log "install pipeline deps"
+
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
+
+    conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
+}
 
 # install Python 2 dependencies in a different conda environment
 install_py2_deps() {
@@ -900,6 +912,8 @@ fi
 # conda installation type. If set to 1, cgat-core and cgat-apps
 # will be installed from repository.
 INSTALL_DEVEL=
+# If set to 1, install all pipeline dependencies as well
+INSTALL_PIPELINES=
 # whether or not to clone from repo
 CLONE_FROM_REPO=
 # pre-existing directory of a cgat-flow repo
@@ -960,7 +974,12 @@ do
 	    INSTALL_DEVEL=1
 	    shift
 	    ;;
-	
+
+	--with-pipelines)
+	    INSTALL_PIPELINES=1
+	    shift
+	    ;;
+
 	--clone-from-repo)
 	    CLONE_FROM_REPO=1
 	    shift # past argument

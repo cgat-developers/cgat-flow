@@ -401,10 +401,11 @@ install_extra_deps() {
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
-
+    conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
 }
 
 

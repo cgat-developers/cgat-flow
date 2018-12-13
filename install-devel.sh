@@ -627,8 +627,8 @@ conda_test() {
 
 	    OUTPUT_DIR=`pwd`
 
-	    # run tests
-	    /usr/bin/time -o test_import.time -v nosetests -v tests/test_import.py
+	    # run tests, note: OSX has no options (no -v, -o)
+	    /usr/bin/time nosetests -v tests/test_import.py
 	    if [[ $? -eq 0 ]] ; then
 		echo
 		echo " test_import.py passed successfully! "
@@ -642,7 +642,7 @@ conda_test() {
 
 	    fi
 
-	    /usr/bin/time -o test_scripts.time -v nosetests -v tests/test_scripts.py
+	    /usr/bin/time nosetests -v tests/test_scripts.py
 	    if [[ $? -eq 0 ]] ; then
 		echo
 		echo " test_scripts.py passed successfully! "

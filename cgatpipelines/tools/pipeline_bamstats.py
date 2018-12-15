@@ -304,6 +304,23 @@ def buildPicardStats(infiles, outfile):
                                        PICARD_MEMORY)
 
 
+@P.add_doc(PipelineBamStats.buildPicardInsertSizeStats)
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           add_inputs(os.path.join(PARAMS["genome_dir"],
+                                   PARAMS["genome"] + ".fa")),
+           r"Picard_stats.dir/\1.insert_stats")
+def buildPicardInserts(infiles, outfile):
+    ''' build Picard alignment stats '''
+    infile, reffile = infiles
+
+    if "transcriptome.dir" in infile:
+        reffile = "refcoding.fa"
+
+    PipelineBamStats.buildPicardInsertSizeStats(infile,
+                                               outfile)
+
+
 @P.add_doc(bamstats.buildPicardDuplicationStats)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
@@ -812,7 +829,8 @@ def views():
          loadExonValidation,
          loadPicardRnaSeqMetrics,
          loadTranscriptProfile,
-         loadStrandSpecificity)
+         loadStrandSpecificity,
+         buildPicardInserts)
 def full():
     '''a dummy task to run all tasks in the pipeline'''
     pass

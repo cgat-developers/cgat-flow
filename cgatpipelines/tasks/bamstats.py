@@ -79,6 +79,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
     INPUT=%(infile)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true
+    HISTOGRAM_FILE=%(outfile)s.pdf
     OUTPUT=%(outfile)s
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''

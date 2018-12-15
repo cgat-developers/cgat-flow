@@ -304,7 +304,7 @@ def buildPicardStats(infiles, outfile):
                                        PICARD_MEMORY)
 
 
-@P.add_doc(PipelineBamStats.buildPicardInsertSizeStats)
+@P.add_doc(bamstats.buildPicardInsertSizeStats)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
            add_inputs(os.path.join(PARAMS["genome_dir"],
@@ -317,8 +317,10 @@ def buildPicardInserts(infiles, outfile):
     if "transcriptome.dir" in infile:
         reffile = "refcoding.fa"
 
-    PipelineBamStats.buildPicardInsertSizeStats(infile,
-                                               outfile)
+    bamstats.buildPicardInsertSizeStats(infile,
+                                        outfile,
+                                        reffile,
+                                        PICARD_MEMORY)
 
 
 @P.add_doc(bamstats.buildPicardDuplicationStats)

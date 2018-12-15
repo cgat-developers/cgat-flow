@@ -778,6 +778,12 @@ def loadTranscriptProfile(infiles, outfile):
     bamstats.loadTranscriptProfile(infiles, outfile)
 
 
+@merge(buildPicardInserts, "picard_insert_metrics.csv")
+def mergePicardInsertMetrics(infiles, outfile):
+    ''' merge insert stats into a single table'''
+    bamstats.mergeInsertSize(infiles, outfile)
+
+
 @P.add_doc(bamstats.loadStrandSpecificity)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @follows(loadTranscriptProfile)
@@ -832,7 +838,7 @@ def views():
          loadPicardRnaSeqMetrics,
          loadTranscriptProfile,
          loadStrandSpecificity,
-         buildPicardInserts)
+         mergePicardInsertMetrics)
 def full():
     '''a dummy task to run all tasks in the pipeline'''
     pass

@@ -100,7 +100,7 @@ def addPseudoSequenceQuality(infile, outfile):
 
     statement = '''cat %(infile)s
     | cgat bam2bam -v 0
-    --method=set-sequence > %(outfile)s'''
+    --method=set-sequence &> (outfile)s.log> %(outfile)s'''
 
     P.run(statement)
 

@@ -535,7 +535,7 @@ def prepareGTFsByOverlapWithIntervals(infile, outfiles):
     zgrep -f %(track)s_overlapping_genes %(tss)s
     | gzip > %(out3)s &&
     zgrep -v -f %(track)s_overlapping_genes %(tss)s
-    | gzip > %(out4)s &&
+    | gzip > %(out4)s
     '''
 
     P.run(statement)

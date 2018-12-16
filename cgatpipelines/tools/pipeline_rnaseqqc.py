@@ -493,8 +493,8 @@ def buildJunctions(infile, outfile):
         E.info('found %i junctions before removing duplicates' % njunctions)
 
     # make unique
-    statement = '''mv %(outfile)s %(outfile)s.tmp;
-                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s;
+    statement = '''mv %(outfile)s %(outfile)s.tmp &&
+                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s &&
                    rm -f %(outfile)s.tmp; '''
     P.run(statement)
 
@@ -1009,7 +1009,7 @@ def buildRefFlat(infile, outfile):
     tmpflat = P.get_temp_filename(".")
 
     statement = '''
-    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;
+    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s &&
     paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
     > %(outfile)s
     '''

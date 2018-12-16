@@ -322,7 +322,7 @@ def loadIntervals(infile, outfile):
 def indexIntervals(infile, outfile):
     '''index intervals.
     '''
-    statement = '''zcat %(infile)s | sort -k1,1 -k2,2n | bgzip > %(outfile)s; tabix -p bed %(outfile)s'''
+    statement = '''zcat %(infile)s | sort -k1,1 -k2,2n | bgzip > %(outfile)s && tabix -p bed %(outfile)s'''
     P.run(statement)
 
 

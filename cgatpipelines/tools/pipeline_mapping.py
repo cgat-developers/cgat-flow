@@ -571,8 +571,8 @@ def buildReferenceTranscriptome(infile, outfile):
 
     statement = '''
     zcat %(infile)s
-    | awk '$3 == "exon"' > %(gtf_file)s;
-    gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s;
+    | awk '$3 == "exon"' > %(gtf_file)s &&
+    gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s &&
     samtools faidx %(outfile)s
     '''
     P.run(statement, job_condaenv="tophat2")
@@ -654,9 +654,9 @@ def buildJunctions(infile, outfile):
         E.info('found %i junctions before removing duplicates' % njunctions)
 
     # make unique
-    statement = '''mv %(outfile)s %(outfile)s.tmp;
-                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s;
-                   rm -f %(outfile)s.tmp; '''
+    statement = '''mv %(outfile)s %(outfile)s.tmp &&
+                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s &&
+                   rm -f %(outfile)s.tmp'''
     P.run(statement)
 
 
@@ -1971,7 +1971,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         infiles = " ".join(infiles)
         statement = '''
-        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log;
+        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log &&
         samtools index %(outfile)s
         '''
         P.run(statement)
@@ -2101,8 +2101,8 @@ def buildBigWig(infile, outfile):
         -bg
         -split
         -scale %(scale)f
-        > %(tmpfile)s;
-        bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
+        > %(tmpfile)s &&
+        bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s &&
         rm -f %(tmpfile)s
         '''
     else:
@@ -2180,7 +2180,7 @@ def buildBed(infile, outfile):
           -
     | sort -k1,1 -k2,2n
     | bgzip
-    > %(outfile)s;
+    > %(outfile)s &&
     tabix -p bed %(outfile)s
     '''
     P.run(statement)

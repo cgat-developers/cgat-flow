@@ -856,7 +856,7 @@ def renderRreport():
                                                'pipeline_bamstats',
                                                'R_report'))
 
-    statement = '''cp %(report_path)s/* R_report.dir ; cd R_report.dir ; R -e "rmarkdown::render_site()"'''
+    statement = '''cp %(report_path)s/* R_report.dir && cd R_report.dir && R -e "rmarkdown::render_site()"'''
 
     P.run(statement)
 
@@ -870,9 +870,9 @@ def renderJupyterReport():
                                                'pipeline_bamstats',
                                                'Jupyter_report'))
 
-    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ ; cd Jupyter_report.dir/;
-                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors;
-                    mkdir _site;
+    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ && cd Jupyter_report.dir/ &&
+                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors &&
+                    mkdir _site &&
                     mv -t _site *.html cgat_logo.jpeg oxford.png'''
 
     P.run(statement)

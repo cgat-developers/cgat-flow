@@ -79,6 +79,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
     INPUT=%(infile)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true
+    HISTOGRAM_FILE=%(outfile)s.pdf
     OUTPUT=%(outfile)s
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
@@ -109,6 +110,24 @@ def addPseudoSequenceQuality(infile, outfile):
 
     P.run(statement)
 
+
+def mergeInsertSize(infiles, outfile):
+    '''merge the insert size files into one file'''
+
+    out = iotools.open_file(outfile,"w")
+    
+    out.write("SAMPLE_NAME\tMEDIAN_INSERT_SIZE\tMODE_INSERT_SIZE\tMEDIAN_ABSOLUTE_DEVIATION\tMIN_INSERT_SIZE\t\
+              MAX_INSERT_SIZE\tMEAN_INSERT_SIZE\tSTANDARD_DEVIATION\tREAD_PAISR\t\
+              PAIR_ORIENTATION\tWIDTH_OF_10_PERCENT\tWIDTH_OF_50_PERCENT\tWIDTH_OF_60_PERCENT\t\
+              WIDTH_OF_70_PERCENT\tWIDTH_OF_80_PERCENT\tWIDTH_OF_90_PERCENT\tWIDTH_OF_95_PERCENT\t\
+              WIDTH_OF_99_PERCENT\tSAMPLE\tLIBRARY\tREAD_GROUP\n")
+
+    for infile in infiles:
+        name = infile.replace(".insert_stats","")
+        name = name.replace("Picard_stats.dir/","")
+        metrics = iotools.open_file(infile).readlines()[7].strip().split("\t")
+        out.write("%s\t%s\n" % (name,"\t".join(metrics)))
+    out.close()
 
 def copyBamFile(infile, outfile):
     '''Make softlinks of the bam files

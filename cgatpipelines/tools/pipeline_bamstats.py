@@ -304,6 +304,25 @@ def buildPicardStats(infiles, outfile):
                                        PICARD_MEMORY)
 
 
+@P.add_doc(bamstats.buildPicardInsertSizeStats)
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           add_inputs(os.path.join(PARAMS["genome_dir"],
+                                   PARAMS["genome"] + ".fa")),
+           r"Picard_stats.dir/\1.insert_stats")
+def buildPicardInserts(infiles, outfile):
+    ''' build Picard alignment stats '''
+    infile, reffile = infiles
+
+    if "transcriptome.dir" in infile:
+        reffile = "refcoding.fa"
+
+    bamstats.buildPicardInsertSizeStats(infile,
+                                        outfile,
+                                        reffile,
+                                        PICARD_MEMORY)
+
+
 @P.add_doc(bamstats.buildPicardDuplicationStats)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
@@ -759,6 +778,12 @@ def loadTranscriptProfile(infiles, outfile):
     bamstats.loadTranscriptProfile(infiles, outfile)
 
 
+@merge(buildPicardInserts, "picard_insert_metrics.csv")
+def mergePicardInsertMetrics(infiles, outfile):
+    ''' merge insert stats into a single table'''
+    bamstats.mergeInsertSize(infiles, outfile)
+
+
 @P.add_doc(bamstats.loadStrandSpecificity)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @follows(loadTranscriptProfile)
@@ -812,7 +837,8 @@ def views():
          loadExonValidation,
          loadPicardRnaSeqMetrics,
          loadTranscriptProfile,
-         loadStrandSpecificity)
+         loadStrandSpecificity,
+         mergePicardInsertMetrics)
 def full():
     '''a dummy task to run all tasks in the pipeline'''
     pass

@@ -156,35 +156,71 @@ filters:
     # JVM options Picard jobs (e.g. "-Xmx10g" to set the maximal memory)
     picard_options: -Xmx10g
 
-     #########################################################
-     # Generate Downsampled Bams
-     #########################################################
+    #############################################################
+    # Merge after filtering
+    #############################################################
+
+merging:
+    # merge files into condition and tissue grouping after filtering (1 = yes, 0 =no)
+    merge_after_filtering: 0
+
+    # if input has low read depth, it might be better to pool all inputs or
+    # all inputs for each condition/tissue.
+    # see https://groups.google.com/forum/#!msg/idr-discuss/Vp3mlWOTgJ4/veaM-BHe7-kJ;context-place=searchin/idr-discuss/replicate$20input%7Csort:relevance
+    #   "all" = to pool all
+    #   "none" =  use inputs as specified in the design table
+    #   "condition" to pool inputs by condition
+    #poolinputs=none,all,condition
+    poolinputs: none
+
+    #########################################################
+    # Generate Downsampled Bams
+    #########################################################
 downsampling:
-     # generate downsampled bams 1 = on, 0 = off
-     downsample_bams: 1
+    # generate downsampled bams 1 = on, 0 = off
+    downsample_bams: 1
 
-     # random seed for downsampling e.g. 1
-     random_seed: 1
+    # random seed for downsampling e.g. 1
+    random_seed: 1
 
-     # method to downsample - options are:
-     # specific_number : set specific number of reads (single-end)
-     #                   or fragments (paired-end) to downsample to
-     # smallest_overall_bam : downsample all bams to the smallest one in design file
-     # smallest_condition_bam : downsample bams to match the smallest one
-     #                          based on groups in the design file
-     downsample_method: smallest_overall_bam
+    # method to downsample - options are:
+    # specific_number : set specific number of reads (single-end)
+    #                   or fragments (paired-end) to downsample to
+    # smallest_overall_bam : downsample all bams to the smallest one in design file
+    # smallest_condition_bam : downsample bams to match the smallest one
+    #                          based on groups in the design file
+    downsample_method: smallest_overall_bam
 
-     # if smallest_condition_bam is set - choose how to group samples in the design file
-     # specify list of columns to group bams by e.g. ['Tissue','Factor','Condition']
-     # not names in list must correspond to columns in design file
-     group_samples_for_downsampling_on: [Tissue,Factor,Condition,Treatment]
+    # if smallest_condition_bam is set - choose how to group samples in the design file
+    # specify list of columns to group bams by e.g. ['Tissue','Factor','Condition']
+    # not names in list must correspond to columns in design file
+    group_samples_for_downsampling_on: [Tissue,Factor,Condition,Treatment]
 
+    # set the number of reads to downsample to - only need to set for 'specific_number'
+    downsample_read_number: 1000000
 
-     # set the number of reads to downsample to - only need to set for 'specific_number'
-     downsample_read_number: 1000000
+    # round downsampling value to nearest number of reads e.g. 1000
+    downsampling_denominantor: 1
 
-     # round downsampling value to nearest number of reads e.g. 1000
-     downsampling_denominantor: 1
+    ##################
+    # these options refer to the merged_bams
+    ##################
+
+    # turn downsampling of merged bams on or off
+    downsample_merged_bams: 0
+
+    # method to downsample - options are:
+    # specific_number : set specific number of reads (single-end)
+    #                    or fragments (paired-end) to downsample to
+    # smallest_overall_bam : downsample all bams to the smallest one in design file
+
+    downsample_merged_bams_method: specific_number
+
+    # set the number of reads to downsample to - only need to set for 'specific_number'
+    downsample_merged_bams_read_number: 16500000
+
+    # round downsampling value to nearest number of reads e.g. 1000
+    downsampling_merged_bams_denominantor: 1
 
 
      ########################################################

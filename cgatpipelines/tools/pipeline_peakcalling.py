@@ -748,13 +748,13 @@ if PARAMS['ATACseqQC_run_ATACseqQC'] == 1:
         print(path_to_rmarkdown)
         genome = PARAMS['genome']
 
-
+        print(PARAMS)
         statement = '''Rscript -e
                        "rmarkdown::render('%(path_to_rmarkdown)s',
                                            params=list( genome='%(genome)s', bamfile='%(bam_path)s', sample_name='%(sample_name)s', output_path='%(output_path)s'),
                                            output_file='%(cwd)s/%(outfile)s' )"''' % locals()
 
-        P.run(statement, job_memory='50G', job_condaenv=PARAMS['conda_atacsqeqc'])
+        P.run(statement, job_memory='50G', job_condaenv='pj44')
 
 else:
     @follows(filtering)

@@ -40,7 +40,7 @@ dependencies:
 - r-dt
 - r-ggplot2
 - r-gmd
-- r-hiddenmarkov
+# - r-hiddenmarkov
 - r-hmisc
 - r-knitr
 - r-mass

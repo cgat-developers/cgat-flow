@@ -52,11 +52,11 @@ dependencies:
 - r-snow
 - r-stringr
 - r-venndiagram
-- r-wasabi
+# - r-wasabi
 - bioconductor-biomart
-- bioconductor-chipqc
+# - bioconductor-chipqc
 - bioconductor-cummerbund
-- bioconductor-hilbertvis
+# - bioconductor-hilbertvis
 - bioconductor-hpar
 - bioconductor-deseq
 - bioconductor-edger

@@ -87,7 +87,7 @@ dependencies:
 - multiqc
 - nomkl
 - pandaseq
-- peakranger
+# - peakranger
 - perl-go-perl
 - picard
 - sailfish

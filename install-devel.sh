@@ -104,7 +104,7 @@ get_cgat_env() {
 	CGATFLOW_REPO="$CGAT_HOME/cgat-flow"
     fi
     
-    if [[ $INSTALL_DEVEL ]] ; then
+    if [[ $INSTALL_DEVEL ]] || [[ $INSTALL_PIPELINES ]]; then
 	CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
 	CONDA_INSTALL_TYPE_APPS="cgat-apps.yml"
 	CONDA_INSTALL_TYPE_CORE="cgat-core.yml"
@@ -265,8 +265,6 @@ conda_install() {
     # Now using conda environment files:
     # https://conda.io/docs/using/envs.html#use-environment-from-file
 
-    [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
-
     curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
     curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
@@ -293,11 +291,6 @@ conda_install() {
     # install extra deps
     install_extra_deps
 
-    # install the pipeline dependencies
-    if [[ ${INSTALL_PIPELINES} -eq 1 ]] ; then
-	install_pipeline_deps
-    fi
-    
     # install Python 2 deps
     install_py2_deps
 
@@ -413,6 +406,11 @@ install_extra_deps() {
 
 # install dependencies for running the pipelines
 install_pipeline_deps() {
+
+    get_cgat_env
+    
+    # activate cgat environment
+    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
     
     log "install pipeline deps"
 
@@ -1080,6 +1078,7 @@ done
 # sanity check: make sure one installation option is selected
 if [[ -z $RUN_TESTS ]] && \
        [[ -z $INSTALL_DEVEL ]] && \
+       [[ -z $INSTALL_PIPELINES ]] && \
        [[ -z $INSTALL_TRAVIS ]] ; then
     report_error " You need to select either --run-tests or  "
 fi
@@ -1104,13 +1103,20 @@ fi
     [[ `df -P ${CGAT_HOME} | awk '/\// {print $4}'` -lt 41943040 ]] && \
     report_error " Not enough disk space available on the installation folder: "$CGAT_HOME
 
-    
+
+[[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
+
+
 if [[ $OS_PKGS ]] ; then
     install_os_packages
 fi
 
 if [[ $INSTALL_DEVEL ]] ; then
     conda_install
+fi
+
+if [[ $INSTALL_PIPELINES -eq 1 ]]; then
+    install_pipeline_deps
 fi
 
 if [[ $RUN_TESTS ]] ; then

@@ -2575,11 +2575,9 @@ def deseqParseResults(control_name, treatment_name, fdr, vsd=False):
     '''
 
     results = []
-    isna = r["is.na"]
-
     counts = E.Counter()
-
-    for index, data in r['res'].iterrows():
+    res_df = pandas2ri.ri2py(r["res"])
+    for index, data in res_df.iterrows():
         counts.input += 1
 
         # set significant flag

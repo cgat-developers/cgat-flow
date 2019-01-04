@@ -522,7 +522,7 @@ def buildTranscriptGeneMap(infile, outfile):
     --output-only-attributes
     | cgat csv_cut transcript_id gene_id
     > %(outfile)s"""
-    P.run(statement, job_memory="8G")
+    P.run(statement, job_memory="16G")
 
 ###################################################################
 # subset fastqs

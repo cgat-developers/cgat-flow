@@ -1094,7 +1094,7 @@ def runTomTom(infile, outfile):
 @transform(runTomTom, suffix(".tomtom"), "_tomtom.load")
 def loadTomTom(infile, outfile):
     '''load tomtom results'''
-    P.load(outfile)
+    P.load(infile, outfile)
 
 
 @files_re((exportMotifIntervalSequences, exportMotifControlSequences),

@@ -1,0 +1,10 @@
+name: sailfish
+
+channels:
+- bioconda
+- conda-forge
+- defaults
+
+dependencies:
+- python
+- sailfish

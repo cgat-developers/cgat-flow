@@ -516,13 +516,13 @@ def buildSalmonIndex(infile, outfile):
        path to output file
     '''
 
-    job_memory = "6G"
+    job_memory = "unlimited"
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
     rm -rf %(outfile)s;
-    salmon index %(salmon_index_options)s -t %(infile)s -i %(outfile)s
+    salmon index -k %(salmon_kmer)i %(salmon_index_options)s -t %(infile)s -i %(outfile)s
     -k %(salmon_kmer)s
     '''
 
@@ -562,7 +562,7 @@ def buildSailfishIndex(infile, outfile):
     %(sailfish_index_options)s
     '''
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sailfish")
 
 
 @originate("transcript2geneMap.tsv")

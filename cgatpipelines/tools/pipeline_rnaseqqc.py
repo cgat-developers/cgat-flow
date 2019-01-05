@@ -899,7 +899,7 @@ def indexForSailfish(infile, outfile):
 
     statement = '''
     sailfish index --transcripts=%(infile)s --out=%(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="16G")
+    P.run(statement, job_memory="unlimited", job_condaenv="sailfish")
 
 
 @transform(SEQUENCEFILES,
@@ -925,7 +925,7 @@ def runSailfish(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sailfish")
 
 
 @split(runSailfish,
@@ -1690,8 +1690,8 @@ def indexForSalmon(infile, outfile):
     '''create a salmon index'''
 
     statement = '''
-    salmon index -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="8G")
+    salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
+    P.run(statement, job_memory="8G", job_condaenv="salmon")
 
 
 @transform(SEQUENCEFILES,
@@ -1714,7 +1714,7 @@ def runSalmon(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run(statement, job_memory="8G")
+    P.run(statement, job_memory="8G", job_condaenv="salmon")
 
 
 @merge(runSalmon, "strandedness.tsv")

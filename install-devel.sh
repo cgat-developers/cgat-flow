@@ -291,9 +291,6 @@ conda_install() {
     # install extra deps
     install_extra_deps
 
-    # install Python 2 deps
-    install_py2_deps
-
     # Set up other environment variables
     setup_env_vars
 
@@ -402,6 +399,7 @@ install_extra_deps() {
 
     conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
+
 }
 
 # install dependencies for running the pipelines
@@ -417,12 +415,14 @@ install_pipeline_deps() {
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
+
+    install_extra_envs
 }
 
 # install Python 2 dependencies in a different conda environment
-install_py2_deps() {
+install_extra_envs() {
 
-    log "install Python 2 deps"
+    log "install extra environments"
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-macs2.yml
 
@@ -440,6 +440,14 @@ install_py2_deps() {
 
     conda env update --file pipelines-splicing.yml
 
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-sailfish.yml
+    
+    conda env update --file pipelines-sailfish.yml
+
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-salmon.yml
+    
+    conda env update --file pipelines-salmon.yml
+    
 }
 
 
@@ -1101,7 +1109,7 @@ fi
 [[ -z ${TRAVIS_INSTALL} ]] && \
     mkdir -p ${CGAT_HOME} && \
     [[ `df -P ${CGAT_HOME} | awk '/\// {print $4}'` -lt 41943040 ]] && \
-    report_error " Not enough disk space available on the installation folder: "$CGAT_HOME
+    report_error " Not enough disk space available on the installation folder: $CGAT_HOME"
 
 
 [[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}

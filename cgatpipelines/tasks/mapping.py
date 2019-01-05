@@ -1158,7 +1158,6 @@ class Salmon(Mapper):
 
         statement.append('''
         -l %%(salmon_libtype)s %(input_file)s -o %(outdir)s
-        -k %%(salmon_kmer)s
         --numBootstraps %%(salmon_bootstrap)s
         --threads %%(job_threads)s %%(salmon_options)s;''' % locals())
 

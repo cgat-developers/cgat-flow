@@ -80,7 +80,7 @@ except ImportError:
 
 
 # activate pandas/rpy conversion
-pandas2ri.activate()
+# pandas2ri.activate()
 
 # AH: Only do this on demand, module might not be
 #     be able to be imported if there are any issues.
@@ -1948,7 +1948,7 @@ def loadTagData(tags_filename, design_filename):
         E.warn("missing samples from design file are ignored: %s" %
                missing)
 
-    # Subset data & set conditions
+    # subset data & set conditions
     r('''includedSamples <- !(is.na(pheno2$include) | pheno2$include == '0') ''')
     E.debug("included samples: %s" %
             r('''colnames(counts_table)[includedSamples]'''))
@@ -1956,8 +1956,7 @@ def loadTagData(tags_filename, design_filename):
     r('''groups <- factor(pheno2$group[ includedSamples ])''')
     r('''conds <- pheno2$group[ includedSamples ]''')
     r('''pairs <- factor(pheno2$pair[ includedSamples ])''')
-
-    # JJ if additional columns present, pass to 'factors'
+    # if additional columns present, pass to 'factors'
     r('''if (length(names(pheno2)) > 4) {
            factors <- data.frame(pheno2[includedSamples,5:length(names(pheno2))])
          } else {
@@ -3441,7 +3440,6 @@ def outputTagSummary(filename_tags,
         E.debug("sample names: %s" % r('''colnames(countsTable)'''))
 
     nrows, ncolumns = tuple(r('''dim(countsTable)'''))
-
     outfile.write("metric\tvalue\tpercent\n")
     outfile.write("number of observations\t%i\t100\n" % nobservations)
     outfile.write("number of samples\t%i\t100\n" % nsamples)
@@ -3463,10 +3461,11 @@ def outputTagSummary(filename_tags,
     E.info("removing rows with no counts in any sample")
     r('''countsTable = countsTable[max_counts>0,]''')
 
-    for x in range(0, 20):
-        nempty = tuple(r('''sum(max_counts <= %i)''' % x))[0]
-        outfile.write("max per row<=%i\t%i\t%f\n" %
-                      (x, nempty, 100.0 * nempty / nrows))
+    if nrows > 0:
+        for x in range(0, 20):
+            nempty = tuple(r('''sum(max_counts <= %i)''' % x))[0]
+            outfile.write("max per row<=%i\t%i\t%f\n" %
+                          (x, nempty, 100.0 * nempty / nrows))
 
     E.info("removed %i empty rows" % tuple(r('''sum(max_counts == 0)''')))
     observations, samples = tuple(r('''dim(countsTable)'''))

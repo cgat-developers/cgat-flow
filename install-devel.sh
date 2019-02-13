@@ -22,7 +22,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+# set -o xtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
@@ -104,7 +104,7 @@ get_cgat_env() {
 	CGATFLOW_REPO="$CGAT_HOME/cgat-flow"
     fi
     
-    if [[ $INSTALL_DEVEL ]] || [[ $INSTALL_PIPELINES ]]; then
+    if [[ $INSTALL_DEVEL ]] || [[ $INSTALL_PIPELINE_DEPENDENCIES ]]; then
 	CONDA_INSTALL_TYPE_PIPELINES="cgat-flow.yml"
 	CONDA_INSTALL_TYPE_APPS="cgat-apps.yml"
 	CONDA_INSTALL_TYPE_CORE="cgat-core.yml"
@@ -167,9 +167,9 @@ print_env_vars() {
     echo " CONDA_INSTALL_TYPE_PIPELINES: "$CONDA_INSTALL_TYPE_PIPELINES
     echo " CONDA_INSTALL_ENV: "$CONDA_INSTALL_ENV
     echo " PYTHONPATH: "$PYTHONPATH
-    [[ ! $RUN_TESTS ]] && echo " PIPELINES_BRANCH: "$PIPELINES_BRANCH
-    [[ ! $RUN_TESTS ]] && echo " APPS_BRANCH: "$APPS_BRANCH
-    [[ ! $RUN_TESTS ]] && echo " CORE_BRANCH: "$CORE_BRANCH
+    [[ ! $RUN_TESTS ]] && echo " CGATFLOW_BRANCH: "$CGATFLOW_BRANCH
+    [[ ! $RUN_TESTS ]] && echo " CGATAPPS_BRANCH: "$CGATAPPS_BRANCH
+    [[ ! $RUN_TESTS ]] && echo " CGATCORE_BRANCH: "$CGATCORE_BRANCH
     [[ ! $RUN_TESTS ]] && echo " RELEASE: "$RELEASE
     echo " CODE_DOWNLOAD_TYPE: "$CODE_DOWNLOAD_TYPE
     echo " CLUSTER: "$CLUSTER
@@ -265,9 +265,9 @@ conda_install() {
     # Now using conda environment files:
     # https://conda.io/docs/using/envs.html#use-environment-from-file
 
-    curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
+    curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
-    curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
+    curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
@@ -308,21 +308,21 @@ conda_install() {
 
 	if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
 	    # get the latest version from Git Hub in zip format
-	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$PIPELINES_BRANCH.zip
-	    unzip $PIPELINES_BRANCH.zip
-	    rm $PIPELINES_BRANCH.zip
+	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$CGATFLOW_BRANCH.zip
+	    unzip $CGATFLOW_BRANCH.zip
+	    rm $CGATFLOW_BRANCH.zip
 	    if [[ ${RELEASE} ]] ; then
-		NEW_NAME=`echo $PIPELINES_BRANCH | sed 's/^v//g'`
+		NEW_NAME=`echo $CGATFLOW_BRANCH | sed 's/^v//g'`
 		mv cgat-flow-$NEW_NAME/ $CGATFLOW_REPO
 	    else
-		mv cgat-flow-$PIPELINES_BRANCH/ $CGATFLOW_REPO
+		mv cgat-flow-$CGATFLOW_BRANCH/ $CGATFLOW_REPO
 	    fi
 	elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
 	    # get latest version from Git Hub with git clone
-	    git clone --branch=$PIPELINES_BRANCH https://github.com/cgat-developers/cgat-flow.git $CGATFLOW_REPO
+	    git clone --branch=$CGATFLOW_BRANCH https://github.com/cgat-developers/cgat-flow.git $CGATFLOW_REPO
 	elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
 	    # get latest version from Git Hub with git clone
-	    git clone --branch=$PIPELINES_BRANCH git@github.com:cgat-developers/cgat-flow.git $CGATFLOW_REPO
+	    git clone --branch=$CGATFLOW_BRANCH git@github.com:cgat-developers/cgat-flow.git $CGATFLOW_REPO
 	else
 	    report_error " Unknown download type for CGAT code... "
 	fi
@@ -395,7 +395,7 @@ install_extra_deps() {
     log "install extra deps"
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${APPS_BRANCH}/conda/environments/apps-extra.yml
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/apps-extra.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
@@ -461,21 +461,21 @@ install_cgat_apps() {
 
     if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
 	# get the latest version from Git Hub in zip format
-	curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$APPS_BRANCH.zip
-	unzip $APPS_BRANCH.zip
-	rm $APPS_BRANCH.zip
+	curl -LOk https://github.com/cgat-developers/cgat-apps/archive/$CGATAPPS_BRANCH.zip
+	unzip $CGATAPPS_BRANCH.zip
+	rm $CGATAPPS_BRANCH.zip
 	if [[ ${RELEASE} ]] ; then
-	    NEW_NAME=`echo $APPS_BRANCH | sed 's/^v//g'`
+	    NEW_NAME=`echo $CGATAPPS_BRANCH | sed 's/^v//g'`
 	    mv cgat-apps-$NEW_NAME/ cgat-apps/
 	else
-	    mv cgat-apps-$APPS_BRANCH/ cgat-apps/
+	    mv cgat-apps-$CGATAPPS_BRANCH/ cgat-apps/
 	fi
     elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
 	# get latest version from Git Hub with git clone
-	git clone --branch=$APPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
+	git clone --branch=$CGATAPPS_BRANCH https://github.com/cgat-developers/cgat-apps.git
     elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
 	# get latest version from Git Hub with git clone
-	git clone --branch=$APPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
+	git clone --branch=$CGATAPPS_BRANCH git@github.com:cgat-developers/cgat-apps.git
     else
 	report_error " Unknown download type for CGAT code... "
     fi
@@ -517,21 +517,21 @@ install_cgat_core() {
 
     if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
 	# get the latest version from Git Hub in zip format
-	curl -LOk https://github.com/cgat-developers/cgat-core/archive/$CORE_BRANCH.zip
-	unzip $CORE_BRANCH.zip
-	rm $CORE_BRANCH.zip
+	curl -LOk https://github.com/cgat-developers/cgat-core/archive/$CGATCORE_BRANCH.zip
+	unzip $CGATCORE_BRANCH.zip
+	rm $CGATCORE_BRANCH.zip
 	if [[ ${RELEASE} ]] ; then
-	    NEW_NAME=`echo $CORE_BRANCH | sed 's/^v//g'`
+	    NEW_NAME=`echo $CGATCORE_BRANCH | sed 's/^v//g'`
 	    mv cgat-core-$NEW_NAME/ cgat-core/
 	else
-	    mv cgat-core-$CORE_BRANCH/ cgat-core/
+	    mv cgat-core-$CGATCORE_BRANCH/ cgat-core/
 	fi
     elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
 	# get latest version from Git Hub with git clone
-	git clone --branch=$CORE_BRANCH https://github.com/cgat-developers/cgat-core.git
+	git clone --branch=$CGATCORE_BRANCH https://github.com/cgat-developers/cgat-core.git
     elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
 	# get latest version from Git Hub with git clone
-	git clone --branch=$CORE_BRANCH git@github.com:cgat-developers/cgat-core.git
+	git clone --branch=$CGATCORE_BRANCH git@github.com:cgat-developers/cgat-core.git
     else
 	report_error " Unknown download type for CGAT core... "
     fi
@@ -772,7 +772,7 @@ test_git_ssh() {
 test_mix_branch_release() {
     # don't mix branch and release options together
     if [[ $RELEASE ]] ; then
-	if [[ "$PIPELINES_BRANCH" != "master" ]] || [[ $APPS_BRANCH != "master" ]] ; then
+	if [[ "$CGATFLOW_BRANCH" != "master" ]] || [[ $CGATAPPS_BRANCH != "master" ]] ; then
             echo
             echo " You cannot mix git branches and releases for the installation."
             echo
@@ -787,10 +787,10 @@ test_mix_branch_release() {
 # https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
 test_core_branch() {
     RELEASE_TEST=0
-    curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CORE_BRANCH}/README.rst || RELEASE_TEST=$?
+    curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/README.rst || RELEASE_TEST=$?
     if [[ ${RELEASE_TEST} -ne 0 ]] ; then
 	echo
-	echo " The branch provided for cgat-core does not exist: ${CORE_BRANCH}"
+	echo " The branch provided for cgat-core does not exist: ${CGATCORE_BRANCH}"
 	echo
 	echo " Please have a look at valid branches here: "
 	echo " https://github.com/cgat-developers/cgat-core/branches"
@@ -864,44 +864,61 @@ cleanup_env() {
 
 # function to display help message
 help_message() {
-    echo
-    echo " This script uses Conda to install cgat-flow. To proceed, please type:"
-    echo " ./install-CGAT-tools.sh --devel [--location </full/path/to/folder/without/trailing/slash>]"
-    echo
-    echo " The default install folder will be: $HOME/cgat-install"
-    echo
-    echo " It is also possible to install/test a specific branch of the code on GitHub:"
-    echo " ./install-CGAT-tools.sh --devel --pipelines-branch <branch> --scripts-branch <branch> --core-banch <branch>"
-    echo
-    echo " This will create an isolated Conda environment with both the pipelines and the scripts from:"
-    echo " https://github.com/cgat-developers/cgat-apps"
-    echo
-    echo " The default name of the newly created conda environment is cgat-f, but you can change it with:"
-    echo " --env-name name"
-    echo
-    echo " The code is downloaded in zip format by default. If you want to get a git clone, use:"
-    echo " --git # for an HTTPS clone"
-    echo " --git-ssh # for a SSH clone (you need to be a CGATOXford contributor on GitHub to do this)"
-    echo
-    echo " The pipelines are intended to run on a cluster using the DRMAA API. If that's not your case, please use:"
-    echo " --no-cluster"
-    echo
-    echo " If you want to download and install IDEs like Spyder or RStudio with this installation, please use:"
-    echo " --ide"
-    echo
-    echo " To test the installation:"
-    echo " ./install-CGAT-tools.sh --test [--location </full/path/to/folder/without/trailing/slash>]"
-    echo
-    echo " To update the Conda packages:"
-    echo " ./install-CGAT-tools.sh --update [--location </full/path/to/folder/without/trailing/slash>]"
-    echo
-    echo " To uninstall the CGAT code:"
-    echo " ./install-CGAT-tools.sh --uninstall [--location </full/path/to/folder/without/trailing/slash>]"
-    echo
-    echo " Please submit any issues via Git Hub:"
-    echo " https://github.com/cgat-developers/cgat-flow/issues"
-    echo
-    exit 1
+    cat << EOF
+usage="$(basename "$0") cgatflow install script
+
+where:
+    -h/--help			show this help text. The following options are supported:
+
+    --install-repo   		install cgatflow from repository. This will also install
+    		     		conda and the conda environment.
+
+    --install-pipeline-dependencies install dependencies for running the pipelines
+                     		included in the cgat-flow repository.
+
+    --clone-from-repo  		clone a fresh copy from git for the install. Please specify
+                       		either --clone-from-repo or --use-repo.
+
+    --use-repo PATH    		install from an existing repository in PATH, see above.
+
+    --location PATH    		installation PATH for the conda environment. Must not exist.
+
+    --cgatflow-branch BRANCH   	branch to use for cgatflow repository checkout. Default
+                               	is master.
+
+    --cgatapps-branch BRANCH   	branch to install from cgatapps. Default is master.
+
+    --cgatcore-branch BRANCH   	branch to install from cgatapps. Default is master.
+
+    --env-name NAME            	name of conda environment. Default is 'cgat-flow'
+
+Examples:
+
+For an install from a clone in the current directory into a new conda installation, type:
+
+    ./install-devel.sh
+    	 --install
+	 --install-pipeline-dependencies
+	 --use-repo .
+	 --location </full/path/to/folder/without/trailing/slash>
+
+To install a specific branch of the code on GitHub from scratch:
+
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install-devel.sh
+
+    ./install-devel.sh
+    	 --install
+	 --install-pipeline-dependencies
+	 --clone-from-repo
+	 --cgatflow-branch <branch>
+	 --location </full/path/to/folder/without/trailing/slash>
+
+Please submit any issues via Git Hub:
+
+https://github.com/cgat-developers/cgat-flow/issues
+
+EOF
+
 } # help_message
 
 # the script starts here
@@ -919,7 +936,7 @@ fi
 # will be installed from repository.
 INSTALL_DEVEL=
 # If set to 1, install all pipeline dependencies as well
-INSTALL_PIPELINES=
+INSTALL_PIPELINE_DEPENDENCIES=
 # whether or not to clone from repo
 CLONE_FROM_REPO=
 # pre-existing directory of a cgat-flow repo
@@ -940,9 +957,9 @@ CGAT_HOME=$HOME/cgat-install
 # 2 = git clone with ssh
 CODE_DOWNLOAD_TYPE=0
 # which github branch to use (default: master)
-PIPELINES_BRANCH="master"
-APPS_BRANCH="master"
-CORE_BRANCH="master"
+CGATFLOW_BRANCH="master"
+CGATAPPS_BRANCH="master"
+CGATCORE_BRANCH="master"
 # type of installation
 CONDA_INSTALL_TYPE_PIPELINES=
 CONDA_INSTALL_TYPE_APPS=
@@ -971,24 +988,63 @@ do
     key="$1"
 
     case $key in
-
+	
+	-h)
+	    help_message
+	    exit 0
+	    ;;
+	    
 	--help)
 	    help_message
+	    exit 0
 	    ;;
 
-	--install)
+	--install-repo)
 	    INSTALL_DEVEL=1
 	    shift
 	    ;;
 
-	--with-pipelines)
-	    INSTALL_PIPELINES=1
+	--install-pipeline-dependencies)
+	    INSTALL_PIPELINE_DEPENDENCIES=1
 	    shift
 	    ;;
 
 	--clone-from-repo)
 	    CLONE_FROM_REPO=1
 	    shift # past argument
+	    ;;
+
+	--location)
+	    CGAT_HOME="$2"
+	    shift 2
+	    ;;
+
+	--use-repo)
+	    CGATFLOW_REPO="$2"
+	    shift 2
+	    ;;
+	
+	--cgatflow-branch)
+	    CGATFLOW_BRANCH="$2"
+	    test_mix_branch_release
+	    shift 2
+	    ;;
+
+	--cgatapps-branch)
+	    CGATAPPS_BRANCH="$2"
+	    test_mix_branch_release
+	    shift 2
+	    ;;
+
+	--cgatcore-branch)
+	    CGATCORE_BRANCH="$2"
+	    test_core_branch
+	    shift 2
+	    ;;
+
+	--env-name)
+	    CONDA_INSTALL_ENV="$2"
+	    shift 2
 	    ;;
 
 	--zip)
@@ -1024,34 +1080,6 @@ do
 	    shift
 	    ;;
 
-	--location)
-	    CGAT_HOME="$2"
-	    shift 2
-	    ;;
-
-	--use-repo)
-	    CGATFLOW_REPO="$2"
-	    shift 2
-	    ;;
-	
-	--pipelines-branch)
-	    PIPELINES_BRANCH="$2"
-	    test_mix_branch_release
-	    shift 2
-	    ;;
-
-	--scripts-branch)
-	    APPS_BRANCH="$2"
-	    test_mix_branch_release
-	    shift 2
-	    ;;
-
-	--core-branch)
-	    CORE_BRANCH="$2"
-	    test_core_branch
-	    shift 2
-	    ;;
-
 	--no-cluster)
 	    CLUSTER=0
 	    shift
@@ -1061,13 +1089,8 @@ do
 	    RELEASE="$2"
 	    test_mix_branch_release
 	    test_release
-	    PIPELINES_BRANCH="$2"
-	    APPS_BRANCH="$2"
-	    shift 2
-	    ;;
-
-	--env-name)
-	    CONDA_INSTALL_ENV="$2"
+	    CGATFLOW_BRANCH="$2"
+	    CGATAPPS_BRANCH="$2"
 	    shift 2
 	    ;;
 
@@ -1086,7 +1109,7 @@ done
 # sanity check: make sure one installation option is selected
 if [[ -z $RUN_TESTS ]] && \
        [[ -z $INSTALL_DEVEL ]] && \
-       [[ -z $INSTALL_PIPELINES ]] && \
+       [[ -z $INSTALL_PIPELINE_DEPENDENCIES ]] && \
        [[ -z $INSTALL_TRAVIS ]] ; then
     report_error " You need to select either --run-tests or  "
 fi
@@ -1112,18 +1135,13 @@ fi
     report_error " Not enough disk space available on the installation folder: $CGAT_HOME"
 
 
-[[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${PIPELINES_BRANCH}
-
-
-if [[ $OS_PKGS ]] ; then
-    install_os_packages
-fi
+[[ -z ${TRAVIS_BRANCH} ]] && TRAVIS_BRANCH=${CGATFLOW_BRANCH}
 
 if [[ $INSTALL_DEVEL ]] ; then
     conda_install
 fi
 
-if [[ $INSTALL_PIPELINES -eq 1 ]]; then
+if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
     install_pipeline_deps
 fi
 

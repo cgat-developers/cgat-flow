@@ -22,7 +22,7 @@ free to give it a go::
     bash install-devel.sh -h
 
     ./install-devel.sh
-    	 --install
+    	 --install-repo
 	 --install-pipeline-dependencies
 	 --clone-from-repo
 	 --location </full/path/to/folder/without/trailing/slash>

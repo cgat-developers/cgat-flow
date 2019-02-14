@@ -897,7 +897,7 @@ Examples:
 For an install from a clone in the current directory into a new conda installation, type:
 
     ./install-devel.sh
-    	 --install
+    	 --install-repo
 	 --install-pipeline-dependencies
 	 --use-repo .
 	 --location </full/path/to/folder/without/trailing/slash>
@@ -907,7 +907,7 @@ To install a specific branch of the code on GitHub from scratch:
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install-devel.sh
 
     ./install-devel.sh
-    	 --install
+    	 --install-repo
 	 --install-pipeline-dependencies
 	 --clone-from-repo
 	 --cgatflow-branch <branch>
@@ -997,6 +997,11 @@ do
 	--help)
 	    help_message
 	    exit 0
+	    ;;
+
+	--install)
+	    INSTALL_DEVEL=1
+	    shift
 	    ;;
 
 	--install-repo)

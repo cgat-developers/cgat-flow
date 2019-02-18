@@ -357,7 +357,7 @@ conda_install() {
     [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
 
     # environment pinning
-    python scripts/conda.py
+    # python scripts/conda.py
 
     # check whether conda create went fine
     if [[ $DEV_RESULT -ne 0 ]] ; then
@@ -1116,7 +1116,7 @@ if [[ -z $RUN_TESTS ]] && \
        [[ -z $INSTALL_DEVEL ]] && \
        [[ -z $INSTALL_PIPELINE_DEPENDENCIES ]] && \
        [[ -z $INSTALL_TRAVIS ]] ; then
-    report_error " You need to select either --run-tests or  "
+    report_error " You need to select either --run-tests or --install-repo"
 fi
 
 # sanity check: make sure one installation option for repo is selected

@@ -22,7 +22,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-# set -o xtrace
+set -o xtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
@@ -59,7 +59,7 @@ trap 'error_handler ${LINENO} $? ${BASH_COMMAND}' ERR INT TERM
 
 # log installation information
 log() {
-    echo "# install-CGAT-tools.sh log | `hostname` | `date` | $1 "
+    echo "# install-devel.sh log | `hostname` | `date` | $1 "
 }
 
 # report error and exit

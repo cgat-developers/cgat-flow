@@ -265,11 +265,11 @@ conda_install() {
     # Now using conda environment files:
     # https://conda.io/docs/using/envs.html#use-environment-from-file
 
-    #curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
+    curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
-    #curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
+    curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
-    #curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
+    curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
     [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
@@ -412,7 +412,7 @@ install_pipeline_deps() {
     
     log "install pipeline deps"
 
-    #curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/cgat-flow-pipelines.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
 

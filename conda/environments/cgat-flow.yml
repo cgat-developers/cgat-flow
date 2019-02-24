@@ -13,7 +13,7 @@ channels:
 
 dependencies:
 # python dependencies
-- python
+- python >= 3.6
 - rpy2
 
 # exome.py
@@ -26,3 +26,6 @@ dependencies:
 
 # gsenrichment.py
 - toposort
+
+# misc
+- nomkl

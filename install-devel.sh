@@ -22,13 +22,12 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+#set -o xtrace
+#set -o errtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
 # https://stelfox.net/blog/2013/11/fail-fast-in-bash-scripts/
-
-set -o errtrace
 
 SCRIPT_NAME="$0"
 SCRIPT_PARAMS="$@"

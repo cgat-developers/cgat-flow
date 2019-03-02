@@ -628,6 +628,9 @@ conda_test() {
 	    # prepare environment
 	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
+            # show conda environment used for testing
+            conda env export
+
 	    # make sure you are in the CGAT_HOME/cgat-flow folder
 	    cd $CGATFLOW_REPO
 

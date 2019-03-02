@@ -1020,7 +1020,7 @@ do
 	    ;;
 
 	--location)
-	    CGAT_HOME=`readlink --canonicalize $2`
+            CGAT_HOME=$("$READLINK" --canonicalize "$2")
 	    shift 2
 	    ;;
 

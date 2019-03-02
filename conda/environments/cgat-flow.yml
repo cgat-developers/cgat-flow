@@ -7,8 +7,8 @@
 name: cgat-flow
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:

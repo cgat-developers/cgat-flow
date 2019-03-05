@@ -581,6 +581,7 @@ conda_test() {
 	source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
 	# show conda environment used for testing
+	log "conda env export"
 	conda env export
 
 	# install cgat-core
@@ -628,6 +629,7 @@ conda_test() {
 	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
             # show conda environment used for testing
+            log "conda env export"
             conda env export
 
 	    # make sure you are in the CGAT_HOME/cgat-flow folder

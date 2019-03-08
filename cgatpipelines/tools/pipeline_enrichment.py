@@ -203,7 +203,6 @@ def connect():
 ##########################################################################
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
 @follows(mkdir("annotations.dir"))
 @split(dbname, ["annotations.dir/*%s" % r for r in outfilesuffixes])
 def getDBAnnotations(infile, outfiles):
@@ -221,7 +220,6 @@ def getDBAnnotations(infile, outfiles):
     enrichment.getDBAnnotations(infile, outfiles, dbname, submit=True)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
 @follows(getDBAnnotations)
 @originate(unmappedouts)
 def mapUnmappedAnnotations(outfiles):
@@ -239,7 +237,6 @@ def mapUnmappedAnnotations(outfiles):
     enrichment.getFlatFileAnnotations(substatement, outstem2, dbname)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
 @follows(mkdir("clean_foregrounds.dir"))
 @transform("foregrounds.dir/*.tsv", regex("foregrounds.dir/(.*).tsv"),
            r"clean_foregrounds.dir/\1.tsv")
@@ -254,7 +251,6 @@ def cleanForegrounds(infile, outfile):
                                       submit=True)
 
 
-@active_if(PARAMS['analysis_ora'] == 1)
 @follows(mkdir("clean_backgrounds.dir"))
 @transform("backgrounds.dir/*.tsv",
            regex("backgrounds.dir/(.*).tsv"),
@@ -270,7 +266,6 @@ def cleanUserBackgrounds(infile, outfile):
                                       submit=True)
 
 
-@active_if(PARAMS.get('analysis_ora', False))
 @follows(cleanUserBackgrounds)
 @active_if(PARAMS.get("hpa_run", False))
 @originate(hpatissues)
@@ -288,7 +283,6 @@ def buildHPABackground(outfile):
                                      submit=True)
 
 
-@active_if(PARAMS.get('analysis_ora', False))
 @follows(mapUnmappedAnnotations)
 @merge("annotations.dir/*_genestoterms.tsv",
        "clean_backgrounds.dir/allgenes.tsv")
@@ -302,7 +296,6 @@ def buildStandardBackground(infiles, outfile):
     P.run(statement)
 
 
-@active_if(PARAMS.get('analysis_ora', 1))
 @follows(buildHPABackground)
 @follows(cleanUserBackgrounds)
 @follows(cleanForegrounds)
@@ -340,7 +333,6 @@ def foregroundsVsBackgrounds(infiles, outfiles):
                                                 PARAMS['id_type'],
                                                 submit=True)
 
-@active_if(PARAMS.get('analysis_ora', 1))
 @follows(mkdir("barcharts.dir"))
 @transform(foregroundsVsBackgrounds,
            regex("results.dir/(.*)(_go|_hpo)(_all_results.tsv)"),
@@ -367,7 +359,6 @@ def makeBarCharts(infiles, outfile):
         out.close()
 
 
-@active_if(PARAMS.get('analysis_ora', 1))
 @follows(mkdir("cytoscape.dir"))
 @transform(foregroundsVsBackgrounds,
            regex("results.dir/(.*)(_go|_reactome)(_all_results.tsv)"),
@@ -389,8 +380,7 @@ def makeCytoscapeInputs(infiles, outfile):
     os.remove(T)
 
 
-@follows(makeCytoscapeInputs,
-         runGsea)
+@follows(makeCytoscapeInputs)
 def full():
     pass
 

@@ -4,6 +4,11 @@ Release notes
 
 Notes on each release are below.
 
+Release 0.5.0
+=============
+
+* refactor pipelines to work with cgatcore
+
 Release 0.4.0
 =============
 

@@ -5,13 +5,13 @@
 name: cgat-flow
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:
 # python dependencies
-- python
+- python >= 3.6
 - beautifulsoup4
 - biopython
 - cgat-report
@@ -35,7 +35,7 @@ dependencies:
 - sqlalchemy
 - toposort
 # R dependencies
-- r-base
+- r-base >= 3.5
 - r-dbi
 - r-dt
 - r-ggplot2

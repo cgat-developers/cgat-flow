@@ -26,7 +26,7 @@ dependencies:
 - pep8
 - pybedtools
 - pysam
-- python-drmaa
+- drmaa
 - rpy2
 - ruffus
 - scikit-learn

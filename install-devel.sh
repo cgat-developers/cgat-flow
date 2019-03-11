@@ -22,13 +22,12 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+#set -o xtrace
+#set -o errtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
 # https://stelfox.net/blog/2013/11/fail-fast-in-bash-scripts/
-
-set -o errtrace
 
 SCRIPT_NAME="$0"
 SCRIPT_PARAMS="$@"
@@ -395,15 +394,15 @@ install_extra_deps() {
     log "install extra deps"
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/pipelines-extra.yml
-    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/apps-extra.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-    conda env update --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
 }
 
 # install dependencies for running the pipelines
 install_pipeline_deps() {
+
+    cd $CGAT_HOME
 
     get_cgat_env
     
@@ -582,6 +581,7 @@ conda_test() {
 	source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
 
 	# show conda environment used for testing
+	log "conda env export"
 	conda env export
 
 	# install cgat-core
@@ -627,6 +627,10 @@ conda_test() {
 	if [[ $CONDA_INSTALL_TYPE_PIPELINES ]] ; then
 	    # prepare environment
 	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+
+            # show conda environment used for testing
+            log "conda env export"
+            conda env export
 
 	    # make sure you are in the CGAT_HOME/cgat-flow folder
 	    cd $CGATFLOW_REPO
@@ -1020,7 +1024,7 @@ do
 	    ;;
 
 	--location)
-	    CGAT_HOME="$2"
+            CGAT_HOME=$("$READLINK" --canonicalize "$2")
 	    shift 2
 	    ;;
 

@@ -159,10 +159,16 @@ strelka:
 
 annotation:
 
+    # location of the snipeff jar software
+    snpeff_location: /ifs/apps/bio/snpEff-3.3-dev/snpEff.jar
+
     #Config file specifies that the genome must be downloaded into your home directory
     snpeff_config: /ifs/apps/bio/snpEff-3.3-dev/snpEff.config
 
     snpeff_genome: GRCh37.68
+
+    # location of the snpsnift jar software
+    snpsift_location: /ifs/apps/bio/snpEff-3.1/SnpSift.jar
 
     snpsift_dbnsfp: /ifs/apps/bio/snpEff-3.1/dbNSFP2.1.txt
 

@@ -49,11 +49,11 @@ bam:
     sequence_stripped: 0
 
     ################################################################
-    ## name of the database that you want to generate
+    ## name of the database that you want to generate - use full path
     ################################################################
 database:
 
-    url: sqlite:///./csvdb
+    url: sqlite:///./path/to/folder/pipeline/will/run/csvdb
 
     ################################################################
     ## Location of pipeline_genesets database 

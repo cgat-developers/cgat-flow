@@ -16,9 +16,11 @@ library("ggplot2") # For plotting
 library("DT") # Interactove html tables
 library(ggplot2)
 library(reshape2)
+library(yaml)
 
-setwd("./..")
-mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
+yml <- read_yaml("../pipeline.yml")
+database <- gsub("sqlite:///.", "", yml$database$url)
+mydb <- dbConnect(RSQLite::SQLite(), database)
 db <- dbGetQuery(mydb, 'SELECT * FROM transcript_profile')
 
 library(ggplot2)

@@ -2616,49 +2616,6 @@ def doIDRQC(infile, outfile):
 
     finaltab.to_csv(outfile, sep="\t", index=None)
 
-#############################################
-# QC Functions
-#############################################
-
-
-def runCHIPQC(infile, outfiles, rdir):
-    '''
-    Runs the R package ChIPQC to plot and record various quality control
-    statistics on peaks.
-
-    Parameters
-    ----------
-    infile: str
-       path to a design table formatted for the ChIPQC package as specified
-       here  -
-       https://www.bioconductor.org/packages/devel/bioc/
-       vignettes/ChIPQC/inst/doc/ChIPQC.pdf
-    outfile: str
-       path to main output file
-    rdir: str
-       path to directory in which to place the output files
-    '''
-
-    runCHIPQC_R = R('''
-    function(samples, outdir, cwd){
-        library("ChIPQC")
-        cwd = "/ifs/projects/katherineb/test_data_peakcalling/test3"
-        print("cwd")
-        print(cwd)
-        print("samples")
-        print(samples)
-        setwd(cwd)
-        print(getwd())
-        samples$Tissue = as.factor(samples$Tissue)
-        samples$Factor = as.factor(samples$Factor)
-        samples$Replicate = as.factor(samples$Replicate)
-        experiment = ChIPQC(samples)
-        ChIPQCreport(experiment, reportFolder=outdir)
-    }
-    ''' % locals())
-    cwd = os.getcwd()
-    runCHIPQC_R(pandas2ri.py2ri(infile), rdir, cwd)
-
 
 # Pipeline Specific Functions
 

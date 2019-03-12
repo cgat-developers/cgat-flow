@@ -582,7 +582,7 @@ def SelectExonicHapmapVariants(infile, outfile):
     exome target regions. Assumes bgzipped & tabix indexed Hapmap VCF file.'''
     bed = PARAMS["roi_regions"]
     statement = '''tabix -B %(infile)s %(bed)s |
-                   awk '{OFS="\\t"; if (!/^#/){print $1,$2-1,$2}}'
+                   awk '{OFS="\\t" if (!/^#/){print $1,$2-1,$2}}'
                    > %(outfile)s''' % locals()
     P.run(statement)
 
@@ -611,7 +611,7 @@ def HapMapGenotype(infiles, outfile):
            r"hapmap/\1.hapmap.vcf.gz")
 def indexVCFs(infile, outfile):
     '''Genotype HapMap SNPs using HaplotypeCaller in each individual'''
-    statement = '''bgzip -c %(infile)s > %(outfile)s;
+    statement = '''bgzip -c %(infile)s > %(outfile)s &&
                    tabix -p vcf %(outfile)s; '''
     P.run(statement)
 
@@ -902,7 +902,7 @@ def annotateVariantsPhastcons(infile, outfile):
         PARAMS['general_genome'])
     phastcons = PARAMS["annotation_phastcons"]
     intout = outfile.replace("samples", "samples_phastc")
-    statement = """ln -sf %(genomeind)s %(phastcons)s/genome.fai;
+    statement = """ln -sf %(genomeind)s %(phastcons)s/genome.fai &&
                    SnpSift.sh phastCons %(phastcons)s %(infile)s >
                    %(outfile)s;"""
     P.run(statement)
@@ -933,7 +933,7 @@ def annotateVariants1000G(infile, outfile):
     for vcf in vcfs:
         statement = """SnpSift.sh annotate
                        %(vcf)s
-                       %(tempin)s > %(tempout)s;
+                       %(tempin)s > %(tempout)s &&
                        mv %(tempout)s %(tempin)s"""
         P.run(statement)
 
@@ -1197,8 +1197,8 @@ def runPlinkandKing(infiles, outfile):
     p = PARAMS['king_plink']
     statement = """
     %(p)s/plink --file %(pref)s --make-bed --no-fid --noweb --map3
-          --no-parents --no-sex --no-pheno;
-    %(k)s/king -b plink.bed --binary --prefix %(pref)s;
+          --no-parents --no-sex --no-pheno &&
+    %(k)s/king -b plink.bed --binary --prefix %(pref)s &&
     %(k)s/king -b %(pref)s.bgeno --kinship --ibs --prefix %(pref)s"""
     P.run(statement)
 
@@ -1926,7 +1926,7 @@ def compoundHets(infiles, outfile):
     family, infile, pedfile = infiles
     family_id = P.snip(os.path.basename(family), ".ped")
     statement = '''gemini load -v %(infile)s
-                   -p %(pedfile)s -t snpEff %(family_id)s.db ;
+                   -p %(pedfile)s -t snpEff %(family_id)s.db &&
                    gemini comp_hets
                    --families %(family_id)s
                    --columns "chrom, start, end, ref, alt, codon_change, gene, qual, depth"
@@ -2012,19 +2012,19 @@ def loadVCFstats(infiles, outfile):
     tablename = P.to_table(outfile)
     E.info("Loading vcf stats...")
     statement = '''cgat vcfstats2db %(filenames)s >>
-                   %(outfile)s; '''
+                   %(outfile)s && '''
     statement += '''cat vcfstats.txt | cgat csv2db
                     %(csv2db_options)s --allow-empty-file --add-index=track
-                    --table=vcf_stats >> %(outfile)s; '''
+                    --table=vcf_stats >> %(outfile)s &&'''
     statement += '''cat sharedstats.txt | cgat csv2db
                     %(csv2db_options)s --allow-empty-file --add-index=track
-                    --table=vcf_shared_stats >> %(outfile)s; '''
+                    --table=vcf_shared_stats >> %(outfile)s &&'''
     statement += '''cat indelstats.txt | cgat csv2db
                     %(csv2db_options)s --allow-empty-file --add-index=track
-                    --table=indel_stats >> %(outfile)s; '''
+                    --table=indel_stats >> %(outfile)s &&'''
     statement += '''cat snpstats.txt | cgat csv2db
                     %(csv2db_options)s --allow-empty-file --add-index=track
-                    --table=snp_stats >> %(outfile)s; '''
+                    --table=snp_stats >> %(outfile)s &&'''
     P.run(statement)
 
 ###############################################################################

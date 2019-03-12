@@ -45,11 +45,6 @@ software to be in the path:
 .. Add any additional external requirements such as 3rd party software
    or R modules below:
 
-Requirements:
-
-* samtools >= 1.1
-* sailfish >= 0.9.0
-
 Pipeline output
 ===============
 
@@ -264,7 +259,7 @@ def makeSailfishIndex(infile, outfile):
         "--kmerSize %(sailfish_kmer)s "
         ">& %(outfile)s.log ")
     # building human transcriptome takes a lot of memory
-    P.run(statement, job_memory="unlimited")
+    P.run(statement, job_memory="unlimited", job_condaenv="sailfish")
 
 
 if PARAMS['paired']:

@@ -971,4 +971,4 @@ def runTomTom(infile, outfile):
         shutil.rmtree(target_path)
     shutil.move(tmpdir, target_path)
 
-    shutil.copyfile(os.path.join(target_path, "tomtom.txt"), outfile)
+    shutil.copyfile(os.path.join(target_path, "tomtom.tsv"), outfile)

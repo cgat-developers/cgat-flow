@@ -596,7 +596,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
 
 @active_if(SPLICED_MAPPING)
 @transform(intBam,
-           regex("BamFiles.dir/(\S+).bam$"),
+           regex("BamFiles.dir/(\S+).bam"),
            add_inputs(PARAMS["annotations_interface_geneset_coding_exons_gtf"]),
            r"Paired_QC.dir/\1.transcriptprofile.gz")
 def buildTranscriptProfiles(infiles, outfile):

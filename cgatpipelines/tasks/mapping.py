@@ -2752,10 +2752,10 @@ class STAR(Mapper):
         index_prefix = "%(genome)s"
 
         logfile = ("%sLog.final.out") % (P.snip(outfile, ".star.bam"))
-
         if nfiles == 1:
 
-            if infiles[0].endswith(".gz"):
+            
+            if str(infiles[0][0]).endswith(".gz"):
                 compress_option = "--readFilesCommand zcat"
             else:
                 compress_option = ""

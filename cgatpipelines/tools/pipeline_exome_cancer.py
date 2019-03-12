@@ -756,7 +756,8 @@ def annotateVariantsSNPeff(infile, outfile):
 
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
-    statement = '''java -Xmx4G -jar /ifs/apps/bio/snpEff-3.3-dev/snpEff.jar
+    snpeff = PARAMS["annotation_snpeff_location"]
+    statement = '''java -Xmx4G -jar snpeff
                    -c %(config)s -v %(snpeff_genome)s -o gatk
                    %(infile)s > %(outfile)s'''
     P.run(statement)
@@ -773,7 +774,8 @@ def annotateVariantsINDELsSNPeff(infile, outfile):
 
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
-    statement = '''java -Xmx4G -jar /ifs/apps/bio/snpEff-3.3-dev/snpEff.jar
+    snpeff = PARAMS["annotation_snpeff_location"]
+    statement = '''java -Xmx4G -jar snpeff
                    -c %(config)s -v %(snpeff_genome)s -o gatk
                    %(infile)s > %(outfile)s'''
     P.run(statement)
@@ -882,8 +884,9 @@ def variantRecalibrator(infile, outfile):
 def filterIndels(infile, outfile):
     ''' use SnpSift to filter INDELS using VCF fields'''
 
+    snpsift = PARAMS["annotation_snpsift_location"]
     statement = '''cat %(infile)s |
-                   java -Xmx2g -jar /ifs/apps/bio/snpEff-3.1/SnpSift.jar filter
+                   java -Xmx2g -jar snpsift filter
                    "(QSI_NT>%(filter_indel_nt)s &
                      IHP<%(filter_indel_ihp)s &
                      RC<%(filter_indel_rc)s &

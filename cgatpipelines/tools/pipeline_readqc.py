@@ -208,8 +208,8 @@ if P.get_params().get("preprocessors", None):
             infiles = " ".join(infiles)
 
             statement = """
-            cat %(infiles)s | fastx_reverse_complement > %(tempfile)s;
-            cat %(tempfile)s %(infiles)s | fastx_collapser > %(outfile)s;
+            cat %(infiles)s | fastx_reverse_complement > %(tempfile)s &&
+            cat %(tempfile)s %(infiles)s | fastx_collapser > %(outfile)s &&
             rm -f %(tempfile)s
             """
             P.run(statement)

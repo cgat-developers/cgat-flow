@@ -327,7 +327,7 @@ def prepareIntervals(infile, outfile):
     | bedtools merge
     | awk '{printf("%%s\\t%%s\\t%%s\\t%%i\n",$1,$2,$3,++a)}'
     | bgzip
-    > %(outfile)s;
+    > %(outfile)s &&
     tabix -p bed %(outfile)s
     '''
     P.run(statement)
@@ -365,7 +365,7 @@ def indexIntervals(infile, outfile):
 
     statement = '''zcat %(infile)s
     | sort -k1,1 -k2,2n
-    | bgzip > %(outfile)s;
+    | bgzip > %(outfile)s &&
     tabix -p bed %(outfile)s'''
 
     P.run(statement)
@@ -527,15 +527,15 @@ def prepareGTFsByOverlapWithIntervals(infile, outfiles):
     | cgat gff2bed --is-gtf -v 0
     | cut -f4
     | sort
-    | uniq > %(track)s_overlapping_genes;
+    | uniq > %(track)s_overlapping_genes &&
     zgrep -f %(track)s_overlapping_genes %(geneset)s
-    | gzip > %(out1)s;
+    | gzip > %(out1)s &&
     zgrep -v -f %(track)s_overlapping_genes %(geneset)s
-    | gzip > %(out2)s;
+    | gzip > %(out2)s &&
     zgrep -f %(track)s_overlapping_genes %(tss)s
-    | gzip > %(out3)s;
+    | gzip > %(out3)s &&
     zgrep -v -f %(track)s_overlapping_genes %(tss)s
-    | gzip > %(out4)s;
+    | gzip > %(out4)s
     '''
 
     P.run(statement)
@@ -1724,10 +1724,10 @@ def reset(infile, outfile):
     pipeline!!!
     '''
     statement = '''
-    rm -rf export motifs report;
-    rm -rf _cache _static _templates;
-    rm -f csvdb *.load;
-    rm -f *.meme* *.tomtom* *.fasta*;
+    rm -rf export motifs report &&
+    rm -rf _cache _static _templates &&
+    rm -f csvdb *.load &&
+    rm -f *.meme* *.tomtom* *.fasta* &&
     rm -rf *.dir;
     '''
     P.run(statement)

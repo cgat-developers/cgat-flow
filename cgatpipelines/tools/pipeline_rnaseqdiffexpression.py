@@ -459,7 +459,7 @@ def buildReferenceTranscriptome(infile, outfile):
     awk '$3=="exon"'|
     cgat gff2fasta
     --is-gtf --genome-file=%(genome_file)s --fold-at=60 -v 0
-    --log=%(outfile)s.log > %(outfile)s;
+    --log=%(outfile)s.log > %(outfile)s &&
     samtools faidx %(outfile)s
     '''
 
@@ -556,7 +556,7 @@ def buildSailfishIndex(infile, outfile):
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
-    rm -rf %(outfile)s;
+    rm -rf %(outfile)s &&
     sailfish index --transcripts=%(infile)s --out=%(outfile)s
     --kmerSize=%(sailfish_kmer)s
     %(sailfish_index_options)s

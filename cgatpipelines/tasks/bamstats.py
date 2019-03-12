@@ -101,12 +101,8 @@ def addPseudoSequenceQuality(infile, outfile):
 
     statement = '''cat %(infile)s
     | cgat bam2bam -v 0
-    --method=set-sequence &> (outfile)s.log> %(outfile)s'''
-
-    P.run(statement)
-
-    statement = '''samtools index %(outfile)s
-    '''
+    --method=set-sequence &> (outfile)s.log> %(outfile)s &&
+    samtools index %(outfile)s'''
 
     P.run(statement)
 
@@ -125,7 +121,10 @@ def mergeInsertSize(infiles, outfile):
     for infile in infiles:
         name = infile.replace(".insert_stats","")
         name = name.replace("Picard_stats.dir/","")
-        metrics = iotools.open_file(infile).readlines()[7].strip().split("\t")
+        try:
+            metrics = iotools.open_file(infile).readlines()[7].strip().split("\t")
+        except:
+            metrics = "No output"
         out.write("%s\t%s\n" % (name,"\t".join(metrics)))
     out.close()
 
@@ -140,13 +139,8 @@ def copyBamFile(infile, outfile):
         Output file in :term: `BAM` format.
     '''
 
-    statement = '''ln -s ../%(infile)s
-    %(outfile)s'''
-
-    P.run(statement)
-
-    statement = '''samtools index %(outfile)s
-    '''
+    statement = '''cp %(infile)s
+    BamFiles.dir && samtools index %(outfile)s && sleep 10'''
 
     P.run(statement)
 

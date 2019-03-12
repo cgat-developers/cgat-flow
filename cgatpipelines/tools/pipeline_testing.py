@@ -303,7 +303,7 @@ def run_reports(infile, outfile):
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     statement = '''
-    cd %(track)s.dir;
+    cd %(track)s.dir &&
     xvfb-run -d cgatflow %(pipeline_name)s
     %(pipeline_options)s %(workflow_options)s make build_report
     -L ../%(outfile)s
@@ -609,8 +609,8 @@ def reset(infile, outfile):
     to_cluster = False
 
     statement = '''
-    rm -rf prereq_* ctmp*;
-    rm -rf test_* _cache _static _templates _tmp report;
+    rm -rf prereq_* ctmp* &&
+    rm -rf test_* _cache _static _templates _tmp report &&
     rm -f *.log csvdb *.load *.tsv'''
     P.run(statement)
 

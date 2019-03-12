@@ -1646,12 +1646,6 @@ def makeCHIPQCInputTables(infiles, outfiles):
                     tab['Tissue'] + ".tsv")
     tab.to_csv(outfiles[1], sep="\t", index=None)
 
-# TODO
-# @follows(mkdir("ChIPQC.dir"))
-# @transform(makeCHIPQCInputTable,regex("(.*)_(.*).tsv"), r'ChIPQC.dir/\1.pdf')
-# def runCHIPQC(infiles, outfiles):
-#    R('''''')
-
 
 @follows(filtering, peakcalling_tasks, IDR, buildBigWig)
 def full():

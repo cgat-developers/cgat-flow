@@ -5,13 +5,13 @@
 name: cgat-flow
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:
 # python dependencies
-- python
+- python >= 3.6
 - beautifulsoup4
 - biopython
 - cgat-report
@@ -25,7 +25,7 @@ dependencies:
 - pep8
 - pybedtools
 - pysam
-- python-drmaa
+- drmaa
 - rpy2
 - ruffus
 - scikit-learn
@@ -35,12 +35,12 @@ dependencies:
 - sqlalchemy
 - toposort
 # R dependencies
-- r-base
+- r-base >= 3.5
 - r-dbi
 - r-dt
 - r-ggplot2
 - r-gmd
-- r-hiddenmarkov
+# - r-hiddenmarkov
 - r-hmisc
 - r-knitr
 - r-mass
@@ -52,11 +52,11 @@ dependencies:
 - r-snow
 - r-stringr
 - r-venndiagram
-- r-wasabi
+# - r-wasabi
 - bioconductor-biomart
-- bioconductor-chipqc
+# - bioconductor-chipqc
 - bioconductor-cummerbund
-- bioconductor-hilbertvis
+# - bioconductor-hilbertvis
 - bioconductor-hpar
 - bioconductor-deseq
 - bioconductor-edger
@@ -87,7 +87,7 @@ dependencies:
 - multiqc
 - nomkl
 - pandaseq
-- peakranger
+# - peakranger
 - perl-go-perl
 - picard
 - sailfish

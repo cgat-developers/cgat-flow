@@ -2,8 +2,8 @@
 name: cgat-flow
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:
@@ -26,7 +26,7 @@ dependencies:
 - pep8
 - pybedtools
 - pysam
-- python-drmaa
+- drmaa
 - rpy2
 - ruffus
 - scikit-learn

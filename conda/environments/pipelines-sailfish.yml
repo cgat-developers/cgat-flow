@@ -1,5 +1,4 @@
-
-name: macs2
+name: sailfish
 
 channels:
 - conda-forge
@@ -7,6 +6,5 @@ channels:
 - defaults
 
 dependencies:
-- macs2=2.1.1.20160309
-- r-base=3.4.1
-- nomkl
+- python
+- sailfish

@@ -1094,55 +1094,7 @@ def runTomTom(infile, outfile):
 @transform(runTomTom, suffix(".tomtom"), "_tomtom.load")
 def loadTomTom(infile, outfile):
     '''load tomtom results'''
-
-    tablename = P.to_table(outfile)
-
-    resultsdir = os.path.join(
-        os.path.abspath(PARAMS["exportdir"]), "tomtom", infile)
-    xml_file = os.path.join(resultsdir, "tomtom.xml")
-
-    if not os.path.exists(xml_file):
-        E.warn("no tomtom output - skipped loading ")
-        iotools.touch_file(outfile)
-        return
-
-    # get the motif name from the xml file
-    tree = xml.etree.ElementTree.ElementTree()
-    tree.parse(xml_file)
-    motifs = tree.find("targets")
-    name2alt = {}
-    for motif in motifs.getiterator("motif"):
-        name = motif.get("name")
-        if name is None:
-            name = motif.get("id")
-        alt = motif.get("alt")
-        if alt is None:
-            alt = name
-        name2alt[name] = alt
-
-    tmpfile = P.get_temp_file(".")
-
-    # parse the text file
-    for line in iotools.open_file(infile):
-        if line.startswith("#Query"):
-            tmpfile.write('\t'.join(
-                ("target_name", "query_id", "target_id",
-                 "optimal_offset", "pvalue", "evalue",
-                 "qvalue", "Overlap", "query_consensus",
-                 "target_consensus", "orientation")) + "\n")
-            continue
-        data = line[:-1].split("\t")
-        target_name = name2alt[data[1]]
-        tmpfile.write("%s\t%s" % (target_name, line))
-    tmpfile.close()
-
-    P.load(tmpfile.name, outfile)
-
-    os.unlink(tmpfile.name)
-
-############################################################
-############################################################
-############################################################
+    P.load(infile, outfile)
 
 
 @files_re((exportMotifIntervalSequences, exportMotifControlSequences),
@@ -1160,10 +1112,6 @@ def runMast(infiles, outfile):
 
     '''
     motifs.runMAST(infiles, outfile)
-
-############################################################
-############################################################
-############################################################
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")

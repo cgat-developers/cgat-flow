@@ -317,30 +317,19 @@ def buildReferenceGeneSet(infile, outfile):
        :term:`PARAMS`. Genome name (e.g hg38)
     '''
 
-    tmp_mergedfiltered = P.get_temp_filename(".")
-
     if "geneset_remove_repetetive_rna" in PARAMS:
         rna_file = PARAMS["annotations_interface_rna_gff"]
     else:
         rna_file = None
 
-    gene_ids = mapping.mergeAndFilterGTF(
+    mapping.mergeAndFilterGTF(
         infile,
-        tmp_mergedfiltered,
+        outfile,
         "%s.removed.gz" % outfile,
         genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
         max_intron_size=PARAMS["max_intron_size"],
         remove_contigs=PARAMS["geneset_remove_contigs"],
         rna_file=rna_file)
-
-    # Add tss_id and p_id
-    mapping.resetGTFAttributes(
-        infile=tmp_mergedfiltered,
-        genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
-        gene_ids=gene_ids,
-        outfile=outfile)
-
-    os.unlink(tmp_mergedfiltered)
 
 
 @follows(mkdir("geneset.dir"))
@@ -528,12 +517,12 @@ def buildTranscriptGeneMap(infile, outfile):
 
     statement = """
     zcat %(infile)s
-    |cgat gtf2tsv
+    | cgat gtf2tsv
     --attributes-as-columns
     --output-only-attributes
     | cgat csv_cut transcript_id gene_id
     > %(outfile)s"""
-    P.run(statement)
+    P.run(statement, job_memory="16G")
 
 ###################################################################
 # subset fastqs
@@ -910,7 +899,7 @@ def indexForSailfish(infile, outfile):
 
     statement = '''
     sailfish index --transcripts=%(infile)s --out=%(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="16G")
+    P.run(statement, job_memory="unlimited", job_condaenv="sailfish")
 
 
 @transform(SEQUENCEFILES,
@@ -936,7 +925,7 @@ def runSailfish(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sailfish")
 
 
 @split(runSailfish,
@@ -1701,8 +1690,8 @@ def indexForSalmon(infile, outfile):
     '''create a salmon index'''
 
     statement = '''
-    salmon index -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="8G")
+    salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
+    P.run(statement, job_memory="8G", job_condaenv="salmon")
 
 
 @transform(SEQUENCEFILES,
@@ -1725,7 +1714,7 @@ def runSalmon(infiles, outfile):
 
     statement = m.build((infile,), outfile)
 
-    P.run(statement, job_memory="8G")
+    P.run(statement, job_memory="8G", job_condaenv="salmon")
 
 
 @merge(runSalmon, "strandedness.tsv")

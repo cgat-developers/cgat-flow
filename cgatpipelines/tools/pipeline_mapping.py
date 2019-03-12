@@ -314,9 +314,6 @@ def buildReferenceGeneSet(infile, outfile):
 
     This preserves all features in a gtf file (exon, CDS, ...)
 
-    Runs cuffcompare with `infile` against itself to add
-    attributes such as p_id and tss_id.
-
     Parameters
     ----------
     infile : str
@@ -332,30 +329,19 @@ def buildReferenceGeneSet(infile, outfile):
        :term:`PARAMS`. Genome name (e.g hg38)
     '''
 
-    tmp_mergedfiltered = P.get_temp_filename(".")
-
     if "geneset_remove_repetetive_rna" in PARAMS:
         rna_file = PARAMS["annotations_interface_rna_gff"]
     else:
         rna_file = None
 
-    gene_ids = mapping.mergeAndFilterGTF(
+    mapping.mergeAndFilterGTF(
         infile,
-        tmp_mergedfiltered,
+        outfile,
         "%s.removed.gz" % outfile,
         genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
         max_intron_size=PARAMS["max_intron_size"],
         remove_contigs=PARAMS["geneset_remove_contigs"],
         rna_file=rna_file)
-
-    # Add tss_id and p_id
-    mapping.resetGTFAttributes(
-        infile=tmp_mergedfiltered,
-        genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
-        gene_ids=gene_ids,
-        outfile=outfile)
-
-    os.unlink(tmp_mergedfiltered)
 
 
 @active_if(SPLICED_MAPPING)

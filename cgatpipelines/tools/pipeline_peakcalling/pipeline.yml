@@ -154,6 +154,12 @@ filters:
     # strip sequence from bams
     strip: 1
 
+    # memory required for filtering jobs
+    memory: 50G
+
+    # JVM options Picard jobs (e.g. "-Xmx10g" to set the maximal memory)
+    picard_options: -Xmx10g
+
     ########################################################
     #
     # Generate BigWig files with ChIP-Rx

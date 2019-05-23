@@ -184,7 +184,7 @@ print_env_vars() {
 conda_cleanup() {
     conda clean --index-cache
     conda clean --tarballs -y
-    conda clean --packages -y
+    conda update all
 }
 
 

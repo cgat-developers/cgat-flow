@@ -183,10 +183,10 @@ print_env_vars() {
 # installation folder as much as possible
 conda_cleanup() {
     conda clean --index-cache
+    conda clean --lock
     conda clean --tarballs -y
-    conda update --all
+    conda clean --packages -y
 }
-
 
 
 # proceed with conda installation
@@ -298,9 +298,6 @@ conda_install() {
 
     # install cgat-apps
     install_cgat_apps
-
-    # cleanup conda environment
-    conda_cleanup
 
     # make sure you are in the CGAT_HOME folder
     cd $CGAT_HOME

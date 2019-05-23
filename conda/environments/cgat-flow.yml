@@ -13,8 +13,8 @@ channels:
 
 dependencies:
 # python dependencies
-- python == 3.6
-- rpy2
+- python >= 3.6
+- rpy2 >= 2.9
 
 # exome.py
 - beautifulsoup4

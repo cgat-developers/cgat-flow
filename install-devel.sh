@@ -183,7 +183,6 @@ print_env_vars() {
 # installation folder as much as possible
 conda_cleanup() {
     conda clean --index-cache
-    conda clean --lock
     conda clean --tarballs -y
     conda clean --packages -y
 }

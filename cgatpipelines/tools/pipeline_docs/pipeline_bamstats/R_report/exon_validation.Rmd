@@ -21,7 +21,7 @@ library(reshape2)
 library(yaml)
 
 yml <- read_yaml("../pipeline.yml")
-database <- gsub("sqlite:///.", "", yml$database$url)
+database <- gsub("sqlite://.", "", yml$database$url)
 mydb <- dbConnect(RSQLite::SQLite(), database)
 
 db <- dbGetQuery(mydb, 'SELECT * FROM exon_validation;')

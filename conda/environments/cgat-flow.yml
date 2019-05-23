@@ -29,3 +29,4 @@ dependencies:
 
 # misc
 - nomkl
+- libgfortran 3.0.*

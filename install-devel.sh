@@ -189,6 +189,7 @@ conda_cleanup() {
 }
 
 
+
 # proceed with conda installation
 conda_install() {
 
@@ -298,6 +299,9 @@ conda_install() {
 
     # install cgat-apps
     install_cgat_apps
+
+    # cleanup conda environment
+    conda_cleanup
 
     # make sure you are in the CGAT_HOME folder
     cd $CGAT_HOME

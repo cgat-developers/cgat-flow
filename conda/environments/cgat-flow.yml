@@ -15,6 +15,7 @@ dependencies:
 # python dependencies
 - python >= 3.6
 - rpy2 >= 2.9
+- sortedcontainers
 
 # exome.py
 - beautifulsoup4

@@ -2080,7 +2080,7 @@ def buildBigWig(infile, outfile):
         scale = 1000000.0 / float(reads_mapped)
         tmpfile = P.get_temp_filename()
         contig_sizes = PARAMS["annotations_interface_contigs"]
-        job_memory = "3G"
+        job_memory = PARAMS['bigwig_memory']
         statement = '''bedtools genomecov
         -ibam %(infile)s
         -g %(contig_sizes)s
@@ -2095,19 +2095,6 @@ def buildBigWig(infile, outfile):
         # wigToBigWig observed to use 16G
         job_memory = "16G"
         statement = '''cgat bam2wiggle
-        --output-format=bigwig
-        %(bigwig_options)s
-        %(infile)s
-        %(outfile)s
-        > %(outfile)s.log'''
-    P.run(statement)
-
-
-@merge(buildBigWig,
-       "bigwig_stats.load")
-def loadBigWigStats(infiles, outfile):
-    '''merge and load bigwig summary for all wiggle files.
-
     Summarise and merge bigwig files for all samples and load into a
     table called bigwig_stats
 

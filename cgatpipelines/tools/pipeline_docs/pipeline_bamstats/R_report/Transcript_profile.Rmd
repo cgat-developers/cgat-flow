@@ -19,7 +19,7 @@ library(reshape2)
 library(yaml)
 
 yml <- read_yaml("../pipeline.yml")
-database <- gsub("sqlite:///.", "", yml$database$url)
+database <- gsub("sqlite://.", "", yml$database$url)
 mydb <- dbConnect(RSQLite::SQLite(), database)
 db <- dbGetQuery(mydb, 'SELECT * FROM transcript_profile')
 
@@ -29,7 +29,8 @@ library(ggplot2)
 sample_names <- colnames(db[,grep("bin|region|region_bin", names(db), invert=TRUE)])
 
 for (i in sample_names){
-  plot <- ggplot(data=db, aes(x=bin, y=db[i])) + geom_line() + geom_vline(xintercept = 999, colour="red") +
+  print(i)
+  plot <- ggplot(data=db, aes(x=bin, y=db[,i])) + geom_line() + geom_vline(xintercept = 999, colour="red") +
     geom_vline(xintercept = 3999, colour="red") + 
     geom_vline(xintercept = 4499, colour="red") +
     labs(x = "transcript profile", y="Counts")+

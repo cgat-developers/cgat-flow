@@ -462,6 +462,9 @@ shortstack:
     # options for bigwig export
 bigwig:
 
+    # Specify memory for building bigWig
+    memory: 3G
+
     # bam to bigwig conversion options. See bam2wiggle.py
     options: ''
 

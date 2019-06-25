@@ -2080,7 +2080,7 @@ def buildBigWig(infile, outfile):
         scale = 1000000.0 / float(reads_mapped)
         tmpfile = P.get_temp_filename()
         contig_sizes = PARAMS["annotations_interface_contigs"]
-        job_memory = "3G"
+        job_memory = PARAMS['bigwig_memory']
         statement = '''bedtools genomecov
         -ibam %(infile)s
         -g %(contig_sizes)s

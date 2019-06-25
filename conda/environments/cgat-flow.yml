@@ -7,14 +7,16 @@
 name: cgat-flow
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:
 # python dependencies
 - python >= 3.6
-- rpy2
+- pip
+- pip:
+  - rpy2
 
 # exome.py
 - beautifulsoup4

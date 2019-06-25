@@ -8,8 +8,8 @@ name: cgat-flow
 
 channels:
 - r
-- conda-forge
 - bioconda
+- conda-forge
 - defaults
 
 dependencies:

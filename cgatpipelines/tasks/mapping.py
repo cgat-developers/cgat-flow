@@ -83,6 +83,7 @@ import glob
 import collections
 import re
 import itertools
+import subprocess
 from cgatcore import pipeline as P
 import logging as L
 import cgatcore.experiment as E
@@ -108,7 +109,7 @@ def checkBowtie2VersionNumber():
        higher than 2.3.3'''
 
 
-    result = subprocess.run(["bowtie2", "--version"], capture_output=True)
+    result = subprocess.run(["bowtie2", "--version"], stdout=subprocess.PIPE)
 
     p = re.compile(r'version (\d+.\d+.\d+)')
 

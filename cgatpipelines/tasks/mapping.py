@@ -118,7 +118,7 @@ def checkBowtie2VersionNumber():
     version = int(''.join(version).replace(".",""))
 
     versionOld = 233
-    return(version >versionOld)
+    return(version >= versionOld)
 
 def getSequencingInformation(track):
     '''glean sequencing information from *track*.

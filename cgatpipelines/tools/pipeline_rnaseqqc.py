@@ -191,7 +191,6 @@ import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.mappingqc as mappingqc
 from cgatcore import pipeline as P
-from cgatpipelines.report import run_report
 
 import json
 
@@ -1806,22 +1805,6 @@ def plotStrandednessSalmon(infile, outfile):
          loadStrandednessSalmon)
 def full():
     pass
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 def main(argv=None):

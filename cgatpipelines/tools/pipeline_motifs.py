@@ -137,7 +137,6 @@ import cgatcore.iotools as iotools
 
 import cgatpipelines.tasks.motifs as motifs
 import cgatpipelines.tasks.tracks as tracks
-from cgatpipelines.report import run_report
 
 ###################################################
 ###################################################
@@ -840,61 +839,6 @@ def exportMotifLocations(infiles, outfile):
          loadIntervals)
 def full():
     '''run the full pipeline.'''
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
-
-
-@follows(mkdir("%s/bedfiles" % PARAMS["web_dir"]),
-         update_report,
-         )
-def publish():
-    '''publish files.'''
-    # publish web pages
-
-    P.publish_report()
-
-    # publish additional data
-    web_dir = PARAMS["web_dir"]
-    project_id = P.getProjectId()
-
-    # directory, files
-    exportfiles = {
-        "intervals": glob.glob(os.path.join(
-            PARAMS["exportdir"], "bed", "*.bed.gz")) +
-        glob.glob(os.path.join(PARAMS["exportdir"], "bed", "*.bed.gz.tbi")),
-    }
-
-    bams = []
-
-    for targetdir, filenames in exportfiles.items():
-        if len(filenames) == 0:
-            E.warn("no files for target '%s'" % targetdir)
-        for src in filenames:
-            dest = "%s/%s/%s" % (web_dir, targetdir, os.path.basename(src))
-            if dest.endswith(".bam"):
-                bams.append(dest)
-            dest = os.path.abspath(dest)
-            destdir = os.path.dirname(dest)
-            if not os.path.exists(destdir):
-                os.makedirs(destdir)
-
-            if not os.path.exists(dest):
-                E.debug("creating symlink from %s to %s" % (src, dest))
-                os.symlink(os.path.abspath(src), dest)
 
 
 def main(argv=None):

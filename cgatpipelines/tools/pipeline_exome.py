@@ -180,7 +180,6 @@ import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.exome as exome
 import cgatpipelines.tasks.exomeancestry as exomeancestry
-from cgatpipelines.report import run_report
 
 ###############################################################################
 ###############################################################################
@@ -2136,31 +2135,6 @@ def vcfstats():
          makeAnnotationsTables)
 def full():
     pass
-
-###############################################################################
-###############################################################################
-###############################################################################
-# Reports
-
-
-@follows()
-def publish():
-    '''publish files.'''
-    P.publish_report()
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 def main(argv=None):

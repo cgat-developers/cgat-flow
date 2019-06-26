@@ -159,7 +159,6 @@ import cgatpipelines.tasks.mappingqc as mappingqc
 from cgatcore import pipeline as P
 import re
 import cgatpipelines.tasks.exome as exome
-from cgatpipelines.report import run_report
 
 USECLUSTER = True
 
@@ -1223,31 +1222,6 @@ def tabulation():
          loadVCFstats)
 def vcfstats():
     pass
-
-
-#########################################################################
-#########################################################################
-#########################################################################
-
-
-@follows()
-def publish():
-    '''publish files.'''
-    P.publish_report()
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 def main(argv=None):

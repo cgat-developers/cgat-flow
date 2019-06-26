@@ -132,7 +132,6 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.readqc as readqc
 import cgatpipelines.tasks.preprocess as preprocess
 import cgatcore.iotools as iotools
-from cgatpipelines.report import run_report
 
 
 # Initialize the pipeline
@@ -530,15 +529,6 @@ def renderMultiqc(infile):
         "mv multiqc_report.html MultiQC_report.dir/")
 
     P.run(statement)
-
-
-@follows(renderMultiqc)
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
 
 
 def main(argv=None):

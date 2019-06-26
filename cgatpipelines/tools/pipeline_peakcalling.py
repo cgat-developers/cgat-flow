@@ -252,7 +252,6 @@ import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.peakcalling as peakcalling
 import cgat.BamTools.bamtools as Bamtools
 import cgatcore.database as DB
-from cgatpipelines.report import run_report
 
 #########################################################################
 # Load PARAMS Dictionary from Pipeline.innni file options ###############
@@ -1650,27 +1649,6 @@ def makeCHIPQCInputTables(infiles, outfiles):
 @follows(filtering, peakcalling_tasks, IDR, buildBigWig)
 def full():
     ''' runs entire pipeline '''
-
-
-###############################################################
-# Report functions
-###############################################################
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 ###############################################################

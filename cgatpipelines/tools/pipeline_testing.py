@@ -157,7 +157,6 @@ import tarfile
 import pandas
 import cgatcore.experiment as E
 import cgatcore.iotools as iotools
-from cgatpipelines.report import run_report
 
 ###################################################
 ###################################################
@@ -621,28 +620,28 @@ def reset(infile, outfile):
 ###################################################################
 
 
-@follows(mkdir("report"))
+def renderJupyter():
+    '''builds a Jupyter report of csvdb output'''
+
+    report_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                  "pipeline_docs",
+                                  "pipeline_testing"))
+
+    statement = '''cp %(report_path)s/* . &&
+                   jupyter nbconvert
+                           --ExecutePreprocessor.timeout=None
+                           --to html
+                           --execute *.ipynb
+                           --allow-errors'''
+
+    P.run(statement)
+
+
+@follows(renderJupyter)
 def build_report():
-    '''build report from scratch.'''
+    '''dummy task to build report'''
 
-    E.info("starting report build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating report")
-    run_report(clean=False)
-
-
-@follows(update_report)
-def publish_report():
-    '''publish report.'''
-
-    E.info("publishing report")
-    P.publish_report()
+    pass
 
 
 def main(argv=None):

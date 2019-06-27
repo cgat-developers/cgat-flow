@@ -121,7 +121,7 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.mappingqc as mappingqc
-from cgatpipelines.report import run_report
+
 
 #########################################################################
 #########################################################################
@@ -2699,39 +2699,6 @@ def full():
 @follows(buildBackgroundWindows)
 def test():
     pass
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
-
-
-@follows(mkdir("%s/bamfiles" % PARAMS["web_dir"]),
-         mkdir("%s/medips" % PARAMS["web_dir"]),
-         )
-def publish():
-    '''publish files.'''
-
-    # directory : files
-    export_files = {
-        "bedfiles":
-        glob.glob("deseq.dir/*.bed.gz") +
-        glob.glob("edger.dir/*.bed.gz"),
-    }
-
-    # publish web pages
-    P.publish_report(export_files=export_files)
 
 
 def main(argv=None):

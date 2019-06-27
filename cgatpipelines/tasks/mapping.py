@@ -2770,9 +2770,16 @@ class STAR(Mapper):
         index_prefix = "%(genome)s"
 
         logfile = ("%sLog.final.out") % (P.snip(outfile, ".star.bam"))
-
         if nfiles == 1:
-            infiles = "<( zcat %s )" % " ".join([x[0] for x in infiles])
+
+            
+            if str(infiles[0][0]).endswith(".gz"):
+                compress_option = "--readFilesCommand zcat"
+            else:
+                compress_option = ""
+                
+            infiles = " ".join([x[0] for x in infiles])
+
             statement = '''
             %(executable)s
             --runMode alignReads
@@ -2782,6 +2789,7 @@ class STAR(Mapper):
             --outStd SAM
             --outSAMunmapped Within
             %%(star_options)s
+            %(compress_option)s
             --readFilesIn %(infiles)s
             | samtools view -bS -
             > %(tmpdir)s/%(track)s.bam

@@ -83,6 +83,7 @@ import glob
 import collections
 import re
 import itertools
+import subprocess
 from cgatcore import pipeline as P
 import logging as L
 import cgatcore.experiment as E
@@ -101,6 +102,23 @@ SequenceInformation = collections.namedtuple("SequenceInformation",
                                                  readlength_second
                                                  is_colour""")
 
+def checkBowtie2VersionNumber():
+    '''Bowtie2 >= 2.3.3 does not require the file to be gunzipped
+       before running. This function cheks the version number then
+       returns True or False depending on if the version number is
+       higher than 2.3.3'''
+
+
+    result = subprocess.run(["bowtie2", "--version"], stdout=subprocess.PIPE)
+
+    p = re.compile(r'version (\d+.\d+.\d+)')
+
+    output = result.stdout.decode("utf-8")
+    version = p.findall(output)
+    version = int(''.join(version).replace(".",""))
+
+    versionOld = 233
+    return(version >= versionOld)
 
 def getSequencingInformation(track):
     '''glean sequencing information from *track*.
@@ -2973,7 +2991,15 @@ class Bowtie(Mapper):
         tmpdir_fastq = self.tmpdir_fastq
 
         if nfiles == 1:
-            infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
+            if executable == "bowtie2":
+                # Check version number is >= 2.3.3 (botie handles gz files)
+                bowtie2 = checkBowtie2VersionNumber()
+                if bowtie2 == True:
+                    infiles = ",".join([x for x in infiles[0]])
+                else:
+                    infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
+            else:
+                    infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
             statement = '''
             %(executable)s
             --threads %%(bowtie_threads)i
@@ -2989,8 +3015,18 @@ class Bowtie(Mapper):
             ''' % locals()
 
         elif nfiles == 2:
-            infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
-            infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
+            if executable == "bowtie2":
+                # Check version number is >= 2.3.3 (botie handles gz files)
+                bowtie2 = checkBowtie2VersionNumber()
+                if bowtie2 == True:
+                    infiles1 = ",".join([x for x in infiles[0]])
+                    infiles2 = ",".join([x for x in infiles[1]])
+                else:
+                    infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
+                    infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
+            else:
+                infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
+                infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
 
             statement = '''
             %(executable)s
@@ -3076,7 +3112,6 @@ class Bowtie2(Bowtie):
 
     # output option - default is SAM for botwie2
     output_option = ""
-
 
 class BowtieTranscripts(Mapper):
 

@@ -81,6 +81,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     job_memory = PICARD_MEMORY
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
+    tmp_bam = P.getTempFilename(".")
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
@@ -96,8 +97,9 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     --method=set-sequence
     --output-sam
     --log=%(outfile)s.bam2bam.log
-    | picard %(picard_opts)s CollectMultipleMetrics
-    INPUT=/dev/stdin
+    > %(tmp_bam)s &&
+    picard %(picard_opts)s CollectMultipleMetrics
+    INPUT=%(tmp_bam)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true
     OUTPUT=%(outfile)s
@@ -106,6 +108,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
 
     P.run(statement)
 
+    os.unlink(tmp_bam)
 
 def buildPicardDuplicationStats(infile, outfile):
     '''run picard:MarkDuplicates

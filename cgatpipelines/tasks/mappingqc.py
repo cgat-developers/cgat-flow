@@ -81,7 +81,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file):
     job_memory = PICARD_MEMORY
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
-    tmp_bam = P.getTempFilename(".")
+    tmp_bam = P.get_temp_filename(".")
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)

@@ -39,7 +39,9 @@ EXCLUDE = (
     # No need to check cgat_check_deps.py
     'cgat_check_deps',
     # No need to check conda.py
-    'conda',)
+    'conda',
+    # Is pipeline_splicing Py3 ready?
+    'pipeline_splicing',)
 
 
 def check_import(filename, outfile):

@@ -522,7 +522,6 @@ def buildSalmonIndex(infile, outfile):
     statement = '''
     rm -rf %(outfile)s;
     salmon index -k %(salmon_kmer)i %(salmon_index_options)s -t %(infile)s -i %(outfile)s
-    -k %(salmon_kmer)s
     '''
 
     P.run(statement)

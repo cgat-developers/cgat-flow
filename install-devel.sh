@@ -791,13 +791,30 @@ test_mix_branch_release() {
 # https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
 test_core_branch() {
     RELEASE_TEST=0
-    curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/README.rst || RELEASE_TEST=$?
+    curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/README.md || RELEASE_TEST=$?
     if [[ ${RELEASE_TEST} -ne 0 ]] ; then
 	echo
 	echo " The branch provided for cgat-core does not exist: ${CGATCORE_BRANCH}"
 	echo
 	echo " Please have a look at valid branches here: "
 	echo " https://github.com/cgat-developers/cgat-core/branches"
+	echo
+	report_error " Please use a valid branch and try again."
+    fi
+}
+
+
+# test whether a branch exists in the cgat-apps repository
+# https://stackoverflow.com/questions/12199059/how-to-check-if-an-url-exists-with-the-shell-and-probably-curl
+test_apps_branch() {
+    RELEASE_TEST=0
+    curl --output /dev/null --silent --head --fail https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/README.rst || RELEASE_TEST=$?
+    if [[ ${RELEASE_TEST} -ne 0 ]] ; then
+	echo
+	echo " The branch provided for cgat-apps does not exist: ${CGATAPPS_BRANCH}"
+	echo
+	echo " Please have a look at valid branches here: "
+	echo " https://github.com/cgat-developers/cgat-apps/branches"
 	echo
 	report_error " Please use a valid branch and try again."
     fi

@@ -369,7 +369,7 @@ def summarizeFastQC(infiles, outfiles):
     for infile in infiles:
         track = P.snip(infile, ".fastqc")
         all_files.extend(glob.glob(
-            os.path.join(track + "*_fastqc",
+            os.path.join(track + ".*_fastqc",
                          "fastqc_data.txt")))
 
     dfs = readqc.read_fastqc(

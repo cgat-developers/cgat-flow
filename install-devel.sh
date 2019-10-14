@@ -22,7 +22,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+#set -o xtrace
 #set -o errtrace
 
 # Bash traps
@@ -249,7 +249,7 @@ conda_install() {
     log "installing miniconda"
 
     bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
-    source ${CONDA_INSTALL_DIR}/bin/activate
+    source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
     hash -r
 
     # install cgat environment
@@ -282,7 +282,7 @@ conda_install() {
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
     # activate cgat environment
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    conda activate ${CONDA_INSTALL_ENV}
 
     log "installing CGAT code into conda environment"
     DEV_RESULT=0
@@ -407,7 +407,7 @@ install_pipeline_deps() {
     get_cgat_env
     
     # activate cgat environment
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    conda activate ${CONDA_INSTALL_ENV}
     
     log "install pipeline deps"
 
@@ -578,7 +578,7 @@ conda_test() {
 
 	# enable Conda env
 	log "activating CGAT conda environment"
-	source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+	conda activate ${CONDA_INSTALL_ENV}
 
 	# show conda environment used for testing
 	log "conda env export"
@@ -626,7 +626,7 @@ conda_test() {
 
 	if [[ $CONDA_INSTALL_TYPE_PIPELINES ]] ; then
 	    # prepare environment
-	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+	    conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"
@@ -688,7 +688,7 @@ conda_update() {
     # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
     get_cgat_env
 
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    conda activate ${CONDA_INSTALL_ENV}
     conda update --all
 
     if [[ ! $? -eq 0 ]] ; then
@@ -871,8 +871,8 @@ test_compilers() {
 # deliberately use brute force
 cleanup_env() {
     set +e
-    source deactivate >& /dev/null || true
-    source deactivate >& /dev/null || true
+    conda deactivate >& /dev/null || true
+    conda deactivate >& /dev/null || true
     unset -f conda || true
     unset PYTHONPATH || true
     # Next actions disabled. Please see:

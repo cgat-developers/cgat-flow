@@ -4,8 +4,6 @@ os:
   - osx
   - linux
 
-osx_image: xcode9.2
-
 # use container-based infrastructure on Travis
 # http://docs.travis-ci.com/user/workers/container-based-infrastructure/
 # http://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/

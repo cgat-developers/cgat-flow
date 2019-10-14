@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env bash
 
 # Travis: repo is provided by travis.
 #         build conda environment
@@ -22,7 +22,7 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-#set -o xtrace
+set -o xtrace
 #set -o errtrace
 
 # Bash traps

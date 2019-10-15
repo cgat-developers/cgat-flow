@@ -256,7 +256,8 @@ conda_install() {
     # Conda 4.4 breaks everything again!
     # Conda 4.5 looks better
     #conda install --quiet --yes 'conda=4.3.33'
-    conda update --all --yes
+    # test without updating conda
+    #conda update --all --yes
     conda info -a
 
     log "installing conda CGAT environment"

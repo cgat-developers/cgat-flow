@@ -632,10 +632,12 @@ conda_test() {
 
 	if [[ $CONDA_INSTALL_TYPE_PIPELINES ]] ; then
 	    # prepare environment
-	    conda env list
-	    conda env export
-	    log "conda activate ${CONDA_INSTALL_ENV}"
-	    conda activate ${CONDA_INSTALL_ENV}
+
+	    # do we need activate in this case?
+	    #conda env list
+	    #conda env export
+	    #log "conda activate ${CONDA_INSTALL_ENV}"
+	    #conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"

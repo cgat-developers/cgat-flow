@@ -291,7 +291,7 @@ conda_install() {
     install_extra_deps
 
     # Set up other environment variables
-    setup_env_vars
+    #setup_env_vars
 
     # install cgat-core
     install_cgat_core
@@ -571,7 +571,7 @@ conda_test() {
     # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
     get_cgat_env
 
-    setup_env_vars
+    #setup_env_vars
 
     # setup environment and run tests
     if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then

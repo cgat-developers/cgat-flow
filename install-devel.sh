@@ -279,7 +279,12 @@ conda_install() {
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-apps.yml
 
     log "updating with cgat-flow dependencies"
+    log "curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}"
+    cat env-cgat-core.yml
+    log "curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}"
+    cat env-cgat-apps.yml
     log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
+    cat env-cgat-flow.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
     # activate cgat environment

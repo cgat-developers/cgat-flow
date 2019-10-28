@@ -21,7 +21,7 @@ When pre-processing reads before mapping, the workflow of the pipeline
 is as follows:
 
 1. Run the ``full`` target to perform initial QC on the raw data. Then
-   build the report (``build_report`` target).
+   build the report (``renderMultiqc`` target).
 
 2. Inspect the output to decide if and what kind of pre-processing is
    required.
@@ -30,7 +30,7 @@ is as follows:
    pre-processing and parameterize it appropriately. Note that
    parameters can be set on a per-sample basis.
 
-4. Rerun the ``full`` target and ``build_report`` targets. The data
+4. Rerun the ``full`` target and ``renderMultiqc`` targets. The data
    will now be processed and additional QC will be performed on the
    processed data. Note that all the processed data will be found in
    the :file:`processed.dir` directory.

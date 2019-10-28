@@ -133,6 +133,30 @@ get_cgat_env() {
 
 } # get_cgat_env
 
+# check whether the 'cgat-flow' conda environment is enabled or not
+is_env_enabled() {
+    # disable error checking
+    set +e
+
+    # store the result
+    ENV_ENABLED=0
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -eq 0 ]] ; then
+        ENV_PATH=$(dirname $(dirname $CONDA_PATH))
+	stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
+	if [[ $? -eq 0 ]] ; then
+            export ENV_ENABLED=1
+	fi
+    fi
+
+    export ENV_ENABLED
+
+    # enable error checking again
+    set -e
+}
 
 # setup environment variables
 setup_env_vars() {
@@ -249,7 +273,7 @@ conda_install() {
     log "installing miniconda"
 
     bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
-    source ${CONDA_INSTALL_DIR}/bin/activate
+    source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
     hash -r
 
     # install cgat environment
@@ -264,10 +288,13 @@ conda_install() {
     # Now using conda environment files:
     # https://conda.io/docs/using/envs.html#use-environment-from-file
 
+    log "curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}"
     curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
+    log "curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}"
     curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
+    log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
     [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
@@ -282,7 +309,7 @@ conda_install() {
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
     # activate cgat environment
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    conda activate ${CONDA_INSTALL_ENV}
 
     log "installing CGAT code into conda environment"
     DEV_RESULT=0
@@ -291,7 +318,7 @@ conda_install() {
     install_extra_deps
 
     # Set up other environment variables
-    setup_env_vars
+    #setup_env_vars
 
     # install cgat-core
     install_cgat_core
@@ -407,7 +434,8 @@ install_pipeline_deps() {
     get_cgat_env
     
     # activate cgat environment
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    is_env_enabled
+    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
     
     log "install pipeline deps"
 
@@ -571,14 +599,14 @@ conda_test() {
     # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
     get_cgat_env
 
-    setup_env_vars
+    #setup_env_vars
 
     # setup environment and run tests
     if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
 
-	# enable Conda env
-	log "activating CGAT conda environment"
-	source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+        # activate cgat environment
+        is_env_enabled
+        [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
 	# show conda environment used for testing
 	log "conda env export"
@@ -625,8 +653,10 @@ conda_test() {
     else
 
 	if [[ $CONDA_INSTALL_TYPE_PIPELINES ]] ; then
-	    # prepare environment
-	    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+
+            # activate cgat environment
+            is_env_enabled
+            [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"
@@ -688,7 +718,10 @@ conda_update() {
     # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
     get_cgat_env
 
-    source $CONDA_INSTALL_DIR/bin/activate $CONDA_INSTALL_ENV
+    # activate cgat environment
+    is_env_enabled
+    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
+
     conda update --all
 
     if [[ ! $? -eq 0 ]] ; then
@@ -871,8 +904,8 @@ test_compilers() {
 # deliberately use brute force
 cleanup_env() {
     set +e
-    source deactivate >& /dev/null || true
-    source deactivate >& /dev/null || true
+    conda deactivate >& /dev/null || true
+    conda deactivate >& /dev/null || true
     unset -f conda || true
     unset PYTHONPATH || true
     # Next actions disabled. Please see:

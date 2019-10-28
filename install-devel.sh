@@ -435,7 +435,7 @@ install_pipeline_deps() {
     
     # activate cgat environment
     is_env_enabled
-    [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
+    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
     
     log "install pipeline deps"
 
@@ -606,7 +606,7 @@ conda_test() {
 
         # activate cgat environment
         is_env_enabled
-        [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
+        [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
 	# show conda environment used for testing
 	log "conda env export"
@@ -663,7 +663,7 @@ conda_test() {
 
             # activate cgat environment
             is_env_enabled
-            [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
+            [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"

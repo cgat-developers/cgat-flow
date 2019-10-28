@@ -653,13 +653,6 @@ conda_test() {
     else
 
 	if [[ $CONDA_INSTALL_TYPE_PIPELINES ]] ; then
-	    # prepare environment
-
-	    # do we need activate in this case?
-	    #conda env list
-	    #conda env export
-	    #log "conda activate ${CONDA_INSTALL_ENV}"
-	    #conda activate ${CONDA_INSTALL_ENV}
 
             # activate cgat environment
             is_env_enabled
@@ -725,7 +718,10 @@ conda_update() {
     # get environment variables: CGAT_HOME, CONDA_INSTALL_DIR, CONDA_INSTALL_TYPE_PIPELINES
     get_cgat_env
 
-    conda activate ${CONDA_INSTALL_ENV}
+    # activate cgat environment
+    is_env_enabled
+    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
+
     conda update --all
 
     if [[ ! $? -eq 0 ]] ; then

@@ -133,6 +133,30 @@ get_cgat_env() {
 
 } # get_cgat_env
 
+# check whether the 'cgat-flow' conda environment is enabled or not
+is_env_enabled() {
+    # disable error checking
+    set +e
+
+    # store the result
+    ENV_ENABLED=0
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -eq 0 ]] ; then
+        ENV_PATH=$(dirname $(dirname $CONDA_PATH))
+	stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
+	if [[ $? -eq 0 ]] ; then
+            export ENV_ENABLED=1
+	fi
+    fi
+
+    export ENV_ENABLED
+
+    # enable error checking again
+    set -e
+}
 
 # setup environment variables
 setup_env_vars() {
@@ -264,10 +288,13 @@ conda_install() {
     # Now using conda environment files:
     # https://conda.io/docs/using/envs.html#use-environment-from-file
 
+    log "curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}"
     curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}
 
+    log "curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}"
     curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}
 
+    log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
 
     [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
@@ -279,12 +306,6 @@ conda_install() {
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-apps.yml
 
     log "updating with cgat-flow dependencies"
-    log "curl -o env-cgat-core.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-core/${CGATCORE_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_CORE}"
-    cat env-cgat-core.yml
-    log "curl -o env-cgat-apps.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${CGATAPPS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_APPS}"
-    cat env-cgat-apps.yml
-    log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${TRAVIS_BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
-    cat env-cgat-flow.yml
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
 
     # activate cgat environment
@@ -413,7 +434,8 @@ install_pipeline_deps() {
     get_cgat_env
     
     # activate cgat environment
-    conda activate ${CONDA_INSTALL_ENV}
+    is_env_enabled
+    [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
     
     log "install pipeline deps"
 
@@ -582,9 +604,9 @@ conda_test() {
     # setup environment and run tests
     if [[ $TRAVIS_INSTALL ]] || [[ $JENKINS_INSTALL ]] ; then
 
-	# enable Conda env
-	log "activating CGAT conda environment"
-	conda activate ${CONDA_INSTALL_ENV}
+        # activate cgat environment
+        is_env_enabled
+        [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
 	# show conda environment used for testing
 	log "conda env export"
@@ -638,6 +660,10 @@ conda_test() {
 	    #conda env export
 	    #log "conda activate ${CONDA_INSTALL_ENV}"
 	    #conda activate ${CONDA_INSTALL_ENV}
+
+            # activate cgat environment
+            is_env_enabled
+            [[ ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"

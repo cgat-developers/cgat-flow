@@ -21,7 +21,7 @@ When pre-processing reads before mapping, the workflow of the pipeline
 is as follows:
 
 1. Run the ``full`` target to perform initial QC on the raw data. Then
-   build the report (``build_report`` target).
+   build the report (``renderMultiqc`` target).
 
 2. Inspect the output to decide if and what kind of pre-processing is
    required.
@@ -30,7 +30,7 @@ is as follows:
    pre-processing and parameterize it appropriately. Note that
    parameters can be set on a per-sample basis.
 
-4. Rerun the ``full`` target and ``build_report`` targets. The data
+4. Rerun the ``full`` target and ``renderMultiqc`` targets. The data
    will now be processed and additional QC will be performed on the
    processed data. Note that all the processed data will be found in
    the :file:`processed.dir` directory.
@@ -132,7 +132,6 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.readqc as readqc
 import cgatpipelines.tasks.preprocess as preprocess
 import cgatcore.iotools as iotools
-from cgatpipelines.report import run_report
 
 
 # Initialize the pipeline
@@ -208,8 +207,8 @@ if P.get_params().get("preprocessors", None):
             infiles = " ".join(infiles)
 
             statement = """
-            cat %(infiles)s | fastx_reverse_complement > %(tempfile)s;
-            cat %(tempfile)s %(infiles)s | fastx_collapser > %(outfile)s;
+            cat %(infiles)s | fastx_reverse_complement > %(tempfile)s &&
+            cat %(tempfile)s %(infiles)s | fastx_collapser > %(outfile)s &&
             rm -f %(tempfile)s
             """
             P.run(statement)
@@ -370,7 +369,7 @@ def summarizeFastQC(infiles, outfiles):
     for infile in infiles:
         track = P.snip(infile, ".fastqc")
         all_files.extend(glob.glob(
-            os.path.join(track + "*_fastqc",
+            os.path.join(track + ".*_fastqc",
                          "fastqc_data.txt")))
 
     dfs = readqc.read_fastqc(
@@ -530,15 +529,6 @@ def renderMultiqc(infile):
         "mv multiqc_report.html MultiQC_report.dir/")
 
     P.run(statement)
-
-
-@follows(renderMultiqc)
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
 
 
 def main(argv=None):

@@ -314,9 +314,6 @@ def buildReferenceGeneSet(infile, outfile):
 
     This preserves all features in a gtf file (exon, CDS, ...)
 
-    Runs cuffcompare with `infile` against itself to add
-    attributes such as p_id and tss_id.
-
     Parameters
     ----------
     infile : str
@@ -332,30 +329,19 @@ def buildReferenceGeneSet(infile, outfile):
        :term:`PARAMS`. Genome name (e.g hg38)
     '''
 
-    tmp_mergedfiltered = P.get_temp_filename(".")
-
     if "geneset_remove_repetetive_rna" in PARAMS:
         rna_file = PARAMS["annotations_interface_rna_gff"]
     else:
         rna_file = None
 
-    gene_ids = mapping.mergeAndFilterGTF(
+    mapping.mergeAndFilterGTF(
         infile,
-        tmp_mergedfiltered,
+        outfile,
         "%s.removed.gz" % outfile,
         genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
         max_intron_size=PARAMS["max_intron_size"],
         remove_contigs=PARAMS["geneset_remove_contigs"],
         rna_file=rna_file)
-
-    # Add tss_id and p_id
-    mapping.resetGTFAttributes(
-        infile=tmp_mergedfiltered,
-        genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
-        gene_ids=gene_ids,
-        outfile=outfile)
-
-    os.unlink(tmp_mergedfiltered)
 
 
 @active_if(SPLICED_MAPPING)
@@ -571,8 +557,8 @@ def buildReferenceTranscriptome(infile, outfile):
 
     statement = '''
     zcat %(infile)s
-    | awk '$3 == "exon"' > %(gtf_file)s;
-    gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s;
+    | awk '$3 == "exon"' > %(gtf_file)s &&
+    gtf_to_fasta %(gtf_file)s %(genome_file)s %(outfile)s &&
     samtools faidx %(outfile)s
     '''
     P.run(statement, job_condaenv="tophat2")
@@ -654,9 +640,9 @@ def buildJunctions(infile, outfile):
         E.info('found %i junctions before removing duplicates' % njunctions)
 
     # make unique
-    statement = '''mv %(outfile)s %(outfile)s.tmp;
-                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s;
-                   rm -f %(outfile)s.tmp; '''
+    statement = '''mv %(outfile)s %(outfile)s.tmp &&
+                   cat < %(outfile)s.tmp | sort | uniq > %(outfile)s &&
+                   rm -f %(outfile)s.tmp'''
     P.run(statement)
 
 
@@ -1971,7 +1957,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         infiles = " ".join(infiles)
         statement = '''
-        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log;
+        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log &&
         samtools index %(outfile)s
         '''
         P.run(statement)
@@ -2094,15 +2080,15 @@ def buildBigWig(infile, outfile):
         scale = 1000000.0 / float(reads_mapped)
         tmpfile = P.get_temp_filename()
         contig_sizes = PARAMS["annotations_interface_contigs"]
-        job_memory = "3G"
+        job_memory = PARAMS['bigwig_memory']
         statement = '''bedtools genomecov
         -ibam %(infile)s
         -g %(contig_sizes)s
         -bg
         -split
         -scale %(scale)f
-        > %(tmpfile)s;
-        bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
+        > %(tmpfile)s &&
+        bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s &&
         rm -f %(tmpfile)s
         '''
     else:
@@ -2180,7 +2166,7 @@ def buildBed(infile, outfile):
           -
     | sort -k1,1 -k2,2n
     | bgzip
-    > %(outfile)s;
+    > %(outfile)s &&
     tabix -p bed %(outfile)s
     '''
     P.run(statement)

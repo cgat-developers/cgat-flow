@@ -304,6 +304,25 @@ def buildPicardStats(infiles, outfile):
                                        PICARD_MEMORY)
 
 
+@P.add_doc(bamstats.buildPicardInsertSizeStats)
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           add_inputs(os.path.join(PARAMS["genome_dir"],
+                                   PARAMS["genome"] + ".fa")),
+           r"Picard_stats.dir/\1.insert_stats")
+def buildPicardInserts(infiles, outfile):
+    ''' build Picard alignment stats '''
+    infile, reffile = infiles
+
+    if "transcriptome.dir" in infile:
+        reffile = "refcoding.fa"
+
+    bamstats.buildPicardInsertSizeStats(infile,
+                                        outfile,
+                                        reffile,
+                                        PICARD_MEMORY)
+
+
 @P.add_doc(bamstats.buildPicardDuplicationStats)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
@@ -577,7 +596,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
 
 @active_if(SPLICED_MAPPING)
 @transform(intBam,
-           regex("BamFiles.dir/(\S+).bam$"),
+           regex("BamFiles.dir/(\S+).bam"),
            add_inputs(PARAMS["annotations_interface_geneset_coding_exons_gtf"]),
            r"Paired_QC.dir/\1.transcriptprofile.gz")
 def buildTranscriptProfiles(infiles, outfile):
@@ -759,6 +778,12 @@ def loadTranscriptProfile(infiles, outfile):
     bamstats.loadTranscriptProfile(infiles, outfile)
 
 
+@merge(buildPicardInserts, "picard_insert_metrics.csv")
+def mergePicardInsertMetrics(infiles, outfile):
+    ''' merge insert stats into a single table'''
+    bamstats.mergeInsertSize(infiles, outfile)
+
+
 @P.add_doc(bamstats.loadStrandSpecificity)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @follows(loadTranscriptProfile)
@@ -812,7 +837,8 @@ def views():
          loadExonValidation,
          loadPicardRnaSeqMetrics,
          loadTranscriptProfile,
-         loadStrandSpecificity)
+         loadStrandSpecificity,
+         mergePicardInsertMetrics)
 def full():
     '''a dummy task to run all tasks in the pipeline'''
     pass
@@ -830,7 +856,7 @@ def renderRreport():
                                                'pipeline_bamstats',
                                                'R_report'))
 
-    statement = '''cp %(report_path)s/* R_report.dir ; cd R_report.dir ; R -e "rmarkdown::render_site()"'''
+    statement = '''cp %(report_path)s/* R_report.dir && cd R_report.dir && R -e "rmarkdown::render_site()"'''
 
     P.run(statement)
 
@@ -844,9 +870,9 @@ def renderJupyterReport():
                                                'pipeline_bamstats',
                                                'Jupyter_report'))
 
-    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ ; cd Jupyter_report.dir/;
-                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors;
-                    mkdir _site;
+    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ && cd Jupyter_report.dir/ &&
+                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors &&
+                    mkdir _site &&
                     mv -t _site *.html cgat_logo.jpeg oxford.png'''
 
     P.run(statement)

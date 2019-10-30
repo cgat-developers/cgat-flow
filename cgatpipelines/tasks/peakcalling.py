@@ -202,7 +202,7 @@ def appendSamtoolsFilters(statement, inT, tabout, filters, qual, pe):
     return statement, outT
 
 
-def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
+def appendPicardFilters(statement, inT, tabout, filters, pe, outfile, picard_options=""):
     '''
     Appends a fragment to an existing command line statement to
     filter bam files using Picard.
@@ -248,7 +248,7 @@ def appendPicardFilters(statement, inT, tabout, filters, pe, outfile):
         log = outfile.replace(".bam", "_duplicates.log")
         outT = P.get_temp_filename("./filtered_bams.dir")
         statement += """
-        picard MarkDuplicates \
+        picard %(picard_options)s MarkDuplicates \
         INPUT=%(inT)s.bam \
         ASSUME_SORTED=true \
         REMOVE_DUPLICATES=true \
@@ -379,7 +379,8 @@ def appendContigFilters(statement, inT, tabout, filters, pe,
 
 @cluster_runnable
 def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
-               contigs_to_remove, keep_intermediates=False):
+               contigs_to_remove, keep_intermediates=False,
+               job_memory="50G", picard_options=""):
     '''Builds a statement which applies various filters to bam files.
 
     The file is sorted then filters are applied.
@@ -454,7 +455,8 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
 
         statement, inT = appendPicardFilters(statement, inT,
                                              tabout, filters, pe,
-                                             bamout)
+                                             bamout,
+                                             picard_options)
         statement, inT = appendSamtoolsFilters(statement, inT,
                                                tabout, filters,
                                                qual, pe)
@@ -493,7 +495,7 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
         if int(keep_intermediates) == 1:
             statement = re.sub("rm -f \S+.bam;", "", statement)
 
-        P.run(statement, job_memory="8G")
+        P.run(statement, job_memory=job_memory)
 
     # reformats the read counts into a table
     inf = [line.strip() for line in open(tabout).readlines()]
@@ -515,9 +517,10 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     # check the filtering is done correctly - write a log file
     # if unpaired is specified in bamfilters in the pipeline.yml
     # remove reads whose mate has been filtered out elsewhere
-
     T = P.get_temp_filename(".")
-    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True)
+    # "bamout" was generated above as part of the main statement
+    # here, check it one more time while writing/copying "bamout" to <T>.bam
+    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True, job_memory=job_memory)
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
     shutil.move("%s.bam" % T, bamout)
@@ -755,7 +758,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         cp predictd_model.pdf ../%(pdffile)s
         '''
         P.run(statement, job_condaenv="macs2")
-        # Remove the sample's predictd output directory
+        # Remove the directory
         shutil.rmtree("%s.dir" % outfile)
     outf = iotools.open_file(outfile, "w")
     outf.write("mode\tfragmentsize_mean\tfragmentsize_std\ttagsize\n")
@@ -2612,49 +2615,6 @@ def doIDRQC(infile, outfile):
         finaltab = finaltab.append(exptab)
 
     finaltab.to_csv(outfile, sep="\t", index=None)
-
-#############################################
-# QC Functions
-#############################################
-
-
-def runCHIPQC(infile, outfiles, rdir):
-    '''
-    Runs the R package ChIPQC to plot and record various quality control
-    statistics on peaks.
-
-    Parameters
-    ----------
-    infile: str
-       path to a design table formatted for the ChIPQC package as specified
-       here  -
-       https://www.bioconductor.org/packages/devel/bioc/
-       vignettes/ChIPQC/inst/doc/ChIPQC.pdf
-    outfile: str
-       path to main output file
-    rdir: str
-       path to directory in which to place the output files
-    '''
-
-    runCHIPQC_R = R('''
-    function(samples, outdir, cwd){
-        library("ChIPQC")
-        cwd = "/ifs/projects/katherineb/test_data_peakcalling/test3"
-        print("cwd")
-        print(cwd)
-        print("samples")
-        print(samples)
-        setwd(cwd)
-        print(getwd())
-        samples$Tissue = as.factor(samples$Tissue)
-        samples$Factor = as.factor(samples$Factor)
-        samples$Replicate = as.factor(samples$Replicate)
-        experiment = ChIPQC(samples)
-        ChIPQCreport(experiment, reportFolder=outdir)
-    }
-    ''' % locals())
-    cwd = os.getcwd()
-    runCHIPQC_R(pandas2ri.py2ri(infile), rdir, cwd)
 
 
 # Pipeline Specific Functions

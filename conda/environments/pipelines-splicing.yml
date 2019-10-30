@@ -2,8 +2,8 @@
 name: splicing
 
 channels:
-- bioconda
 - conda-forge
+- bioconda
 - defaults
 
 dependencies:

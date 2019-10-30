@@ -17,16 +17,18 @@ library("ggplot2") # For plotting
 library("DT") # Interactove html tables
 library(ggplot2)
 library(reshape2)
+library(yaml)
 
-setwd("./..")
-mydb <- dbConnect(RSQLite::SQLite(), "csvdb")
-  db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats_mapq;')
+yml <- read_yaml("../pipeline.yml")
+database <- gsub("sqlite://.", "", yml$database$url)
+mydb <- dbConnect(RSQLite::SQLite(), database)
+db <- dbGetQuery(mydb, 'SELECT * FROM bam_stats_mapq;')
   
   
-  db <- melt(db, id.vars="mapq")
+db <- melt(db, id.vars="mapq")
   
   
-  fancy_scientific <- function(l) {
+fancy_scientific <- function(l) {
     # turn in to character string in scientific notation
     l <- format(l, scientific = TRUE)
     # quote the part before the exponent to keep all the digits

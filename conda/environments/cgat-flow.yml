@@ -1,0 +1,32 @@
+# basic environment components 
+#
+# The dependencies below are sufficient to execute and pass the unit/acceptance
+# tests in the repository: style check, everything importable, etc.
+# 
+
+name: cgat-flow
+
+channels:
+- conda-forge
+- bioconda
+- defaults
+
+dependencies:
+# python dependencies
+- python >= 3.6
+- rpy2 <= 2.9.4
+- tzlocal
+
+# exome.py
+- beautifulsoup4
+
+# geneinfo.py
+- httplib2
+- intermine
+- mygene
+
+# gsenrichment.py
+- toposort
+
+# misc
+- nomkl

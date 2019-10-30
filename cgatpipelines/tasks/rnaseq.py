@@ -457,7 +457,7 @@ class SailfishQuantifier(AF_Quantifier):
 
         statement = m.build((fastqfile), outfile)
 
-        P.run(statement)
+        P.run(statement, job_condaenv="sailfish")
 
         # parse the output to extract the counts
         parse_table(self.sample, outfile,
@@ -478,7 +478,6 @@ class SalmonQuantifier(AF_Quantifier):
         salmon_options = self.options
         salmon_bootstrap = self.bootstrap
         salmon_libtype = self.libtype
-        salmon_kmer = self.kmer
         outfile = os.path.join(
             os.path.dirname(self.transcript_outfile), "quant.sf")
         sample = self.sample

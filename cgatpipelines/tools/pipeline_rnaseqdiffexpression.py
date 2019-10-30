@@ -339,7 +339,6 @@ import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
-from cgatpipelines.report import run_report
 
 import cgatpipelines.tasks.expression as Expression
 # levels of cuffdiff analysis
@@ -459,7 +458,7 @@ def buildReferenceTranscriptome(infile, outfile):
     awk '$3=="exon"'|
     cgat gff2fasta
     --is-gtf --genome-file=%(genome_file)s --fold-at=60 -v 0
-    --log=%(outfile)s.log > %(outfile)s;
+    --log=%(outfile)s.log > %(outfile)s &&
     samtools faidx %(outfile)s
     '''
 
@@ -516,14 +515,13 @@ def buildSalmonIndex(infile, outfile):
        path to output file
     '''
 
-    job_memory = "6G"
+    job_memory = "unlimited"
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
     rm -rf %(outfile)s;
-    salmon index %(salmon_index_options)s -t %(infile)s -i %(outfile)s
-    -k %(salmon_kmer)s
+    salmon index -k %(salmon_kmer)i %(salmon_index_options)s -t %(infile)s -i %(outfile)s
     '''
 
     P.run(statement)
@@ -556,13 +554,13 @@ def buildSailfishIndex(infile, outfile):
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
-    rm -rf %(outfile)s;
+    rm -rf %(outfile)s &&
     sailfish index --transcripts=%(infile)s --out=%(outfile)s
     --kmerSize=%(sailfish_kmer)s
     %(sailfish_index_options)s
     '''
 
-    P.run(statement)
+    P.run(statement, job_condaenv="sailfish")
 
 
 @originate("transcript2geneMap.tsv")
@@ -1531,22 +1529,6 @@ def expressionSummaryPlots(infiles, logfiles):
          loadNormalisedExpression,)
 def full():
     ''' collects DE tasks and cufflinks transcript build'''
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 def main(argv=None):

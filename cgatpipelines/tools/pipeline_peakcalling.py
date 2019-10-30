@@ -252,7 +252,6 @@ import cgatpipelines.tasks.mappingqc as mappingqc
 import cgatpipelines.tasks.peakcalling as peakcalling
 import cgat.BamTools.bamtools as Bamtools
 import cgatcore.database as DB
-from cgatpipelines.report import run_report
 
 #########################################################################
 # Load PARAMS Dictionary from Pipeline.innni file options ###############
@@ -320,7 +319,6 @@ else:
 ########################################################################
 # Check if reads are paired end
 ########################################################################
-
 if CHIPBAMS and Bamtools.is_paired(CHIPBAMS[0]):
     PARAMS['paired_end'] = True
 else:
@@ -375,7 +373,9 @@ def filterInputBAMs(infile, outfiles):
                                    PARAMS['filters_strip'],
                                    PARAMS['filters_qual'],
                                    PARAMS['filters_contigs_to_remove'],
-                                   PARAMS['filters_keepint'])
+                                   PARAMS['filters_keepint'],
+                                   PARAMS['filters_memory'],
+                                   PARAMS['filters_picard_options'])
 
 
 @follows(mkdir("filtered_bams.dir"))
@@ -403,7 +403,9 @@ def filterChipBAMs(infile, outfiles):
                                    PARAMS['filters_strip'],
                                    PARAMS['filters_qual'],
                                    PARAMS['filters_contigs_to_remove'],
-                                   PARAMS['filters_keepint'])
+                                   PARAMS['filters_keepint'],
+                                   PARAMS['filters_memory'],
+                                   PARAMS['filters_picard_options'])
 
 
 # ############################################################################
@@ -610,9 +612,9 @@ def buildBigWig(infile, outfile):
     -g %(contig_sizes)s
     -bg
     -scale %(scale)f
-    > %(tmpfile)s;
-    sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s;
-    bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s;
+    > %(tmpfile)s &&
+    sort -k1,1 -k2,2n -o %(tmpfile)s %(tmpfile)s &&
+    bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s &&
     rm -f %(tmpfile)s
     '''
     P.run(statement)
@@ -1643,37 +1645,10 @@ def makeCHIPQCInputTables(infiles, outfiles):
                     tab['Tissue'] + ".tsv")
     tab.to_csv(outfiles[1], sep="\t", index=None)
 
-# TODO
-# @follows(mkdir("ChIPQC.dir"))
-# @transform(makeCHIPQCInputTable,regex("(.*)_(.*).tsv"), r'ChIPQC.dir/\1.pdf')
-# def runCHIPQC(infiles, outfiles):
-#    R('''''')
-
 
 @follows(filtering, peakcalling_tasks, IDR, buildBigWig)
 def full():
     ''' runs entire pipeline '''
-
-
-###############################################################
-# Report functions
-###############################################################
-
-
-@follows(mkdir("report"))
-def build_report():
-    '''build report from scratch.'''
-
-    E.info("starting documentation build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating documentation")
-    run_report(clean=False)
 
 
 ###############################################################

@@ -1394,7 +1394,7 @@ def characteriseTranscripts(infile, outfile):
 
     statement = '''
     cat %(infile)s | cgat fasta2table
-    --split-fasta-identifier --section=na,dn,length -v 0
+    --split-fasta-identifier --section=na;dn;length -v 0
     | gzip > %(outfile)s'''
 
     P.run(statement)

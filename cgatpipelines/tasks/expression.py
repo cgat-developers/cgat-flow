@@ -47,6 +47,7 @@ To do:
 
 '''
 
+import os
 import math
 import numpy
 import sys
@@ -66,8 +67,11 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
-from rpy2.rinterface_lib.embedded import RRuntimeError
-import os
+
+try:
+    from rpy2.rinterface import RRuntimeError
+except ImportError:
+    from rpy2.rinterface_lib.embedded import RRuntimeError
 
 try:
     import cgatcore.experiment as E

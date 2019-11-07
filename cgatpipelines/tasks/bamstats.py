@@ -719,9 +719,11 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
     if len(xfiles) == 0:
         E.warn("no files for %s" % tablename)
         return
+
     header = ",".join([os.path.basename(x)
                        for x in xfiles])
     filenames = " ".join(["%s.%s" % (x, suffix) for x in xfiles])
+
     # there might be a variable number of columns in the tables
     # only take the first ignoring the rest
 

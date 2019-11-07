@@ -84,7 +84,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run(statement, job_memory=picardmem)
+    P.run(statement)
 
 
 def addPseudoSequenceQuality(infile, outfile):

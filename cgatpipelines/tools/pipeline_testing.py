@@ -219,10 +219,9 @@ def setupTests(infile, outfile):
 
     statement = (
         "(cd %(track)s.dir; "
-        "cgatflow %(pipeline_name)s "
+        "cgatflow %(pipeline_name)s config"
         "%(pipeline_options)s "
         "%(workflow_options)s "
-        "config "
         "2> %(outfile)s.stderr "
         "1> %(outfile)s.log)")
     P.run(statement)
@@ -303,8 +302,8 @@ def run_reports(infile, outfile):
 
     statement = '''
     cd %(track)s.dir &&
-    xvfb-run -d cgatflow %(pipeline_name)s
-    %(pipeline_options)s %(workflow_options)s make build_report
+    xvfb-run -d cgatflow %(pipeline_name)s make build_report
+    %(pipeline_options)s %(workflow_options)s 
     -L ../%(outfile)s
     -S ../%(outfile)s.stdout
     -E ../%(outfile)s.stderr

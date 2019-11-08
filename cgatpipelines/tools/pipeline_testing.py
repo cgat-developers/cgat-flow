@@ -219,7 +219,7 @@ def setupTests(infile, outfile):
 
     statement = (
         "(cd %(track)s.dir; "
-        "cgatflow %(pipeline_name)s config"
+        "cgatflow %(pipeline_name)s config "
         "%(pipeline_options)s "
         "%(workflow_options)s "
         "2> %(outfile)s.stderr "

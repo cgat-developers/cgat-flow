@@ -158,10 +158,10 @@ is_env_enabled() {
     if [[ $? -eq 0 ]] ; then
         # conda is available
         ENV_PATH=$(dirname $(dirname $CONDA_PATH))
-	stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
-	if [[ $? -eq 0 ]] ; then
+        stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
+        if [[ $? -eq 0 ]] ; then
             export ENV_ENABLED=1
-	fi
+        fi
     else
         # conda is not available
         report_error " Conda can't be found! "
@@ -172,6 +172,7 @@ is_env_enabled() {
     # enable error checking again
     set -e
 }
+
 
 # setup environment variables
 setup_env_vars() {

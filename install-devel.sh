@@ -133,30 +133,38 @@ get_cgat_env() {
 
 } # get_cgat_env
 
-# check whether the 'cgat-flow' conda environment is enabled or not
+
+# check whether the 'cgat-flow' conda environment is enabled
+# and try to enable it if not
 is_env_enabled() {
     # disable error checking
     set +e
 
-    # store the result
-    ENV_ENABLED=0
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -ne 0 ]] ; then
+        # conda is not available
+        get_cgat_env
+        source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
+    fi
 
     # is conda available?
     CONDA_PATH=$(which conda)
 
     if [[ $? -eq 0 ]] ; then
+        # conda is available
         ENV_PATH=$(dirname $(dirname $CONDA_PATH))
-	stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
-	if [[ $? -eq 0 ]] ; then
-            export ENV_ENABLED=1
-	fi
+        stat ${ENV_PATH}/envs/cgat-flow >& /dev/null
+    else
+        # conda is not available
+        report_error " Conda can't be found! "
     fi
-
-    export ENV_ENABLED
 
     # enable error checking again
     set -e
 }
+
 
 # setup environment variables
 setup_env_vars() {
@@ -435,7 +443,6 @@ install_pipeline_deps() {
     
     # activate cgat environment
     is_env_enabled
-    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
     
     log "install pipeline deps"
 
@@ -606,7 +613,6 @@ conda_test() {
 
         # activate cgat environment
         is_env_enabled
-        [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
 	# show conda environment used for testing
 	log "conda env export"
@@ -656,7 +662,6 @@ conda_test() {
 
             # activate cgat environment
             is_env_enabled
-            [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
             # show conda environment used for testing
             log "conda env export"
@@ -720,7 +725,6 @@ conda_update() {
 
     # activate cgat environment
     is_env_enabled
-    [[ ! ${ENV_ENABLED} ]] && conda activate ${CONDA_INSTALL_ENV}
 
     conda update --all
 

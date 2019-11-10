@@ -531,6 +531,11 @@ def renderMultiqc(infile):
     P.run(statement)
 
 
+@follows(renderMultiqc)
+def build_report():
+    pass
+
+
 def main(argv=None):
     P.main(argv)
 

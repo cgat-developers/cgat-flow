@@ -323,6 +323,8 @@ conda_install() {
     install_extra_deps
 
     # install all other pipeline dependencies
+    # this step has to be done here, see:
+    # https://github.com/cgat-developers/cgat-flow/pull/119
     if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
         install_pipeline_deps
     fi

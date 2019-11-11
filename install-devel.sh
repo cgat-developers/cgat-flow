@@ -161,9 +161,6 @@ is_env_enabled() {
         report_error " Conda can't be found! "
     fi
 
-    # troubleshooting
-    conda env list
-
     # enable error checking again
     set -e
 }
@@ -322,11 +319,15 @@ conda_install() {
     # activate cgat environment
     conda activate ${CONDA_INSTALL_ENV}
 
-    log "installing CGAT code into conda environment"
-    DEV_RESULT=0
-
     # install extra deps
     install_extra_deps
+
+    # install all other pipeline dependencies
+    # this step has to be done here, see:
+    # https://github.com/cgat-developers/cgat-flow/pull/119
+    if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
+        install_pipeline_deps
+    fi
 
     # Set up other environment variables
     #setup_env_vars
@@ -337,91 +338,8 @@ conda_install() {
     # install cgat-apps
     install_cgat_apps
 
-    # make sure you are in the CGAT_HOME folder
-    cd $CGAT_HOME
-
-    # download the code out of jenkins
-    if [[ ${CLONE_FROM_REPO} -eq 1 ]] ; then
-
-	if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
-	    # get the latest version from Git Hub in zip format
-	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$CGATFLOW_BRANCH.zip
-	    unzip $CGATFLOW_BRANCH.zip
-	    rm $CGATFLOW_BRANCH.zip
-	    if [[ ${RELEASE} ]] ; then
-		NEW_NAME=`echo $CGATFLOW_BRANCH | sed 's/^v//g'`
-		mv cgat-flow-$NEW_NAME/ $CGATFLOW_REPO
-	    else
-		mv cgat-flow-$CGATFLOW_BRANCH/ $CGATFLOW_REPO
-	    fi
-	elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
-	    # get latest version from Git Hub with git clone
-	    git clone --branch=$CGATFLOW_BRANCH https://github.com/cgat-developers/cgat-flow.git $CGATFLOW_REPO
-	elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
-	    # get latest version from Git Hub with git clone
-	    git clone --branch=$CGATFLOW_BRANCH git@github.com:cgat-developers/cgat-flow.git $CGATFLOW_REPO
-	else
-	    report_error " Unknown download type for CGAT code... "
-	fi
-
-	# make sure you are in the CGAT_HOME/cgat-flow folder
-	cd $CGATFLOW_REPO
-    else
-	log "using existing cgat-flow repo in $CGATFLOW_REPO"
-	cd "$CGATFLOW_REPO"
-    fi
-
-    # Python preparation
-    log "linking cgat-flow code into conda environment"
-    sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
-    sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
-    python setup.py develop
-
-    if [[ $? -ne 0 ]] ; then
-	echo
-	echo " There was a problem doing: 'python setup.py develop' "
-	echo " Installation did not finish properly. "
-	echo 
-	echo " Please submit this issue via Git Hub: "
-	echo " https://github.com/cgat-developers/cgat-flow/issues "
-	echo
-
-	print_env_vars
-
-    fi # if-$?
-
-    # revert setup.py if downloaded with git
-    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
-
-    # environment pinning
-    # python scripts/conda.py
-
-    # check whether conda create went fine
-    if [[ $DEV_RESULT -ne 0 ]] ; then
-	echo
-	echo " There was a problem installing the code with conda. "
-	echo " Installation did not finish properly. "
-	echo
-	echo " Please submit this issue via Git Hub: "
-	echo " https://github.com/cgat-developers/cgat-flow/issues "
-	echo
-
-	print_env_vars
-
-    else
-	clear
-	echo 
-	echo " The code successfully installed!"
-	echo
-	echo " To activate the CGAT environment type: "
-	echo " $ source $CONDA_INSTALL_DIR/etc/profile.d/conda.sh"
-	echo " $ conda activate base"
-	echo " $ conda activate $CONDA_INSTALL_ENV"
-	echo
-	echo " To deactivate the environment, use:"
-	echo " $ conda deactivate"
-	echo
-    fi # if-$ conda create
+    # install cgat-flow
+    install_cgat_flow
 
 } # conda install
 
@@ -486,6 +404,89 @@ install_extra_envs() {
     conda env update --file pipelines-salmon.yml
     
 }
+
+# helper function to install cgat-flow
+install_cgat_flow() {
+
+    log "install cgat flow"
+
+    OLDWD=`pwd`
+    cd $CGAT_HOME
+
+    # download the code out of jenkins
+    if [[ ${CLONE_FROM_REPO} -eq 1 ]] ; then
+
+	if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
+	    # get the latest version from Git Hub in zip format
+	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$CGATFLOW_BRANCH.zip
+	    unzip $CGATFLOW_BRANCH.zip
+	    rm $CGATFLOW_BRANCH.zip
+	    if [[ ${RELEASE} ]] ; then
+		NEW_NAME=`echo $CGATFLOW_BRANCH | sed 's/^v//g'`
+		mv cgat-flow-$NEW_NAME/ $CGATFLOW_REPO
+	    else
+		mv cgat-flow-$CGATFLOW_BRANCH/ $CGATFLOW_REPO
+	    fi
+	elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$CGATFLOW_BRANCH https://github.com/cgat-developers/cgat-flow.git $CGATFLOW_REPO
+	elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$CGATFLOW_BRANCH git@github.com:cgat-developers/cgat-flow.git $CGATFLOW_REPO
+	else
+	    report_error " Unknown download type for CGAT code... "
+	fi
+
+	# make sure you are in the CGAT_HOME/cgat-flow folder
+	cd $CGATFLOW_REPO
+    else
+	log "using existing cgat-flow repo in $CGATFLOW_REPO"
+	cd "$CGATFLOW_REPO"
+    fi
+
+    # Python preparation
+    log "linking cgat-flow code into conda environment"
+    sed -i'' -e '/REPO_REQUIREMENT/,/pass/d' setup.py
+    sed -i'' -e '/# dependencies/,/dependency_links=dependency_links,/d' setup.py
+    python setup.py develop
+
+    if [[ $? -ne 0 ]] ; then
+        echo
+        echo " There was a problem doing: 'python setup.py develop' "
+        echo " Installation did not finish properly. "
+        echo
+        echo " Please submit this issue via Git Hub: "
+        echo " https://github.com/cgat-developers/cgat-flow/issues "
+        echo
+
+        print_env_vars
+
+    else
+
+        clear
+        echo
+        echo " The code successfully installed!"
+        echo
+        echo " To activate the CGAT environment type: "
+        echo " $ source $CONDA_INSTALL_DIR/etc/profile.d/conda.sh"
+        echo " $ conda activate base"
+        echo " $ conda activate $CONDA_INSTALL_ENV"
+        echo
+        echo " To deactivate the environment, use:"
+        echo " $ conda deactivate"
+        echo
+    fi # if-$?
+
+    # revert setup.py if downloaded with git
+    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
+
+    # environment pinning
+    # python scripts/conda.py
+
+    # go back to old working directory
+    cd $OLDWD
+
+} # install_cgat_flow
 
 
 # helper function to install cgat-apps
@@ -1207,10 +1208,6 @@ fi
 
 if [[ $INSTALL_DEVEL ]] ; then
     conda_install
-fi
-
-if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
-    install_pipeline_deps
 fi
 
 if [[ $RUN_TESTS ]] ; then

@@ -322,6 +322,11 @@ conda_install() {
     # install extra deps
     install_extra_deps
 
+    # install all other pipeline dependencies
+    if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
+        install_pipeline_deps
+    fi
+
     # Set up other environment variables
     #setup_env_vars
 
@@ -1201,10 +1206,6 @@ fi
 
 if [[ $INSTALL_DEVEL ]] ; then
     conda_install
-fi
-
-if [[ $INSTALL_PIPELINE_DEPENDENCIES -eq 1 ]]; then
-    install_pipeline_deps
 fi
 
 if [[ $RUN_TESTS ]] ; then

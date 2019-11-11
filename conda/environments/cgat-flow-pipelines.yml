@@ -26,7 +26,7 @@ dependencies:
 - pybedtools
 - pysam
 - drmaa
-- rpy2
+- rpy2 <= 2.9
 - ruffus
 - scikit-learn
 - scipy

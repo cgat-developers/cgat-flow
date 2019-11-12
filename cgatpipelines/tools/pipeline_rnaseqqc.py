@@ -15,11 +15,11 @@ data. The output of the pipeline can be used to filter out problematic
 cells in a standard RNA seq experiment. For single cell RNA seq the
 pipeline_rnaseqqc.py should be run instead.
 
-Sailfish is used to perform rapid alignment-free transcript
+Salmon is used to perform rapid alignment-free transcript
 quantification and hisat is used to align a subset of reads to the
-reference genome.
+reference genome provided by the genesets pipeline.
 
-From the sailfish and hisat output, a number of analyses are
+From the salmon and hisat output, a number of analyses are
 performed, either within the pipeline or during the reporting:
 
 - Proportion of reads aligned to annotated features
@@ -123,7 +123,7 @@ Requirements:
 +---------+------------+------------------------------------------------+
 |*Program*|*Version*   |*Purpose*                                       |
 +---------+------------+------------------------------------------------+
-|sailfish |>=0.9.0     |pseudo alignment                               |
+|salmon   |>=0.9.0     |pseudo alignment                               |
 +---------+------------+------------------------------------------------+
 |hisat    |>=0.1.6     |read mapping                                   |
 +---------+------------+------------------------------------------------+
@@ -147,11 +147,11 @@ Glossary
    hisat
       hisat_- a read mapper used in the pipeline because it is
               relatively quick to run
-   sailfish
-      sailfish_-a pseudoaligner that is used for quantifying the
+   salmon
+      salmon_-a pseudoaligner that is used for quantifying the
                 abundance transcripts
 .._hisat: http://ccb.jhu.edu/software/hisat/manual.shtml
-.. sailfish: https://github.com/kingsfordgroup/sailfish
+.. salmon: https://github.com/
 
 Code
 ====
@@ -166,7 +166,8 @@ Code
 
 # import ruffus
 from ruffus import transform, suffix, regex, merge, \
-    follows, mkdir, originate, add_inputs, jobs_limit, split
+    follows, mkdir, originate, add_inputs, jobs_limit, split, \
+    subdivide, formatter, collate
 
 # import useful standard python modules
 import sys
@@ -190,6 +191,7 @@ import cgatcore.iotools as iotools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.rnaseq as rnaseq
 from cgatcore import pipeline as P
 
 import json
@@ -283,160 +285,8 @@ def countReads(infile, outfile):
 
 
 @follows(mkdir("geneset.dir"))
-@merge(PARAMS["annotations_interface_geneset_all_gtf"],
-       "geneset.dir/reference.gtf.gz")
-def buildReferenceGeneSet(infile, outfile):
-    ''' filter full gene set and add attributes to create the reference gene set
-
-    Performs merge and filter operations:
-       * Merge exons separated by small introns (< 5bp).
-       * Remove transcripts with very long introns (`max_intron_size`)
-       * Remove transcripts located on contigs to be ignored (`remove_contigs`)
-         (usually: chrM, _random, ...)
-       * (Optional) Remove transcripts overlapping repetitive sequences
-         (`rna_file`)
-
-    This preserves all features in a gtf file (exon, CDS, ...)
-
-    Runs cuffcompare with `infile` against itself to add
-    attributes such as p_id and tss_id.
-
-    Parameters
-    ----------
-    infile : str
-       Input filename in :term:`gtf` format
-    outfile : str
-       Input filename in :term:`gtf` format
-    annotations_interface_rna_gff : str
-       :term:`PARAMS`. Filename of :term:`gtf` file containing
-       repetitive rna annotations
-    genome_dir : str
-       :term:`PARAMS`. Directory of :term:fasta formatted files
-    genome : str
-       :term:`PARAMS`. Genome name (e.g hg38)
-    '''
-
-    if "geneset_remove_repetetive_rna" in PARAMS:
-        rna_file = PARAMS["annotations_interface_rna_gff"]
-    else:
-        rna_file = None
-
-    mapping.mergeAndFilterGTF(
-        infile,
-        outfile,
-        "%s.removed.gz" % outfile,
-        genome=os.path.join(PARAMS["genome_dir"], PARAMS["genome"]),
-        max_intron_size=PARAMS["max_intron_size"],
-        remove_contigs=PARAMS["geneset_remove_contigs"],
-        rna_file=rna_file)
-
-
-@follows(mkdir("geneset.dir"))
-@originate("geneset.dir/protein_coding_gene_ids.tsv")
-def identifyProteinCodingGenes(outfile):
-    '''Output a list of proteing coding gene identifiers
-
-    Identify protein coding genes from the annotation database table
-    and output the gene identifiers
-
-    Parameters
-    ----------
-    oufile : str
-       Output file of :term:`gtf` format
-    annotations_interface_table_gene_info : str
-       :term:`PARAMS`. Database table name for gene information
-
-    '''
-    dbh = P.connect()
-
-    table = os.path.basename(PARAMS["annotations_interface_table_gene_info"])
-
-    select = dbh.execute("""SELECT DISTINCT gene_id
-    FROM annotations.%(table)s
-    WHERE gene_biotype = 'protein_coding'""" % locals())
-
-    with iotools.open_file(outfile, "w") as outf:
-        outf.write("gene_id\n")
-        outf.write("\n".join((x[0] for x in select)) + "\n")
-
-
-@transform(buildReferenceGeneSet,
-           suffix("reference.gtf.gz"),
-           add_inputs(identifyProteinCodingGenes),
-           "refcoding.gtf.gz")
-def buildCodingGeneSet(infiles, outfile):
-    '''build a gene set with only protein coding transcripts.
-
-    Retain the genes from the gene_tsv file in the outfile geneset.
-    The gene set will contain all transcripts of protein coding genes,
-    including processed transcripts. The gene set includes UTR and
-    CDS.
-
-    Parameters
-    ----------
-    infiles : list
-    infile: str
-       Input filename in :term:`gtf` format
-
-    genes_ts: str
-       Input filename in :term:`tsv` format
-
-    outfile: str
-       Output filename in :term:`gtf` format
-
-    '''
-
-    infile, genes_tsv = infiles
-
-    statement = '''
-    zcat %(infile)s
-    | cgat gtf2gtf
-    --method=filter
-    --filter-method=gene
-    --map-tsv-file=%(genes_tsv)s
-    --log=%(outfile)s.log
-    | gzip
-    > %(outfile)s
-    '''
-    P.run(statement, job_memory="8G")
-
-
-@follows(mkdir("geneset.dir"))
-@merge(PARAMS["annotations_interface_geneset_all_gtf"],
-       "geneset.dir/coding_exons.gtf.gz")
-def buildCodingExons(infile, outfile):
-    '''compile the set of protein coding exons.
-
-    Filter protein coding transcripts
-    This set is used for splice-site validation
-
-    Parameters
-    ----------
-    infile : str
-       Input filename in :term:`gtf` format
-    outfile: str
-       Output filename in :term:`gtf` format
-
-    '''
-
-    statement = '''
-    zcat %(infile)s
-    | awk '$3 == "CDS"'
-    | cgat gtf2gtf
-    --method=filter
-    --filter-method=proteincoding
-    --log=%(outfile)s.log
-    | awk -v OFS="\\t" -v FS="\\t" '{$3="exon"; print}'
-    | cgat gtf2gtf
-    --method=merge-exons
-    --log=%(outfile)s.log
-    | gzip
-    > %(outfile)s
-    '''
-    P.run(statement)
-
-
-@transform(buildCodingGeneSet, suffix(".gtf.gz"), ".junctions")
+@transform(PARAMS["annotations_interface_geneset_coding_exons_gtf"],
+           regex("(\S+).gtf.gz"), "geneset.dir/refcoding.junctions")
 def buildJunctions(infile, outfile):
     '''build file with splice junctions from gtf file.
 
@@ -487,7 +337,7 @@ def buildJunctions(infile, outfile):
     P.run(statement)
 
 
-@transform(buildCodingGeneSet,
+@transform(PARAMS["annotations_interface_geneset_coding_exons_gtf"],
            suffix(".gtf.gz"),
            ".fasta")
 def buildTranscriptFasta(infile, outfile):
@@ -508,9 +358,9 @@ def buildTranscriptFasta(infile, outfile):
     P.run(statement)
 
 
-@transform(buildCodingGeneSet,
-           suffix(".gtf.gz"),
-           ".tsv")
+@transform(PARAMS["annotations_interface_geneset_coding_exons_gtf"],
+            regex("(\S+).gtf.gz"),
+           "geneset.dir/transcript2gene.tsv")
 def buildTranscriptGeneMap(infile, outfile):
     """build a map of transcript ids to gene ids."""
 
@@ -888,95 +738,82 @@ def loadAltContextStats(infiles, outfile):
 # alignment-free quantification
 ###################################################################
 
-
-@follows(mkdir("sailfish.dir"))
+@follows(mkdir("salmon.dir"))
 @transform(buildTranscriptFasta,
            regex("(\S+)"),
-           "sailfish.dir/transcripts.sailfish.index")
-def indexForSailfish(infile, outfile):
-    '''create a sailfish index'''
+           "salmon.dir/transcripts.salmon.index")
+def indexForSalmon(infile, outfile):
+    '''create a salmon index'''
 
     statement = '''
-    sailfish index --transcripts=%(infile)s --out=%(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="unlimited", job_condaenv="sailfish")
+    salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
+    P.run(statement, job_memory="8G", job_condaenv="salmon")
 
 
-@transform(SEQUENCEFILES,
-           SEQUENCEFILES_REGEX,
-           add_inputs(indexForSailfish,
-                      buildCodingGeneSet,
-                      buildTranscriptGeneMap),
-           r"sailfish.dir/\2/quant.sf")
-def runSailfish(infiles, outfile):
-    '''quantify abundance'''
+@collate(SEQUENCEFILES,
+         SEQUENCEFILES_REGEX,
+         add_inputs(indexForSalmon,
+                    buildTranscriptGeneMap),
+           [r"salmon.dir/\2/lib_format_counts.json",
+            r"salmon.dir/\2/transcripts.tsv.gz",
+            r"salmon.dir/\2/genes.tsv.gz"])
+def runSalmon(infiles, outfiles):
+    '''quantify abundance using Salmon'''
 
-    job_threads = PARAMS["sailfish_threads"]
-    job_memory = PARAMS["sailfish_memory"]
+    fastqfile = [x[0] for x in infiles]
+    index = infiles[0][1]
+    transcript2geneMap = infiles[0][2]
+    libformat, transcript_outfile, gene_outfile = outfiles
 
-    infile, index, geneset, transcript_map = infiles
+    Quantifier = rnaseq.SalmonQuantifier(
+        infile=fastqfile,
+        transcript_outfile=transcript_outfile,
+        gene_outfile=gene_outfile,
+        annotations=index,
+        job_threads=PARAMS["salmon_threads"],
+        job_memory=PARAMS["salmon_memory"],
+        options=PARAMS["salmon_options"],
+        bootstrap=1,
+        libtype='A',
+        kmer=PARAMS['salmon_kmer'],
+        transcript2geneMap=transcript2geneMap)
 
-    sailfish_bootstrap = 1
-    sailfish_libtype = PARAMS["sailfish_libtype"]
-    sailfish_options = PARAMS["sailfish_options"]
-    sailfish_options += " --geneMap %s" % transcript_map
-
-    m = mapping.Sailfish()
-
-    statement = m.build((infile,), outfile)
-
-    P.run(statement, job_condaenv="sailfish")
+    Quantifier.run_all()
 
 
-@split(runSailfish,
-       ["sailfish.dir/sailfish_transcripts.tsv.gz",
-        "sailfish.dir/sailfish_genes.tsv.gz"])
-def mergeSailfishResults(infiles, outfiles):
-    ''' concatenate sailfish expression estimates from each sample'''
+@collate(runSalmon,
+         regex("(\S+).dir/(\S+)/transcripts.tsv.gz"),
+         [r"\1.dir/transcripts.tsv.gz",
+          r"\1.dir/genes.tsv.gz"])
+def mergeSalmonResults(infiles, outfiles):
+    ''' merge counts for alignment-based methods'''
 
-    s_infiles = " " .join(sorted(infiles))
-    outfile_transcripts, outfile_genes = outfiles
+    transcript_infiles = [x[1] for x in infiles]
+    gene_infiles = [x[2] for x in infiles]
 
-    statement = """
-    cat %(s_infiles)s
-    | awk -v OFS="\\t"
-    '/^Name/
-    { sample_id+=1;
-      if (sample_id == 1) {
-         gsub(/Name/, "transcript_id");
-         printf("sample_id\\t%%s\\n", $0)};
-      next;}
-    !/^#/
-        {printf("%%i\\t%%s\\n", sample_id, $0)}'
-    | gzip
-    > %(outfile_transcripts)s
-    """
-    P.run(statement)
+    transcript_outfile, gene_outfile = outfiles
 
-    s_infiles = " ".join(
-        [re.sub("quant.sf", "quant.genes.sf", x) for x in infiles])
+    def mergeinfiles(infiles, outfile):
+        final_df = pd.DataFrame()
 
-    statement = """
-    cat %(s_infiles)s
-    | awk -v OFS="\\t"
-    '/^Name/
-    { sample_id+=1;
-      if (sample_id == 1) {
-         gsub(/Name/, "gene_id");
-         printf("sample_id\\t%%s\\n", $0)};
-      next;}
-    !/^#/
-        {printf("%%i\\t%%s\\n", sample_id, $0)}'
-    | gzip
-    > %(outfile_genes)s
-    """
-    P.run(statement)
+        for infile in infiles:
+            tmp_df = pd.read_table(infile, sep="\t", index_col=0)
+            final_df = final_df.merge(
+                tmp_df, how="outer",  left_index=True, right_index=True)
+
+        final_df = final_df.round()
+        final_df.sort_index(inplace=True)
+        final_df.to_csv(outfile, sep="\t", compression="gzip")
+
+    mergeinfiles(transcript_infiles, transcript_outfile)
+    mergeinfiles(gene_infiles, gene_outfile)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(mergeSailfishResults,
+@transform(mergeSalmonResults,
            suffix(".tsv.gz"),
            ".load")
-def loadSailfishResults(infile, outfile):
+def loadSalmonResults(infile, outfile):
     P.load(infile, outfile,
            options="--add-index=sample_id "
            "--add-index=gene_id "
@@ -1040,24 +877,24 @@ def loadPicardRnaSeqMetrics(infiles, outfiles):
            regex("fastq.dir/highest_counts_subset_(\d+)."
                  "(fastq.1.gz|fastq.gz|fa.gz|sra|"
                  "csfasta.gz|csfasta.F3.gz|export.txt.gz)"),
-           add_inputs(indexForSailfish,
-                      buildCodingGeneSet,
+           add_inputs(indexForSalmon,
+                      PARAMS["annotations_interface_geneset_coding_exons_gtf"],
                       buildTranscriptGeneMap),
-           r"sailfish.dir/highest_counts_subset_\1/quant.sf")
-def runSailfishSaturation(infiles, outfile):
+           r"salmon.dir/highest_counts_subset_\1/quant.sf")
+def runSalmonSaturation(infiles, outfile):
     '''quantify abundance of transcripts with increasing subsets of the data'''
-
-    job_threads = PARAMS["sailfish_threads"]
-    job_memory = PARAMS["sailfish_memory"]
 
     infile, index, geneset, transcript_map = infiles
 
-    sailfish_bootstrap = 20
-    sailfish_libtype = PARAMS["sailfish_libtype"]
-    sailfish_options = PARAMS["sailfish_options"]
-    sailfish_options += " --geneMap %s" % transcript_map
+    job_threads = PARAMS["salmon_threads"]
+    job_memory = PARAMS["salmon_memory"]
 
-    m = mapping.Sailfish()
+    salmon_bootstrap = 20
+    salmon_libtype = 'A'
+    salmon_options = PARAMS["salmon_options"]
+    salmon_options += " --geneMap %s" % transcript_map
+
+    m = mapping.Salmon()
 
     statement = m.build((infile,), outfile)
 
@@ -1065,10 +902,10 @@ def runSailfishSaturation(infiles, outfile):
 
 
 @jobs_limit(1, "R")
-@mkdir("sailfish.dir/plots.dir")
-@merge(runSailfishSaturation,
-       "sailfish.dir/plots.dir/saturation_plots.sentinel")
-def plotSailfishSaturation(infiles, outfile):
+@mkdir("salmon.dir/plots.dir")
+@merge(runSalmonSaturation,
+       "salmon.dir/plots.dir/saturation_plots.sentinel")
+def plotSalmonSaturation(infiles, outfile):
     ''' Plot the relationship between sample sequencing depth and
     quantification accuracy'''
 
@@ -1089,8 +926,8 @@ def plotSailfishSaturation(infiles, outfile):
 
     Path = "%(quant_dir)s"
 
-    # following code to read Sailfish binary files borrows from Rob
-    # Patro's Wasabi R package for making sailfish/salmon output
+    # following code to read Salmon binary files borrows from Rob
+    # Patro's Wasabi R package for making salmon output
     # compatable with sleuth
     minfo <- rjson::fromJSON(file=file.path(
       Path, 'highest_counts_subset_9', "aux", "meta_info.json"))
@@ -1173,7 +1010,7 @@ def plotSailfishSaturation(infiles, outfile):
     point_df = read.table(
       file.path(Path, paste0('highest_counts_subset_', ix), "quant.sf"),
       sep="\t", header=T, row.names=1)
-
+`
     tpm_est[[paste0("sample_", ix)]] = (
       abs(point_df$TPM - ref_point_df$TPM) / ref_point_df$TPM)
     }
@@ -1219,7 +1056,7 @@ def plotSailfishSaturation(infiles, outfile):
 @follows(mkdir("transcriptprofiles.dir"))
 @transform(mapReadsWithHisat,
            regex("hisat.dir/(\S+).hisat.bam"),
-           add_inputs(buildCodingExons),
+           add_inputs(PARAMS["annotations_interface_geneset_coding_exons_gtf"]),
            r"transcriptprofiles.dir/\1.transcriptprofile.gz")
 def buildTranscriptProfiles(infiles, outfile):
     '''build gene coverage profiles
@@ -1402,7 +1239,7 @@ def characteriseTranscripts(infile, outfile):
 
 @transform(characteriseTranscripts,
            regex("transcripts_attributes.tsv.gz"),
-           add_inputs(mergeSailfishResults),
+           add_inputs(mergeSalmonResults),
            "bias_binned_means.tsv")
 def summariseBias(infiles, outfile):
 
@@ -1496,9 +1333,9 @@ def loadBias(infile, outfile):
 ###################################################################
 
 
-@mkdir("sailfish.dir/plots.dir")
-@follows(loadSailfishResults, loadMetaInformation)
-@originate("sailfish.dir/plots.dir/top_expressed.sentinel")
+@mkdir("salmon.dir/plots.dir")
+@follows(loadSalmonResults, loadMetaInformation)
+@originate("salmon.dir/plots.dir/top_expressed.sentinel")
 def plotTopGenesHeatmap(outfile):
     '''extract the top 1000 genes (by expression) for each sample and
     plot a heatmap of the intersection'''
@@ -1509,7 +1346,7 @@ def plotTopGenesHeatmap(outfile):
 
     exp_select_cmd = '''
     SELECT TPM, gene_id, sample_name
-    FROM sailfish_genes AS A
+    FROM salmon_genes AS A
     JOIN samples AS B
     ON A.sample_id = B.id
     '''
@@ -1615,10 +1452,10 @@ def plotTopGenesHeatmap(outfile):
 # Plot expression distribution
 ###################################################################
 
-@mkdir("sailfish.dir/plots.dir")
+@mkdir("salmon.dir/plots.dir")
 @follows(loadMetaInformation,
-         loadSailfishResults)
-@originate("sailfish.dir/plots.dir/expression_distribution.sentinel")
+         loadSalmonResults)
+@originate("salmon.dir/plots.dir/expression_distribution.sentinel")
 def plotExpression(outfile):
     "Plot the per sample expression distibutions coloured by factor levels"
 
@@ -1631,7 +1468,7 @@ def plotExpression(outfile):
 
     statement = """
     SELECT sample_id, transcript_id, TPM
-    FROM sailfish_transcripts"""
+    FROM salmon_transcripts"""
 
     df = pd.read_sql(statement, dbh)
     
@@ -1679,42 +1516,6 @@ def plotExpression(outfile):
 ###################################################################
 # Run Salmon To Autodetect Strandedness
 ###################################################################
-
-
-@follows(mkdir("salmon.dir"))
-@transform(buildTranscriptFasta,
-           regex("(\S+)"),
-           "salmon.dir/transcripts.salmon.index")
-def indexForSalmon(infile, outfile):
-    '''create a salmon index'''
-
-    statement = '''
-    salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="8G", job_condaenv="salmon")
-
-
-@transform(SEQUENCEFILES,
-           SEQUENCEFILES_REGEX,
-           add_inputs(indexForSalmon,
-                      buildCodingGeneSet,
-                      buildTranscriptGeneMap),
-           r"salmon.dir/\2/lib_format_counts.json")
-def runSalmon(infiles, outfile):
-    '''quantify abundance using Salmon'''
-
-    job_threads = PARAMS["salmon_threads"]
-    job_memory = PARAMS["salmon_memory"]
-    infile, index, geneset, transcript_map = infiles
-    salmon_bootstrap = 1
-    salmon_libtype = 'A'
-    salmon_options = PARAMS["salmon_options"]
-
-    m = mapping.Salmon()
-
-    statement = m.build((infile,), outfile)
-
-    P.run(statement, job_memory="8G", job_condaenv="salmon")
-
 
 @merge(runSalmon, "strandedness.tsv")
 def checkStrandednessSalmon(infiles, outfile):
@@ -1793,12 +1594,12 @@ def plotStrandednessSalmon(infile, outfile):
 @follows(loadContextStats,
          loadBAMStats,
          loadTranscriptProfiles,
-         loadSailfishResults,
+         loadSalmonResults,
          loadMetaInformation,
          loadBias,
          loadPicardRnaSeqMetrics,
          loadAltContextStats,
-         plotSailfishSaturation,
+         plotSalmonSaturation,
          plotTopGenesHeatmap,
          plotExpression,
          plotStrandednessSalmon,

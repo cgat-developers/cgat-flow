@@ -1314,7 +1314,7 @@ def getSleuthNormExp(infiles, outfiles, quantifier):
     if quantifier == "kallisto":
         basename = "abundance.h5.tsv"
         column = "tpm"
-    elif quantifier == "salmon"
+    elif quantifier == "salmon":
         basename = "quant.sf"
         column = "TPM"
     else:

@@ -781,8 +781,8 @@ def runSalmon(infiles, outfiles):
     Quantifier.run_all()
 
 
-@collate(runSalmon,
-         regex("salmon.dir/(\S+)/transcripts.tsv.gz"),
+@subdivide(runSalmon,
+         regex(".*"),
          ["salmon.dir/transcripts.tsv.gz",
           "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
@@ -810,15 +810,11 @@ def mergeSalmonResults(infiles, outfiles):
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(mergeSalmonResults,
-           suffix(".tsv.gz"),
-           ".load")
+@collate(mergeSalmonResults,
+        regex(r"(.*).tsv.gz"),
+        r"\1.load")
 def loadSalmonResults(infile, outfile):
-    P.load(infile, outfile,
-           options="--add-index=sample_id "
-           "--add-index=gene_id "
-           "--add-index=transcript_id "
-           "--map=sample_id:int")
+    P.load(infile[0], outfile)
 
 ###################################################################
 # strand bias
@@ -877,14 +873,12 @@ def loadPicardRnaSeqMetrics(infiles, outfiles):
            regex("fastq.dir/highest_counts_subset_(\d+)."
                  "(fastq.1.gz|fastq.gz|fa.gz|sra|"
                  "csfasta.gz|csfasta.F3.gz|export.txt.gz)"),
-           add_inputs(indexForSalmon,
-                      PARAMS["annotations_interface_geneset_coding_exons_gtf"],
-                      buildTranscriptGeneMap),
+           add_inputs(indexForSalmon),
            r"salmon.dir/highest_counts_subset_\1/quant.sf")
 def runSalmonSaturation(infiles, outfile):
     '''quantify abundance of transcripts with increasing subsets of the data'''
-
-    infile, index, geneset, transcript_map = infiles
+    
+    infile, index = infiles
 
     job_threads = PARAMS["salmon_threads"]
     job_memory = PARAMS["salmon_memory"]
@@ -892,7 +886,6 @@ def runSalmonSaturation(infiles, outfile):
     salmon_bootstrap = 20
     salmon_libtype = 'A'
     salmon_options = PARAMS["salmon_options"]
-    salmon_options += " --geneMap %s" % transcript_map
 
     m = mapping.Salmon()
 
@@ -1345,10 +1338,7 @@ def plotTopGenesHeatmap(outfile):
     # pandas code should be changed into a tracker
 
     exp_select_cmd = '''
-    SELECT TPM, gene_id, sample_name
-    FROM salmon_genes AS A
-    JOIN samples AS B
-    ON A.sample_id = B.id
+    SELECT * FROM genes
     '''
 
     dbh = P.connect()
@@ -1365,27 +1355,22 @@ def plotTopGenesHeatmap(outfile):
     top_n = 1000
 
     factors_df = pd.read_sql(factors_select_cmd, dbh)
-
-    exp_df['TPM'] = exp_df['TPM'].astype(float)
-    exp_df_pivot = pd.pivot_table(exp_df, values=["TPM"],
-                                  index="gene_id",
-                                  columns="sample_name")
-
+   
     # extract the top genes per sample
     top_genes = {}
-    for col in exp_df_pivot.columns:
-        top_genes[col] = exp_df_pivot[col].sort_values(
+    for col in exp_df.columns:
+        top_genes[col] = exp_df[col].sort_values(
             ascending=False)[0:top_n].index
 
     # set up the empty df
     intersection_df = pd.DataFrame(
-        index=range(0, len(exp_df_pivot.columns) **
-                    2 - len(exp_df_pivot.columns)),
+        index=range(0, len(exp_df.columns) **
+                    2 - len(exp_df.columns)),
         columns=["sample1", "sample2", "intersection", "fraction"])
 
     # populate the df
     n = 0
-    for col1, col2 in itertools.combinations_with_replacement(exp_df_pivot.columns, 2):
+    for col1, col2 in itertools.combinations_with_replacement(exp_df.columns, 2):
         s1_genes = top_genes[col1]
         s2_genes = top_genes[col2]
         intersection = set(s1_genes).intersection(set(s2_genes))
@@ -1467,8 +1452,7 @@ def plotExpression(outfile):
     dbh = P.connect()
 
     statement = """
-    SELECT sample_id, transcript_id, TPM
-    FROM salmon_transcripts"""
+    SELECT * FROM transcripts"""
 
     df = pd.read_sql(statement, dbh)
     

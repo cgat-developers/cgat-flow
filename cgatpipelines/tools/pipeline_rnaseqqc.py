@@ -338,8 +338,8 @@ def buildJunctions(infile, outfile):
 
 
 @transform(PARAMS["annotations_interface_geneset_coding_exons_gtf"],
-           suffix(".gtf.gz"),
-           ".fasta")
+           regex("(\S+)"),           
+           "geneset.dir/refcoding.fasta")
 def buildTranscriptFasta(infile, outfile):
     """build geneset where all exons within a gene
     are merged.
@@ -782,9 +782,9 @@ def runSalmon(infiles, outfiles):
 
 
 @collate(runSalmon,
-         regex("(\S+).dir/(\S+)/transcripts.tsv.gz"),
-         [r"\1.dir/transcripts.tsv.gz",
-          r"\1.dir/genes.tsv.gz"])
+         regex("salmon.dir/(\S+)/transcripts.tsv.gz"),
+         ["salmon.dir/transcripts.tsv.gz",
+          "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
     ''' merge counts for alignment-based methods'''
 
@@ -1527,19 +1527,20 @@ def checkStrandednessSalmon(infiles, outfile):
     http://salmon.readthedocs.io/en/latest/library_type.html
     '''
     results = pd.DataFrame()
-    for infile in infiles:
-        j = json.load(open(infile, "r"))
+    strandfiles = [x[0] for x in infiles]
+    for strandfile in strandfiles:
+        j = json.load(open(strandfile, "r"))
         vals = list(j.values())
         cols = list(j.keys())
         D = pd.DataFrame(vals, index=cols).T
-        D['sample'] = infile.split("/")[-2]
+        D['sample'] = strandfile.split("/")[-2]
         results = results.append(D)
     results = results[["sample", "expected_format",
                        "compatible_fragment_ratio",
                        "num_compatible_fragments",
                        "num_assigned_fragments",
-                       "num_consistent_mappings",
-                       "num_inconsistent_mappings",
+                       "num_frags_with_consistent_mappings",
+                       "num_frags_with_inconsistent_or_orphan_mappings",
                        "MSF", "OSF", "ISF", "MSR",
                        "OSR", "ISR", "SF", "SR",
                        "MU", "OU", "IU", "U"]]

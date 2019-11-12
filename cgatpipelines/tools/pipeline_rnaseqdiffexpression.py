@@ -30,7 +30,6 @@ The pipeline performs the following:
      methods are implemented:
       * kallisto_
       * salmon_
-      * sailfish_
 
    * Perform differential expression analysis. The methods currently
      implemented are:
@@ -69,7 +68,6 @@ The quantification tools fall into two categories:
       The available tools are:
       * kallisto_
       * salmon_
-      * sailfish_
 
    * Alignment-based
       Quantification is performed on the aligned reads using the
@@ -118,7 +116,7 @@ Log TPM (alignment-free only) are well modelled by a gaussian
 distribution and differential expression can therefore be performed
 with a linear model. This is the approach taken by sleuth which is
 used here. In addition, slueth_ uses the bootstrap estimates from
-kallisto_/salmon_/sailfish_ to estimate the proportion of the variance
+kallisto_/salmon_ to estimate the proportion of the variance
 which is technical and therefore the proportion which is biological.
 
 Usage
@@ -221,8 +219,7 @@ software to be in the path:
 +--------------+----------+------------------------------------+
 |salmon_       |>=0.7.2   |alignment-free quantification       |
 +--------------+----------+------------------------------------+
-|sailfish_     |>=0.9.0   |alignment-free quantification       |
-+--------------+----------+------------------------------------+
+
 
 
 Pipeline output
@@ -262,9 +259,7 @@ Glossary
    kallisto
       kallisto_ - alignment-free quantification
    salmon
-      kallisto_ - alignment-free quantification
-   sailfish
-      kallisto_ - alignment-free quantification
+      salmon_ - alignment-free quantification
    featureCounts
       featurecounts_ - alignment-free quantification
    deseq
@@ -277,7 +272,6 @@ Glossary
 .. _featurecounts: http://bioinf.wehi.edu.au/featureCounts/
 .. _kallisto: https://pachterlab.github.io/kallisto/
 .. _salmon: https://combine-lab.github.io/salmon/
-.. _sailfish: http://www.cs.cmu.edu/~ckingsf/software/sailfish/
 .. _deseq: http://www-huber.embl.de/users/anders/DESeq/
 .. _edger: http://bioconductor.org/packages/release/bioc/html/edgeR.html
 .. _sleuth: https://github.com/pachterlab/sleuth
@@ -506,7 +500,7 @@ def buildSalmonIndex(infile, outfile):
        path to reference transcriptome - fasta file containing transcript
        sequences
     salmon_kmer: int
-       :term: `PARAMS` kmer size for sailfish.  Default is 31.
+       :term: `PARAMS` kmer size for salmon.  Default is 31.
        Salmon will ignores transcripts shorter than this.
     salmon_index_options: str
        :term: `PARAMS` string to append to the salmon index command to
@@ -525,42 +519,6 @@ def buildSalmonIndex(infile, outfile):
     '''
 
     P.run(statement)
-
-
-@transform(buildReferenceTranscriptome,
-           suffix(".fa"),
-           ".sailfish.index")
-def buildSailfishIndex(infile, outfile):
-    '''
-    Builds a sailfish index for the reference transcriptome
-    Parameters
-    ----------
-    infile: str
-       path to reference transcriptome - fasta file containing transcript
-       sequences
-    sailfish_kmer: int
-       :term: `PARAMS` kmer size for sailfish.  Default is 31.
-       Sailfish will ignores transcripts shorter than this.
-    sailfish_index_options: str
-       :term: `PARAMS` string to append to the sailfish index command to
-       provide specific options e.g. --force --threads N
-    outfile: str
-       path to output file
-    '''
-    # sailfish indexing is more memory intensive than Salmon/Kallisto
-    job_memory = "6G"
-
-    # need to remove the index directory (if it exists) as ruffus uses
-    # the directory timestamp which wont change even when re-creating
-    # the index files
-    statement = '''
-    rm -rf %(outfile)s &&
-    sailfish index --transcripts=%(infile)s --out=%(outfile)s
-    --kmerSize=%(sailfish_kmer)s
-    %(sailfish_index_options)s
-    '''
-
-    P.run(statement, job_condaenv="sailfish")
 
 
 @originate("transcript2geneMap.tsv")
@@ -790,12 +748,6 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         r"salmon.dir/%s/genes.tsv.gz" % (
             PARAMS["merge_pattern_output"].strip())]
 
-    SEQUENCEFILES_SAILFISH_OUTPUT = [
-        r"sailfish.dir/%s/transcripts.tsv.gz" % (
-            PARAMS["merge_pattern_output"].strip()),
-        r"sailfish.dir/%s/genes.tsv.gz" % (
-            PARAMS["merge_pattern_output"].strip())]
-
 else:
     SEQUENCEFILES_REGEX = regex(
         "(\S+).(fastq.1.gz|fastq.gz|sra)")
@@ -808,9 +760,6 @@ else:
         r"salmon.dir/\1/transcripts.tsv.gz",
         r"salmon.dir/\1/genes.tsv.gz"]
 
-    SEQUENCEFILES_SAILFISH_OUTPUT = [
-        r"sailfish.dir/\1/transcripts.tsv.gz",
-        r"sailfish.dir/\1/genes.tsv.gz"]
 ###################################################
 
 
@@ -882,69 +831,6 @@ def runKallisto(infiles, outfiles):
     Quantifier.run_all()
 
 
-@follows(mkdir("sailfish.dir"))
-@collate(SEQUENCEFILES,
-         SEQUENCEFILES_REGEX,
-         add_inputs(buildSailfishIndex, getTranscript2GeneMap),
-         SEQUENCEFILES_SAILFISH_OUTPUT)
-def runSailfish(infiles, outfiles):
-    '''
-    Computes read counts across transcripts and genes based on a fastq
-    file and an indexed transcriptome using Sailfish.
-
-    Runs the sailfish "quant" function across transcripts with the specified
-    options.  Read counts across genes are counted as the total in all
-    transcripts of that gene (based on the getTranscript2GeneMap table)
-
-    Parameters
-    ----------
-    infiles: list
-        list with three components
-        0 - list of strings - paths to fastq files to merge then quantify
-        across using sailfish
-        1 - string - path to sailfish index file
-        2 - string - path to table mapping transcripts to genes
-
-    sailfish_threads: int
-       :term: `PARAMS` the number of threads for sailfish
-    sailfish_memory: str
-       :term: `PARAMS` the job memory for sailfish
-    sailfish_options: str
-       :term: `PARAMS` string to append to the sailfish quant command to
-       provide specific
-       options, see http://sailfish.readthedocs.io/en/master/index.html
-    sailfish_bootstrap: int
-       :term: `PARAMS` number of bootstrap samples to run.
-       Note, you need to bootstrap for differential expression with sleuth
-       if there are no technical replicates. If you only need point estimates,
-       set to 1.
-    sailfish_libtype: str
-       :term: `PARAMS` sailfish library type
-       http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtype
-    outfiles: list
-       paths to output files for transcripts and genes
-    '''
-
-    fastqfile = [x[0] for x in infiles]
-    index = infiles[0][1]
-    transcript2geneMap = infiles[0][2]
-
-    transcript_outfile, gene_outfile = outfiles
-    Quantifier = rnaseq.SailfishQuantifier(
-        infile=fastqfile,
-        transcript_outfile=transcript_outfile,
-        gene_outfile=gene_outfile,
-        annotations=index,
-        job_threads=PARAMS["sailfish_threads"],
-        job_memory=PARAMS["sailfish_memory"],
-        options=PARAMS["sailfish_options"],
-        bootstrap=PARAMS["sailfish_bootstrap"],
-        libtype=PARAMS['sailfish_libtype'],
-        transcript2geneMap=transcript2geneMap)
-
-    Quantifier.run_all()
-
-
 @follows(mkdir("salmon.dir"))
 @collate(SEQUENCEFILES,
          SEQUENCEFILES_REGEX,
@@ -964,8 +850,8 @@ def runSalmon(infiles, outfiles):
     infiles: list
         list with three components
         0 - list of strings - paths to fastq files to merge then quantify
-        across using sailfish
-        1 - string - path to sailfish index file
+        across using salmon
+        1 - string - path to salmon index file
         2 - string - path to table mapping transcripts to genes
 
     salmon_threads: int
@@ -975,16 +861,14 @@ def runSalmon(infiles, outfiles):
     salmon_options: str
        :term: `PARAMS` string to append to the salmon quant command to
        provide specific
-       options, see http://sailfish.readthedocs.io/en/master/salmon.html
+       options, see https://salmon.readthedocs.io/en/latest/salmon.html#description-of-important-optionsç∂
     salmon_bootstrap: int
        :term: `PARAMS` number of bootstrap samples to run.
        Note, you need to bootstrap for differential expression with sleuth
        if there are no technical replicates. If you only need point estimates,
        set to 1.
     salmon_libtype: str
-       :term: `PARAMS` salmon library type
-       as for sailfish - use
-       http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtype
+       :term: `PARAMS` salmon library type, https://salmon.readthedocs.io/en/latest/library_type.html
     outfiles: list
        paths to output files for transcripts and genes
     '''
@@ -1017,7 +901,6 @@ def runSalmon(infiles, outfiles):
 QUANTTARGETS = []
 mapToQuantTargets = {'kallisto': (runKallisto,),
                      'salmon': (runSalmon,),
-                     'sailfish': (runSailfish,),
                      'featurecounts': (runFeatureCounts,),
                      'gtf2table': (runGTF2Table,)}
 
@@ -1254,7 +1137,7 @@ def runEdgeR(infiles, outfiles, design_name):
 @mkdir("DEresults.dir/sleuth")
 @product(mergeCounts,
          formatter(
-             ".*/(?P<QUANTIFIER>(kallisto|salmon|sailfish)).dir/transcripts.tsv.gz"),
+             ".*/(?P<QUANTIFIER>(kallisto|salmon)).dir/transcripts.tsv.gz"),
          ["design%s.tsv" % x.asFile() for x in DESIGNS],
          formatter(".*/design(?P<DESIGN>\S+).tsv$"),
          ["DEresults.dir/sleuth/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
@@ -1410,7 +1293,7 @@ def getEdgeRNormExp(infiles, outfiles):
 @collate(
     QUANTTARGETS,
     formatter(
-        "(?P<QUANTIFIER>(kallisto|salmon|sailfish)).dir/(\S+)/transcripts.tsv.gz"),
+        "(?P<QUANTIFIER>(kallisto|salmon)).dir/(\S+)/transcripts.tsv.gz"),
     add_inputs(getTranscript2GeneMap),
     [r"DEresults.dir/sleuth/{QUANTIFIER[0]}_normalised_transcripts_expression.tsv.gz",
      r"DEresults.dir/sleuth/{QUANTIFIER[0]}_normalised_genes_expression.tsv.gz"],
@@ -1431,7 +1314,7 @@ def getSleuthNormExp(infiles, outfiles, quantifier):
     if quantifier == "kallisto":
         basename = "abundance.h5.tsv"
         column = "tpm"
-    elif quantifier == "salmon" or quantifier == "sailfish":
+    elif quantifier == "salmon"
         basename = "quant.sf"
         column = "TPM"
     else:

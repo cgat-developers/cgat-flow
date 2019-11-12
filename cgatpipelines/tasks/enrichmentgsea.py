@@ -245,7 +245,6 @@ def translateGenelist(dbname, genelist, idtype, id_conversion):
         trans.columns = getDBColumnNames(
             dbname, "%s2%s$geneid" %
             (idtype, id_conversion))
-    #print(trans.loc[trans[1] == '29924'])
     mergeon = set(trans.columns)
     mergeon.remove(id_conversion)
     mergeon = list(mergeon)[0]
@@ -296,26 +295,24 @@ def preprocess_ExpressionData(
     gene names from idtype to id_conversion and Rank them on the basis
     of ranking metrices
     '''
+
     filename_base = os.path.basename(filename)
     part1, suff1, suff2 = filename_base.split('.')
     report_file = "_".join([part1, "preprocessing_report.txt"])
     file_ids, values = read_Expression_data(filename)
-    # print(len(file_ids))
+
+    ''' Convert from ID type'''
     if(idtype != id_conversion):
-        E.warn("It should not come here")
-        E.warn(idtype)
-        E.warn(id_conversion)
+        E.info("Converting from %s to %s" % (idtype, id_conversion))
         file_ids = translateGenelist(dbname, file_ids, idtype, id_conversion)
-    '''Remove duplicats.'''
-    # print(len(file_ids))
+
+    '''Remove duplicates.'''
     index_to_kept = list(range(len(file_ids)))
     index_to_remove = list_Duplicates(file_ids)
-    # print(len(index_to_remove))
     if(len(index_to_remove) > 0):
         index_to_kept = [i for j, i in enumerate(
             index_to_kept) if j not in index_to_remove]
     generate_Report_of_preprocessing(file_ids, index_to_remove, report_file)
     create_File_after_preprocessing(file_ids, values, index_to_kept, outfile)
-    return
 
-# preprocess_ExpressionData("Expression_data_test.gene.tsv","/ifs/projects/reshma/DATABASE/human_db_110817","entrez","ensemblg","Expression_data_test")
+    return

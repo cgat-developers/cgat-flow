@@ -783,10 +783,10 @@ def runSalmon(infiles, outfiles):
     Quantifier.run_all()
 
 
-@subdivide(runSalmon,
-         regex(".*"),
-         ["salmon.dir/transcripts.tsv.gz",
-          "salmon.dir/genes.tsv.gz"])
+@collate(runSalmon,
+        regex(".*"),
+        ["salmon.dir/transcripts.tsv.gz",
+        "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
     ''' merge counts for alignment-based methods'''
 
@@ -812,11 +812,12 @@ def mergeSalmonResults(infiles, outfiles):
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@collate(mergeSalmonResults,
-        regex(r"(.*).tsv.gz"),
-        r"\1.load")
-def loadSalmonResults(infile, outfile):
-    P.load(infile[0], outfile)
+@transform(mergeSalmonResults,
+           regex(r"(.*).tsv.gz"),
+           ["transcripts.load", "genes.load"])
+def loadSalmonResults(infiles, outfiles):
+    P.load(infiles[0], outfiles[0])
+    P.load(infiles[1], outfiles[1])
 
 ###################################################################
 # strand bias
@@ -1245,7 +1246,8 @@ def summariseBias(infiles, outfile):
         slope, intercept, r, p, stderr = linregress(x, y)
         return slope
 
-    attributes, genes, transcripts = infiles
+    attributes, salmonresults = infiles
+    transcripts, genes = salmonresults
 
     atr = pd.read_table(attributes, sep='\t', index_col="id")
     atr = atr.rename(columns={'pGC': 'GC_Content'})
@@ -1263,8 +1265,10 @@ def summariseBias(infiles, outfile):
     atr["length"] = np.log2(atr["length"])
 
     E.info("loading transcripts from {}".format(transcripts))
-    exp = pd.read_csv(transcripts, sep='\t', index_col="transcript_id")
-    exp['LogTPM'] = np.log2(exp['TPM'] + 0.1)
+    exp = pd.read_csv(transcripts, sep='\t')
+    exp = pd.melt(exp, id_vars="id", value_name="TPM", var_name="sample_id")
+    exp = exp.set_index("id")
+    exp['LogTPM'] = np.log2(exp['TPM'] + 1)
 
     merged = atr.join(exp[['sample_id', 'LogTPM']])
 

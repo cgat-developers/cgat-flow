@@ -1268,7 +1268,7 @@ def summariseBias(infiles, outfile):
     exp = pd.read_csv(transcripts, sep='\t')
     exp = pd.melt(exp, id_vars="id", value_name="TPM", var_name="sample_id")
     exp = exp.set_index("id")
-    exp['LogTPM'] = np.log2(exp['TPM'] + 1)
+    exp['LogTPM'] = np.log2(exp['TPM'] + 0.1)
 
     merged = atr.join(exp[['sample_id', 'LogTPM']])
 

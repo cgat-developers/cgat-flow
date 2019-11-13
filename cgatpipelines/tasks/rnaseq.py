@@ -408,33 +408,6 @@ class KallistoQuantifier(AF_Quantifier):
                     self.transcript_outfile, 'est_counts')
 
 
-class SailfishQuantifier(AF_Quantifier):
-    ''' quantifier class to run sailfish'''
-
-    def run_transcript(self):
-        fastqfile = self.infile
-        index = self.annotations
-        job_threads = self.job_threads
-        job_memory = self.job_memory
-
-        sailfish_options = self.options
-        sailfish_bootstrap = self.bootstrap
-        sailfish_libtype = self.libtype
-        outfile = os.path.join(
-            os.path.dirname(self.transcript_outfile), "quant.sf")
-        sample = self.sample
-
-        m = mapping.Sailfish()
-
-        statement = m.build((fastqfile), outfile)
-
-        P.run(statement, job_condaenv="sailfish")
-
-        # parse the output to extract the counts
-        parse_table(self.sample, outfile,
-                    self.transcript_outfile, 'NumReads')
-
-
 class SalmonQuantifier(AF_Quantifier):
     '''quantifier class to run salmon'''
     def run_transcript(self):

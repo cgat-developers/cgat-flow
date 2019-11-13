@@ -184,6 +184,8 @@ import seaborn as sns
 
 from rpy2.robjects import r as R
 from rpy2.robjects import pandas2ri
+import rpy2.robjects as ro
+from rpy2.robjects.conversion import localconverter
 
 import cgatcore.experiment as E
 import cgat.GTF as GTF
@@ -1344,6 +1346,7 @@ def plotTopGenesHeatmap(outfile):
     dbh = P.connect()
 
     exp_df = pd.read_sql(exp_select_cmd, dbh)
+    exp_df = exp_df.set_index("id")
 
     factors_select_cmd = '''
     SELECT factor, factor_value, sample_name
@@ -1375,14 +1378,15 @@ def plotTopGenesHeatmap(outfile):
         s2_genes = top_genes[col2]
         intersection = set(s1_genes).intersection(set(s2_genes))
         fraction = len(intersection) / float(top_n)
-        intersection_df.ix[n] = [col1[1], col2[1], len(intersection), fraction]
+        intersection_df.ix[n] = [col1, col2, len(intersection), fraction]
         n += 1
 
         # if the samples are different, calculate the reverse intersection too
         if col1 != col2:
-            intersection_df.ix[n] = [col2[1], col1[1],
+            intersection_df.ix[n] = [col2, col1,
                                      len(intersection), fraction]
             n += 1
+
 
     # pivot to format for heatmap.3 plotting
     intersection_df['fraction'] = intersection_df['fraction'].astype('float')
@@ -1390,8 +1394,6 @@ def plotTopGenesHeatmap(outfile):
         intersection_df, index="sample1", columns="sample2", values="fraction")
 
     for factor in set(factors_df['factor'].tolist()):
-        print(factor)
-        print(factors_df)
         # don't want to plot coloured by genome
         if factor == "genome":
             continue
@@ -1415,7 +1417,7 @@ def plotTopGenesHeatmap(outfile):
           brewer.pal(length(levels(fact_df$factor_value)),"Dark2"))(
             length(levels(fact_df$factor_value)))
         side_colours = colours[as.numeric((fact_df$factor_value))]
-        print(side_colours)
+
         # plot
         png("%(plotfile)s", width=1000, heigh=1000)
         heatmap.3(as.dist(1- as.matrix(int_df)),
@@ -1427,8 +1429,12 @@ def plotTopGenesHeatmap(outfile):
         }
         ''' % locals())
 
-        plotHeatmap(pandas2ri.py2ri(intersection_pivot),
-                    pandas2ri.py2ri(factors_df))
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            r_intersection_pivot = ro.conversion.py2ri(intersection_pivot)
+            r_factors_df = ro.conversion.py2ri(factors_df)
+        
+        plotHeatmap(r_intersection_pivot,
+                    r_factors_df)
 
     iotools.touch_file(outfile)
 
@@ -1455,9 +1461,10 @@ def plotExpression(outfile):
     SELECT * FROM transcripts"""
 
     df = pd.read_sql(statement, dbh)
+    df = pd.melt(df, id_vars="id", value_name="TPM", var_name="sample_id")
     
-    df['logTPM'] = df['TPM'].apply(lambda x: np.log2(x + 0.1))
-
+    df['logTPM'] = df['TPM'].apply(lambda x: np.log2(x + 1))
+    
     factors = dbh.execute("SELECT DISTINCT factor FROM factors")
     factors = [x[0] for x in factors if x[0] != "genome"]
 
@@ -1473,9 +1480,8 @@ def plotExpression(outfile):
         WHERE factor = "%(factor)s"''' % locals()
 
         factor_df = pd.read_sql(factor_statement, dbh)
-
         full_df = pd.merge(df, factor_df, left_on="sample_id",
-                           right_on="sample_id")
+                           right_on="sample_name")
 
         plotDistribution = R('''
         function(df){
@@ -1492,8 +1498,10 @@ def plotExpression(outfile):
         ggsave("%(plotfile)s")
         }
         ''' % locals())
-
-        plotDistribution(pandas2ri.py2ri(full_df))
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            r_full_df = ro.conversion.py2ri(full_df)
+        
+        plotDistribution(r_full_df)
 
     iotools.touch_file(outfile)
 

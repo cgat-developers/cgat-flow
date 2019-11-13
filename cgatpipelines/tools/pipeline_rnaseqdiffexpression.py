@@ -335,9 +335,6 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 
 import cgatpipelines.tasks.expression as Expression
-# levels of cuffdiff analysis
-# (no promotor and splice -> no lfold column)
-CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
 
 ###################################################
 ###################################################
@@ -1411,7 +1408,7 @@ def expressionSummaryPlots(infiles, logfiles):
          loadDifferentialExpression,
          loadNormalisedExpression,)
 def full():
-    ''' collects DE tasks and cufflinks transcript build'''
+    ''' collects DE tasks'''
 
 
 def main(argv=None):

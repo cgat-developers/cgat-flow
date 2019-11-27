@@ -91,16 +91,17 @@ def main(argv=None):
 
             if len(argv) <= 2:
 
-                print('CGAT R-tools are grouped by keywords. The following keywords')
-                print('are defined:\n')
-                print(("%s\n" % printListInColumns(list(map_keyword2script.keys()),
-                                                   3)))
+                print("The list of available commands is:\n")
+                print(("%s\n" % printListInColumns(
+                    sorted([os.path.basename(x)[:-2]
+                            for x in glob.glob(os.path.join(path, "*.R"))]),
+                    3)))
 
             elif 'all' in argv[2:]:
-                print("The list of all available commands is:\n")
+                print("The list of available commands is:\n")
                 print(("%s\n" % printListInColumns(
-                    sorted([os.path.basename(x)[:-3]
-                            for x in glob.glob(os.path.join(path, "*.py"))]),
+                    sorted([os.path.basename(x)[:-2]
+                            for x in glob.glob(os.path.join(path, "*.R"))]),
                     3)))
 
             else:

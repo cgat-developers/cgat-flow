@@ -123,11 +123,11 @@ def main(argv=None):
                 "{args}".format(
                     r_root=os.path.dirname(path),
                     rscriptname=rscriptname,
-                    args=" ".join([shlex.quote(x) for x in argv[2:]])))
+                    args=" ".join([shlex.quote(x) for x in argv[3:]])))
             return subprocess.call(statement, shell=True, executable=os.environ["SHELL"])
         else:
         # remove 'cgatflow' and "R" from sys.argv
-            del sys.argv[0:1]
+            del sys.argv[0:2]
 
             (file, pathname, description) = imp.find_module(command, [path, ])
             module = imp.load_module(command, file, pathname, description)

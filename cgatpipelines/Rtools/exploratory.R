@@ -99,12 +99,14 @@ run <- function(opt) {
   ### PRINCIPAL COMPONENT ANALYSIS ###
   futile.logger::flog.info(paste("Performing Principal Component Analysis"))
   pca = prcomp(t(assay(vsd)))
-  variable.group <- with(colData(dds), group)
-  sample.group<- with(colData(dds), group)
+  variable.group <- colData(dds)[, opt$contrast]
+  sample.group<- colData(dds)[, opt$contrast]
+  percentVar <- round(100 * attr(pca, "percentVar"))
   scores <- data.frame(variable.group, sample.group, pca$x[,1:10])
   start_plot('PCA')
     print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
-      theme(legend.position="right") +  labs(colour=opt$contrast, x="PC1 (37% of variance)", y="PC3(28% of variance)") + 
+      theme(legend.position="right") +  
+      labs(colour=opt$contrast, x=paste0("PC1 (", percentVar[1]," of variance)", y="PC2 (", percentVar[2]," of variance)")) + 
       ggtitle("Principal Component Analysis") + theme_grey(base_size = 15) +
       theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) + theme(text=element_text(family='serif')))
   end_plot()
@@ -122,7 +124,7 @@ run <- function(opt) {
   df <- as.data.frame(colData(dds)[,c(opt$contrast)])
   rownames(df) <- colData(dds)$track
   start_plot('Heatmap_topExpressed')
-    pheatmap(assay(vsd)[select,], cluster_rows=FALSE, cluster_cols=FALSE, annotation_col=df, fontsize_row = 6)
+    pheatmap(assay(vsd)[select,], cluster_rows=FALSE, cluster_cols=FALSE, show_rownames=FALSE, annotation_col=df)
   end_plot()
   # Heatmap of Top 20 Variable Genes
   topVarGenes <- head(order(rowVars(assay(vsd)),decreasing=TRUE),20)
@@ -188,12 +190,11 @@ run <- function(opt) {
     scores.corr <- plotPCA(batch_transformed, intgroup = opt$contrast, returnData=TRUE)
     percentVar <- round(100 * attr(scores.corr, "percentVar"))
     
-    start_plot(paste0('PCA', batch, '_removed'))
-      print(qplot(x=PC1, y=PC2, data=scores.corr, colour=factor(batch_transformed$group), shape=factor(batch_transformed$line)) +
+    start_plot(paste0('PCA_', batch, '_removed'))
+      print(qplot(x=PC1, y=PC2, data=scores.corr, colour=factor(colData(batch_transformed)[,opt$contrast]), shape=factor(batch_transformed$line)) +
           theme(legend.position="right") +  labs(colour=opt$contrast) +
           ggtitle(paste0("Principal Component Analysis\n after batch correction for ", batch)) + 
-          theme_bw() + theme(plot.title = element_text(lineheight=1, face="bold", hjust = 0.5)) +
-          guides(colour=guide_legend(title="Genotype"), shape=guide_legend(title="Line")))
+          theme_bw() + theme(plot.title = element_text(lineheight=1, face="bold", hjust = 0.5)))
     end_plot()
   }
 }

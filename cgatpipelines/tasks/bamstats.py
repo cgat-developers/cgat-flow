@@ -79,11 +79,12 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
     INPUT=%(infile)s
     REFERENCE_SEQUENCE=%(genome_file)s
     ASSUME_SORTED=true
+    HISTOGRAM_FILE=%(outfile)s.pdf
     OUTPUT=%(outfile)s
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run(statement, job_memory=picardmem)
+    P.run(statement)
 
 
 def addPseudoSequenceQuality(infile, outfile):
@@ -100,15 +101,32 @@ def addPseudoSequenceQuality(infile, outfile):
 
     statement = '''cat %(infile)s
     | cgat bam2bam -v 0
-    --method=set-sequence > %(outfile)s'''
+    --method=set-sequence &> (outfile)s.log> %(outfile)s &&
+    samtools index %(outfile)s'''
 
     P.run(statement)
 
-    statement = '''samtools index %(outfile)s
-    '''
 
-    P.run(statement)
+def mergeInsertSize(infiles, outfile):
+    '''merge the insert size files into one file'''
 
+    out = iotools.open_file(outfile,"w")
+    
+    out.write("SAMPLE_NAME\tMEDIAN_INSERT_SIZE\tMODE_INSERT_SIZE\tMEDIAN_ABSOLUTE_DEVIATION\tMIN_INSERT_SIZE\t\
+              MAX_INSERT_SIZE\tMEAN_INSERT_SIZE\tSTANDARD_DEVIATION\tREAD_PAISR\t\
+              PAIR_ORIENTATION\tWIDTH_OF_10_PERCENT\tWIDTH_OF_50_PERCENT\tWIDTH_OF_60_PERCENT\t\
+              WIDTH_OF_70_PERCENT\tWIDTH_OF_80_PERCENT\tWIDTH_OF_90_PERCENT\tWIDTH_OF_95_PERCENT\t\
+              WIDTH_OF_99_PERCENT\tSAMPLE\tLIBRARY\tREAD_GROUP\n")
+
+    for infile in infiles:
+        name = infile.replace(".insert_stats","")
+        name = name.replace("Picard_stats.dir/","")
+        try:
+            metrics = iotools.open_file(infile).readlines()[7].strip().split("\t")
+        except:
+            metrics = "No output"
+        out.write("%s\t%s\n" % (name,"\t".join(metrics)))
+    out.close()
 
 def copyBamFile(infile, outfile):
     '''Make softlinks of the bam files
@@ -121,13 +139,8 @@ def copyBamFile(infile, outfile):
         Output file in :term: `BAM` format.
     '''
 
-    statement = '''ln -s ../%(infile)s
-    %(outfile)s'''
-
-    P.run(statement)
-
-    statement = '''samtools index %(outfile)s
-    '''
+    statement = '''cp %(infile)s
+    BamFiles.dir && samtools index %(outfile)s && sleep 10'''
 
     P.run(statement)
 
@@ -707,7 +720,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         E.warn("no files for %s" % tablename)
         return
 
-    header = ",".join([P.snip(os.path.basename(x), pipeline_suffix)
+    header = ",".join([os.path.basename(x)
                        for x in xfiles])
     filenames = " ".join(["%s.%s" % (x, suffix) for x in xfiles])
 
@@ -1260,107 +1273,6 @@ def mergeAndFilterGTF(infile, outfile, logfile,
     L.info("%s" % str(c))
 
     return gene_ids
-
-
-def resetGTFAttributes(infile, genome, gene_ids, outfile):
-    """set GTF attributes in :term:`gtf` formatted file so that they are
-    compatible with cufflinks.
-    This method runs cuffcompare with `infile` against itself to add
-    attributes such as p_id and tss_id.
-    Arguments
-    ---------
-    infile : string
-        Filename of :term:`gtf`-formatted input file
-    genome : string
-       Filename (without extension) of indexed genome file
-       in :term:`fasta` format.
-    gene_ids : dict
-       Dictionary mapping transcript ids to gene ids.
-    outfile : string
-       Output filename in :term:`gtf` format
-    """
-    tmpfile1 = P.get_temp_filename(".")
-    tmpfile2 = P.get_temp_filename(".")
-
-    #################################################
-    E.info("adding tss_id and p_id")
-
-    # The p_id attribute is set if the fasta sequence is given.
-    # However, there might be some errors in cuffdiff downstream:
-    #
-    # cuffdiff: bundles.cpp:479: static void HitBundle::combine(const std::
-    # vector<HitBundle*, std::allocator<HitBundle*> >&, HitBundle&): Assertion
-    # `in_bundles[i]->ref_id() == in_bundles[i-1]->ref_id()' failed.
-    #
-    # I was not able to resolve this, it was a complex
-    # bug dependent on both the read libraries and the input reference gtf
-    # files
-    job_memory = "5G"
-
-    statement = '''
-    cuffcompare -r <( gunzip < %(infile)s )
-         -T
-         -s %(genome)s.fa
-         -o %(tmpfile1)s
-         <( gunzip < %(infile)s )
-         <( gunzip < %(infile)s )
-    > %(outfile)s.log
-    '''
-    P.run(statement)
-
-    #################################################
-    E.info("resetting gene_id and transcript_id")
-
-    # reset gene_id and transcript_id to ENSEMBL ids
-    # cufflinks patch:
-    # make tss_id and p_id unique for each gene id
-    outf = iotools.open_file(tmpfile2, "w")
-    map_tss2gene, map_pid2gene = {}, {}
-    inf = iotools.open_file(tmpfile1 + ".combined.gtf")
-
-    def _map(gtf, key, val, m):
-        if val in m:
-            while gene_id != m[val]:
-                val += "a"
-                if val not in m:
-                    break
-        m[val] = gene_id
-
-        gtf.setAttribute(key, val)
-
-    for gtf in GTF.iterator(inf):
-        transcript_id = gtf.oId
-        gene_id = gene_ids[transcript_id]
-        gtf.setAttribute("transcript_id", transcript_id)
-        gtf.setAttribute("gene_id", gene_id)
-
-        # set tss_id
-        try:
-            tss_id = gtf.tss_id
-        except AttributeError:
-            tss_id = None
-        try:
-            p_id = gtf.p_id
-        except AttributeError:
-            p_id = None
-
-        if tss_id:
-            _map(gtf, "tss_id", tss_id, map_tss2gene)
-        if p_id:
-            _map(gtf, "p_id", p_id, map_pid2gene)
-
-        outf.write(str(gtf) + "\n")
-
-    outf.close()
-
-    # sort gtf file
-    geneset.sortGTF(tmpfile2, outfile)
-
-    # make sure tmpfile1 is NEVER empty
-    assert tmpfile1
-    for x in glob.glob(tmpfile1 + "*"):
-        os.unlink(x)
-    os.unlink(tmpfile2)
 
 
 def buildPicardRnaSeqMetrics(infiles, strand, outfile, picardmem):

@@ -83,6 +83,7 @@ import glob
 import collections
 import re
 import itertools
+import subprocess
 from cgatcore import pipeline as P
 import logging as L
 import cgatcore.experiment as E
@@ -101,6 +102,23 @@ SequenceInformation = collections.namedtuple("SequenceInformation",
                                                  readlength_second
                                                  is_colour""")
 
+def checkBowtie2VersionNumber():
+    '''Bowtie2 >= 2.3.3 does not require the file to be gunzipped
+       before running. This function cheks the version number then
+       returns True or False depending on if the version number is
+       higher than 2.3.3'''
+
+
+    result = subprocess.run(["bowtie2", "--version"], stdout=subprocess.PIPE)
+
+    p = re.compile(r'version (\d+.\d+.\d+)')
+
+    output = result.stdout.decode("utf-8")
+    version = p.findall(output)
+    version = int(''.join(version).replace(".",""))
+
+    versionOld = 233
+    return(version >= versionOld)
 
 def getSequencingInformation(track):
     '''glean sequencing information from *track*.
@@ -318,114 +336,6 @@ def mergeAndFilterGTF(infile, outfile, logfile,
     L.info("%s" % str(c))
 
     return gene_ids
-
-
-def resetGTFAttributes(infile, genome, gene_ids, outfile):
-    """set GTF attributes in :term:`gtf` formatted file so that they are
-    compatible with cufflinks.
-
-    This method runs cuffcompare with `infile` against itself to add
-    attributes such as p_id and tss_id.
-
-    Arguments
-    ---------
-    infile : string
-        Filename of :term:`gtf`-formatted input file
-    genome : string
-       Filename (without extension) of indexed genome file
-       in :term:`fasta` format.
-    gene_ids : dict
-       Dictionary mapping transcript ids to gene ids.
-    outfile : string
-       Output filename in :term:`gtf` format
-    """
-    tmpfile1 = P.get_temp_filename(shared=True)
-    tmpfile2 = P.get_temp_filename(shared=True)
-
-    #################################################
-    E.info("adding tss_id and p_id")
-
-    # The p_id attribute is set if the fasta sequence is given.
-    # However, there might be some errors in cuffdiff downstream:
-    #
-    # cuffdiff: bundles.cpp:479: static void HitBundle::combine(const std::
-    # vector<HitBundle*, std::allocator<HitBundle*> >&, HitBundle&): Assertion
-    # `in_bundles[i]->ref_id() == in_bundles[i-1]->ref_id()' failed.
-    #
-    # I was not able to resolve this, it was a complex
-    # bug dependent on both the read libraries and the input reference gtf
-    # files
-    job_memory = "5G"
-
-    if infile.endswith(".gz"):
-        cat = "zcat"
-    else:
-        cat = "cat"
-
-    statement = '''
-    cuffcompare -r <( %(cat)s %(infile)s )
-         -T
-         -s %(genome)s.fa
-         -o %(tmpfile1)s
-         <( %(cat)s %(infile)s )
-         <( %(cat)s %(infile)s )
-    >& %(outfile)s.log
-    '''
-    P.run(statement)
-
-    #################################################
-    E.info("resetting gene_id and transcript_id")
-
-    # reset gene_id and transcript_id to ENSEMBL ids
-    # cufflinks patch:
-    # make tss_id and p_id unique for each gene id
-    outf = iotools.open_file(tmpfile2, "w")
-    map_tss2gene, map_pid2gene = {}, {}
-    inf = iotools.open_file(tmpfile1 + ".combined.gtf")
-
-    def _map(gtf, key, val, m):
-        if val in m:
-            while gene_id != m[val]:
-                val += "a"
-                if val not in m:
-                    break
-        m[val] = gene_id
-
-        gtf.setAttribute(key, val)
-
-    for gtf in GTF.iterator(inf):
-        transcript_id = gtf.oId
-        gene_id = gene_ids[transcript_id]
-        gtf.transcript_id = transcript_id
-        gtf.gene_id = gene_id
-
-        # set tss_id
-        try:
-            tss_id = gtf.tss_id
-        except KeyError:
-            tss_id = None
-        try:
-            p_id = gtf.p_id
-        except KeyError:
-            p_id = None
-
-        if tss_id:
-            _map(gtf, "tss_id", tss_id, map_tss2gene)
-        if p_id:
-            _map(gtf, "p_id", p_id, map_pid2gene)
-
-        outf.write(str(gtf) + "\n")
-
-    outf.close()
-
-    # sort gtf file
-    geneset.sortGTF(tmpfile2, outfile)
-
-    # make sure tmpfile1 is NEVER empty
-    # assert tmpfile1
-    # for x in glob.glob(tmpfile1 + "*"):
-    #     os.unlink(x)
-    # os.unlink(tmpfile2)
 
 
 class SequenceCollectionProcessor(object):
@@ -1266,7 +1176,6 @@ class Salmon(Mapper):
 
         statement.append('''
         -l %%(salmon_libtype)s %(input_file)s -o %(outdir)s
-        -k %%(salmon_kmer)s
         --numBootstraps %%(salmon_bootstrap)s
         --threads %%(job_threads)s %%(salmon_options)s;''' % locals())
 
@@ -2861,10 +2770,10 @@ class STAR(Mapper):
         index_prefix = "%(genome)s"
 
         logfile = ("%sLog.final.out") % (P.snip(outfile, ".star.bam"))
-
         if nfiles == 1:
 
-            if infiles[0].endswith(".gz"):
+            
+            if str(infiles[0][0]).endswith(".gz"):
                 compress_option = "--readFilesCommand zcat"
             else:
                 compress_option = ""
@@ -3090,7 +2999,15 @@ class Bowtie(Mapper):
         tmpdir_fastq = self.tmpdir_fastq
 
         if nfiles == 1:
-            infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
+            if executable == "bowtie2":
+                # Check version number is >= 2.3.3 (botie handles gz files)
+                bowtie2 = checkBowtie2VersionNumber()
+                if bowtie2 == True:
+                    infiles = ",".join([x for x in infiles[0]])
+                else:
+                    infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
+            else:
+                    infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
             statement = '''
             %(executable)s
             --threads %%(bowtie_threads)i
@@ -3106,8 +3023,18 @@ class Bowtie(Mapper):
             ''' % locals()
 
         elif nfiles == 2:
-            infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
-            infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
+            if executable == "bowtie2":
+                # Check version number is >= 2.3.3 (botie handles gz files)
+                bowtie2 = checkBowtie2VersionNumber()
+                if bowtie2 == True:
+                    infiles1 = ",".join([x for x in infiles[0]])
+                    infiles2 = ",".join([x for x in infiles[1]])
+                else:
+                    infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
+                    infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
+            else:
+                infiles1 = ",".join([self.quoteFile(x) for x in infiles[0]])
+                infiles2 = ",".join([self.quoteFile(x) for x in infiles[1]])
 
             statement = '''
             %(executable)s
@@ -3193,7 +3120,6 @@ class Bowtie2(Bowtie):
 
     # output option - default is SAM for botwie2
     output_option = ""
-
 
 class BowtieTranscripts(Mapper):
 

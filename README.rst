@@ -9,38 +9,23 @@ We have developed a set of ruffus_ based pipelines in comparative genomics
 and NGS analysis.
 
 We are working on improving the existing documentation and portability of the code
-to release a set of production pipelines soon so please stay tuned.
+to release a set of production pipelines soon so please stay tuned. However, to view our
+current documentation please see `here <https://www.cgat.org/downloads/public/cgatpipelines/documentation/>`_
 
 We are currently testing a script to automate the installation with conda_. Feel
 free to give it a go::
 
-        # download installation script:
-        curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install-CGAT-tools.sh
+    # download installation script:
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install-devel.sh
 
-        # see help:
-        bash install-CGAT-tools.sh
+    # see help:
+    bash install-devel.sh -h
 
-        # install the development version (recommended, no production version yet):
-        bash install-CGAT-tools.sh --devel [--location </full/path/to/folder/without/trailing/slash>]
-
-        # the code is downloaded in zip format by default. If you want to get a git clone, use:
-           --git # for an HTTPS clone
-           --git-ssh # for a SSH clone (you need to be a CGATOXford contributor on GitHub to do this)
-
-        # the pipelines are intended to run on a cluster using the DRMAA API. If that's not your case, please use:
-           --no-cluster
-
-        # if you want to download and install IDEs like Spyder or RStudio with this installation, please use:
-           --ide
-
-        # once the installation is finished, enable the conda environment as requested by the installation script
-        # NB: you probably want to automate this by adding the instructions below to your .bashrc
-        source </full/path/to/folder/without/trailing/slash>/conda-install/etc/profile.d/conda.sh
-        conda activate base
-        conda activate cgat-f
-
-        # finally, please run the cgatflow command-line tool to check the installation:
-        cgatflow --help
+    ./install-devel.sh
+    	 --install-repo
+	 --install-pipeline-dependencies
+	 --clone-from-repo
+	 --location </full/path/to/folder/without/trailing/slash>
 
 The installation script will put everything under the specified location. It needs
 15 GB of disk space and it takes about 35 minutes to complete. The aim of the

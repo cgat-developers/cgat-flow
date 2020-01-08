@@ -47,6 +47,7 @@ To do:
 
 '''
 
+import os
 import math
 import numpy
 import sys
@@ -54,7 +55,6 @@ import collections
 import itertools
 import re
 import pandas
-import ggplot
 import copy
 import numpy as np
 from scipy.stats import ttest_ind
@@ -67,8 +67,11 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
-from rpy2.rinterface import RRuntimeError
-import os
+
+try:
+    from rpy2.rinterface import RRuntimeError
+except ImportError:
+    from rpy2.rinterface_lib.embedded import RRuntimeError
 
 try:
     import cgatcore.experiment as E
@@ -81,7 +84,7 @@ except ImportError:
 
 
 # activate pandas/rpy conversion
-pandas2ri.activate()
+# pandas2ri.activate()
 
 # AH: Only do this on demand, module might not be
 #     be able to be imported if there are any issues.
@@ -1949,7 +1952,7 @@ def loadTagData(tags_filename, design_filename):
         E.warn("missing samples from design file are ignored: %s" %
                missing)
 
-    # Subset data & set conditions
+    # subset data & set conditions
     r('''includedSamples <- !(is.na(pheno2$include) | pheno2$include == '0') ''')
     E.debug("included samples: %s" %
             r('''colnames(counts_table)[includedSamples]'''))
@@ -1957,8 +1960,7 @@ def loadTagData(tags_filename, design_filename):
     r('''groups <- factor(pheno2$group[ includedSamples ])''')
     r('''conds <- pheno2$group[ includedSamples ]''')
     r('''pairs <- factor(pheno2$pair[ includedSamples ])''')
-
-    # JJ if additional columns present, pass to 'factors'
+    # if additional columns present, pass to 'factors'
     r('''if (length(names(pheno2)) > 4) {
            factors <- data.frame(pheno2[includedSamples,5:length(names(pheno2))])
          } else {
@@ -2576,11 +2578,9 @@ def deseqParseResults(control_name, treatment_name, fdr, vsd=False):
     '''
 
     results = []
-    isna = r["is.na"]
-
     counts = E.Counter()
-
-    for index, data in r['res'].iterrows():
+    res_df = pandas2ri.ri2py(r["res"])
+    for index, data in res_df.iterrows():
         counts.input += 1
 
         # set significant flag
@@ -3306,18 +3306,19 @@ def plotDETagStats(infile, outfile_prefix,
             # see https://github.com/yhat/ggplot/issues/393
             E.warn(msg)
 
-    _dplot(table,
-           outfile_prefix + ".densities_tags_control.png",
-           "log10_control_mean")
-    _dplot(table,
-           outfile_prefix + ".densities_tags_treatment.png",
-           "log10_treatment_mean")
-    _bplot(table,
-           outfile_prefix + ".boxplot_tags_control.png",
-           "log10_control_mean")
-    _bplot(table,
-           outfile_prefix + ".boxplot_tags_treatment.png",
-           "log10_treatment_mean")
+    # TODO: ggplot not supported, replace with plotnine
+    # _dplot(table,
+    #        outfile_prefix + ".densities_tags_control.png",
+    #        "log10_control_mean")
+    # _dplot(table,
+    #        outfile_prefix + ".densities_tags_treatment.png",
+    #        "log10_treatment_mean")
+    # _bplot(table,
+    #        outfile_prefix + ".boxplot_tags_control.png",
+    #        "log10_control_mean")
+    # _bplot(table,
+    #        outfile_prefix + ".boxplot_tags_treatment.png",
+    #        "log10_treatment_mean")
 
     if additional_columns:
         for column in additional_columns:
@@ -3443,7 +3444,6 @@ def outputTagSummary(filename_tags,
         E.debug("sample names: %s" % r('''colnames(countsTable)'''))
 
     nrows, ncolumns = tuple(r('''dim(countsTable)'''))
-
     outfile.write("metric\tvalue\tpercent\n")
     outfile.write("number of observations\t%i\t100\n" % nobservations)
     outfile.write("number of samples\t%i\t100\n" % nsamples)
@@ -3465,10 +3465,11 @@ def outputTagSummary(filename_tags,
     E.info("removing rows with no counts in any sample")
     r('''countsTable = countsTable[max_counts>0,]''')
 
-    for x in range(0, 20):
-        nempty = tuple(r('''sum(max_counts <= %i)''' % x))[0]
-        outfile.write("max per row<=%i\t%i\t%f\n" %
-                      (x, nempty, 100.0 * nempty / nrows))
+    if nrows > 0:
+        for x in range(0, 20):
+            nempty = tuple(r('''sum(max_counts <= %i)''' % x))[0]
+            outfile.write("max per row<=%i\t%i\t%f\n" %
+                          (x, nempty, 100.0 * nempty / nrows))
 
     E.info("removed %i empty rows" % tuple(r('''sum(max_counts == 0)''')))
     observations, samples = tuple(r('''dim(countsTable)'''))

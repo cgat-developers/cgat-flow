@@ -577,7 +577,7 @@ def buildIntronLevelReadCounts(infiles, outfile):
 
 @active_if(SPLICED_MAPPING)
 @transform(intBam,
-           regex("BamFiles.dir/(\S+).bam$"),
+           regex("BamFiles.dir/(\S+).bam"),
            add_inputs(PARAMS["annotations_interface_geneset_coding_exons_gtf"]),
            r"Paired_QC.dir/\1.transcriptprofile.gz")
 def buildTranscriptProfiles(infiles, outfile):
@@ -830,7 +830,7 @@ def renderRreport():
                                                'pipeline_bamstats',
                                                'R_report'))
 
-    statement = '''cp %(report_path)s/* R_report.dir ; cd R_report.dir ; R -e "rmarkdown::render_site()"'''
+    statement = '''cp %(report_path)s/* R_report.dir && cd R_report.dir && R -e "rmarkdown::render_site()"'''
 
     P.run(statement)
 
@@ -844,9 +844,9 @@ def renderJupyterReport():
                                                'pipeline_bamstats',
                                                'Jupyter_report'))
 
-    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ ; cd Jupyter_report.dir/;
-                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors;
-                    mkdir _site;
+    statement = ''' cp %(report_path)s/* Jupyter_report.dir/ && cd Jupyter_report.dir/ &&
+                    jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute *.ipynb --allow-errors &&
+                    mkdir _site &&
                     mv -t _site *.html cgat_logo.jpeg oxford.png'''
 
     P.run(statement)

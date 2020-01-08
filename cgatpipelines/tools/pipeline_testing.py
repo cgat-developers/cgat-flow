@@ -125,6 +125,7 @@ The reference file looks like this::
    test_mytest1.dir/bwa.dir/Brain-F1-R1.bwa.bam 503c99ab7042a839e56147fb1a221f27
    ...
 
+
 This file is created by the test pipeline and called
 :file:`test_mytest1.md5`.  When setting up a test, start with an empty
 files and later add this file to the test data.
@@ -157,7 +158,6 @@ import tarfile
 import pandas
 import cgatcore.experiment as E
 import cgatcore.iotools as iotools
-from cgatpipelines.report import run_report
 
 ###################################################
 ###################################################
@@ -220,10 +220,9 @@ def setupTests(infile, outfile):
 
     statement = (
         "(cd %(track)s.dir; "
-        "cgatflow %(pipeline_name)s "
+        "cgatflow %(pipeline_name)s config "
         "%(pipeline_options)s "
         "%(workflow_options)s "
-        "config "
         "2> %(outfile)s.stderr "
         "1> %(outfile)s.log)")
     P.run(statement)
@@ -303,9 +302,9 @@ def run_reports(infile, outfile):
     pipeline_name = PARAMS.get("%s_pipeline" % track, track[len("test_"):])
 
     statement = '''
-    cd %(track)s.dir;
-    xvfb-run -d cgatflow %(pipeline_name)s
-    %(pipeline_options)s %(workflow_options)s make build_report
+    cd %(track)s.dir &&
+    xvfb-run -d cgatflow %(pipeline_name)s make build_report
+    %(pipeline_options)s %(workflow_options)s
     -L ../%(outfile)s
     -S ../%(outfile)s.stdout
     -E ../%(outfile)s.stderr
@@ -609,8 +608,8 @@ def reset(infile, outfile):
     to_cluster = False
 
     statement = '''
-    rm -rf prereq_* ctmp*;
-    rm -rf test_* _cache _static _templates _tmp report;
+    rm -rf prereq_* ctmp* &&
+    rm -rf test_* _cache _static _templates _tmp report &&
     rm -f *.log csvdb *.load *.tsv'''
     P.run(statement)
 
@@ -621,28 +620,28 @@ def reset(infile, outfile):
 ###################################################################
 
 
-@follows(mkdir("report"))
+def renderJupyter():
+    '''builds a Jupyter report of csvdb output'''
+
+    report_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                               "pipeline_docs",
+                                               "pipeline_testing"))
+
+    statement = '''cp %(report_path)s/* . &&
+                   jupyter nbconvert
+                           --ExecutePreprocessor.timeout=None
+                           --to html
+                           --execute *.ipynb
+                           --allow-errors'''
+
+    P.run(statement)
+
+
+@follows(renderJupyter)
 def build_report():
-    '''build report from scratch.'''
+    '''dummy task to build report'''
 
-    E.info("starting report build process from scratch")
-    run_report(clean=True)
-
-
-@follows(mkdir("report"))
-def update_report():
-    '''update report.'''
-
-    E.info("updating report")
-    run_report(clean=False)
-
-
-@follows(update_report)
-def publish_report():
-    '''publish report.'''
-
-    E.info("publishing report")
-    P.publish_report()
+    pass
 
 
 def main(argv=None):

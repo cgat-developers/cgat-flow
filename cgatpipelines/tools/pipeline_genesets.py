@@ -289,9 +289,6 @@ territories.gff.gz
 tssterritories.gff.gz
    gff file with tss territories
 
-greatdomains.gff.gz
-   gff file of regulator domains defined a la GREAT
-
 genomic_context_bed=genomic_context.bed.gz
    bed-formatted file with genomic context
 
@@ -814,7 +811,7 @@ def buildRefFlat(infile, outfile):
     tmpflat = P.get_temp_filename(".")
 
     statement = '''
-    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s;
+    gtfToGenePred -genePredExt -geneNameAsName2 %(infile)s %(tmpflat)s &&
     paste <(cut -f 12 %(tmpflat)s) <(cut -f 1-10 %(tmpflat)s)
     > %(outfile)s
     '''

@@ -1,0 +1,40 @@
+
+name: cgat-flow
+
+channels:
+- conda-forge
+- bioconda
+- defaults
+
+dependencies:
+# system deps
+- nomkl
+- zlib
+# bioinformatics tools
+# python deps
+- python
+- beautifulsoup4
+- biopython
+- cgat-report
+- httplib2
+- intermine
+- matplotlib
+- mygene
+- nose
+- numpy
+- pandas
+- pep8
+- pybedtools
+- pysam
+- drmaa
+- rpy2
+- ruffus
+- scikit-learn
+- scipy
+- seaborn
+- setuptools
+- sqlalchemy
+- toposort
+# R deps
+- r-base
+- bioconductor-hpar

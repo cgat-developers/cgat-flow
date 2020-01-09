@@ -1,13 +1,14 @@
-#' Differential expression analysis Script
+#' Reading in Data and Basic filtering analysis Script
 #'
 #' 
 #' Example usage:
 #' 
-#' cgatflow R diffexpression --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
-#'
-#' `sce.rds` is a single cell experiment object after filtering
-#'
-#'
+#' cgatflow R readandfiltercounts 
+#' 
+#' input: directory containing read count files or tsv file containing reads
+#' additional input variables: method used to generate file, model
+#' output: `experiment_out.rds` is an experiment object after filtering
+#' 
 
 suppressMessages(library(futile.logger))
 suppressMessages(library(getopt))
@@ -18,7 +19,7 @@ suppressMessages(library(edgeR))
 suppressMessages(library(csaw))
 suppressMessages(library(rhdf5))
 suppressMessages(library(tximport))
-
+suppressMessages(library(DEXSeq))
 
 source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
@@ -34,7 +35,7 @@ run <- function(opt) {
   rownames(sampleData) <- sampleData$track
 
   futile.logger::flog.info(paste("reading in data from ", opt$source))
-  if(opt$source == "salmon" || "kallisto"){
+  if(opt$source %in% c("salmon", "kallisto")){
     # Read in Transcript to Gene Map
     tx2gene <- read_tsv(opt$tx2gene)
     colnames(tx2gene) <- c("ensembl_transcript_id", "ensembl_gene_id")
@@ -66,7 +67,7 @@ run <- function(opt) {
   
   if(opt$source == "dexseq"){
     # Read in Data
-    files <- file.path(opt$counts_dir, sampleData$track)
+    files <- file.path(opt$counts_dir, paste0(sampleData$track, ".txt"))
     names(files) <- sampleData$track
     if(opt$method != "dexseq"){
       stop("DEXSeq input is handled by DEXSeq. Please correct the method argument.")
@@ -128,6 +129,14 @@ run <- function(opt) {
               quote = FALSE,
               row.names = TRUE,
               col.names = NA)
+  if(opt$source %in% c("salmon", "kallisto")){
+    write.table(txi$abundance,
+                file = "tpm.tsv",
+                sep = "\t",
+                quote = FALSE,
+                row.names = TRUE,
+                col.names = NA)
+  }
 }
 
   
@@ -181,7 +190,8 @@ main <- function() {
       dest="tx2gene_regex", 
       type="character",
       default="",
-      help=paste("Path to transcript to gene tsv.")
+      help=paste("Regex/Prefix for removal of certain features from ",
+                 "experiment (e.g. removal of spike-ins)")
     ),  
     make_option(
       "--method",

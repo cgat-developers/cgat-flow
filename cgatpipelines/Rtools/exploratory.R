@@ -1,4 +1,15 @@
-suppressMessages(library(futile.logger))
+#' Differential expression analysis Script
+#'
+#' 
+#' Example usage:
+#' 
+#' cgatflow R exploratory --model=~ group --contrast=group --factor=mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint
+#'
+#' Primary Input: `filename.rds` - output from the readandfiltercounts.R file or DESeqExpermient object or DEGList object
+#' Additional inputs: model and contrast as well as factors of interest
+#'
+#' Output: png images of: PCA, clustering, Surrogate Variable Analysis, Heatmaps
+#'
 suppressMessages(library(getopt))
 suppressMessages(library(tidyverse))
 suppressMessages(library(data.table))
@@ -11,6 +22,8 @@ suppressMessages(library(biomaRt))
 suppressMessages(library(Cairo))
 suppressMessages(library(pheatmap))
 suppressMessages(library(RColorBrewer))
+suppressMessages(library(ggforce))
+
 
 source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
@@ -71,11 +84,11 @@ run <- function(opt) {
   mod  <- model.matrix(formula(opt$model), colData(dds))
   mod0 <- model.matrix(~ 1, colData(dds))
   svseq <- svaseq(dat, mod, mod0, n.sv = 2)
-  for(batch in opt$batches){
-    start_plot(paste0('SVA for ', batch))
+  for(factor in opt$factors){
+    start_plot(paste0('SVA for ', factor))
     par(mfrow = c(2, 1), mar = c(3,5,3,1))
     for (i in 1:2) {
-      stripchart(svseq$sv[, i] ~ colData(dds)[, batch], vertical = TRUE, main = paste0("SV", i))
+      stripchart(svseq$sv[, i] ~ colData(dds)[, factor], vertical = TRUE, main = paste0("SV", i))
       abline(h = 0)
     }
     end_plot()
@@ -99,17 +112,31 @@ run <- function(opt) {
   ### PRINCIPAL COMPONENT ANALYSIS ###
   futile.logger::flog.info(paste("Performing Principal Component Analysis"))
   pca = prcomp(t(assay(vsd)))
+  for(factor in opt$factors){
+    variable.group <- colData(dds)[, factor]
+    names(variable.group) <- factor
+    percentVar <- round(100 * summary(pca)$importance[2,])
+    scores <- data.frame(variable.group, pca$x[,1:10])
+    start_plot(paste0('PCA_', factor))
+      print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
+        theme(legend.position="right") +  
+        labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
+             y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
+        ggtitle("Principal Component Analysis") + theme_grey(base_size = 15) +
+        theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
+        theme(text=element_text(family='serif')))
+    end_plot()
+  }
   variable.group <- colData(dds)[, opt$contrast]
-  sample.group<- colData(dds)[, opt$contrast]
-  percentVar <- round(100 * attr(pca, "percentVar"))
-  scores <- data.frame(variable.group, sample.group, pca$x[,1:10])
-  start_plot('PCA')
-    print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
-      theme(legend.position="right") +  
-      labs(colour=opt$contrast, x=paste0("PC1 (", percentVar[1]," of variance)", y="PC2 (", percentVar[2]," of variance)")) + 
-      ggtitle("Principal Component Analysis") + theme_grey(base_size = 15) +
-      theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) + theme(text=element_text(family='serif')))
+  names(variable.group) <- opt$contrast
+  scores <- data.frame(variable.group, pca$x[,1:10])
+  start_plot(paste0('PCA_grid'))
+  print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
+    geom_point(shape = 16, size = 0.5, position = 'auto') + 
+    geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
+    facet_matrix(vars(PC1:PC10), layer.diag = 2))
   end_plot()
+  
   loadings <- pca$rotation[,1:10]
   loadings <- data.frame(loadings[order(loadings[,1]), ])
   data <- getmart(rownames(loadings))
@@ -119,10 +146,10 @@ run <- function(opt) {
   
   ### HEATMAPS ###
   futile.logger::flog.info(paste("Performing Heatmap"))
+  df <- as.data.frame(colData(dds)[,opt$factors])
+  rownames(df) <- colData(dds)$track
   # Heatmap of Top 20 Expressed Genes
   select <- order(rowMeans(counts(dds,normalized=TRUE)),decreasing=TRUE)[1:20]
-  df <- as.data.frame(colData(dds)[,c(opt$contrast)])
-  rownames(df) <- colData(dds)$track
   start_plot('Heatmap_topExpressed')
     pheatmap(assay(vsd)[select,], cluster_rows=FALSE, cluster_cols=FALSE, show_rownames=FALSE, annotation_col=df)
   end_plot()
@@ -132,9 +159,6 @@ run <- function(opt) {
   temp <- getmart(rownames(mat))
   row.names(temp) <- temp$ensembl_gene_id
   rownames(mat) <- temp[rownames(mat),"external_gene_name"]
-  df <- as.data.frame(colData(vsd)[,c(opt$contrast)])
-  colnames(df)<- opt$contrast
-  rownames(df) <- colData(dds)$track
   start_plot('Heatmap_topVariable')
     pheatmap(mat, annotation_col=df, cluster_rows=FALSE,fontsize_row = 6)
   end_plot()
@@ -145,9 +169,6 @@ run <- function(opt) {
     temp <- getmart(rownames(mat))
     row.names(temp) <- temp$ensembl_gene_id
     rownames(mat) <- temp[rownames(mat),"external_gene_name"]
-    df <- as.data.frame(colData(vsd)[,c(opt$contrast)])
-    colnames(df)<- opt$contrast
-    rownames(df) <- colData(dds)$track
     start_plot('Heatmap_ofInterest')
       pheatmap(mat, annotation_col=df, scale = "row", cluster_cols = FALSE)
     end_plot()
@@ -158,7 +179,7 @@ run <- function(opt) {
   # for all genes
   sampleDists <- dist(t(assay(vsd)))
   sampleDistMatrix <- as.matrix( sampleDists )
-  rownames(sampleDistMatrix) <- paste( vsd$group, vsd$track, sep = " - " )
+  rownames(sampleDistMatrix) <- paste(colData(vsd)[,opt$contrast], vsd$track, sep = " - " )
   colnames(sampleDistMatrix) <- NULL
   colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
   start_plot('Heatmap_all')
@@ -171,7 +192,7 @@ run <- function(opt) {
   top500 <- head(assay(vsd)[ order(rowMeans(assay(vsd)), decreasing=TRUE ),  ], n=500)
   distsRL500 <- dist(t(top500))
   sampleDistMatrix500 <- as.matrix( distsRL500 )
-  rownames(sampleDistMatrix500) <- paste( vsd$group, vsd$track, sep = " - " )
+  rownames(sampleDistMatrix500) <- paste(colData(vsd)[,opt$contrast], vsd$track, sep = " - " )
   colnames(sampleDistMatrix500) <- NULL
   colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
   start_plot('Heatmap_top500')
@@ -183,18 +204,23 @@ run <- function(opt) {
   
   ### EXPLORE BATCH EFFECTS ###
   futile.logger::flog.info(paste("Exploring Batch Effects"))
-  for(batch in opt$batches){
-    batch_transformed <- vsd
-    assay(batch_transformed) <- limma::removeBatchEffect(assay(batch_transformed), colData(batch_transformed)[,batch])
-    
-    scores.corr <- plotPCA(batch_transformed, intgroup = opt$contrast, returnData=TRUE)
-    percentVar <- round(100 * attr(scores.corr, "percentVar"))
-    
-    start_plot(paste0('PCA_', batch, '_removed'))
-      print(qplot(x=PC1, y=PC2, data=scores.corr, colour=factor(colData(batch_transformed)[,opt$contrast]), shape=factor(batch_transformed$line)) +
-          theme(legend.position="right") +  labs(colour=opt$contrast) +
-          ggtitle(paste0("Principal Component Analysis\n after batch correction for ", batch)) + 
-          theme_bw() + theme(plot.title = element_text(lineheight=1, face="bold", hjust = 0.5)))
+  for(factor in opt$factors){
+    factor_transformed <- vsd
+    assay(factor_transformed) <- limma::removeBatchEffect(assay(factor_transformed), colData(factor_transformed)[,factor])
+    pca = prcomp(t(assay(factor_transformed)))
+    sample.group <- as_factor(colData(dds)[, factor])
+    variable.group <- colData(dds)[, opt$contrast]
+    percentVar <- round(100 * summary(pca)$importance[2,])
+    scores <- data.frame(variable.group, sample.group, pca$x[,1:10])
+    start_plot(paste0('PCA_', factor, '_removed'))
+    print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
+            theme(legend.position="right") +  
+            labs(colour=opt$contrast, shape=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
+                 y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
+            ggtitle(paste0("Principal Component Analysis\n after batch correction for ", factor)) + 
+            theme_grey(base_size = 15) +
+            theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
+            theme(text=element_text(family='serif')))
     end_plot()
   }
 }
@@ -223,8 +249,8 @@ main <- function() {
       help = paste("formula for multivariate model")
     ),
     make_option(
-      "--batches",
-      dest = "batches",
+      "--factors",
+      dest = "factors",
       type = "character",
       default = "",
       help = paste("formula for multivariate model")
@@ -247,8 +273,8 @@ main <- function() {
   opt <- experiment_start(option_list = option_list,
                           description = description)
   
-  if (!is.null(opt$batches)) {
-    opt$batches = unlist(strsplit(opt$batches, ","))
+  if (!is.null(opt$factors)) {
+    opt$factors = unlist(strsplit(opt$factors, ","))
   }
   if (!is.null(opt$genes_of_interest)) {
     opt$genes_of_interest = unlist(strsplit(opt$genes_of_interest, ","))

@@ -228,7 +228,7 @@ conda_install() {
     log "romoving old environment ${CONDA_INSTALL_ENV} if it exists"
     conda env remove -y -n ${CONDA_INSTALL_ENV} >& /dev/null || echo "Not removing environment ${CONDA_INSTALL_ENV} because it does not exist"
 
-    log "installing cgat-core and basic dependencies"
+    log "installing cgat-core, cgat-apps and its dependencies"
     conda create -y --name ${CONDA_INSTALL_ENV} -c conda-forge -c bioconda cgatcore cgat-apps
 
     # activate the environment - conda activate directly does not work
@@ -257,40 +257,37 @@ code_install() {
     # activate the environment - conda activate directly does not work
     conda activate ${CONDA_INSTALL_ENV}
 
+    OLDPWD=`pwd`
+
     log "installing cgat-flow code into conda environment"
-    if [[ ${CLONE_REPO} ]] ; then
+    if [[ ${CODE_INSTALL} ]] ; then
 
-	DEV_RESULT=0
-	# make sure you are in the CGAT_HOME folder
-	cd $CGAT_HOME
+	cd ${CGAT_HOME}
 
-	# download the code out of jenkins
-	if [[ -z ${JENKINS_INSTALL} ]] ; then
-
-	    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
-		# get the latest version from Git Hub in zip format
-		curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$BRANCH.zip
-		unzip $BRANCH.zip
-		rm $BRANCH.zip
-		if [[ ${RELEASE} ]] ; then
-		    NEW_NAME=`echo $BRANCH | sed 's/^v//g'`
-		    mv cgat-flow-$NEW_NAME/ cgat-flow/
-		else
-		    mv cgat-flow-$BRANCH/ cgat-flow/
-		fi
-            elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
-		# get latest version from Git Hub with git clone
-		git clone --branch=$BRANCH https://github.com/cgat-developers/cgat-flow.git
-            elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
-		# get latest version from Git Hub with git clone
-		git clone --branch=$BRANCH git@github.com:cgat-developers/cgat-flow.git
-            else
-		report_error " Unknown download type for CGAT code... "
-	    fi
-	    
-	    # make sure you are in the CGAT_HOME/cgat-flow folder
-	    cd $CGAT_HOME/cgat-flow
+        if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
+	    # get the latest version from Git Hub in zip format
+	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$BRANCH.zip
+	    unzip $BRANCH.zip
+	    rm $BRANCH.zip
+	    if [[ ${RELEASE} ]] ; then
+	        NEW_NAME=`echo $BRANCH | sed 's/^v//g'`
+		mv cgat-flow-$NEW_NAME/ cgat-flow/
+	    else
+	        mv cgat-flow-$BRANCH/ cgat-flow/
+            fi
+        elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$BRANCH https://github.com/cgat-developers/cgat-flow.git
+        elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$BRANCH git@github.com:cgat-developers/cgat-flow.git
+        else
+	    report_error " Unknown download type for CGAT code... "
 	fi
+
+        # make sure you are in the CGAT_HOME/cgat-flow folder
+	cd ${CGAT_HOME}/cgat-flow
+
     else
 	cd ${REPO_DIR}
     fi
@@ -314,25 +311,6 @@ code_install() {
 	
 	print_env_vars
 	
-    fi # if-$?
-
-    # revert setup.py if downloaded with git
-    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
-    
-    conda env export > environment.yml
-
-    # check whether conda create went fine
-    if [[ $DEV_RESULT -ne 0 ]] ; then
-	echo
-	echo " There was a problem installing the code with conda. "
-	echo " Installation did not finish properly. "
-	echo
-	echo " Please submit this issue via Git Hub: "
-	echo " https://github.com/cgat-developers/cgat-flow/issues "
-	echo
-
-	print_env_vars
-
     else
 	clear
 	echo 
@@ -349,6 +327,14 @@ code_install() {
 	echo
     fi # if-$ conda create
 
+    # revert setup.py if downloaded with git
+    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
+
+    conda env export > environment.yml
+
+    # go back to old working directory
+    cd $OLDPWD
+
 } # conda install
 
 
@@ -358,10 +344,8 @@ install_extra_deps() {
     log "installing extra deps"
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/pipelines-extra.yml
-    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${BRANCH}/conda/environments/apps-extra.yml
 
     conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-    conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
     if [[ ${INSTALL_IDE} -eq 1 ]] ; then
 	curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/pipelines-ide.yml
@@ -657,6 +641,7 @@ do
 	    CGAT_HOME="$2"
 	    shift 2
 	    FULL_INSTALL=1
+	    CODE_INSTALL=1
 	    ;;
 
 	--pipelines-branch)

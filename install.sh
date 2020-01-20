@@ -524,9 +524,7 @@ cleanup_env() {
 help_message() {
     echo
     echo " This script uses Conda to install cgat-flow. To do a full install, please type:"
-    echo " ./install.sh [--install-dir </full/path/to/folder/without/trailing/slash>]"
-    echo
-    echo " The default install folder will be: $HOME/cgat-install"
+    echo " ./install.sh --install-dir </full/path/to/folder/without/trailing/slash>"
     echo
     exit 1
 } # help_message
@@ -658,6 +656,7 @@ do
 	--install-dir)
 	    CGAT_HOME="$2"
 	    shift 2
+	    FULL_INSTALL=1
 	    ;;
 
 	--pipelines-branch)
@@ -713,7 +712,7 @@ do
 done
 
 if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL) ]] ; then
-    FULL_INSTALL=1
+    help_message
 fi
 
 # sanity check: make sure there is space available in the destination folder (20 GB) in 512-byte blocks

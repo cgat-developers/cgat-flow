@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# cgat-flow-conda: Integration test for pipelines running against the
+# latest conda packages of cgat-core and cgat-apps. The idea is that this
+# is the situation of a user just trying to run or extend our pipelines
+# without getting into cgat-core or cgat-apps internals.
+
 # References
 # http://kvz.io/blog/2013/11/21/bash-best-practices/
 # http://jvns.ca/blog/2017/03/26/bash-quirks/
@@ -14,13 +19,12 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+#set -o xtrace
+#set -o errtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
 # https://stelfox.net/blog/2013/11/fail-fast-in-bash-scripts/
-
-set -o errtrace
 
 SCRIPT_NAME="$0"
 SCRIPT_PARAMS="$@"
@@ -197,7 +201,7 @@ miniconda_install() {
 
     log "installing miniconda"
     bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
-    source ${CONDA_INSTALL_DIR}/bin/activate
+    source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
     hash -r
 
     # install cgat environment
@@ -224,17 +228,11 @@ conda_install() {
     log "romoving old environment ${CONDA_INSTALL_ENV} if it exists"
     conda env remove -y -n ${CONDA_INSTALL_ENV} >& /dev/null || echo "Not removing environment ${CONDA_INSTALL_ENV} because it does not exist"
 
-    log "installing conda CGAT environment into ${CONDA_INSTALL_ENV}"
-
     log "installing cgat-core and basic dependencies"
-    conda create -y --name ${CONDA_INSTALL_ENV} cgatcore numpy cython pysam
-    # activate the environment - conda activate directly does not work
-    source ${CONDA_INSTALL_DIR}/bin/activate $CONDA_INSTALL_ENV
+    conda create -y --name ${CONDA_INSTALL_ENV} -c conda-forge -c bioconda cgatcore cgat-apps
 
-    # TODO: use conda once cgat-apps is available on bioconda Can then probably
-    # remove numpy, cython, pysam from the previous line.
-    log "installing cgat-apps"
-    pip install cgat
+    # activate the environment - conda activate directly does not work
+    conda activate ${CONDA_INSTALL_ENV}
 
     log "installing pipeline dependencies for cgat-flow"
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
@@ -257,7 +255,7 @@ code_install() {
     get_cgat_env
 
     # activate the environment - conda activate directly does not work
-    source ${CONDA_INSTALL_DIR}/bin/activate $CONDA_INSTALL_ENV
+    conda activate ${CONDA_INSTALL_ENV}
 
     log "installing cgat-flow code into conda environment"
     if [[ ${CLONE_REPO} ]] ; then
@@ -525,8 +523,8 @@ cleanup_env() {
 # function to display help message
 help_message() {
     echo
-    echo " This script uses Conda to install cgat-flow. To do a fill install, please type:"
-    echo " ./install.sh -[--install-dir </full/path/to/folder/without/trailing/slash>]"
+    echo " This script uses Conda to install cgat-flow. To do a full install, please type:"
+    echo " ./install.sh [--install-dir </full/path/to/folder/without/trailing/slash>]"
     echo
     echo " The default install folder will be: $HOME/cgat-install"
     echo
@@ -734,18 +732,6 @@ fi
 
 if [[ $CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL ]] ; then
     code_install
-fi
-
-if [[ $OS_PKGS ]] ; then
-    install_os_packages
-fi
-
-if [[ $INSTALL_TEST ]] ; then
-    conda_test
-fi
-
-if [[ $INSTALL_UPDATE ]] ; then
-    conda_update
 fi
 
 if [[ $UNINSTALL ]] ; then

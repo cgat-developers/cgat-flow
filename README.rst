@@ -14,8 +14,11 @@ If you just want to use the production version of the code, please try the follo
     # download installation script:
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install.sh
 
-    # and then:
-    bash install.sh --install-dir </full/path/to/folder/without/trailing/slash>
+    # then run:
+    bash install.sh --full-install --install-dir </full/path/to/folder/without/trailing/slash>
+    
+    # you can also test your installation with:
+    bash install.sh --test --install-dir </full/path/to/folder/without/trailing/slash>
 
 On the other hand, if you prefer to use the development version of the code, run this instead::
 

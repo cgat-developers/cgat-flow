@@ -55,7 +55,7 @@ trap 'error_handler ${LINENO} $? ${BASH_COMMAND}' ERR INT TERM
 
 # log installation information
 log() {
-    echo "# install-CGAT-tools.sh log | `hostname` | `date` | $1 "
+    echo "# install.sh log | `hostname` | `date` | $1 "
 }
 
 # report error and exit
@@ -105,6 +105,36 @@ get_cgat_env() {
     [[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-flow"
 
 } # get_cgat_env
+
+
+is_env_enabled() {
+    # disable error checking
+    set +e
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -ne 0 ]] ; then
+        # conda is not available
+        get_cgat_env
+        source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
+    fi
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -eq 0 ]] ; then
+        # conda is available
+        # activate cgat-flow env
+        conda activate ${CONDA_INSTALL_ENV}
+    else
+        # conda is not available
+        report_error " Conda can't be found! "
+    fi
+
+    # enable error checking again
+    set -e
+}
 
 
 # setup environment variables
@@ -225,21 +255,26 @@ conda_install() {
     mkdir -p $CGAT_HOME
     cd $CGAT_HOME
 
+    # activate cgat environment
+    is_env_enabled
+
     log "romoving old environment ${CONDA_INSTALL_ENV} if it exists"
     conda env remove -y -n ${CONDA_INSTALL_ENV} >& /dev/null || echo "Not removing environment ${CONDA_INSTALL_ENV} because it does not exist"
 
     log "installing cgat-core, cgat-apps and its dependencies"
     conda create -y --name ${CONDA_INSTALL_ENV} -c conda-forge -c bioconda cgatcore cgat-apps
 
-    # activate the environment - conda activate directly does not work
-    conda activate ${CONDA_INSTALL_ENV}
-
-    log "installing pipeline dependencies for cgat-flow"
+    log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
     
     [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
+
+    log "curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/cgat-flow-pipelines."
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/cgat-flow-pipelines.yml
+
+    conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
 
     # install extra deps
     install_extra_deps
@@ -254,13 +289,13 @@ code_install() {
 
     get_cgat_env
 
-    # activate the environment - conda activate directly does not work
-    conda activate ${CONDA_INSTALL_ENV}
+    # activate the environment
+    is_env_enabled
 
     OLDPWD=`pwd`
 
     log "installing cgat-flow code into conda environment"
-    if [[ ${CODE_INSTALL} ]] ; then
+    if [[ ${CODE_INSTALL} || ${FULL_INSTALL} ]] ; then
 
 	cd ${CGAT_HOME}
 
@@ -335,7 +370,7 @@ code_install() {
     # go back to old working directory
     cd $OLDPWD
 
-} # conda install
+} # code_install
 
 
 # install extra dependencies
@@ -379,6 +414,55 @@ install_py2_deps() {
     conda env update --quiet --file pipelines-splicing.yml
 
 }
+
+code_test() {
+
+    detect_cgat_installation
+
+    get_cgat_env
+
+    # activate the environment
+    is_env_enabled
+
+    OLDPWD=`pwd`
+
+    log "starting Python tests"
+
+    conda env list
+    conda env export
+
+    cd $CGAT_HOME/cgat-flow
+
+    nosetests -v tests/test_import.py
+    if [[ $? -eq 0 ]] ; then
+        echo
+	echo " test_imports.py passed sucessfully!"
+	echo
+    else
+	echo
+	echo " test_script.py failed. "
+	echo
+	print_env_vars
+    fi
+
+    nosetests -v tests/test_scripts.py
+    if [[ $? -eq 0 ]] ; then
+        echo
+	echo " test_imports.py passed sucessfully!"
+	echo
+    else
+	echo
+	echo " test_script.py failed. "
+	echo
+	print_env_vars
+    fi
+
+
+    # go back to old working directory
+    cd $OLDPWD
+
+} # code_test
+
 
 # unistall CGAT code collection
 uninstall() {
@@ -508,7 +592,10 @@ cleanup_env() {
 help_message() {
     echo
     echo " This script uses Conda to install cgat-flow. To do a full install, please type:"
-    echo " ./install.sh --install-dir </full/path/to/folder/without/trailing/slash>"
+    echo " ./install.sh --full-install --install-dir </full/path/to/folder/without/trailing/slash>"
+    echo
+    echo " You can test your installation with:"
+    echo "./install.sh --test --install-dir </full/path/to/install/dir>"
     echo
     exit 1
 } # help_message
@@ -640,8 +727,6 @@ do
 	--install-dir)
 	    CGAT_HOME="$2"
 	    shift 2
-	    FULL_INSTALL=1
-	    CODE_INSTALL=1
 	    ;;
 
 	--pipelines-branch)
@@ -696,7 +781,7 @@ do
     esac
 done
 
-if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL) ]] ; then
+if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL || $INSTALL_TEST) ]] ; then
     help_message
 fi
 
@@ -716,6 +801,10 @@ fi
 
 if [[ $CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL ]] ; then
     code_install
+fi
+
+if [[ $INSTALL_TEST ]] ; then
+    code_test
 fi
 
 if [[ $UNINSTALL ]] ; then

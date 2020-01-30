@@ -126,6 +126,15 @@ run <- function(opt) {
         theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
         theme(text=element_text(family='serif')))
     end_plot()
+    start_plot(paste0('PCA_13_', factor))
+          print(qplot(x=PC1, y=PC3, data=scores, colour=factor(variable.group)) +
+        theme(legend.position="right") +  
+        labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
+             y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
+        ggtitle("Principal Component Analysis") + theme_grey(base_size = 15) +
+        theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
+        theme(text=element_text(family='serif')))
+    end_plot()
   }
   variable.group <- colData(dds)[, opt$contrast]
   names(variable.group) <- opt$contrast

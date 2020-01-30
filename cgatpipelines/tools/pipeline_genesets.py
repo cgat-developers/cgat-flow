@@ -1221,9 +1221,6 @@ def buildIntronGeneModels(infiles, outfile):
     '''
     P.run(statement, job_memory=PARAMS["job_memory"])
 
-# Next need to add identifyProteinCodingGenes, buildIntronGeneModels
-# aim is to generate the intron gtf here for use in bamstats
-
 ################################################################
 # UCSC derived annotations
 ################################################################

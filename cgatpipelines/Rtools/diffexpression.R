@@ -47,8 +47,8 @@ getmart <- function(values){
   return(data)
 }
 
-start_plot <- function(section, height = 6, width = 6, type = "png") {
-    file = get_output_filename(paste0(section, ".", type))
+start_plot <- function(section, height = 6, width = 6, type = "png", outdir="") {
+    file = get_output_filename(paste0(outdir,"/",section, ".", type))
     Cairo(file = file,
           type = type,
           width = width,
@@ -116,13 +116,13 @@ run <- function(opt) {
 
   flog.info("... plotting dispersion estimates")
   ## Plot dispersion estimates
-  start_plot("Dispersion")
+  start_plot("Dispersion", outdir=opt$outdir)
     plotDispEsts(dds)
   end_plot()
   
   flog.info("... plotting MA")
   ## MA Plot
-  start_plot("MAPlot")
+  start_plot("MAPlot", outdir=opt$outdir)
     plotMA(resLFC, ylim = c(-3,3))
   end_plot()
   
@@ -135,24 +135,24 @@ run <- function(opt) {
   resLFC$chromosome<-data$chromosome_name[match(rownames(resLFC), data$ensembl_gene_id)]
   resLFC$start<-data$start_position[match(rownames(resLFC), data$ensembl_gene_id)]
   resSig <- subset(resLFC, padj < opt$alpha)
-  write.table(resSig, "results.tsv", sep = "\t")
-  write.table(resLFC, "results_full.tsv", sep = "\t")
+  write.table(resSig, paste0(opt$outdir,"/","results.tsv"), sep = "\t")
+  write.table(resLFC, paste0(opt$outdir,"/","results_full.tsv"), sep = "\t")
   resdf <- data.frame(geneid=rownames(resLFC), pvalue=resLFC$pvalue*sign(resLFC$log2FoldChange))
-  write.table(resdf, "px_results_pvalue.gene.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+  write.table(resdf, paste0(opt$outdir,"/","px_results_pvalue.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
   resdf <- data.frame(geneid=rownames(resLFC), l2fc=resLFC$log2FoldChange)
-  write.table(resdf, "px_results_l2fc.gene.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+  write.table(resdf, paste0(opt$outdir,"/","px_results_l2fc.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
   resdf <- data.frame(geneid=rownames(resLFC), l2fc=resLFC$log2FoldChange)
-  write.table(resdf, "px_results_l2fc.gene.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+  write.table(resdf, paste0(opt$outdir,"/","px_results_l2fc.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
   genelengths <- rowMeans(assays(experiment)$avgTxLength)
-  write.table(genelengths, "gene_lengths.tsv", sep = "\t", row.names = TRUE, quote = FALSE)
-  file = get_output_filename("results_table.rds")
+  write.table(genelengths, paste0(opt$outdir,"/","gene_lengths.tsv"), sep = "\t", row.names = TRUE, quote = FALSE)
+  file = get_output_filename(paste0(opt$outdir,"/","results_table.rds"))
   flog.info(paste("saving results data to", file))
   saveRDS(resLFC, file = file)
 
 
   flog.info("... plotting P histogram")
   ## Plot P value Histogram
-  start_plot("PHistogram")
+  start_plot("PHistogram", outdir=opt$outdir)
     hist(res$pvalue,breaks=50, col='skyblue', xlab="p-value", main="P-value Histogram")
   end_plot()
 
@@ -160,14 +160,14 @@ run <- function(opt) {
   ## Plot Top Downregulated Genes
   genelist <- rownames(resLFC[ order( resLFC[,grepl("log2",colnames(resLFC))] ), ][0:9,])
   dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
-  start_plot("Downregulated")
+  start_plot("Downregulated", outdir=opt$outdir)
   print(plotTPMs(dftemp, opt$contrast))
   end_plot()
   
   flog.info("... plotting upregulated genes")
   genelist <- rownames(resLFC[ order( -resLFC[,grepl("log2",colnames(resLFC))] ), ][0:9,])
   dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
-  start_plot("Upregulated")
+  start_plot("Upregulated", outdir=opt$outdir)
     print(plotTPMs(dftemp, opt$contrast))
   dev.off()
   
@@ -177,7 +177,7 @@ run <- function(opt) {
   if(length(genelist) > 9){
       genelist <- genelist[0:9]}
   dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
-  start_plot("significant")
+  start_plot("significant", outdir=opt$outdir)
     print(plotTPMs(dftemp, opt$contrast))
   dev.off()
   
@@ -194,8 +194,8 @@ run <- function(opt) {
   sigall$percent <- sigall$numberDE/sigall$numberTOT
   sigall <- sigall[which(sigall[,2] < 0.05),]
   cats <- sigall$category
-  write.table(sigall[,c("category", "pvalue")], file='GO.tsv', quote=FALSE, sep='\t', row.names = FALSE)
-  write.table(sigall, file='GOall.tsv', quote=FALSE, sep='\t', row.names = FALSE)
+  write.table(sigall[,c("category", "pvalue")], file=paste0(opt$outdir,"/",'GO.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
+  write.table(sigall, file=paste0(opt$outdir,"/",'GOall.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
   
   
   
@@ -219,7 +219,7 @@ run <- function(opt) {
                         nperm=10000)
       fwrite(fgseaRes, file=paste0('GSEA_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.tsv'), sep="\t", sep2=c("", " ", ""))
       topPathwaysUp <- fgseaRes[ES > 0,][head(order(pval), n=10),]$pathway
-      png(paste0('GSEA_GO_up_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
+      png(paste0(opt$outdir,"/",'GSEA_GO_up_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
           width =15, height = 3, units = 'in', res = 600)
       plotGseaTable(pathways[topPathwaysUp], rnk, fgseaRes, 
                     gseaParam = 0.5, colwidths = c(10,2,1,1,1))
@@ -229,7 +229,7 @@ run <- function(opt) {
       topPathwaysDown <- fgseaRes[ES < 0,][head(order(pval), n=10),]$pathway
       plotGseaTable(pathways[topPathwaysDown], rnk, fgseaRes, 
       gseaParam = 0.5)
-      png(paste0('GSEA_GO_down_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
+      png(paste0(opt$outdir,"/",'GSEA_GO_down_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
           width =15, height = 3, units = 'in', res = 600)
       plotGseaTable(pathways[topPathwaysDown], rnk, fgseaRes, 
                     gseaParam = 0.5, colwidths = c(10,2,1,1,1))
@@ -253,7 +253,7 @@ run <- function(opt) {
       y[[i]] = ddsperm$group
       i = i+1
     }
-    start_plot("Simulations")
+    start_plot("Simulations", outdir=opt$outdir)
     theme_set(theme_gray(base_size = 18))
     sims = qplot(x,
                  geom="histogram",
@@ -274,7 +274,7 @@ run <- function(opt) {
     z <- unlist(z)
     df <- data.frame(number=x, combination=z)
     df
-    write_tsv(df,"Simulations.tsv")
+    write_tsv(df,paste0(opt$outdir,"/","Simulations.tsv"))
   }
 }
 
@@ -306,8 +306,8 @@ main <- function() {
           "--coef",
           dest = "coef",
           type = "character",
-          default = ""
-          help = paste("Comparison of interest for DESeq2: e.g. group_MUT_vs_CTR", where MUT and CTR are in group)
+          default = "",
+          help = paste("Comparison of interest for DESeq2: e.g. group_MUT_vs_CTR, where MUT and CTR are in group")
         ),	
         make_option(
           "--refgroup",
@@ -322,6 +322,13 @@ main <- function() {
             type = "numeric",
             default = 0.05,
             help = paste("Adjusted P value threshold")
+        ),
+        make_option(
+            "--outdir",
+            dest = "outdir",
+            type = "character",
+            default = "experiment",
+            help = paste("Libraries for gsea")
         ),
         make_option(
             "--permute",

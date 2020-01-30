@@ -105,7 +105,7 @@ run <- function(opt) {
     design(experiment) <- formula(opt$model)
     dds <- DESeq(experiment)
     res <- results(dds)
-    resLFC <- lfcShrink(dds, coef="group_SMA1_vs_CTR", type="apeglm")
+    resLFC <- lfcShrink(dds, coef=opt$coef, type="apeglm")
   } 
   if (class(experiment) == "DGEList"){
     dds = DESeqDataSetFromMatrix(experiment$counts, experiment$sample, design = formula(opt$model))
@@ -302,6 +302,13 @@ main <- function() {
           default = "group",
           help = paste("contrast/factor to use for comparison")
         ),
+        make_option(
+          "--coef",
+          dest = "coef",
+          type = "character",
+          default = ""
+          help = paste("Comparison of interest for DESeq2: e.g. group_MUT_vs_CTR", where MUT and CTR are in group)
+        ),	
         make_option(
           "--refgroup",
           dest = "refgroup",

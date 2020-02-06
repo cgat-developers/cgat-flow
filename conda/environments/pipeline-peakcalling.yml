@@ -15,7 +15,7 @@ dependencies:
 - matplotlib
 - numpy
 - pandas
-- pysam
+- pysam<=0.15.2
 - rpy2
 - ruffus
 - seaborn

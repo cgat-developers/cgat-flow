@@ -729,8 +729,8 @@ SEQUENCEFILES = tuple([os.path.join(DATADIR, suffix_name)
 # enable multiple fastqs from the same sample to be analysed together
 if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
     SEQUENCEFILES_REGEX = regex(
-        r"%s/%s.(fastq.1.gz|fastq.gz|sra)" % (
-            DATADIR, PARAMS["merge_pattern_input"].strip()))
+        r"%s.(fastq.1.gz|fastq.gz|sra)" % (
+            PARAMS["merge_pattern_input"].strip()))
 
     # the last expression counts number of groups in pattern_input
     SEQUENCEFILES_KALLISTO_OUTPUT = [

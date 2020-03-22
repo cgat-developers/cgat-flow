@@ -15,7 +15,7 @@ dependencies:
 - numpy
 - pandas
 - pybedtools
-- pysam
+- pysam<=0.15.2
 - ruffus
 # Misc dependencies
 # WARNING: macs2 is Py2 only. Please install it on a separate conda env

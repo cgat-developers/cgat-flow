@@ -5,15 +5,22 @@
 CGAT Flow
 =========
 
-We have developed a set of ruffus_ based pipelines in comparative genomics
-and NGS analysis.
+We have developed a set of ruffus_ based pipelines in comparative genomics and NGS analysis. We are working on improving the
+existing documentation and portability of the code so stay tuned. The current documentation of the code is
+`here <https://www.cgat.org/downloads/public/cgatpipelines/documentation/>`_
 
-We are working on improving the existing documentation and portability of the code
-to release a set of production pipelines soon so please stay tuned. However, to view our
-current documentation please see `here <https://www.cgat.org/downloads/public/cgatpipelines/documentation/>`_
+If you just want to use the production version of the code, please try the following steps::
 
-We are currently testing a script to automate the installation with conda_. Feel
-free to give it a go::
+    # download installation script:
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install.sh
+
+    # then run:
+    bash install.sh --full-install --install-dir </full/path/to/folder/without/trailing/slash>
+    
+    # you can also test your installation with:
+    bash install.sh --test --install-dir </full/path/to/folder/without/trailing/slash>
+
+On the other hand, if you prefer to use the development version of the code, run this instead::
 
     # download installation script:
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/master/install-devel.sh
@@ -27,14 +34,14 @@ free to give it a go::
 	 --clone-from-repo
 	 --location </full/path/to/folder/without/trailing/slash>
 
-The installation script will put everything under the specified location. It needs
-15 GB of disk space and it takes about 35 minutes to complete. The aim of the
-script is to provide a portable installation that does not interfere with the existing
-software. As a result, you will get a conda environment working with CGAT Flow
-which can be enabled on demand according to your needs.
+Both scripts use conda_ to create the appropriate environments for the code to run.
 
-On top of the instructions above, please make sure that you configure the following
-environment variables::
+The installation script will put everything under the specified location. It needs 15 GB of disk space and it takes about
+35 minutes to complete. The aim of the script is to provide a portable installation that does not interfere with the existing
+software. As a result, you will get a conda environment working with CGAT Flow which can be enabled on demand according to your
+needs.
+
+On top of the instructions above, please make sure that you configure the following environment variables::
 
         # Access to the DRMAA library: https://en.wikipedia.org/wiki/DRMAA
         export DRMAA_LIBRARY_PATH=/<full-path>/libdrmaa.so

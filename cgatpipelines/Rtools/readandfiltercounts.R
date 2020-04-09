@@ -70,7 +70,7 @@ run <- function(opt) {
     files <- file.path(opt$counts_dir, paste0(sampleData$track, ".txt"))
     names(files) <- sampleData$track
     if(opt$method != "dexseq"){
-      stop("DEXSeq input is handled by DEXSeq. Please correct the method argument.")
+      stop("DEXSeq input is handled by diffexonexpression. Please correct the method argument.")
     }
     dataset = DEXSeqDataSetFromHTSeq(
       files,
@@ -117,21 +117,21 @@ run <- function(opt) {
   }
 
   ### SAVING DATA ###
-  file = get_output_filename("experiment_out.rds")
+  file = get_output_filename(paste0(opt$outdir,"/experiment_out.rds"))
   flog.info(paste("saving experiment data to", file))
   saveRDS(dataset, file = file)
   
   ## Set up gene lengths for RPKM
   flog.info("outputting counts data")
   write.table(counts(dataset),
-              file = "Counts_Data.tsv",
+              file = paste0(opt$outdir,"/Counts_Data.tsv"),
               sep = "\t",
               quote = FALSE,
               row.names = TRUE,
               col.names = NA)
   if(opt$source %in% c("salmon", "kallisto")){
     write.table(txi$abundance,
-                file = "tpm.tsv",
+                file = paste0(opt$outdir,"/tpm.tsv"),
                 sep = "\t",
                 quote = FALSE,
                 row.names = TRUE,
@@ -162,6 +162,13 @@ main <- function() {
       type="character",
       default = "",
       help=paste("input file with experimental design/sample info")
+    ),
+    make_option(
+      c("--outdir"),
+      dest="outdir",
+      type="character",
+      default = "results.dir",
+      help=paste("output directory")
     ),
     make_option(
       "--model",

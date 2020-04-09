@@ -46,8 +46,8 @@ getmart <- function(values){
 }
 
 
-start_plot <- function(section, height = 6, width = 6, type = "png") {
-  file = get_output_filename(paste0(section, ".", type))
+start_plot <- function(section, height = 6, width = 6, type = "png", outdir="") {
+    file = get_output_filename(paste0(outdir,"/",section, ".", type))
   Cairo(file = file,
         type = type,
         width = width,
@@ -85,7 +85,7 @@ run <- function(opt) {
   mod0 <- model.matrix(~ 1, colData(dds))
   svseq <- svaseq(dat, mod, mod0, n.sv = 2)
   for(factor in opt$factors){
-    start_plot(paste0('SVA for ', factor))
+    start_plot(paste0('SVA for ', factor), outdir=opt$outdir)
     par(mfrow = c(2, 1), mar = c(3,5,3,1))
     for (i in 1:2) {
       stripchart(svseq$sv[, i] ~ colData(dds)[, factor], vertical = TRUE, main = paste0("SV", i))
@@ -104,7 +104,7 @@ run <- function(opt) {
     as_tibble(assay(vsd)[, 1:2]) %>% mutate(transformation = "vst"),
     as_tibble(assay(rld)[, 1:2]) %>% mutate(transformation = "rlog"))
   colnames(df)[1:2] <- c("x", "y")
-  start_plot('Variance_Transformations')
+  start_plot('Variance_Transformations', outdir=opt$outdir)
     print(ggplot(df, aes(x = x, y = y)) + geom_hex(bins = 80) +
       coord_fixed() + facet_grid( . ~ transformation))
   end_plot()
@@ -117,7 +117,7 @@ run <- function(opt) {
     names(variable.group) <- factor
     percentVar <- round(100 * summary(pca)$importance[2,])
     scores <- data.frame(variable.group, pca$x[,1:10])
-    start_plot(paste0('PCA_', factor))
+    start_plot(paste0('PCA_', factor), outdir=opt$outdir)
       print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
         theme(legend.position="right") +  
         labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
@@ -126,11 +126,11 @@ run <- function(opt) {
         theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
         theme(text=element_text(family='serif')))
     end_plot()
-    start_plot(paste0('PCA_13_', factor))
+    start_plot(paste0('PCA_13_', factor), outdir=opt$outdir)
           print(qplot(x=PC1, y=PC3, data=scores, colour=factor(variable.group)) +
         theme(legend.position="right") +  
         labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
-             y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
+             y=paste0("PC3 (", percentVar[3],"% of variance)")) + 
         ggtitle("Principal Component Analysis") + theme_grey(base_size = 15) +
         theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
         theme(text=element_text(family='serif')))
@@ -139,7 +139,7 @@ run <- function(opt) {
   variable.group <- colData(dds)[, opt$contrast]
   names(variable.group) <- opt$contrast
   scores <- data.frame(variable.group, pca$x[,1:10])
-  start_plot(paste0('PCA_grid'))
+  start_plot(paste0('PCA_grid'), outdir=opt$outdir)
   print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
     geom_point(shape = 16, size = 0.5, position = 'auto') + 
     geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
@@ -151,7 +151,7 @@ run <- function(opt) {
   data <- getmart(rownames(loadings))
   loadings$symbol<-data$mgi_symbol[match(rownames(loadings), data$ensembl_gene_id)]
   loadings$description <- data$description[match(rownames(loadings), data$ensembl_gene_id)]
-  write.table(loadings, file='PCA_loadings.tsv', quote=FALSE, sep='\t', row.names = TRUE, col.names = NA) 
+  write.table(loadings, file=paste0(opt$outdir,"/",'PCA_loadings.tsv'), quote=FALSE, sep='\t', row.names = TRUE, col.names = NA) 
   
   ### HEATMAPS ###
   futile.logger::flog.info(paste("Performing Heatmap"))
@@ -159,7 +159,7 @@ run <- function(opt) {
   rownames(df) <- colData(dds)$track
   # Heatmap of Top 20 Expressed Genes
   select <- order(rowMeans(counts(dds,normalized=TRUE)),decreasing=TRUE)[1:20]
-  start_plot('Heatmap_topExpressed')
+  start_plot('Heatmap_topExpressed', outdir=opt$outdir)
     pheatmap(assay(vsd)[select,], cluster_rows=FALSE, cluster_cols=FALSE, show_rownames=FALSE, annotation_col=df)
   end_plot()
   # Heatmap of Top 20 Variable Genes
@@ -168,7 +168,7 @@ run <- function(opt) {
   temp <- getmart(rownames(mat))
   row.names(temp) <- temp$ensembl_gene_id
   rownames(mat) <- temp[rownames(mat),"external_gene_name"]
-  start_plot('Heatmap_topVariable')
+  start_plot('Heatmap_topVariable', outdir=opt$outdir)
     pheatmap(mat, annotation_col=df, cluster_rows=FALSE,fontsize_row = 6)
   end_plot()
   # Heatmap of Genes of interest
@@ -178,7 +178,7 @@ run <- function(opt) {
     temp <- getmart(rownames(mat))
     row.names(temp) <- temp$ensembl_gene_id
     rownames(mat) <- temp[rownames(mat),"external_gene_name"]
-    start_plot('Heatmap_ofInterest')
+    start_plot('Heatmap_ofInterest', outdir=opt$outdir)
       pheatmap(mat, annotation_col=df, scale = "row", cluster_cols = FALSE)
     end_plot()
   }
@@ -191,7 +191,7 @@ run <- function(opt) {
   rownames(sampleDistMatrix) <- paste(colData(vsd)[,opt$contrast], vsd$track, sep = " - " )
   colnames(sampleDistMatrix) <- NULL
   colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
-  start_plot('Heatmap_all')
+  start_plot('Heatmap_all', outdir=opt$outdir)
     pheatmap(sampleDistMatrix,
     clustering_distance_rows = sampleDists,
     clustering_distance_cols = sampleDists,
@@ -204,7 +204,7 @@ run <- function(opt) {
   rownames(sampleDistMatrix500) <- paste(colData(vsd)[,opt$contrast], vsd$track, sep = " - " )
   colnames(sampleDistMatrix500) <- NULL
   colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
-  start_plot('Heatmap_top500')
+  start_plot('Heatmap_top500', outdir=opt$outdir)
     pheatmap(sampleDistMatrix500,
     clustering_distance_rows = distsRL500,
     clustering_distance_cols = distsRL500,
@@ -221,7 +221,7 @@ run <- function(opt) {
     variable.group <- colData(dds)[, opt$contrast]
     percentVar <- round(100 * summary(pca)$importance[2,])
     scores <- data.frame(variable.group, sample.group, pca$x[,1:10])
-    start_plot(paste0('PCA_', factor, '_removed'))
+    start_plot(paste0('PCA_', factor, '_removed'), outdir=opt$outdir)
     print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
             theme(legend.position="right") +  
             labs(colour=opt$contrast, shape=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),

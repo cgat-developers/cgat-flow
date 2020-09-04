@@ -24,8 +24,7 @@ web_dir: ../web
 # gt2table
 # kallisto
 # salmon
-# sailfish
-quantifiers: [featurecounts,gtf2table,kallisto,salmon,sailfish]
+quantifiers: [featurecounts,gtf2table,kallisto,salmon]
 
 # provide a reference geneset (suffix= ".gtf.gz")
 # geneset=refcoding.gtf.gz
@@ -161,45 +160,6 @@ salmon:
 
     threads: 1
 
-    memory: 2G
-
-    ################################################################
-    #
-    # sailfish options
-    #
-    ################################################################
-sailfish:
-
-    # sailfish library type
-    # see `sailfish quant --help` for explanation of library types
-    # or http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtyp
-    # ISF == fr-secondstrand in tophat = inward, stranded, read 1 from forward strand
-    libtype: ISF
-
-    # string to append to the sailfish quant command to provide specific
-    # options
-    # optional arguments include:
-    # --biasCorrec
-    options: ''
-
-    # string to append to the sailfish index command to provide specific
-    # options
-    # optional arguments for indexing include:
-    # --force, --threads N (default=4)
-    index_options: ''
-
-    # kmer size for sailfish library
-    kmer: 31
-
-    # number of bootstrap samples
-    # Note: you need to bootstrap for differential expression with sleuth
-    # if there are no technical replicates
-    bootstrap: 100
-
-    # number of threads for sailfish
-    threads: 1
-
-    # job_memory for sailfish
     memory: 2G
 
     ################################################################

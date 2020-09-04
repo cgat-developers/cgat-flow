@@ -24,7 +24,7 @@ dependencies:
 - pandas
 - pep8
 - pybedtools
-- pysam
+- pysam <= 0.15.2
 - drmaa
 - rpy2 < 3
 - ruffus

@@ -991,7 +991,7 @@ def callMacs2peaks(infiles, outfile):
                                  PARAMS['macs2_idrcol'],
                                  PARAMS['macs2_broad_peak'])
 
-    P.run(statement, job_condaenv="macs2")
+    P.run(statement)
     peakcaller.summarise(outfile)
 
 

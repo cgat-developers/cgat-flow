@@ -103,9 +103,9 @@ run <- function(opt) {
     suppressMessages(library(DESeq2))
     colData(experiment)[,opt$contrast] <- relevel(colData(experiment)[,opt$contrast], ref = opt$refgroup)
     design(experiment) <- formula(opt$model)
-    dds <- DESeq(experiment)
-    res <- results(dds)
-    resLFC <- lfcShrink(dds, coef=opt$coef, type="apeglm")
+    dds <- DESeq(experiment, betaPrior=FALSE)
+    res <- results(dds, name=opt$coef)
+    resLFC <- lfcShrink(dds, coef=opt$coef, type=opt$shrinkage)
   } 
   if (class(experiment) == "DGEList"){
     dds = DESeqDataSetFromMatrix(experiment$counts, experiment$sample, design = formula(opt$model))
@@ -123,7 +123,7 @@ run <- function(opt) {
   flog.info("... plotting MA")
   ## MA Plot
   start_plot("MAPlot", outdir=opt$outdir)
-    plotMA(resLFC, ylim = c(-3,3))
+    DESeq2::plotMA(resLFC, ylim = c(-3,3))
   end_plot()
   
   flog.info("... saving DE data")
@@ -137,6 +137,8 @@ run <- function(opt) {
   resSig <- subset(resLFC, padj < opt$alpha)
   write.table(resSig, paste0(opt$outdir,"/","results.tsv"), sep = "\t")
   write.table(resLFC, paste0(opt$outdir,"/","results_full.tsv"), sep = "\t")
+  resSig2 <- subset(res, padj < opt$alpha)
+  write.table(resSig2, paste0(opt$outdir,"/","results_noLFCshrinkage.tsv"), sep = "\t")
   resdf <- data.frame(geneid=rownames(resLFC), pvalue=resLFC$pvalue*sign(resLFC$log2FoldChange))
   write.table(resdf, paste0(opt$outdir,"/","px_results_pvalue.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
   resdf <- data.frame(geneid=rownames(resLFC), l2fc=resLFC$log2FoldChange)
@@ -178,6 +180,13 @@ run <- function(opt) {
       genelist <- genelist[0:9]}
   dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
   start_plot("significant", outdir=opt$outdir)
+    print(plotTPMs(dftemp, opt$contrast))
+  dev.off()
+
+  flog.info("... plotting user-defined genes")
+  genelist <- unlist(strsplit(opt$userlist, ","))
+  dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
+  start_plot("Userdefined", outdir=opt$outdir)
     print(plotTPMs(dftemp, opt$contrast))
   dev.off()
   
@@ -324,6 +333,20 @@ main <- function() {
             help = paste("Adjusted P value threshold")
         ),
         make_option(
+            "--shrinkage",
+            dest = "shrinkage",
+            type = "character",
+            default = "apeglm",
+            help = paste("Method for LFC shrinkage. Options are apeglm (default), ashr, normal")
+        ),
+         make_option(
+            "--userlist",
+            dest = "userlist",
+            type = "character",
+            default = "ENSG00000205927,ENSG00000130675,ENSG00000016082,ENSG00000070748,ENSG00000064300,ENSG00000078018",
+            help = paste("Method for LFC shrinkage. Options are apeglm (default), ashr, normal")
+        ),
+       make_option(
             "--outdir",
             dest = "outdir",
             type = "character",

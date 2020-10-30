@@ -116,7 +116,8 @@ run <- function(opt) {
     variable.group <- colData(dds)[, factor]
     names(variable.group) <- factor
     percentVar <- round(100 * summary(pca)$importance[2,])
-    scores <- data.frame(variable.group, pca$x[,1:10])
+    futile.logger::flog.info(paste("PCA", dim(pca$x)))
+    scores <- data.frame(variable.group, pca$x[,1:8])
     start_plot(paste0('PCA_', factor), outdir=opt$outdir)
       print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
         theme(legend.position="right") +  
@@ -138,15 +139,15 @@ run <- function(opt) {
   }
   variable.group <- colData(dds)[, opt$contrast]
   names(variable.group) <- opt$contrast
-  scores <- data.frame(variable.group, pca$x[,1:10])
+  scores <- data.frame(variable.group, pca$x[,1:8])
   start_plot(paste0('PCA_grid'), outdir=opt$outdir)
   print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
     geom_point(shape = 16, size = 0.5, position = 'auto') + 
     geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
-    facet_matrix(vars(PC1:PC10), layer.diag = 2))
+    facet_matrix(vars(PC1:PC8), layer.diag = 2))
   end_plot()
   
-  loadings <- pca$rotation[,1:10]
+  loadings <- pca$rotation[,1:8]
   loadings <- data.frame(loadings[order(loadings[,1]), ])
   data <- getmart(rownames(loadings))
   loadings$symbol<-data$mgi_symbol[match(rownames(loadings), data$ensembl_gene_id)]
@@ -220,7 +221,7 @@ run <- function(opt) {
     sample.group <- as_factor(colData(dds)[, factor])
     variable.group <- colData(dds)[, opt$contrast]
     percentVar <- round(100 * summary(pca)$importance[2,])
-    scores <- data.frame(variable.group, sample.group, pca$x[,1:10])
+    scores <- data.frame(variable.group, sample.group, pca$x[,1:8])
     start_plot(paste0('PCA_', factor, '_removed'), outdir=opt$outdir)
     print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
             theme(legend.position="right") +  

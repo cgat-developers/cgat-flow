@@ -23,10 +23,6 @@ import re
 import glob
 import imp
 import cgatpipelines
-import collections
-import shlex
-import subprocess
-import cgatcore.iotools as IOTools
 
 
 def printListInColumns(l, ncolumns):

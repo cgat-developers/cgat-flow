@@ -29,23 +29,6 @@ import subprocess
 import cgatcore.iotools as IOTools
 
 
-def mapKeyword2Script(path):
-    '''collect keywords from scripts.'''
-
-    map_keyword2script = collections.defaultdict(list)
-
-    for script in glob.glob(os.path.join(path, "*.py")):
-        s = os.path.basename(script)[:-3]
-        with IOTools.open_file(script, 'r') as inf:
-            data = [x for x in inf.readlines(10000) if x.startswith(':Tags:')]
-            if data:
-                keywords = [x.strip() for x in data[0][6:].split(' ')]
-                for x in keywords:
-                    if x:
-                        map_keyword2script[x].append(s)
-
-    return map_keyword2script
-
 def printListInColumns(l, ncolumns):
     '''output list *l* in *ncolumns*.'''
     ll = len(l)
@@ -80,60 +63,7 @@ def main(argv=None):
 
     argv = sys.argv
 
-    if argv[1] == "R":
-        path = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)),
-                            "Rtools")
-
-        if len(argv) == 2 or argv[2] == "--help" or argv[2] == "-h":
-            print((globals()["__doc__"]))
-
-            map_keyword2script = mapKeyword2Script(path)
-
-            if len(argv) <= 2:
-
-                print("The list of available commands is:\n")
-                print(("%s\n" % printListInColumns(
-                    sorted([os.path.basename(x)[:-2]
-                            for x in glob.glob(os.path.join(path, "*.R"))]),
-                    3)))
-
-            elif 'all' in argv[2:]:
-                print("The list of available commands is:\n")
-                print(("%s\n" % printListInColumns(
-                    sorted([os.path.basename(x)[:-2]
-                            for x in glob.glob(os.path.join(path, "*.R"))]),
-                    3)))
-
-            else:
-                for arg in argv[2:]:
-                    if arg in map_keyword2script:
-                        print(("Tools matching the keyword '%s':\n" % arg))
-                        print(('%s\n' % printListInColumns(
-                            sorted(map_keyword2script[arg]),
-                            3)))
-            return
-
-        command = argv[2]
-
-        command = re.sub("-", "_", command)
-        if os.path.exists(os.path.join(path, command + ".R")):
-            rscriptname = os.path.join(path, command + ".R")
-            statement = (
-                "export R_ROOT={r_root} && "
-                "Rscript {rscriptname} "
-                "{args}".format(
-                    r_root=os.path.dirname(path),
-                    rscriptname=rscriptname,
-                    args=" ".join([shlex.quote(x) for x in argv[3:]])))
-            return subprocess.call(statement, shell=True, executable=os.environ["SHELL"])
-        else:
-        # remove 'cgatflow' and "R" from sys.argv
-            del sys.argv[0:2]
-
-            (file, pathname, description) = imp.find_module(command, [path, ])
-            module = imp.load_module(command, file, pathname, description)
-        module.main(sys.argv)
-
+    # paths to look for pipelines:
     path = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "tools")
     relpath = os.path.abspath("../src")
 

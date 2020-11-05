@@ -30,11 +30,6 @@ import os
 import pandas as pd
 import re
 
-
-from rpy2.robjects import r as R
-import rpy2.robjects as ro
-import rpy2.rinterface as ri
-
 import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.counts as Counts
 import cgatcore.database as Database
@@ -46,11 +41,7 @@ import cgatpipelines.tasks.mapping as mapping
 
 from cgatcore.pipeline import cluster_runnable
 
-# AH: commented as I thought we wanted to avoid to
-# enable this automatically due to unwanted side
-# effects in other modules.
-# import rpy2.robjects.numpy2ri
-# rpy2.robjects.numpy2ri.activate()
+
 
 
 def normaliseCounts(counts_inf, outfile, method):
@@ -434,97 +425,3 @@ class SalmonQuantifier(AF_Quantifier):
         parse_table(self.sample, outfile,
                     self.transcript_outfile, 'NumReads')
 
-
-@cluster_runnable
-def makeExpressionSummaryPlots(counts_inf, design_inf, logfile):
-    ''' use the plotting methods for Counts object to make summary plots'''
-
-    with iotools.open_file(logfile, "w") as log:
-
-        plot_prefix = P.snip(logfile, ".log")
-        log.write("1")
-
-        # need to manually read in data as index column is not the first column
-        in_table = pd.read_table(counts_inf, sep="\t", index_col=0)
-        in_table = in_table.dropna(axis=0)
-        counts = Counts.Counts(in_table)
-        counts.table.columns = [x.replace(".", "-") for x in counts.table.columns]
-        log.write("2")
-        design = Expression.ExperimentalDesign(design_inf)
-        log.write("3")
-        # make certain counts table only include samples in design
-        counts.restrict(design)
-        log.write("4")
-        cor_scatter_outfile = plot_prefix + "_pairwise_correlations_scatter.png"
-        cor_heatmap_outfile = plot_prefix + "_pairwise_correlations_heatmap.png"
-        pca_var_outfile = plot_prefix + "_pca_variance.png"
-        pca1_outfile = plot_prefix + "_pc1_pc2.png"
-        pca2_outfile = plot_prefix + "_pc3_pc4.png"
-        heatmap_outfile = plot_prefix + "_heatmap.png"
-
-        # use log expression so that the PCA is not overly biased
-        # towards the variance in the most highly expressed genes
-        counts_log10 = counts.log(base=10, pseudocount=0.1, inplace=False)
-        log.write("2")
-        log.write("plot correlations scatter: %s\n" % cor_scatter_outfile)
-        log.write("plot correlations heatmap: %s\n" % cor_heatmap_outfile)
-        # counts_log10.plotPairwise(
-        # cor_scatter_outfile, cor_heatmap_outfile, subset=2000)
-
-        # for the heatmap, and pca we want the top expressed genes (top 25%).
-        counts_log10.removeObservationsPerc(percentile_rowsums=75)
-
-        log.write("plot pc1,pc2: %s\n" % pca1_outfile)
-        counts_log10.plotPCA(design,
-                             pca_var_outfile, pca1_outfile,
-                             x_axis="PC1", y_axis="PC2",
-                             colour="group", shape="group")
-
-        log.write("plot pc3,pc4: %s\n" % pca2_outfile)
-        counts_log10.plotPCA(design,
-                             pca_var_outfile, pca2_outfile,
-                             x_axis="PC3", y_axis="PC4",
-                             colour="group", shape="group")
-
-        # Z-score normalise the expression for the heatmap visualisation
-        # counts_log10.zNormalise(inplace=True)
-
-        # log.write("plot heatmap: %s\n" % heatmap_outfile)
-        # counts_log10.heatmap(heatmap_outfile, zscore=True)
-
-
-def getAlignmentFreeNormExp(transcript_infiles, basename, column,
-                            transcripts_outf, genes_outf, t2gMap):
-    ''' Extract the normalised expression from the transcript-level
-    quantification, merge across multiple samples and output
-    transcript-level and gene-level tables'''
-
-    for n, infile in enumerate(transcript_infiles):
-        # replace filename to use the full results table
-        dirname = os.path.dirname(infile)
-        sample = os.path.basename(dirname)
-        infile = os.path.join(dirname, basename)
-
-        tmp_df = pd.read_table(infile, sep="\t", index_col=0)
-        tmp_df.drop([x for x in tmp_df.columns if x != column],
-                    axis=1, inplace=True)
-        tmp_df.columns = [sample]
-        tmp_df.index.name = "id"
-
-        if n == 0:
-            transcript_df = tmp_df
-        else:
-            transcript_df = transcript_df.merge(
-                tmp_df, how="outer", left_index=True, right_index=True)
-
-    transcript_df.to_csv(transcripts_outf, sep="\t", compression="gzip")
-
-    transcript2gene_df = pd.read_table(t2gMap, sep="\t", index_col=0)
-    transcript_df = pd.merge(transcript_df, transcript2gene_df,
-                             left_index=True, right_index=True,
-                             how="inner")
-    gene_df = pd.DataFrame(transcript_df.groupby('gene_id').sum())
-    gene_df.index.name = 'id'
-
-    gene_df.to_csv(
-        genes_outf, compression="gzip", sep="\t")

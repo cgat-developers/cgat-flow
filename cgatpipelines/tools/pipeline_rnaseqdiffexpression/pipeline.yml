@@ -128,9 +128,7 @@ kallisto:
     memory: 6G
 
     ################################################################
-    #
     # salmon options
-    #
     ################################################################
 salmon:
 
@@ -162,15 +160,53 @@ salmon:
 
     memory: 2G
 
+
+    ###################################################
+    # filtering options for differential count analysis
+    ###################################################
+filter:
+
+    # Regex for filtering (e.g. filterning spike ins)
+    regex:
+
+    # Filter DESeq Dataset [TRUE/FALSE]
+    # For DESeq2 basic rowsum filtering < 10 is applied.
+    deseq2: TRUE
+
+    # Filter EdgeR Dataset [TRUE/FALSE]
+    # For EDGER, the default strategy is applied (see vignette)
+    edger: TRUE
+
+    # minimum number of total counts per row (window) - not implemented
+    filter_min_counts_per_row: 1
+
+    # minimum number of counts per sample - not implemented
+    filter_min_counts_per_sample: 10
+
+    # apply percentile filtering using the total
+    # number of counts per row (window) across
+    # all samples.
+    # 20 removes 20% of the windows with the lowest
+    # counts. - not implemented
+    filter_percentile_rowsums: 20
+
+
+    ###################################################
+    # exploratory analysis
+    ###################################################
+exploratory:
+
+    # Factors to explore
+    factors: age
+
+    # Genes of Interest
+    goi: ENSG00000120948, ENSG00000120949
+
+
+
     ################################################################
     ################################################################
 deseq2:
-
-    # Regex for filtering (e.g. filterning spike ins or a particular chromosome)
-    tx2gene_regex:
-
-    # Use filtering (basic rowsum filtering < 10) [TRUE/FALSE]
-    filtering: TRUE
 
     # fdr to accept for deseq2
     fdr: 0.05
@@ -204,16 +240,15 @@ deseq2:
     coef1: group_Brain2_vs_Brain1
     coef2: condition_untreated_vs_treated
 
-    # test for significance for deseq1 - wald or lrt
-    detest: wald
 
     ################################################################
     ################################################################
 edger:
+
     # fdr to accept for edger
     fdr: 0.05
 
-    # model to pass as DESeq2 design
+    # model to pass as EdgeR design
     # for each design[experiment].tsv you need to define a model and
     # contrast and refgroup
 
@@ -235,6 +270,10 @@ edger:
     # reference level for contrast , e.g WT
     refgroup1: Brain1
     refgroup2: Brain1
+
+    # coefficient for contrast , e.g group_MUT_WT
+    coef1: group_Brain2_vs_Brain1
+    coef2: condition_untreated_vs_treated
 
 
     ################################################################
@@ -296,40 +335,7 @@ sleuth:
     # if lrt MUST provide reduced model
     detest: wald
 
-    # CURRENTLY NOT IN USE
-    ###################################################
-    # Note: Do we want to allow filtering, if so, for all tools, or just some?
-    # For example, DESeq2 applies automatic filtering for low expression
-    # filtering can't be applied in sleuth
-    ###################################################
-    # filtering options for differential count analysis
 
-    # minimum number of total counts per row (window)
-    filter_min_counts_per_row: 1
-
-    # minimum number of counts per sample
-    filter_min_counts_per_sample: 10
-
-    # apply percentile filtering using the total
-    # number of counts per row (window) across
-    # all samples.
-    # 20 removes 20% of the windows with the lowest
-    # counts.
-    filter_percentile_rowsums: 20
-
-    ################################################################
-    ################################################################
-    # FOR buildGeneLevelReadExtension - CURRENTLY NOT IN USE
-counting:
-    # aggregate function to summarize per-exon counts for a gene level.
-    # counts to take for differential expression analysis
-    type: counted_all
-
-    # minimum mapping quality of reads  
-    min_mapping_quality: 10
-
-
-    ################################################################
 report:
     # number of threads to use to build the documentation
     threads: 1

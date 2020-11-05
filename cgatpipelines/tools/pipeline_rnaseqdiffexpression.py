@@ -994,7 +994,7 @@ def count():
          formatter(".*/(?P<QUANTIFIER>\S+).dir/transcripts.tsv.gz"),
          ["design%s.tsv" % x.asFile() for x in DESIGNS],
          formatter(".*/design(?P<DESIGN>\S+).tsv$"),
-         "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}/experiment.rds",
+         "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}/experiment_out.rds",
          "{DESIGN[1][0]}",
          "{QUANTIFIER[0][0]}")
 def filterDESeq2(infiles, outfile, design_name, quantifier_name):
@@ -1010,8 +1010,7 @@ def filterDESeq2(infiles, outfile, design_name, quantifier_name):
     if not quantifier_name in ("salmon", "kallisto"):
         counts = "--counts-tsv %s" % genes  
         quantifier_name = "counts_table"    
-        
-    print(outfile)
+    
     outdir = os.path.dirname(outfile)
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
     scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
@@ -1036,29 +1035,25 @@ def filterDESeq2(infiles, outfile, design_name, quantifier_name):
 # Differential Expression
 ###################################################
 
-@mkdir("DEresults.dir/deseq2")
-@product(filterDESeq2,
-         formatter(".*/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment.rds"),
-         ["DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
-          "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_genes_results.tsv"],
-         "{DESIGN[1][0]}")
-def runDESeq2(infiles, outfiles, design_name):
+
+@transform(filterDESeq2,
+           formatter("DEresults.dir/deseq2/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
+           "DEresults.dir/deseq2/{QUANTIFIER[0]}_{DESIGN[0]}/results_table.rds",
+           "{DESIGN[0]}",
+           "{QUANTIFIER[0]}")
+def runDESeq2(infile, outfile, design_name, quantifier_name):
     ''' run DESeq2 to identify differentially expression transcripts/genes'''
 
     design_name = design_name.lower()
-    counts, design = infiles
-    transcripts, genes = counts
-    transcript_out, gene_out = outfiles
+    design = "design" + design_name + ".tsv"
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/diffexpression.R")
 
-    transcript_prefix = P.snip(transcript_out, ".tsv")
-    transcript_log = transcript_prefix + ".log"
-
-    gene_prefix = P.snip(gene_out, ".tsv")
-    gene_log = gene_prefix + ".log"
-
-
+    model = PARAMS.get('deseq2_model%s' % design_name, None)
     contrast = PARAMS.get('deseq2_contrast%s' % design_name, None)
     refgroup = PARAMS.get('deseq2_refgroup%s' % design_name, None)
+    coef = PARAMS.get('deseq2_coef%s' % design_name, None)
 
     if model is None:
         raise ValueError("deseq2_model{} is not specified".format(
@@ -1069,43 +1064,23 @@ def runDESeq2(infiles, outfiles, design_name):
     if refgroup is None:
         raise ValueError("deseq2_refgroup{} is not specified".format(
             design_name))
+    if refgroup is None:
+        raise ValueError("deseq2_coef{} is not specified".format(
+            design_name))
 
     statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(transcripts)s
-    --design-tsv-file=%(design)s
-    --method=deseq2
-    --de-test=%(deseq2_detest)s
-    --output-filename-pattern=%(transcript_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(deseq2_fdr)s
-    --log=%(transcript_log)s
-    -v 0
-    > %(transcript_out)s;
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(refgroup)s
+    --coef %(coef)s
+    --alpha %(deseq2_fdr)s
+    --outdir %(outdir)s
+    > deseq2.log;
     '''
     P.run(statement)
-
-    statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(genes)s
-    --design-tsv-file=%(design)s
-    --method=deseq2
-    --de-test=%(deseq2_detest)s
-    --output-filename-pattern=%(gene_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(deseq2_fdr)s
-    --log=%(gene_log)s
-    -v 0
-    > %(gene_out)s;
-
-    '''
-
-    P.run(statement)
-
 
 @mkdir("DEresults.dir/edger")
 @product(mergeCounts,

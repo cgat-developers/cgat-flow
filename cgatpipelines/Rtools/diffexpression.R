@@ -104,6 +104,8 @@ run <- function(opt) {
     colData(experiment)[,opt$contrast] <- relevel(colData(experiment)[,opt$contrast], ref = opt$refgroup)
     design(experiment) <- formula(opt$model)
     dds <- DESeq(experiment, betaPrior=FALSE)
+    futile.logger::flog.info(paste("coef", opt$coef))
+    futile.logger::flog.info(paste("coef", resultsNames(dds)))
     res <- results(dds, name=opt$coef)
     resLFC <- lfcShrink(dds, coef=opt$coef, type=opt$shrinkage)
   } 
@@ -301,7 +303,7 @@ main <- function() {
             "--model",
             dest = "model",
             type = "character",
-            default = "~ group",
+            default = "~group",
             help = paste("model formula for GLM")
         ),
         make_option(
@@ -344,7 +346,7 @@ main <- function() {
             dest = "userlist",
             type = "character",
             default = "ENSG00000205927,ENSG00000130675,ENSG00000016082,ENSG00000070748,ENSG00000064300,ENSG00000078018",
-            help = paste("Method for LFC shrinkage. Options are apeglm (default), ashr, normal")
+            help = paste("User defined genes to plot")
         ),
        make_option(
             "--outdir",

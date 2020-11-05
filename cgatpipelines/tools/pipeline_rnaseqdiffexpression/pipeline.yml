@@ -176,16 +176,18 @@ deseq2:
     fdr: 0.05
 
     # model to pass as DESeq2 design
-    # for each design[experiment].tsv you need to define a model and
-    # contrast and refgroup
+    # for each design[experiment].tsv you need to define a model,
+    # contrast, refgroup and coefficient
 
     # e.g if you have two experiments (1 & 2)
     # model1=~group
     # contrast1=group
     # refgroup1=Brain1
+    # coef1=group_Brain2_Brain1
     # model2=~group+condition
     # contrast2=condition
     # refgroup2=treated
+    # coef2=condition_untreated_treated
 
     model1: ~group
     model2: ~group
@@ -197,6 +199,10 @@ deseq2:
     # reference level for contrast , e.g WT
     refgroup1: Brain1
     refgroup2: Brain1
+
+    # coefficient for contrast , e.g group_MUT_WT
+    coef1: group_Brain2_vs_Brain1
+    coef2: condition_untreated_vs_treated
 
     # test for significance for deseq1 - wald or lrt
     detest: wald

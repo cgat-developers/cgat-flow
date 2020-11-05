@@ -39,10 +39,12 @@ run <- function(opt) {
     # Read in Transcript to Gene Map
     tx2gene <- read_tsv(opt$tx2gene)
     colnames(tx2gene) <- c("ensembl_transcript_id", "ensembl_gene_id")
-    if(opt$tx2gene_regex != ""){
+    if(opt$tx2gene_regex != "None"){
       tx2gene <- filter(tx2gene, !grepl(opt$tx2gene_regex,ensembl_transcript_id))
     }
     # Read in Data
+    futile.logger::flog.info(opt$counts_dir)
+    futile.logger::flog.info(sampleData$track)
     files <- file.path(opt$counts_dir, sampleData$track, "quant.sf")
     names(files) <- sampleData$track
     txi <- tximport(files, type = opt$source, tx2gene = tx2gene)
@@ -79,7 +81,7 @@ run <- function(opt) {
       flattenedfile=opt$flattenedFile)
   } else if(opt$source == "counts_table"){
     # Read in Data
-    raw <- read.table(file = opt$counts_tsv, header=TRUE, row.name=1)
+    raw <- read.table(file = gzfile(opt$counts_tsv), header=TRUE, row.name=1)
     experiment_tsv <- raw[,sampleData$track,drop=FALSE]
     if(opt$method == "deseq2"){
       dataset = DESeqDataSetFromMatrix(experiment_tsv, sampleData, design = formula(opt$model))
@@ -174,7 +176,7 @@ main <- function() {
       "--model",
       dest = "model",
       type = "character",
-      default = "~ group",
+      default = "~group",
       help = paste("formula for multivariate model")
     ),
     make_option(
@@ -189,14 +191,14 @@ main <- function() {
       c("--tx2gene"),
       dest="tx2gene", 
       type="character",
-      default="tx2gene.tsv",
+      default="transcript2geneMap.tsv",
       help=paste("Path to transcript to gene tsv.")
     ),
     make_option(
       c("--tx2gene_regex"),
       dest="tx2gene_regex", 
       type="character",
-      default="",
+      default="None",
       help=paste("Regex/Prefix for removal of certain features from ",
                  "experiment (e.g. removal of spike-ins)")
     ),  

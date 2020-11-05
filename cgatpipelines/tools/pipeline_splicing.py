@@ -311,16 +311,17 @@ def aggregateExonCounts(infiles, outfile):
     P.run(statement)
 
 
-'''
+@follows(aggregateExonCounts)
+@
+
+
 @follows(aggregateExonCounts)
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
            r"results.dir/DEXSeq/\1_results.tsv")
 def runDEXSeq(infile, outfile):
-     run DEXSeq command
-
-    DEXSeq is run using the counts2table from the
+    ''' DEXSeq is run using the R scripts from the
     cgat code collection. Output is standardised to
     correspond to differential gene expression output
     from DESeq2 or Sleuth.
@@ -341,7 +342,7 @@ def runDEXSeq(infile, outfile):
     DEXSeq_refgroup_% : string
        :term:`PARAMS`. Specifies model, contrast and reference
        group for DEXSeq analysis
-    
+    '''
 
     outdir = os.path.dirname(outfile)
     countsdir = "counts.dir/"
@@ -351,14 +352,14 @@ def runDEXSeq(infile, outfile):
     model = PARAMS["DEXSeq_model_%s" % design]
     contrast = PARAMS["DEXSeq_contrast_%s" % design]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
+    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/scriptname.R")
 
-    statement = 
-    python -m cgatpipelines.tasks.counts2table
+    statement = '''
+    Rscript %(scriptpath)
     --design-tsv-file=%(infile)s
     --output-filename-pattern=%(outdir)s/%(design)s
     --log=%(outdir)s/%(design)s_DEXSeq.log
-    --method=dexseq
-    --fdr=%(dexseq_fdr)s
+    --alpha=%(dexseq_fdr)s
     --model=%(model)s
     --dexseq-counts-dir=%(countsdir)s
     --contrast=%(contrast)s

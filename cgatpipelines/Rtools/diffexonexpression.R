@@ -1,21 +1,20 @@
-#' filtering single cell data based on QC metrics
+#' Running DEXSeq
 #'
 #' WARNING: This script is work-in-progress
 #' 
 #' Example usage:
 #' 
-#' cgat-singlecell sc_diffexpression --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
+#' Rscript PATH/TO/diffexonexpression.R --rds-filename=experiment.rds --model=~group --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint
 #'
-#' `sce.rds` is a single cell experiment object after filtering
+#' `experiment.rds` is a DEXSeq experiment object after filtering
 #'
 #'
 #' Features can then be selected in the `--factor` option to be
 #' plotted.
 #'
-#' -> todo: parameterize detection of ERCC (pattern?)
-#' -> todo: parameterize definition of mitochondrial genes - currently hardcoded for mouse.
+#' -> todo: ideas
 
-## conda dependencies: bioconductor-scater r-cairo
+## conda dependencies: r-cairo
 
 suppressMessages(library(futile.logger))
 suppressMessages(library(getopt))

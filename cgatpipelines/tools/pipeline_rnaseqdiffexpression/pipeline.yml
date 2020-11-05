@@ -165,6 +165,13 @@ salmon:
     ################################################################
     ################################################################
 deseq2:
+
+    # Regex for filtering (e.g. filterning spike ins or a particular chromosome)
+    tx2gene_regex:
+
+    # Use filtering (basic rowsum filtering < 10) [TRUE/FALSE]
+    filtering: TRUE
+
     # fdr to accept for deseq2
     fdr: 0.05
 

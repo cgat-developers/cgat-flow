@@ -335,6 +335,7 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 
 import cgatpipelines.tasks.expression as Expression
+import cgatpipelines
 
 ###################################################
 ###################################################
@@ -985,15 +986,59 @@ def count():
     ''' dummy task to define upstream quantification tasks'''
 
 ###################################################
-# Differential Expression
+# Loading and filtering counts table
 ###################################################
-
 
 @mkdir("DEresults.dir/deseq2")
 @product(mergeCounts,
          formatter(".*/(?P<QUANTIFIER>\S+).dir/transcripts.tsv.gz"),
          ["design%s.tsv" % x.asFile() for x in DESIGNS],
          formatter(".*/design(?P<DESIGN>\S+).tsv$"),
+         "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}/experiment.rds",
+         "{DESIGN[1][0]}",
+         "{QUANTIFIER[0][0]}")
+def filterDESeq2(infiles, outfile, design_name, quantifier_name):
+    ''' Load counts into RDS object and filter'''
+
+    counts, design = infiles
+    transcripts, genes = counts
+    design_name = design_name.lower()
+    quantifier_name = quantifier_name.lower()
+    counts = "--counts-dir %s.dir" % quantifier_name     
+    model = PARAMS.get('deseq2_model%s' % design_name, None)
+        
+    if not quantifier_name in ("salmon", "kallisto"):
+        counts = "--counts-tsv %s" % genes  
+        quantifier_name = "counts_table"    
+        
+    print(outfile)
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
+    
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s %(counts)s
+    --sampleData %(design)s
+    --outdir %(outdir)s
+    --model %(model)s
+    --method deseq2
+    --filter %(deseq2_filtering)s
+    --source %(quantifier_name)s
+    --tx2gene_regex %(deseq2_tx2gene_regex)s
+    > %(outdir)s/filter.log;
+    '''
+    P.run(statement) 
+
+
+###################################################
+# Differential Expression
+###################################################
+
+@mkdir("DEresults.dir/deseq2")
+@product(filterDESeq2,
+         formatter(".*/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment.rds"),
          ["DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
           "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_genes_results.tsv"],
          "{DESIGN[1][0]}")
@@ -1011,7 +1056,7 @@ def runDESeq2(infiles, outfiles, design_name):
     gene_prefix = P.snip(gene_out, ".tsv")
     gene_log = gene_prefix + ".log"
 
-    model = PARAMS.get('deseq2_model%s' % design_name, None)
+
     contrast = PARAMS.get('deseq2_contrast%s' % design_name, None)
     refgroup = PARAMS.get('deseq2_refgroup%s' % design_name, None)
 

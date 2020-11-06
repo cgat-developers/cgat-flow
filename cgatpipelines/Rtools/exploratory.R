@@ -24,8 +24,6 @@ suppressMessages(library(pheatmap))
 suppressMessages(library(RColorBrewer))
 suppressMessages(library(ggforce))
 
-
-source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 

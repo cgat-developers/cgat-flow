@@ -21,7 +21,6 @@ suppressMessages(library(rhdf5))
 suppressMessages(library(tximport))
 suppressMessages(library(DEXSeq))
 
-source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 run <- function(opt) {
@@ -62,6 +61,7 @@ run <- function(opt) {
       dataset <- scaleOffset(dataset,normMat)
     } else if(opt$method == "Sleuth"){
       stop("Sleuth method not yet implemented. Sorry.")
+      
     } else{
       stop("Method not defined. Allowable methods are \"DESeq2\", \"EdgeR\" or \"Sleuth\"")
     }

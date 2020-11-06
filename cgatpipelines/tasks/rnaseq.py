@@ -33,7 +33,6 @@ import re
 import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.counts as Counts
 import cgatcore.database as Database
-import cgatpipelines.tasks.expression as Expression
 import cgat.GTF as GTF
 import cgatcore.iotools as iotools
 from cgatcore import pipeline as P

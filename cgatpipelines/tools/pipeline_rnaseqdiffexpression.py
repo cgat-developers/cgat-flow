@@ -328,13 +328,11 @@ import pandas as pd
 import sqlite3
 import cgat.GTF as GTF
 import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
-from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
-
-import cgatpipelines.tasks.expression as Expression
 import cgatpipelines
 
 ###################################################
@@ -1082,8 +1080,7 @@ def filterEdgeR(infiles, outfile, design_name, quantifier_name):
            "DEresults.dir/{DETOOL[0]}/{QUANTIFIER[0]}_{DESIGN[0]}/exploratory.rds",
            "{DESIGN[0]}",
            "{QUANTIFIER[0]}",
-           "{DETOOL[0]}",           
-            )
+           "{DETOOL[0]}")
 def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_name):
 
 
@@ -1112,7 +1109,7 @@ def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_na
     --factors %(exploratory_factors)s
     --genes_of_interest %(exploratory_goi)s
     --outdir %(outdir)s
-    > %(outdir)s/exploratory.log;
+    > %(outdir)s/PCA_loadings.tsv;
     '''
     P.run(statement)
 
@@ -1124,7 +1121,7 @@ def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_na
 
 @transform(filterDESeq2,
            formatter("DEresults.dir/deseq2/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
-           "DEresults.dir/deseq2/{QUANTIFIER[0]}_{DESIGN[0]}/results_table.rds",
+           "DEresults.dir/deseq2/{QUANTIFIER[0]}_{DESIGN[0]}/results_full.tsv",
            "{DESIGN[0]}",
            "{QUANTIFIER[0]}")
 def runDESeq2(infile, outfile, design_name, quantifier_name):
@@ -1164,6 +1161,10 @@ def runDESeq2(infile, outfile, design_name, quantifier_name):
     --coef %(coef)s
     --alpha %(deseq2_fdr)s
     --outdir %(outdir)s
+    --shrinkage %(deseq_shrinkage)s
+    --userlist %(pathways_usergenes)s
+    --permute %(deseq_permutations)s
+    --pathways %(pathways_GSEA_datasets)s
     > %(outdir)s/deseq2.log;
     '''
     P.run(statement)
@@ -1210,6 +1211,9 @@ def runEdgeR(infile, outfile, design_name, quantifier_name):
     --coef %(coef)s
     --alpha %(edger_fdr)s
     --outdir %(outdir)s
+    --userlist %(pathways_usergenes)s
+    --permute %(deseq_permutations)s
+    --pathways %(pathways_GSEA_datasets)s
     > %(outdir)s/edger.log;
     '''
     P.run(statement)
@@ -1237,9 +1241,8 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1
-
-    Design = Expression.ExperimentalDesign("design%s.tsv" % design_name)
-    number_samples = sum(Design.table['include'])
+    
+    number_samples = CALCULATENUMBEROFSAMPLESHERE
 
     job_memory = rnaseq.estimateSleuthMemory(
         PARAMS["%(quantifier)s_bootstrap" % locals()],

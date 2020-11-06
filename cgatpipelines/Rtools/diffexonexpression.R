@@ -28,11 +28,6 @@ suppressMessages(library(Cairo))
 suppressMessages(library(goseq))
 suppressMessages(library(DEXSeq))
 
-
-
-
-
-source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 
@@ -62,7 +57,6 @@ start_plot <- function(section, height = 6, width = 6, type = "png") {
 end_plot <- function() {
   dev.off()
 }
-
 
 
 # plotTPMs function

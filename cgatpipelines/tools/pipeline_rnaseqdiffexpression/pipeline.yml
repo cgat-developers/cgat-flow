@@ -166,7 +166,7 @@ salmon:
     ###################################################
 filter:
 
-    # Regex for filtering (e.g. filterning spike ins)
+    # Regex for filtering by transcript name (e.g. filterning spike ins)
     regex:
 
     # Filter DESeq Dataset [TRUE/FALSE]
@@ -211,10 +211,14 @@ deseq2:
     # fdr to accept for deseq2
     fdr: 0.05
 
-    # model to pass as DESeq2 design
+    # log fold change shrinkage algorithm to use [options: apeglm, ashr, normal]
+    shrinkage: apeglm
+
+    # number of permutations to carry out in permutation analysis
+    permutations: 0
+
     # for each design[experiment].tsv you need to define a model,
     # contrast, refgroup and coefficient
-
     # e.g if you have two experiments (1 & 2)
     # model1=~group
     # contrast1=group
@@ -225,6 +229,7 @@ deseq2:
     # refgroup2=treated
     # coef2=condition_untreated_treated
 
+    # model to pass as DESeq2 design
     model1: ~group
     model2: ~group
 
@@ -247,6 +252,9 @@ edger:
 
     # fdr to accept for edger
     fdr: 0.05
+
+    # number of permutations to carry out in permutation analysis
+    permutations: 0
 
     # model to pass as EdgeR design
     # for each design[experiment].tsv you need to define a model and
@@ -334,6 +342,18 @@ sleuth:
     # test for significance for sleuth - wald or lrt
     # if lrt MUST provide reduced model
     detest: wald
+
+
+    ################################################################
+    # Enrichment Analysis
+    ################################################################
+pathways:
+    
+    # path to gmt files containing pathways for GSEA analysis 
+    GSEA_datasets: /ifs/mirror/reactome/h.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c1.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c2.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c3.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c5.all.v7.0.entrez.gmt
+
+    # user-defined genes to plot
+    plotgenes: ENSG00000205927,ENSG00000130675,ENSG00000016082,ENSG00000070748,ENSG00000064300,ENSG00000078018
 
 
 report:

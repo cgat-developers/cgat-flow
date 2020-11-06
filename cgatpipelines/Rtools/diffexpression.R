@@ -28,10 +28,6 @@ suppressMessages(library(RUVSeq))
 suppressMessages(library(Cairo))
 suppressMessages(library(goseq))
 
-
-
-
-source(file.path(Sys.getenv("R_ROOT"), "io.R"))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 

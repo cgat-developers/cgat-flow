@@ -312,14 +312,40 @@ def aggregateExonCounts(infiles, outfile):
 
 
 @follows(aggregateExonCounts)
-@
-
-
-@follows(aggregateExonCounts)
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
-           r"results.dir/DEXSeq/\1_results.tsv")
+           r"results.dir/DEXSeq/\1_/experiment_out.rds")
+def filterDEXSeq(infile, outfile:
+    ''' Load counts into RDS object and filter'''
+
+    design = infile
+    countsdir = "counts.dir/"
+    model = PARAMS["DEXSeq_model_%s" % design]
+    
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
+    
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --counts-dir %(countsdir)s
+    --source dexseq
+    --method dexseq
+    --sampleData %(design)s
+    --outdir %(outdir)s
+    --model %(model)s
+    > %(outdir)s/filter.log;
+    '''
+
+    P.run(statement) 
+
+
+@transform(filterDEXSeq,
+           regex("(.*)/experiment_out.rds"),
+           r"\1/results.tsv")
 def runDEXSeq(infile, outfile):
     ''' DEXSeq is run using the R scripts from the
     cgat code collection. Output is standardised to
@@ -345,31 +371,25 @@ def runDEXSeq(infile, outfile):
     '''
 
     outdir = os.path.dirname(outfile)
-    countsdir = "counts.dir/"
     gfffile = os.path.abspath("geneset_flat.gff")
     dexseq_fdr = 0.05
-    design = infile.split('.')[0]
     model = PARAMS["DEXSeq_model_%s" % design]
     contrast = PARAMS["DEXSeq_contrast_%s" % design]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
-    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/scriptname.R")
+    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/diffexonexpression.R")
 
     statement = '''
-    Rscript %(scriptpath)
-    --design-tsv-file=%(infile)s
-    --output-filename-pattern=%(outdir)s/%(design)s
-    --log=%(outdir)s/%(design)s_DEXSeq.log
-    --alpha=%(dexseq_fdr)s
-    --model=%(model)s
-    --dexseq-counts-dir=%(countsdir)s
-    --contrast=%(contrast)s
-    -r %(refgroup)s
-    --dexseq-flattened-file=%(gfffile)s
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s   
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(refgroup)s
+    --alpha (dexseq_fdr)s
     > %(outfile)s;
-     % locals()
+    '''
 
     P.run(statement)
-'''
+
 
 ###################################################################
 ###################################################################

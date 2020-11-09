@@ -483,9 +483,43 @@ def buildKallistoIndex(infile, outfile):
 
     P.run(statement)
 
-
 @transform(buildReferenceTranscriptome,
            suffix(".fa"),
+           ".gentrome.fa")
+def buildGentrome(infile, outfile):
+    '''
+    Builds a "Gentrome", a concatenation of the reference transcriptome and genome
+    FASTA file, required by Salmon indexing
+
+    Parameters
+    ----------
+    infile: str
+        path to the reference transcriptome generated in the previous function
+    genome_dir: str
+        :term: `PARAMS` the directory of the reference genome
+    genome: str
+        :term: `PARAMS` the filename of the reference genome (without .fa)
+    outfile: str
+        path to output file
+    '''
+
+    genome_file = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
+
+    outdir = os.path.dirname(outfile)
+
+    statement = '''
+    grep "^>" %(genome_file)s |
+    cut -d " " -f 1 > %(outdir)s/decoys.txt &&
+    sed -i.bak -e 's/>//g' %(outdir)s/decoys.txt &&
+    cat %(infile)s %(genome_file)s > %(outfile)s
+    '''
+
+    P.run(statement)
+    
+
+@transform(buildGentrome,
+           suffix(".gentrome.fa"),
            ".salmon.index")
 def buildSalmonIndex(infile, outfile):
     '''
@@ -506,12 +540,17 @@ def buildSalmonIndex(infile, outfile):
     '''
 
     job_memory = "unlimited"
+    threads = 12
+    if PARAMS["salmon_threads"] is not None:
+        threads = PARAMS["salmon_threads"]
+    outdir = os.path.dirname(outfile)
+    
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
     rm -rf %(outfile)s;
-    salmon index -k %(salmon_kmer)i %(salmon_index_options)s -t %(infile)s -i %(outfile)s
+    salmon index -p %(threads)s -k %(salmon_kmer)i -t %(infile)s -d %(outdir)s/decoys.txt -i %(outfile)s
     '''
 
     P.run(statement)
@@ -1023,7 +1062,7 @@ def filterDESeq2(infiles, outfile, design_name, quantifier_name):
     --method deseq2
     --filter %(filter_deseq2)s
     --source %(quantifier_name)s
-    --tx2gene_regex %(deseq2_tx2gene_regex)s
+    --tx2gene_regex %(filter_regex)s
     > %(outdir)s/filter.log;
     '''
     P.run(statement) 
@@ -1161,9 +1200,9 @@ def runDESeq2(infile, outfile, design_name, quantifier_name):
     --coef %(coef)s
     --alpha %(deseq2_fdr)s
     --outdir %(outdir)s
-    --shrinkage %(deseq_shrinkage)s
+    --shrinkage %(deseq2_shrinkage)s
     --userlist %(pathways_usergenes)s
-    --permute %(deseq_permutations)s
+    --permute %(deseq2_permutations)s
     --pathways %(pathways_GSEA_datasets)s
     > %(outdir)s/deseq2.log;
     '''
@@ -1212,7 +1251,7 @@ def runEdgeR(infile, outfile, design_name, quantifier_name):
     --alpha %(edger_fdr)s
     --outdir %(outdir)s
     --userlist %(pathways_usergenes)s
-    --permute %(deseq_permutations)s
+    --permute %(edger_permutations)s
     --pathways %(pathways_GSEA_datasets)s
     > %(outdir)s/edger.log;
     '''

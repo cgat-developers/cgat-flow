@@ -134,7 +134,7 @@ salmon:
 
     # see `salmon quant --help` for explanation of library types
     # ISF == fr-secondstrand in tophat
-    libtype: ISF
+    libtype: ISR
 
     # String providing additional options to append to the salmon quant
     # command
@@ -150,13 +150,7 @@ salmon:
     # if there are no technical replicates
     bootstrap: 100
 
-    # string to append to the salmon index command to provide specific
-    # options
-    # from salmon >= v0.5.0, an index type is required
-    # specify one of --type=fmd or --type=quasi
-    index_options: --type=fmd
-
-    threads: 1
+    threads: 12
 
     memory: 2G
 
@@ -350,7 +344,7 @@ sleuth:
 pathways:
     
     # path to gmt files containing pathways for GSEA analysis 
-    GSEA_datasets: /ifs/mirror/reactome/h.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c1.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c2.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c3.all.v7.0.entrez.gmt,/ifs/mirror/reactome/c5.all.v7.0.entrez.gmt
+    GSEA_datasets: /ifs/mirror/gsea/h.all.v7.0.entrez.gmt,/ifs/mirror/gsea/c1.all.v7.0.entrez.gmt,/ifs/mirror/gsea/c2.all.v7.0.entrez.gmt,/ifs/mirror/gsea/c3.all.v7.0.entrez.gmt,/ifs/mirror/gsea/c5.all.v7.0.entrez.gmt
 
     # user-defined genes to plot
     plotgenes: ENSG00000205927,ENSG00000130675,ENSG00000016082,ENSG00000070748,ENSG00000064300,ENSG00000078018

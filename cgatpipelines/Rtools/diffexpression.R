@@ -224,7 +224,7 @@ run <- function(opt) {
                         minSize=15,
                         maxSize=500,
                         nperm=10000)
-      fwrite(fgseaRes, file=paste0('GSEA_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.tsv'), sep="\t", sep2=c("", " ", ""))
+      fwrite(fgseaRes, file=paste0(opt$outdir,"/",'GSEA_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.tsv'), sep="\t", sep2=c("", " ", ""))
       topPathwaysUp <- fgseaRes[ES > 0,][head(order(pval), n=10),]$pathway
       png(paste0(opt$outdir,"/",'GSEA_GO_up_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
           width =15, height = 3, units = 'in', res = 600)

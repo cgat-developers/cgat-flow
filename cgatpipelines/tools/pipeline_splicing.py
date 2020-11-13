@@ -129,6 +129,7 @@ import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.splicing as splicing
+import cgatpipelines
 
 ###################################################################
 ###################################################################
@@ -315,13 +316,16 @@ def aggregateExonCounts(infiles, outfile):
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
-           r"results.dir/DEXSeq/\1_/experiment_out.rds")
-def filterDEXSeq(infile, outfile:
+           add_inputs(buildGff),
+           r"results.dir/DEXSeq/\1/experiment_out.rds")
+def filterDEXSeq(infiles, outfile):
     ''' Load counts into RDS object and filter'''
 
-    design = infile
+    design, gfffile = infiles
     countsdir = "counts.dir/"
-    model = PARAMS["DEXSeq_model_%s" % design]
+    design_name = design.split('.')[0]
+    model = PARAMS["DEXSeq_model_%s" % design_name]
+
     
     outdir = os.path.dirname(outfile)
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
@@ -334,6 +338,7 @@ def filterDEXSeq(infile, outfile:
     --counts-dir %(countsdir)s
     --source dexseq
     --method dexseq
+    --dexseq-flattened-file %(gfffile)s
     --sampleData %(design)s
     --outdir %(outdir)s
     --model %(model)s
@@ -344,9 +349,10 @@ def filterDEXSeq(infile, outfile:
 
 
 @transform(filterDEXSeq,
-           regex("(.*)/experiment_out.rds"),
-           r"\1/results.tsv")
-def runDEXSeq(infile, outfile):
+           regex("(.+)\/(?P<DESIGN>\S+)\/experiment_out.rds"),
+           r"\1/\2/results.tsv",
+           r"\2")
+def runDEXSeq(infile, outfile, design):
     ''' DEXSeq is run using the R scripts from the
     cgat code collection. Output is standardised to
     correspond to differential gene expression output
@@ -370,22 +376,24 @@ def runDEXSeq(infile, outfile):
        group for DEXSeq analysis
     '''
 
+    E.info(design)
     outdir = os.path.dirname(outfile)
-    gfffile = os.path.abspath("geneset_flat.gff")
     dexseq_fdr = 0.05
     model = PARAMS["DEXSeq_model_%s" % design]
     contrast = PARAMS["DEXSeq_contrast_%s" % design]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
     scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/diffexonexpression.R")
 
     statement = '''
+    export R_ROOT=%(r_root)s &&
     Rscript %(scriptpath)s
     --rds-filename %(infile)s   
     --model %(model)s
     --contrast %(contrast)s
     --refgroup %(refgroup)s
-    --alpha (dexseq_fdr)s
-    > %(outfile)s;
+    --alpha %(dexseq_fdr)s
+    > %(outdir)s/dexseq.log;
     '''
 
     P.run(statement)
@@ -692,7 +700,7 @@ def runSashimi(infiles, outfile):
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,
-         aggregateExonCounts)
+         runDEXSeq)
 def full():
     pass
 

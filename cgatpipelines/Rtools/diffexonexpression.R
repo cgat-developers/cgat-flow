@@ -42,8 +42,8 @@ getmart <- function(values){
   return(data)
 }
 
-start_plot <- function(section, height = 6, width = 6, type = "png") {
-  file = get_output_filename(paste0(section, ".", type))
+start_plot <- function(section, outdir = "", height = 6, width = 6, type = "png") {
+  file = get_output_filename(paste0(outdir,"/",section, ".", type))
   Cairo(file = file,
         type = type,
         width = width,
@@ -90,13 +90,13 @@ run <- function(opt) {
   
   flog.info("... plotting dispersion estimates")
   ## Plot dispersion estimates
-  start_plot("Dispersion")
+  start_plot("Dispersion", opt$outdir)
   plotDispEsts(dxd)
   end_plot()
   
   flog.info("... plotting MA")
   ## MA Plot
-  start_plot("MAPlot")
+  start_plot("MAPlot", opt$outdir)
   plotMA(res, ylim = c(-3,3))
   end_plot()
   
@@ -107,12 +107,12 @@ run <- function(opt) {
   #res$symbol<-data$external_gene_name[match(data$ensembl_transcript_id, as.character(map(res$transcripts, 1)))]
   #res$desc<-data$description[match(data$ensembl_transcript_id, as.character(map(res$transcripts, 1)))]
   resSig <- subset(res, padj < opt$alpha)
-  write.table(resSig, "results.tsv", sep = "\t")
-  write.table(res, "results_full.tsv", sep = "\t")
+  write.table(resSig, paste0(opt$outdir,"/","results.tsv"), sep = "\t")
+  write.table(res, paste0(opt$outdir,"/","results_full.tsv"), sep = "\t")
   
   flog.info("... plotting P histogram")
   ## Plot P value Histogram
-  start_plot("PHistogram")
+  start_plot("PHistogram", opt$outdir)
   hist(res$pvalue,breaks=50, col='skyblue', xlab="p-value", main="P-value Histogram")
   end_plot()
   
@@ -120,7 +120,7 @@ run <- function(opt) {
   ## Plot Top Downregulated Genes
   genelist <- rownames(res[ order( res[,grepl("log2",colnames(res))] ), ][0:9,])
   for(gene in unique(substr(genelist,0,15))){
-    start_plot(paste0("Downregulated_",gene))
+    start_plot(paste0("Downregulated_",gene), opt$outdir)
       plotDEXSeq(res, gene, legend=TRUE, cex.axis=1.2, cex=1.3, lwd=2 ,fitExpToVar = opt$contrast)
     end_plot()
   }
@@ -129,7 +129,7 @@ run <- function(opt) {
   flog.info("... plotting upregulated genes")
   genelist <- rownames(res[ order( -res[,grepl("log2",colnames(res))] ), ][0:9,])
   for(gene in unique(substr(genelist,0,15))){
-    start_plot(paste0("Upregulated_",gene))
+    start_plot(paste0("Upregulated_",gene), opt$outdir)
     plotDEXSeq(res, gene, legend=TRUE, cex.axis=1.2, cex=1.3, lwd=2 ,fitExpToVar = opt$contrast)
     end_plot()
   }
@@ -137,7 +137,7 @@ run <- function(opt) {
   flog.info("... plotting significant genes")
   genelist <- rownames(resSig[order(resSig$padj), ])
   for(gene in unique(substr(genelist,0,15))){
-    start_plot(paste0("Significant_",gene))
+    start_plot(paste0("Significant_",gene), opt$outdir)
     plotDEXSeq(res, gene, legend=TRUE, cex.axis=1.2, cex=1.3, lwd=2 ,fitExpToVar = opt$contrast)
     end_plot()
   }
@@ -180,6 +180,13 @@ main <- function() {
       type = "numeric",
       default = 0.05,
       help = paste("Adjusted P value threshold")
+    ),
+   make_option(
+        "--outdir",
+        dest = "outdir",
+        type = "character",
+        default = "experiment",
+        help = paste("Libraries for gsea")
     ),
     make_option(
       "--permute",

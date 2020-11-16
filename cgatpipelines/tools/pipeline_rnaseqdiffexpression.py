@@ -1116,7 +1116,7 @@ def filterEdgeR(infiles, outfile, design_name, quantifier_name):
 
 @transform(filterDESeq2,
            formatter("DEresults.dir/(?P<DETOOL>\S+)/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
-           "DEresults.dir/{DETOOL[0]}/{QUANTIFIER[0]}_{DESIGN[0]}/exploratory.rds",
+           "DEresults.dir/{DETOOL[0]}/{QUANTIFIER[0]}_{DESIGN[0]}/Heatmap_top500.png",
            "{DESIGN[0]}",
            "{QUANTIFIER[0]}",
            "{DETOOL[0]}")
@@ -1148,7 +1148,7 @@ def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_na
     --factors %(exploratory_factors)s
     --genes_of_interest %(exploratory_goi)s
     --outdir %(outdir)s
-    > %(outdir)s/PCA_loadings.tsv;
+    > %(outdir)s/exploratory.log;
     '''
     P.run(statement)
 

@@ -376,7 +376,7 @@ def runDEXSeq(infile, outfile, design):
        group for DEXSeq analysis
     '''
 
-    E.info(design)
+
     outdir = os.path.dirname(outfile)
     dexseq_fdr = 0.05
     model = PARAMS["DEXSeq_model_%s" % design]
@@ -393,6 +393,7 @@ def runDEXSeq(infile, outfile, design):
     --contrast %(contrast)s
     --refgroup %(refgroup)s
     --alpha %(dexseq_fdr)s
+    --outdir %(outdir)s
     > %(outdir)s/dexseq.log;
     '''
 

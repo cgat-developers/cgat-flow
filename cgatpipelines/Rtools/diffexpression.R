@@ -68,6 +68,7 @@ makeTPMtable  <- function(genelist, abundance, design, contrast){
   genelist.df <- genelist.df[!duplicated(genelist.df[,1]),]
   rownames(genelist.df) <- genelist.df$ensembl_gene_id
   genelist.names <- genelist.df[genelist,]$external_gene_name
+  genelist.names[is.na(genelist.names)] <- genelist[is.na(genelist.names)]
   dftemp <- as_tibble(t(abundance[genelist,]), rownames = "track")
   dftemp <- dftemp %>% rename_at(vars(genelist), ~ genelist.names)
   dftemp$contrast <- design[dftemp$track,][,contrast]
@@ -216,7 +217,10 @@ run <- function(opt) {
   rnk <- rnk.df$log2FoldChange
   names(rnk) <- rnk.df$entrezgene
   rnk <- rnk[isUnique(names(rnk))]
-  
+  if (!dir.exists(paste0(opt$outdir,"/gsea"))) {
+    dir.create(paste0(opt$outdir,"/gsea"))
+  }
+
   for(pathway in opt$pathways){
       pathways <- gmtPathways(pathway)
       fgseaRes <- fgsea(pathways = pathways, 
@@ -224,9 +228,9 @@ run <- function(opt) {
                         minSize=15,
                         maxSize=500,
                         nperm=10000)
-      fwrite(fgseaRes, file=paste0(opt$outdir,"/",'GSEA_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.tsv'), sep="\t", sep2=c("", " ", ""))
+      fwrite(fgseaRes, file=paste0(opt$outdir,"/gsea/",sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.tsv'), sep="\t", sep2=c("", " ", ""))
       topPathwaysUp <- fgseaRes[ES > 0,][head(order(pval), n=10),]$pathway
-      png(paste0(opt$outdir,"/",'GSEA_GO_up_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
+      png(paste0(opt$outdir,"/gsea/",'UP_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
           width =15, height = 3, units = 'in', res = 600)
       plotGseaTable(pathways[topPathwaysUp], rnk, fgseaRes, 
                     gseaParam = 0.5, colwidths = c(10,2,1,1,1))
@@ -236,7 +240,7 @@ run <- function(opt) {
       topPathwaysDown <- fgseaRes[ES < 0,][head(order(pval), n=10),]$pathway
       plotGseaTable(pathways[topPathwaysDown], rnk, fgseaRes, 
       gseaParam = 0.5)
-      png(paste0(opt$outdir,"/",'GSEA_GO_down_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
+      png(paste0(opt$outdir,"/gsea/",'DOWN_',sub("([^.]+)\\.[[:alnum:]]+$", "\\1", (basename(pathway))),'.png'),
           width =15, height = 3, units = 'in', res = 600)
       plotGseaTable(pathways[topPathwaysDown], rnk, fgseaRes, 
                     gseaParam = 0.5, colwidths = c(10,2,1,1,1))

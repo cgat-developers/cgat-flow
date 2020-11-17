@@ -1,4 +1,4 @@
-#' filtering single cell data based on QC metrics
+a#' filtering single cell data based on QC metrics
 #'
 #' WARNING: This script is work-in-progress
 #' 
@@ -38,7 +38,8 @@ getmart <- function(values){
     attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene", 'chromosome_name',
                    'start_position', 'end_position'),
     values= values,
-    mart= mart)
+    mart= mart,
+    useCache = FALSE)
   data$description <- gsub("\t", "", data$description)
   return(data)
 }
@@ -144,8 +145,10 @@ run <- function(opt) {
   write.table(resdf, paste0(opt$outdir,"/","px_results_l2fc.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
   resdf <- data.frame(geneid=rownames(resLFC), l2fc=resLFC$log2FoldChange)
   write.table(resdf, paste0(opt$outdir,"/","px_results_l2fc.gene.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
-  genelengths <- rowMeans(assays(experiment)$avgTxLength)
-  write.table(genelengths, paste0(opt$outdir,"/","gene_lengths.tsv"), sep = "\t", row.names = TRUE, quote = FALSE)
+  if(any(names(assays(experiment)) == "avgTxLength")){
+    genelengths <- rowMeans(assays(experiment)$avgTxLength)
+    write.table(genelengths, paste0(opt$outdir,"/","gene_lengths.tsv"), sep = "\t", row.names = TRUE, quote = FALSE)
+  }
   file = get_output_filename(paste0(opt$outdir,"/","results_table.rds"))
   flog.info(paste("saving results data to", file))
   saveRDS(resLFC, file = file)
@@ -190,21 +193,24 @@ run <- function(opt) {
   dev.off()
   
   flog.info("... performing gene ontology (GO) enrichment analysis")
-  res.nona <- subset(resLFC, (!is.na(padj)))
-  de.genes <- as.integer(res.nona$padj < 0.05)
-  names(de.genes) <- rownames(res.nona)
-  temp <- rowMeans(assays(experiment)$avgTxLength[match(names(de.genes), rownames(assays(experiment)$avgTxLength)),])
-  pwf=nullp(de.genes,bias.data=temp)
-  all = goseq(pwf,"hg38","ensGene", method="Hypergeometric")
-  sigall <- all
-  names(sigall) <- c("category","pvalue","underrepresented_pvalue","numberDE", "numberTOT", "term", "ontology")
-  sigall$pvalue <- p.adjust(sigall$pvalue, method="BH")
-  sigall$percent <- sigall$numberDE/sigall$numberTOT
-  sigall <- sigall[which(sigall[,2] < 0.05),]
-  cats <- sigall$category
-  write.table(sigall[,c("category", "pvalue")], file=paste0(opt$outdir,"/",'GO.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
-  write.table(sigall, file=paste0(opt$outdir,"/",'GOall.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
-  
+  # Currently only supports data from salmon and kallisto
+  # Needs implementation of genelength matrix from featurecounts
+  if(any(names(assays(experiment)) == "avgTxLength")){
+      res.nona <- subset(resLFC, (!is.na(padj)))
+      de.genes <- as.integer(res.nona$padj < 0.05)
+      names(de.genes) <- rownames(res.nona)
+      temp <- rowMeans(assays(experiment)$avgTxLength[match(names(de.genes), rownames(assays(experiment)$avgTxLength)),])
+      pwf=nullp(de.genes,bias.data=temp)
+      all = goseq(pwf,"hg38","ensGene", method="Hypergeometric")
+      sigall <- all
+      names(sigall) <- c("category","pvalue","underrepresented_pvalue","numberDE", "numberTOT", "term", "ontology")
+      sigall$pvalue <- p.adjust(sigall$pvalue, method="BH")
+      sigall$percent <- sigall$numberDE/sigall$numberTOT
+      sigall <- sigall[which(sigall[,2] < 0.05),]
+      cats <- sigall$category
+      write.table(sigall[,c("category", "pvalue")], file=paste0(opt$outdir,"/",'GO.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
+      write.table(sigall, file=paste0(opt$outdir,"/",'GOall.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
+   }
   
   
   flog.info("... performing gene set enrichment analysis (GSEA)")

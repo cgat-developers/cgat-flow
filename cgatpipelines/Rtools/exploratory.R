@@ -38,7 +38,8 @@ getmart <- function(values){
     filters= "ensembl_gene_id", 
     attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene"),
     values= values,
-    mart= mart)
+    mart= mart,
+    useCache = FALSE)
   data$description <- gsub("\t", "", data$description)
   return(data)
 }

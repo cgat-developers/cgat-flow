@@ -1,4 +1,4 @@
-a#' filtering single cell data based on QC metrics
+#' filtering single cell data based on QC metrics
 #'
 #' WARNING: This script is work-in-progress
 #' 

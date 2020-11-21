@@ -369,7 +369,7 @@ def summarizeFastQC(infiles, outfiles):
     for infile in infiles:
         track = P.snip(infile, ".fastqc")
         all_files.extend(glob.glob(
-            os.path.join(track + "_fastqc",
+            os.path.join(track + ".*_fastqc",
                          "fastqc_data.txt")))
 
     dfs = readqc.read_fastqc(
@@ -504,10 +504,11 @@ def summarizeFastqScreen(infiles, outfiles):
 
 @jobs_limit(P.get_params().get("jobs_limit_db", 1), "db")
 @transform(summarizeFastqScreen,
-           suffix(".tsv"), ".load")
-def loadFastqScreen(infile, outfile):
+           suffix(".tsv.gz"), ".load")
+def loadFastqScreen(infiles, outfile):
     '''load FASTQC stats into database.'''
-    P.load(infile, outfile, options="--add-index=track")
+    for infile in infiles:
+        P.load(infile, outfile, options="--add-index=track")
 
 
 @follows(loadFastQC,

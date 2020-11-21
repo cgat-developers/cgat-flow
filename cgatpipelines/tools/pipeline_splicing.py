@@ -120,6 +120,7 @@ from ruffus import *
 import sys
 import os
 import glob
+import shutil
 import sqlite3
 import pandas as pd
 from rpy2.robjects import r as R
@@ -188,6 +189,23 @@ TRACKS = tracks.Tracks(MySample).loadFromDirectory(
 Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
+
+SEQUENCESUFFIXES = ("*.fastq.1.gz",
+                    "*.fastq.gz",
+                    "*.fa.gz",
+                    "*.sra",
+                    "*.export.txt.gz",
+                    "*.csfasta.gz",
+                    "*.csfasta.F3.gz",
+                    )
+
+SEQUENCEFILES = tuple([suffix_name
+                       for suffix_name in SEQUENCESUFFIXES])
+
+SEQUENCEFILES_REGEX = regex(
+    r"(.*\/)*(\S+).(fastq.1.gz|fastq.gz|fa.gz|sra|"
+    "csfasta.gz|csfasta.F3.gz|export.txt.gz)")
+
 
 
 ###################################################################
@@ -399,6 +417,148 @@ def runDEXSeq(infile, outfile, design):
 
     P.run(statement)
 
+
+
+###################################################################
+###################################################################
+###################################################################
+# IRFinder workflow
+###################################################################
+
+@mkdir("IRFinder.dir")
+@originate("IRFinder.dir/REF.log")
+def buildIRReference(outfile):
+    '''Creates a mapping reference for IRFinder using STAR
+
+    This downloads a gtf from ensembl and the fitting FASTA and
+    first runs STAR and then checks mapability
+
+    Parameters
+    ----------
+
+    infile : string
+       FTP path to correct ensembl annotation
+
+    outfile : string
+        One of the IRFinder reference files indicating
+        completion of the run
+
+    annotations_interface_geneset_all_gtf : string
+       :term:`PARAMS`. Filename of :term:`gtf` file containing
+       all ensembl annotations
+    '''
+
+    bin = PARAMS['IRFinder_bin']
+    extra = PARAMS['IRFinder_extra']
+    bedfile = PARAMS['IRFinder_bed']
+    gtf = PARAMS['IRFinder_ensembl_ftp']
+
+    statement = '''IRFinder -m BuildRef 
+                   -r IRFinder.dir/REF '''
+    if extra is not None:
+        statement += "-e %(extra)s "
+    if bedfile is not None:
+        statement += "-b %(bedfile)s "
+
+    statement +=  "%(gtf)s > IRFinder.dir/REF.log"
+
+    P.run(statement)
+
+
+
+@transform(SEQUENCEFILES,
+           SEQUENCEFILES_REGEX,
+           add_inputs(buildIRReference),           
+           r"IRFinder.dir/\2/IRFinder-IR-nondir.txt")
+def runIRFinder(infiles, outfile):
+    '''
+    Maps reads using STAR and creates Intron quantification tables.
+
+    Parameters
+    ----------
+    infile: str
+        filename of reads file
+        can be :term:`fastq`, :term:`sra`, csfasta
+
+    IRFinder_executable: str
+        :term:`PARAMS`
+        path to IRFinder executable
+
+    outfile: str
+        :term:`txt` filename to write .
+    '''
+
+    infile, reference = infiles
+    ref_dir = P.snip(reference)
+    bin = PARAMS['IRFinder_bin']
+
+    job_threads = PARAMS["IRFinder_threads"]
+    job_memory = PARAMS["IRFinder_memory"]
+
+    m = splicing.IRFinder()
+    statement = m.build((infile,), outfile)
+
+    P.run(statement, job_condaenv="IRFinder")
+
+
+@collate(runIRFinder,
+         regex("IRFiles.dir/(.*)/IRFinder-IR-nondir.txt"),
+         r"IRFiles.dir/filelist.tsv")
+def aggregateIRFinder(infiles, outfile):
+    ''' Build a matrix of counts with exons and tracks dimensions.
+
+    Uses `combine_tables.py` to combine all the `txt` files output from
+    countDEXSeq into a single :term:`tsv` file named
+    "summarycounts.tsv". A `.log` file is also produced.
+
+    Parameters
+    ---------
+    infiles : list
+        a list of `tsv.gz` files from the counts.dir that were the
+        output from dexseq_count.py
+
+    outfile : string
+        a filename denoting the file containing a matrix of counts with genes
+        as rows and tracks as the columns - this is a `tsv.gz` file      '''
+
+    # if stranded/directional output exists use that instead
+    infiles_dir = [infile.replace("nondir","dir") for infile in infiles]
+    if os.path.exists(infiles_dir[1]):
+        infiles = infiles_dir
+
+    with open(outfile, 'a') as outputfile:
+        for infile in infiles:
+            outputfile.write(os.path.abspath(infile+"\n"))
+
+
+@mkdir("results.dir/IRFinder")
+@subdivide(["%s" % x.asFile().lower() for x in DESIGNS],
+           regex("(\S+).design.tsv"),
+           add_inputs(aggregateIRFinder),
+           r"results.dir/IRFinder/\1_results.tsv")
+def diffexIRFinder(infiles, outfile):
+    E.info(os.path.join(os.path.dirname(cgatpipelines.__file__)))
+    design, counts = infiles
+    rscript = PARAMS["Rscript"]
+    IRscript = PARAMS["IRscript"]
+    cgat = PARAMS["cgat_directory"]
+    tmpfile = P.get_temp_filename(shared=True)
+    statement="which IRFinder >> %s" % tmpfile
+    P.run(statement, job_condaenv="IRFinder")
+    with open(tmpfile) as tmppath:
+        IRloc = tmppath.readline().rstrip()
+    IRScript = IRloc
+
+    statement = '''Rscript %(rscript)s
+    --file %(counts)s
+    --design %(design)s
+    --irscript %(IRScript)s
+    --cgat %(cgat)s
+    ''' % locals()
+    E.info(IRloc)
+    E.info(statement)
+    P.run(statement)
+    return
 
 ###################################################################
 ###################################################################

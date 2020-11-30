@@ -3010,7 +3010,7 @@ class Bowtie(Mapper):
                     infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
             statement = '''
             %(executable)s
-            --threads %%(bowtie_threads)i
+            --threads %%(%(executable)s_threads)i
             %(data_options)s
             %(tool_options)s
             %(index_option)s %(index_prefix)s

@@ -46,7 +46,7 @@ jobs:
           python setup.py install
           pip install nose
           mamba install cgatcore
-          mamba install cgat-apps==0.5.4
+          mamba install cgat-apps==0.5.3
           nosetests -v tests/test_import.py
           nosetests -v tests/test_style.py
           nosetests -v tests/test_scripts.py

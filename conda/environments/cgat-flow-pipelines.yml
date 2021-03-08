@@ -15,7 +15,6 @@ dependencies:
 - beautifulsoup4
 - biopython
 - cgat-report
-- cgat-apps>=0.5.5
 - cgatcore
 - httplib2
 - intermine

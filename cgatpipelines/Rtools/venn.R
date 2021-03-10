@@ -35,9 +35,15 @@ run <- function(opt) {
   dataframes <- lapply(opt$filenames, read.table)
   names(dataframes) <- opt$names
   x <- lapply(dataframes, function(x) subset(x, padj < opt$pvalue))
+  if(opt$sign == "positive"){
+    x <- lapply(x, function(y) subset(y, log2FoldChange >0))}
+  if(opt$sign == "negative"){
+    x <- lapply(x, function(y) subset(y, log2FoldChange <0))}
   x <- lapply(x, rownames)
   flog.info(str(x))
-  
+  lapply(calculate.overlap(x), write, "venn.txt", append=TRUE, ncolumns=1000)
+
+
   venn.diagram(x,
                filename = 'venn_diagramm.png',
                output = TRUE ,
@@ -88,6 +94,13 @@ main <- function() {
       dest = "pvalue",
       type = "numeric",
       default = 0.05,
+      help = paste("p value threshold")
+    ),
+    make_option(
+      "--sign",
+      dest = "sign",
+      type = "character",
+      default = "",
       help = paste("p value threshold")
     )
   )

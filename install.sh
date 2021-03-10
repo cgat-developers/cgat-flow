@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# cgat-flow-conda: Integration test for pipelines running against the
+# latest conda packages of cgat-core and cgat-apps. The idea is that this
+# is the situation of a user just trying to run or extend our pipelines
+# without getting into cgat-core or cgat-apps internals.
+
 # References
 # http://kvz.io/blog/2013/11/21/bash-best-practices/
 # http://jvns.ca/blog/2017/03/26/bash-quirks/
@@ -14,13 +19,12 @@ set -o pipefail
 #set -o nounset
 
 # trace what gets executed
-set -o xtrace
+#set -o xtrace
+#set -o errtrace
 
 # Bash traps
 # http://aplawrence.com/Basics/trapping_errors.html
 # https://stelfox.net/blog/2013/11/fail-fast-in-bash-scripts/
-
-set -o errtrace
 
 SCRIPT_NAME="$0"
 SCRIPT_PARAMS="$@"
@@ -51,7 +55,7 @@ trap 'error_handler ${LINENO} $? ${BASH_COMMAND}' ERR INT TERM
 
 # log installation information
 log() {
-    echo "# install-CGAT-tools.sh log | `hostname` | `date` | $1 "
+    echo "# install.sh log | `hostname` | `date` | $1 "
 }
 
 # report error and exit
@@ -101,6 +105,36 @@ get_cgat_env() {
     [[ ${CONDA_INSTALL_ENV} ]] || CONDA_INSTALL_ENV="cgat-flow"
 
 } # get_cgat_env
+
+
+is_env_enabled() {
+    # disable error checking
+    set +e
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -ne 0 ]] ; then
+        # conda is not available
+        get_cgat_env
+        source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
+    fi
+
+    # is conda available?
+    CONDA_PATH=$(which conda)
+
+    if [[ $? -eq 0 ]] ; then
+        # conda is available
+        # activate cgat-flow env
+        conda activate ${CONDA_INSTALL_ENV}
+    else
+        # conda is not available
+        report_error " Conda can't be found! "
+    fi
+
+    # enable error checking again
+    set -e
+}
 
 
 # setup environment variables
@@ -197,7 +231,7 @@ miniconda_install() {
 
     log "installing miniconda"
     bash ${MINICONDA} -b -p $CONDA_INSTALL_DIR
-    source ${CONDA_INSTALL_DIR}/bin/activate
+    source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
     hash -r
 
     # install cgat environment
@@ -221,27 +255,26 @@ conda_install() {
     mkdir -p $CGAT_HOME
     cd $CGAT_HOME
 
+    # activate cgat environment
+    is_env_enabled
+
     log "romoving old environment ${CONDA_INSTALL_ENV} if it exists"
     conda env remove -y -n ${CONDA_INSTALL_ENV} >& /dev/null || echo "Not removing environment ${CONDA_INSTALL_ENV} because it does not exist"
 
-    log "installing conda CGAT environment into ${CONDA_INSTALL_ENV}"
+    log "installing cgat-core, cgat-apps and its dependencies"
+    conda create -y --name ${CONDA_INSTALL_ENV} -c conda-forge -c bioconda cgatcore cgat-apps
 
-    log "installing cgat-core and basic dependencies"
-    conda create -y --name ${CONDA_INSTALL_ENV} cgatcore numpy cython pysam
-    # activate the environment - conda activate directly does not work
-    source ${CONDA_INSTALL_DIR}/bin/activate $CONDA_INSTALL_ENV
-
-    # TODO: use conda once cgat-apps is available on bioconda Can then probably
-    # remove numpy, cython, pysam from the previous line.
-    log "installing cgat-apps"
-    pip install cgat
-
-    log "installing pipeline dependencies for cgat-flow"
+    log "curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}"
     curl -o env-cgat-flow.yml -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/${CONDA_INSTALL_TYPE_PIPELINES}
     
     [[ ${CLUSTER} -eq 0 ]] && sed -i'' -e '/drmaa/d' env-cgat-flow.yml
 
     conda env update --name ${CONDA_INSTALL_ENV} --file env-cgat-flow.yml
+
+    log "curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/cgat-flow-pipelines."
+    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/cgat-flow-pipelines.yml
+
+    conda env update --name ${CONDA_INSTALL_ENV} --file cgat-flow-pipelines.yml
 
     # install extra deps
     install_extra_deps
@@ -256,43 +289,40 @@ code_install() {
 
     get_cgat_env
 
-    # activate the environment - conda activate directly does not work
-    source ${CONDA_INSTALL_DIR}/bin/activate $CONDA_INSTALL_ENV
+    # activate the environment
+    is_env_enabled
+
+    OLDPWD=`pwd`
 
     log "installing cgat-flow code into conda environment"
-    if [[ ${CLONE_REPO} ]] ; then
+    if [[ ${CODE_INSTALL} || ${FULL_INSTALL} ]] ; then
 
-	DEV_RESULT=0
-	# make sure you are in the CGAT_HOME folder
-	cd $CGAT_HOME
+	cd ${CGAT_HOME}
 
-	# download the code out of jenkins
-	if [[ -z ${JENKINS_INSTALL} ]] ; then
-
-	    if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
-		# get the latest version from Git Hub in zip format
-		curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$BRANCH.zip
-		unzip $BRANCH.zip
-		rm $BRANCH.zip
-		if [[ ${RELEASE} ]] ; then
-		    NEW_NAME=`echo $BRANCH | sed 's/^v//g'`
-		    mv cgat-flow-$NEW_NAME/ cgat-flow/
-		else
-		    mv cgat-flow-$BRANCH/ cgat-flow/
-		fi
-            elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
-		# get latest version from Git Hub with git clone
-		git clone --branch=$BRANCH https://github.com/cgat-developers/cgat-flow.git
-            elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
-		# get latest version from Git Hub with git clone
-		git clone --branch=$BRANCH git@github.com:cgat-developers/cgat-flow.git
-            else
-		report_error " Unknown download type for CGAT code... "
-	    fi
-	    
-	    # make sure you are in the CGAT_HOME/cgat-flow folder
-	    cd $CGAT_HOME/cgat-flow
+        if [[ $CODE_DOWNLOAD_TYPE -eq 0 ]] ; then
+	    # get the latest version from Git Hub in zip format
+	    curl -LOk https://github.com/cgat-developers/cgat-flow/archive/$BRANCH.zip
+	    unzip $BRANCH.zip
+	    rm $BRANCH.zip
+	    if [[ ${RELEASE} ]] ; then
+	        NEW_NAME=`echo $BRANCH | sed 's/^v//g'`
+		mv cgat-flow-$NEW_NAME/ cgat-flow/
+	    else
+	        mv cgat-flow-$BRANCH/ cgat-flow/
+            fi
+        elif [[ $CODE_DOWNLOAD_TYPE -eq 1 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$BRANCH https://github.com/cgat-developers/cgat-flow.git
+        elif [[ $CODE_DOWNLOAD_TYPE -eq 2 ]] ; then
+	    # get latest version from Git Hub with git clone
+	    git clone --branch=$BRANCH git@github.com:cgat-developers/cgat-flow.git
+        else
+	    report_error " Unknown download type for CGAT code... "
 	fi
+
+        # make sure you are in the CGAT_HOME/cgat-flow folder
+	cd ${CGAT_HOME}/cgat-flow
+
     else
 	cd ${REPO_DIR}
     fi
@@ -316,25 +346,6 @@ code_install() {
 	
 	print_env_vars
 	
-    fi # if-$?
-
-    # revert setup.py if downloaded with git
-    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
-    
-    conda env export > environment.yml
-
-    # check whether conda create went fine
-    if [[ $DEV_RESULT -ne 0 ]] ; then
-	echo
-	echo " There was a problem installing the code with conda. "
-	echo " Installation did not finish properly. "
-	echo
-	echo " Please submit this issue via Git Hub: "
-	echo " https://github.com/cgat-developers/cgat-flow/issues "
-	echo
-
-	print_env_vars
-
     else
 	clear
 	echo 
@@ -351,7 +362,15 @@ code_install() {
 	echo
     fi # if-$ conda create
 
-} # conda install
+    # revert setup.py if downloaded with git
+    [[ $CODE_DOWNLOAD_TYPE -ge 1 ]] && git checkout -- setup.py
+
+    conda env export > environment.yml
+
+    # go back to old working directory
+    cd $OLDPWD
+
+} # code_install
 
 
 # install extra dependencies
@@ -360,10 +379,8 @@ install_extra_deps() {
     log "installing extra deps"
 
     curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/pipelines-extra.yml
-    curl -O https://raw.githubusercontent.com/cgat-developers/cgat-apps/${BRANCH}/conda/environments/apps-extra.yml
 
     conda env update --quiet --name ${CONDA_INSTALL_ENV} --file pipelines-extra.yml
-    conda env update --quiet --name ${CONDA_INSTALL_ENV} --file apps-extra.yml
 
     if [[ ${INSTALL_IDE} -eq 1 ]] ; then
 	curl -O https://raw.githubusercontent.com/cgat-developers/cgat-flow/${BRANCH}/conda/environments/pipelines-ide.yml
@@ -397,6 +414,55 @@ install_py2_deps() {
     conda env update --quiet --file pipelines-splicing.yml
 
 }
+
+code_test() {
+
+    detect_cgat_installation
+
+    get_cgat_env
+
+    # activate the environment
+    is_env_enabled
+
+    OLDPWD=`pwd`
+
+    log "starting Python tests"
+
+    conda env list
+    conda env export
+
+    cd $CGAT_HOME/cgat-flow
+
+    nosetests -v tests/test_import.py
+    if [[ $? -eq 0 ]] ; then
+        echo
+	echo " test_imports.py passed sucessfully!"
+	echo
+    else
+	echo
+	echo " test_script.py failed. "
+	echo
+	print_env_vars
+    fi
+
+    nosetests -v tests/test_scripts.py
+    if [[ $? -eq 0 ]] ; then
+        echo
+	echo " test_imports.py passed sucessfully!"
+	echo
+    else
+	echo
+	echo " test_script.py failed. "
+	echo
+	print_env_vars
+    fi
+
+
+    # go back to old working directory
+    cd $OLDPWD
+
+} # code_test
+
 
 # unistall CGAT code collection
 uninstall() {
@@ -525,10 +591,11 @@ cleanup_env() {
 # function to display help message
 help_message() {
     echo
-    echo " This script uses Conda to install cgat-flow. To do a fill install, please type:"
-    echo " ./install.sh -[--install-dir </full/path/to/folder/without/trailing/slash>]"
+    echo " This script uses Conda to install cgat-flow. To do a full install, please type:"
+    echo " ./install.sh --full-install --install-dir </full/path/to/folder/without/trailing/slash>"
     echo
-    echo " The default install folder will be: $HOME/cgat-install"
+    echo " You can test your installation with:"
+    echo "./install.sh --test --install-dir </full/path/to/install/dir>"
     echo
     exit 1
 } # help_message
@@ -714,8 +781,8 @@ do
     esac
 done
 
-if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL) ]] ; then
-    FULL_INSTALL=1
+if [[ !($CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL || $INSTALL_TEST) ]] ; then
+    help_message
 fi
 
 # sanity check: make sure there is space available in the destination folder (20 GB) in 512-byte blocks
@@ -736,16 +803,8 @@ if [[ $CODE_INSTALL || $CONDA_INSTALL || $FULL_INSTALL ]] ; then
     code_install
 fi
 
-if [[ $OS_PKGS ]] ; then
-    install_os_packages
-fi
-
 if [[ $INSTALL_TEST ]] ; then
-    conda_test
-fi
-
-if [[ $INSTALL_UPDATE ]] ; then
-    conda_update
+    code_test
 fi
 
 if [[ $UNINSTALL ]] ; then

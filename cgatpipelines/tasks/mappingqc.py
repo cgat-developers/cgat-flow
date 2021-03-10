@@ -388,8 +388,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         E.warn("no files for %s" % tablename)
         return
 
-    header = ",".join([P.snip(os.path.basename(x), pipeline_suffix)
-                       for x in xfiles])
+    header = ",".join([os.path.basename(x) for x in xfiles])
     filenames = " ".join(["%s.%s" % (x, suffix) for x in xfiles])
 
     # there might be a variable number of columns in the tables

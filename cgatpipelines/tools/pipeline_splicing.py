@@ -120,6 +120,7 @@ from ruffus import *
 import sys
 import os
 import glob
+import shutil
 import sqlite3
 import pandas as pd
 from rpy2.robjects import r as R
@@ -129,6 +130,7 @@ import cgatcore.experiment as E
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
 import cgatpipelines.tasks.splicing as splicing
+import cgatpipelines
 
 ###################################################################
 ###################################################################
@@ -187,6 +189,23 @@ TRACKS = tracks.Tracks(MySample).loadFromDirectory(
 Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
+
+SEQUENCESUFFIXES = ("*.fastq.1.gz",
+                    "*.fastq.gz",
+                    "*.fa.gz",
+                    "*.sra",
+                    "*.export.txt.gz",
+                    "*.csfasta.gz",
+                    "*.csfasta.F3.gz",
+                    )
+
+SEQUENCEFILES = tuple([suffix_name
+                       for suffix_name in SEQUENCESUFFIXES])
+
+SEQUENCEFILES_REGEX = regex(
+    r"(.*\/)*(\S+).(fastq.1.gz|fastq.gz|fa.gz|sra|"
+    "csfasta.gz|csfasta.F3.gz|export.txt.gz)")
+
 
 
 ###################################################################
@@ -311,16 +330,48 @@ def aggregateExonCounts(infiles, outfile):
     P.run(statement)
 
 
-'''
 @follows(aggregateExonCounts)
 @mkdir("results.dir/DEXSeq")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
-           r"results.dir/DEXSeq/\1_results.tsv")
-def runDEXSeq(infile, outfile):
-     run DEXSeq command
+           add_inputs(buildGff),
+           r"results.dir/DEXSeq/\1/experiment_out.rds")
+def filterDEXSeq(infiles, outfile):
+    ''' Load counts into RDS object and filter'''
 
-    DEXSeq is run using the counts2table from the
+    design, gfffile = infiles
+    countsdir = "counts.dir/"
+    designname = design.split(".")[0]
+    model = PARAMS["DEXSeq_model_%s" % designname]
+
+    
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
+    
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --counts-dir %(countsdir)s
+    --source dexseq
+    --method dexseq
+    --dexseq-flattened-file %(gfffile)s
+    --sampleData %(design)s
+    --outdir %(outdir)s
+    --model %(model)s
+    > %(outdir)s/filter.log;
+    '''
+
+    P.run(statement) 
+
+
+@transform(filterDEXSeq,
+           regex("(.+)\/(?P<DESIGN>\S+)\/experiment_out.rds"),
+           r"\1/\2/results.tsv",
+           r"\2")
+def runDEXSeq(infile, outfile, design):
+    ''' DEXSeq is run using the R scripts from the
     cgat code collection. Output is standardised to
     correspond to differential gene expression output
     from DESeq2 or Sleuth.
@@ -341,34 +392,187 @@ def runDEXSeq(infile, outfile):
     DEXSeq_refgroup_% : string
        :term:`PARAMS`. Specifies model, contrast and reference
        group for DEXSeq analysis
-    
+    '''
+
 
     outdir = os.path.dirname(outfile)
-    countsdir = "counts.dir/"
-    gfffile = os.path.abspath("geneset_flat.gff")
     dexseq_fdr = 0.05
-    design = infile.split('.')[0]
-    model = PARAMS["DEXSeq_model_%s" % design]
-    contrast = PARAMS["DEXSeq_contrast_%s" % design]
-    refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
+    designname = design.split(".")[0]
+    model = PARAMS["DEXSeq_model_%s" % designname]
+    contrast = PARAMS["DEXSeq_contrast_%s" % designname]
+    refgroup = PARAMS["DEXSeq_refgroup_%s" % designname]
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/diffexonexpression.R")
 
-    statement = 
-    python -m cgatpipelines.tasks.counts2table
-    --design-tsv-file=%(infile)s
-    --output-filename-pattern=%(outdir)s/%(design)s
-    --log=%(outdir)s/%(design)s_DEXSeq.log
-    --method=dexseq
-    --fdr=%(dexseq_fdr)s
-    --model=%(model)s
-    --dexseq-counts-dir=%(countsdir)s
-    --contrast=%(contrast)s
-    -r %(refgroup)s
-    --dexseq-flattened-file=%(gfffile)s
-    > %(outfile)s;
-     % locals()
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s   
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(refgroup)s
+    --alpha %(dexseq_fdr)s
+    --outdir %(outdir)s
+
+    > %(outdir)s/dexseq.log;
+    '''
 
     P.run(statement)
-'''
+
+
+
+###################################################################
+###################################################################
+###################################################################
+# IRFinder workflow
+###################################################################
+
+@mkdir("IRFinder.dir")
+@originate("IRFinder.dir/REF.log")
+def buildIRReference(outfile):
+    '''Creates a mapping reference for IRFinder using STAR
+
+    This downloads a gtf from ensembl and the fitting FASTA and
+    first runs STAR and then checks mapability
+
+    Parameters
+    ----------
+
+    infile : string
+       FTP path to correct ensembl annotation
+
+    outfile : string
+        One of the IRFinder reference files indicating
+        completion of the run
+
+    annotations_interface_geneset_all_gtf : string
+       :term:`PARAMS`. Filename of :term:`gtf` file containing
+       all ensembl annotations
+    '''
+
+    extra = PARAMS['IRFinder_extra']
+    bedfile = PARAMS['IRFinder_bed']
+    gtf = PARAMS['IRFinder_ensembl_ftp']
+
+    statement = '''IRFinder -m BuildRef 
+                   -r IRFinder.dir/REF '''
+    if extra is not None:
+        statement += "-e %(extra)s "
+    if bedfile is not None:
+        statement += "-b %(bedfile)s "
+
+    statement +=  "%(gtf)s > IRFinder.dir/REF.log"
+
+    P.run(statement)
+
+
+
+@transform(SEQUENCEFILES,
+           SEQUENCEFILES_REGEX,
+           add_inputs(buildIRReference),           
+           r"IRFinder.dir/\2/IRFinder-IR-nondir.txt")
+def runIRFinder(infiles, outfile):
+    '''
+    Maps reads using STAR and creates Intron quantification tables.
+
+    Parameters
+    ----------
+    infile: str
+        filename of reads file
+        can be :term:`fastq`, :term:`sra`, csfasta
+
+    IRFinder_executable: str
+        :term:`PARAMS`
+        path to IRFinder executable
+
+    outfile: str
+        :term:`txt` filename to write .
+    '''
+
+    infile, reference = infiles
+    ref_dir = P.snip(reference)
+    bin = PARAMS['IRFinder_bin']
+
+    job_threads = PARAMS["IRFinder_threads"]
+    job_memory = PARAMS["IRFinder_memory"]
+
+    m = splicing.IRFinder()
+    statement = m.build((infile,), outfile)
+
+    P.run(statement, job_condaenv="IRFinder")
+
+
+@collate(runIRFinder,
+         regex("IRFinder.dir/(.*)/IRFinder-IR-nondir.txt"),
+         r"IRFinder.dir/filelist.tsv")
+def aggregateIRFinder(infiles, outfile):
+    ''' Build a matrix of counts with exons and tracks dimensions.
+
+    Uses `combine_tables.py` to combine all the `txt` files output from
+    countDEXSeq into a single :term:`tsv` file named
+    "summarycounts.tsv". A `.log` file is also produced.
+
+    Parameters
+    ---------
+    infiles : list
+        a list of `tsv.gz` files from the counts.dir that were the
+        output from dexseq_count.py
+
+    outfile : string
+        a filename denoting the file containing a matrix of counts with genes
+        as rows and tracks as the columns - this is a `tsv.gz` file      '''
+
+    # if stranded/directional output exists use that instead
+    infiles_dir = [infile.replace("nondir","dir") for infile in infiles]
+    if os.path.exists(infiles_dir[1]):
+        infiles = infiles_dir
+
+    with open(outfile, 'a') as outputfile:
+        for infile in infiles:
+            outputfile.write(os.path.abspath(infile+"\n"))
+
+
+@mkdir("results.dir/IRFinder")
+@subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
+           regex("(\S+).design.tsv"),
+           add_inputs(aggregateIRFinder),
+           r"results.dir/IRFinder/\1/results.tsv")
+def diffIRFinder(infiles, outfile):
+
+    design, counts = infiles
+    designname = design.split(".")[0]
+    model = PARAMS["IRFinder_model_%s" % designname]
+    contrast = PARAMS["IRFinder_contrast_%s" % designname]
+    REF = PARAMS["IRFinder_reference_%s" % designname]
+    COMP = PARAMS['IRFinder_comparator_%s' % designname]
+    permute = PARAMS["IRFinder_permute"]
+    pvalue = PARAMS["IRFinder_pvalue"]
+    
+    outdir = os.path.dirname(outfile)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/IRFinder.R")
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --counts %(counts)s
+    --design %(design)s
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(REF)s
+    --compgroup %(COMP)s
+    --permute %(permute)s
+    --alpha %(pvalue)s
+    --outdir %(outdir)s > %(outdir)s/IRFinder.log
+    '''
+
+    P.run(statement)
+    return
+
+
 
 ###################################################################
 ###################################################################
@@ -671,7 +875,8 @@ def runSashimi(infiles, outfile):
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,
-         aggregateExonCounts)
+         runDEXSeq,
+         diffIRFinder)
 def full():
     pass
 

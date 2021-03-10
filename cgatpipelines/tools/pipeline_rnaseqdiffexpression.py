@@ -30,7 +30,6 @@ The pipeline performs the following:
      methods are implemented:
       * kallisto_
       * salmon_
-      * sailfish_
 
    * Perform differential expression analysis. The methods currently
      implemented are:
@@ -69,7 +68,6 @@ The quantification tools fall into two categories:
       The available tools are:
       * kallisto_
       * salmon_
-      * sailfish_
 
    * Alignment-based
       Quantification is performed on the aligned reads using the
@@ -118,7 +116,7 @@ Log TPM (alignment-free only) are well modelled by a gaussian
 distribution and differential expression can therefore be performed
 with a linear model. This is the approach taken by sleuth which is
 used here. In addition, slueth_ uses the bootstrap estimates from
-kallisto_/salmon_/sailfish_ to estimate the proportion of the variance
+kallisto_/salmon_ to estimate the proportion of the variance
 which is technical and therefore the proportion which is biological.
 
 Usage
@@ -221,8 +219,7 @@ software to be in the path:
 +--------------+----------+------------------------------------+
 |salmon_       |>=0.7.2   |alignment-free quantification       |
 +--------------+----------+------------------------------------+
-|sailfish_     |>=0.9.0   |alignment-free quantification       |
-+--------------+----------+------------------------------------+
+
 
 
 Pipeline output
@@ -262,9 +259,7 @@ Glossary
    kallisto
       kallisto_ - alignment-free quantification
    salmon
-      kallisto_ - alignment-free quantification
-   sailfish
-      kallisto_ - alignment-free quantification
+      salmon_ - alignment-free quantification
    featureCounts
       featurecounts_ - alignment-free quantification
    deseq
@@ -277,7 +272,6 @@ Glossary
 .. _featurecounts: http://bioinf.wehi.edu.au/featureCounts/
 .. _kallisto: https://pachterlab.github.io/kallisto/
 .. _salmon: https://combine-lab.github.io/salmon/
-.. _sailfish: http://www.cs.cmu.edu/~ckingsf/software/sailfish/
 .. _deseq: http://www-huber.embl.de/users/anders/DESeq/
 .. _edger: http://bioconductor.org/packages/release/bioc/html/edgeR.html
 .. _sleuth: https://github.com/pachterlab/sleuth
@@ -334,16 +328,12 @@ import pandas as pd
 import sqlite3
 import cgat.GTF as GTF
 import cgatcore.iotools as iotools
+from cgatcore import pipeline as P
 
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.rnaseq as rnaseq
-from cgatcore import pipeline as P
 import cgatpipelines.tasks.tracks as tracks
-
-import cgatpipelines.tasks.expression as Expression
-# levels of cuffdiff analysis
-# (no promotor and splice -> no lfold column)
-CUFFDIFF_LEVELS = ("gene", "cds", "isoform", "tss")
+import cgatpipelines
 
 ###################################################
 ###################################################
@@ -493,9 +483,43 @@ def buildKallistoIndex(infile, outfile):
 
     P.run(statement)
 
-
 @transform(buildReferenceTranscriptome,
            suffix(".fa"),
+           ".gentrome.fa")
+def buildGentrome(infile, outfile):
+    '''
+    Builds a "Gentrome", a concatenation of the reference transcriptome and genome
+    FASTA file, required by Salmon indexing
+
+    Parameters
+    ----------
+    infile: str
+        path to the reference transcriptome generated in the previous function
+    genome_dir: str
+        :term: `PARAMS` the directory of the reference genome
+    genome: str
+        :term: `PARAMS` the filename of the reference genome (without .fa)
+    outfile: str
+        path to output file
+    '''
+
+    genome_file = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
+
+    outdir = os.path.dirname(outfile)
+
+    statement = '''
+    grep "^>" %(genome_file)s |
+    cut -d " " -f 1 > %(outdir)s/decoys.txt &&
+    sed -i.bak -e 's/>//g' %(outdir)s/decoys.txt &&
+    cat %(infile)s %(genome_file)s > %(outfile)s
+    '''
+
+    P.run(statement)
+    
+
+@transform(buildGentrome,
+           suffix(".gentrome.fa"),
            ".salmon.index")
 def buildSalmonIndex(infile, outfile):
     '''
@@ -506,7 +530,7 @@ def buildSalmonIndex(infile, outfile):
        path to reference transcriptome - fasta file containing transcript
        sequences
     salmon_kmer: int
-       :term: `PARAMS` kmer size for sailfish.  Default is 31.
+       :term: `PARAMS` kmer size for salmon.  Default is 31.
        Salmon will ignores transcripts shorter than this.
     salmon_index_options: str
        :term: `PARAMS` string to append to the salmon index command to
@@ -516,51 +540,20 @@ def buildSalmonIndex(infile, outfile):
     '''
 
     job_memory = "unlimited"
+    threads = 12
+    if PARAMS["salmon_threads"] is not None:
+        threads = PARAMS["salmon_threads"]
+    outdir = os.path.dirname(outfile)
+    
     # need to remove the index directory (if it exists) as ruffus uses
     # the directory timestamp which wont change even when re-creating
     # the index files
     statement = '''
     rm -rf %(outfile)s;
-    salmon index -k %(salmon_kmer)i %(salmon_index_options)s -t %(infile)s -i %(outfile)s
+    salmon index -p %(threads)s -k %(salmon_kmer)i -t %(infile)s -d %(outdir)s/decoys.txt -i %(outfile)s
     '''
 
     P.run(statement)
-
-
-@transform(buildReferenceTranscriptome,
-           suffix(".fa"),
-           ".sailfish.index")
-def buildSailfishIndex(infile, outfile):
-    '''
-    Builds a sailfish index for the reference transcriptome
-    Parameters
-    ----------
-    infile: str
-       path to reference transcriptome - fasta file containing transcript
-       sequences
-    sailfish_kmer: int
-       :term: `PARAMS` kmer size for sailfish.  Default is 31.
-       Sailfish will ignores transcripts shorter than this.
-    sailfish_index_options: str
-       :term: `PARAMS` string to append to the sailfish index command to
-       provide specific options e.g. --force --threads N
-    outfile: str
-       path to output file
-    '''
-    # sailfish indexing is more memory intensive than Salmon/Kallisto
-    job_memory = "6G"
-
-    # need to remove the index directory (if it exists) as ruffus uses
-    # the directory timestamp which wont change even when re-creating
-    # the index files
-    statement = '''
-    rm -rf %(outfile)s &&
-    sailfish index --transcripts=%(infile)s --out=%(outfile)s
-    --kmerSize=%(sailfish_kmer)s
-    %(sailfish_index_options)s
-    '''
-
-    P.run(statement, job_condaenv="sailfish")
 
 
 @originate("transcript2geneMap.tsv")
@@ -774,8 +767,8 @@ SEQUENCEFILES = tuple([os.path.join(DATADIR, suffix_name)
 # enable multiple fastqs from the same sample to be analysed together
 if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
     SEQUENCEFILES_REGEX = regex(
-        r"%s/%s.(fastq.1.gz|fastq.gz|sra)" % (
-            DATADIR, PARAMS["merge_pattern_input"].strip()))
+        r"%s.(fastq.1.gz|fastq.gz|sra)" % (
+            PARAMS["merge_pattern_input"].strip()))
 
     # the last expression counts number of groups in pattern_input
     SEQUENCEFILES_KALLISTO_OUTPUT = [
@@ -790,12 +783,6 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
         r"salmon.dir/%s/genes.tsv.gz" % (
             PARAMS["merge_pattern_output"].strip())]
 
-    SEQUENCEFILES_SAILFISH_OUTPUT = [
-        r"sailfish.dir/%s/transcripts.tsv.gz" % (
-            PARAMS["merge_pattern_output"].strip()),
-        r"sailfish.dir/%s/genes.tsv.gz" % (
-            PARAMS["merge_pattern_output"].strip())]
-
 else:
     SEQUENCEFILES_REGEX = regex(
         "(\S+).(fastq.1.gz|fastq.gz|sra)")
@@ -808,9 +795,6 @@ else:
         r"salmon.dir/\1/transcripts.tsv.gz",
         r"salmon.dir/\1/genes.tsv.gz"]
 
-    SEQUENCEFILES_SAILFISH_OUTPUT = [
-        r"sailfish.dir/\1/transcripts.tsv.gz",
-        r"sailfish.dir/\1/genes.tsv.gz"]
 ###################################################
 
 
@@ -882,69 +866,6 @@ def runKallisto(infiles, outfiles):
     Quantifier.run_all()
 
 
-@follows(mkdir("sailfish.dir"))
-@collate(SEQUENCEFILES,
-         SEQUENCEFILES_REGEX,
-         add_inputs(buildSailfishIndex, getTranscript2GeneMap),
-         SEQUENCEFILES_SAILFISH_OUTPUT)
-def runSailfish(infiles, outfiles):
-    '''
-    Computes read counts across transcripts and genes based on a fastq
-    file and an indexed transcriptome using Sailfish.
-
-    Runs the sailfish "quant" function across transcripts with the specified
-    options.  Read counts across genes are counted as the total in all
-    transcripts of that gene (based on the getTranscript2GeneMap table)
-
-    Parameters
-    ----------
-    infiles: list
-        list with three components
-        0 - list of strings - paths to fastq files to merge then quantify
-        across using sailfish
-        1 - string - path to sailfish index file
-        2 - string - path to table mapping transcripts to genes
-
-    sailfish_threads: int
-       :term: `PARAMS` the number of threads for sailfish
-    sailfish_memory: str
-       :term: `PARAMS` the job memory for sailfish
-    sailfish_options: str
-       :term: `PARAMS` string to append to the sailfish quant command to
-       provide specific
-       options, see http://sailfish.readthedocs.io/en/master/index.html
-    sailfish_bootstrap: int
-       :term: `PARAMS` number of bootstrap samples to run.
-       Note, you need to bootstrap for differential expression with sleuth
-       if there are no technical replicates. If you only need point estimates,
-       set to 1.
-    sailfish_libtype: str
-       :term: `PARAMS` sailfish library type
-       http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtype
-    outfiles: list
-       paths to output files for transcripts and genes
-    '''
-
-    fastqfile = [x[0] for x in infiles]
-    index = infiles[0][1]
-    transcript2geneMap = infiles[0][2]
-
-    transcript_outfile, gene_outfile = outfiles
-    Quantifier = rnaseq.SailfishQuantifier(
-        infile=fastqfile,
-        transcript_outfile=transcript_outfile,
-        gene_outfile=gene_outfile,
-        annotations=index,
-        job_threads=PARAMS["sailfish_threads"],
-        job_memory=PARAMS["sailfish_memory"],
-        options=PARAMS["sailfish_options"],
-        bootstrap=PARAMS["sailfish_bootstrap"],
-        libtype=PARAMS['sailfish_libtype'],
-        transcript2geneMap=transcript2geneMap)
-
-    Quantifier.run_all()
-
-
 @follows(mkdir("salmon.dir"))
 @collate(SEQUENCEFILES,
          SEQUENCEFILES_REGEX,
@@ -964,8 +885,8 @@ def runSalmon(infiles, outfiles):
     infiles: list
         list with three components
         0 - list of strings - paths to fastq files to merge then quantify
-        across using sailfish
-        1 - string - path to sailfish index file
+        across using salmon
+        1 - string - path to salmon index file
         2 - string - path to table mapping transcripts to genes
 
     salmon_threads: int
@@ -975,16 +896,14 @@ def runSalmon(infiles, outfiles):
     salmon_options: str
        :term: `PARAMS` string to append to the salmon quant command to
        provide specific
-       options, see http://sailfish.readthedocs.io/en/master/salmon.html
+       options, see https://salmon.readthedocs.io/en/latest/salmon.html#description-of-important-optionsç∂
     salmon_bootstrap: int
        :term: `PARAMS` number of bootstrap samples to run.
        Note, you need to bootstrap for differential expression with sleuth
        if there are no technical replicates. If you only need point estimates,
        set to 1.
     salmon_libtype: str
-       :term: `PARAMS` salmon library type
-       as for sailfish - use
-       http://sailfish.readthedocs.io/en/master/library_type.html#fraglibtype
+       :term: `PARAMS` salmon library type, https://salmon.readthedocs.io/en/latest/library_type.html
     outfiles: list
        paths to output files for transcripts and genes
     '''
@@ -1017,7 +936,6 @@ def runSalmon(infiles, outfiles):
 QUANTTARGETS = []
 mapToQuantTargets = {'kallisto': (runKallisto,),
                      'salmon': (runSalmon,),
-                     'sailfish': (runSailfish,),
                      'featurecounts': (runFeatureCounts,),
                      'gtf2table': (runGTF2Table,)}
 
@@ -1105,35 +1023,159 @@ def count():
     ''' dummy task to define upstream quantification tasks'''
 
 ###################################################
-# Differential Expression
+# Loading and filtering counts table
 ###################################################
-
 
 @mkdir("DEresults.dir/deseq2")
 @product(mergeCounts,
          formatter(".*/(?P<QUANTIFIER>\S+).dir/transcripts.tsv.gz"),
          ["design%s.tsv" % x.asFile() for x in DESIGNS],
          formatter(".*/design(?P<DESIGN>\S+).tsv$"),
-         ["DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
-          "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_genes_results.tsv"],
-         "{DESIGN[1][0]}")
-def runDESeq2(infiles, outfiles, design_name):
+         "DEresults.dir/deseq2/{QUANTIFIER[0][0]}_{DESIGN[1][0]}/experiment_out.rds",
+         "{DESIGN[1][0]}",
+         "{QUANTIFIER[0][0]}")
+def filterDESeq2(infiles, outfile, design_name, quantifier_name):
+    ''' Load counts into RDS object and filter'''
+
+    counts, design = infiles
+    transcripts, genes = counts
+    design_name = design_name.lower()
+    quantifier_name = quantifier_name.lower()
+    counts = "--counts-dir %s.dir" % quantifier_name     
+    model = PARAMS.get('deseq2_model%s' % design_name, None)
+        
+    if not quantifier_name in ("salmon", "kallisto"):
+        counts = "--counts-tsv %s" % genes  
+        quantifier_name = "counts_table"    
+    
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
+    
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s %(counts)s
+    --sampleData %(design)s
+    --outdir %(outdir)s
+    --model %(model)s
+    --method deseq2
+    --filter %(filter_deseq2)s
+    --source %(quantifier_name)s
+    --tx2gene_regex %(filter_regex)s
+    > %(outdir)s/filter.log;
+    '''
+    P.run(statement) 
+
+
+@mkdir("DEresults.dir/edger")
+@product(mergeCounts,
+         formatter(".*/(?P<QUANTIFIER>\S+).dir/transcripts.tsv.gz"),
+         ["design%s.tsv" % x.asFile() for x in DESIGNS],
+         formatter(".*/design(?P<DESIGN>\S+).tsv$"),
+         "DEresults.dir/edger/{QUANTIFIER[0][0]}_{DESIGN[1][0]}/experiment_out.rds",
+         "{DESIGN[1][0]}",
+         "{QUANTIFIER[0][0]}")
+def filterEdgeR(infiles, outfile, design_name, quantifier_name):
+    ''' Load counts into RDS object and filter'''
+
+    counts, design = infiles
+    transcripts, genes = counts
+    design_name = design_name.lower()
+    quantifier_name = quantifier_name.lower()
+    counts = "--counts-dir %s.dir" % quantifier_name     
+    model = PARAMS.get('edger_model%s' % design_name, None)
+        
+    if not quantifier_name in ("salmon", "kallisto"):
+        counts = "--counts-tsv %s" % genes  
+        quantifier_name = "counts_table"    
+    
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/filtercounts.R")
+    
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s %(counts)s
+    --sampleData %(design)s
+    --outdir %(outdir)s
+    --model %(model)s
+    --method edger
+    --filter %(filter_edger)s
+    --source %(quantifier_name)s
+    --tx2gene_regex %(filter_regex)s
+    > %(outdir)s/filter.log;
+    '''
+    P.run(statement) 
+
+
+###################################################
+# Exploratory Analysis
+###################################################
+
+@transform(filterDESeq2,
+           formatter("DEresults.dir/(?P<DETOOL>\S+)/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
+           "DEresults.dir/{DETOOL[0]}/{QUANTIFIER[0]}_{DESIGN[0]}/Heatmap_top500.png",
+           "{DESIGN[0]}",
+           "{QUANTIFIER[0]}",
+           "{DETOOL[0]}")
+def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_name):
+
+
+    design_name = design_name.lower()
+    design = "design" + design_name + ".tsv"
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/exploratory.R")
+
+    model = PARAMS.get('%s_model%s' % (detool_name, design_name), None)
+    contrast = PARAMS.get('%s_contrast%s' % (detool_name, design_name), None)
+
+    if model is None:
+        raise ValueError("{}_model{} is not specified".format(
+            (detool_name, design_name)))
+    if contrast is None:
+        raise ValueError("{}_contrast{} is not specified".format(
+            (detool_name, design_name)))
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s
+    --model %(model)s
+    --contrast %(contrast)s
+    --factors %(exploratory_factors)s
+    --genes_of_interest %(exploratory_goi)s
+    --outdir %(outdir)s
+    > %(outdir)s/exploratory.log;
+    '''
+    P.run(statement)
+
+
+###################################################
+# Differential Expression
+###################################################
+
+
+@transform(filterDESeq2,
+           formatter("DEresults.dir/deseq2/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
+           "DEresults.dir/deseq2/{QUANTIFIER[0]}_{DESIGN[0]}/results_full.tsv",
+           "{DESIGN[0]}",
+           "{QUANTIFIER[0]}")
+def runDESeq2(infile, outfile, design_name, quantifier_name):
     ''' run DESeq2 to identify differentially expression transcripts/genes'''
 
     design_name = design_name.lower()
-    counts, design = infiles
-    transcripts, genes = counts
-    transcript_out, gene_out = outfiles
-
-    transcript_prefix = P.snip(transcript_out, ".tsv")
-    transcript_log = transcript_prefix + ".log"
-
-    gene_prefix = P.snip(gene_out, ".tsv")
-    gene_log = gene_prefix + ".log"
+    design = "design" + design_name + ".tsv"
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/diffexpression.R")
 
     model = PARAMS.get('deseq2_model%s' % design_name, None)
     contrast = PARAMS.get('deseq2_contrast%s' % design_name, None)
     refgroup = PARAMS.get('deseq2_refgroup%s' % design_name, None)
+    coef = PARAMS.get('deseq2_coef%s' % design_name, None)
 
     if model is None:
         raise ValueError("deseq2_model{} is not specified".format(
@@ -1144,69 +1186,46 @@ def runDESeq2(infiles, outfiles, design_name):
     if refgroup is None:
         raise ValueError("deseq2_refgroup{} is not specified".format(
             design_name))
+    if coef is None:
+        raise ValueError("deseq2_coef{} is not specified".format(
+            design_name))
 
     statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(transcripts)s
-    --design-tsv-file=%(design)s
-    --method=deseq2
-    --de-test=%(deseq2_detest)s
-    --output-filename-pattern=%(transcript_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(deseq2_fdr)s
-    --log=%(transcript_log)s
-    -v 0
-    > %(transcript_out)s;
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(refgroup)s
+    --coef %(coef)s
+    --alpha %(deseq2_fdr)s
+    --outdir %(outdir)s
+    --shrinkage %(deseq2_shrinkage)s
+    --userlist %(pathways_usergenes)s
+    --permute %(deseq2_permutations)s
+    --pathways %(pathways_GSEA_datasets)s
+    > %(outdir)s/deseq2.log;
     '''
     P.run(statement)
 
-    statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(genes)s
-    --design-tsv-file=%(design)s
-    --method=deseq2
-    --de-test=%(deseq2_detest)s
-    --output-filename-pattern=%(gene_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(deseq2_fdr)s
-    --log=%(gene_log)s
-    -v 0
-    > %(gene_out)s;
-
-    '''
-
-    P.run(statement)
-
-
-@mkdir("DEresults.dir/edger")
-@product(mergeCounts,
-         formatter(".*/(?P<QUANTIFIER>\S+).dir/transcripts.tsv.gz"),
-         ["design%s.tsv" % x.asFile() for x in DESIGNS],
-         formatter(".*/design(?P<DESIGN>\S+).tsv$"),
-         ["DEresults.dir/edger/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
-          "DEresults.dir/edger/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_genes_results.tsv"],
-         "{DESIGN[1][0]}")
-def runEdgeR(infiles, outfiles, design_name):
-    ''' run edgeR to identify differentially expression transcripts/genes'''
+@transform(filterEdgeR,
+           formatter("DEresults.dir/edger/(?P<QUANTIFIER>\S+)_(?P<DESIGN>\S+)/experiment_out.rds"),
+           "DEresults.dir/edger/{QUANTIFIER[0]}_{DESIGN[0]}/results_table.rds",
+           "{DESIGN[0]}",
+           "{QUANTIFIER[0]}")
+def runEdgeR(infile, outfile, design_name, quantifier_name):
+    ''' run EdgeR to identify differentially expression transcripts/genes'''
 
     design_name = design_name.lower()
-    counts, design = infiles
-    transcripts, genes = counts
-    transcript_out, gene_out = outfiles
-
-    transcript_prefix = P.snip(transcript_out, ".tsv")
-    transcript_log = transcript_prefix + ".log"
-
-    gene_prefix = P.snip(gene_out, ".tsv")
-    gene_log = gene_prefix + ".log"
+    design = "design" + design_name + ".tsv"
+    outdir = os.path.dirname(outfile)
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/diffexpression.R")
 
     model = PARAMS.get('edger_model%s' % design_name, None)
     contrast = PARAMS.get('edger_contrast%s' % design_name, None)
     refgroup = PARAMS.get('edger_refgroup%s' % design_name, None)
+    coef = PARAMS.get('edger_coef%s' % design_name, None)
 
     if model is None:
         raise ValueError("edger_model{} is not specified".format(
@@ -1217,44 +1236,32 @@ def runEdgeR(infiles, outfiles, design_name):
     if refgroup is None:
         raise ValueError("edger_refgroup{} is not specified".format(
             design_name))
+    if coef is None:
+        raise ValueError("edger_coef{} is not specified".format(
+            design_name))
 
     statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(transcripts)s
-    --design-tsv-file=%(design)s
-    --method=edger
-    --output-filename-pattern=%(transcript_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(edger_fdr)s
-    --log=%(transcript_log)s
-    -v 0
-    > %(transcript_out)s;
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --rds-filename %(infile)s
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(refgroup)s
+    --coef %(coef)s
+    --alpha %(edger_fdr)s
+    --outdir %(outdir)s
+    --userlist %(pathways_usergenes)s
+    --permute %(edger_permutations)s
+    --pathways %(pathways_GSEA_datasets)s
+    > %(outdir)s/edger.log;
     '''
-    P.run(statement)
-
-    statement = '''
-    python -m cgatpipelines.tasks.counts2table
-    --tag-tsv-file=%(genes)s
-    --design-tsv-file=%(design)s
-    --method=edger
-    --output-filename-pattern=%(gene_prefix)s
-    --model=%(model)s
-    --contrast=%(contrast)s
-    --reference-group=%(refgroup)s
-    --fdr=%(edger_fdr)s
-    --log=%(gene_log)s
-    -v 0
-    > %(gene_out)s;'''
-
     P.run(statement)
 
 
 @mkdir("DEresults.dir/sleuth")
 @product(mergeCounts,
          formatter(
-             ".*/(?P<QUANTIFIER>(kallisto|salmon|sailfish)).dir/transcripts.tsv.gz"),
+             ".*/(?P<QUANTIFIER>(kallisto|salmon)).dir/transcripts.tsv.gz"),
          ["design%s.tsv" % x.asFile() for x in DESIGNS],
          formatter(".*/design(?P<DESIGN>\S+).tsv$"),
          ["DEresults.dir/sleuth/{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_results.tsv",
@@ -1263,27 +1270,8 @@ def runEdgeR(infiles, outfiles, design_name):
          "{QUANTIFIER[0][0]}")
 def runSleuth(infiles, outfiles, design_name, quantifier):
     ''' run sleuth to identify differentially expression transcripts/genes'''
+    ''' NOT FUNCTIONAL'''
 
-    design_name = design_name.lower()
-    counts, design = infiles
-    transcripts, genes = counts
-    transcript_out, gene_out = outfiles
-
-    transcript_prefix = P.snip(transcript_out, ".tsv")
-    transcript_log = transcript_prefix + ".log"
-
-    gene_prefix = P.snip(gene_out, ".tsv")
-    gene_log = gene_prefix + ".log"
-
-    model = PARAMS['sleuth_model%s' % design_name]
-    E.info(model)
-    reduced_model = PARAMS['sleuth_reduced_model%s' % design_name]
-
-    contrast = PARAMS['sleuth_contrast%s' % design_name]
-    refgroup = PARAMS['sleuth_refgroup%s' % design_name]
-    detest = PARAMS['sleuth_detest']
-    transcripts = os.path.join("geneset.dir",
-                               P.snip(PARAMS['geneset'], ".gtf.gz") + ".fa")
 
     # to estimate sleuth memory, we need to know the number of
     # samples, transcripts and boostraps
@@ -1292,9 +1280,8 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
         for line in inf:
             if line.startswith(">"):
                 number_transcripts += 1
-
-    Design = Expression.ExperimentalDesign("design%s.tsv" % design_name)
-    number_samples = sum(Design.table['include'])
+    
+    number_samples = CALCULATENUMBEROFSAMPLESHERE
 
     job_memory = rnaseq.estimateSleuthMemory(
         PARAMS["%(quantifier)s_bootstrap" % locals()],
@@ -1324,122 +1311,6 @@ def runSleuth(infiles, outfiles, design_name, quantifier):
 
     P.run(statement)
 
-    if PARAMS['sleuth_genewise']:
-
-        assert PARAMS['sleuth_gene_biomart'], (
-            "Must provide a biomart (see pipeline.yml)")
-
-        # gene-wise sleuth seems to be even more memory hungry!
-        # Use 2 * transcript memory estimate
-        job_memory = rnaseq.estimateSleuthMemory(
-            PARAMS["%(quantifier)s_bootstrap" % locals()],
-            2 * number_samples, number_transcripts)
-
-        statement = '''
-        python -m cgatpipelines.tasks.counts2table
-        --design-tsv-file=%(design)s
-        --output-filename-pattern=%(gene_prefix)s
-        --log=%(gene_log)s
-        --method=sleuth
-        --fdr=%(sleuth_fdr)s
-        --model=%(model)s
-        --contrast=%(contrast)s
-        --sleuth-genewise
-        --sleuth-counts-dir=%(quantifier)s.dir
-        --reference-group=%(refgroup)s
-        --gene-biomart=%(sleuth_gene_biomart)s
-        --de-test=%(detest)s
-        '''
-        if detest == "lrt":
-            statement += '''
-            --reduced-model=%(reduced_model)s
-            '''
-        statement += '''
-        -v 0
-        >%(transcript_out)s
-        '''
-
-        P.run(statement)
-
-
-@mkdir("DEresults.dir/deseq2")
-@transform(mergeCounts,
-           regex("(\S+).dir/transcripts.tsv.gz"),
-           [r"DEresults.dir/deseq2/\1_normalised_transcripts_expression.tsv.gz",
-            r"DEresults.dir/deseq2/\1_normalised_genes_expression.tsv.gz"])
-def getDESeqNormExp(infiles, outfiles):
-    ''' Use the Deseq2 size factors method to obtain normalised
-    expression values for summary plots '''
-    # currently DESeq expression factors is not working
-    # to normalise the expression values. In some workflows
-    # the columns produce infinity values. Have defaulted to
-    # total column until issue is identified
-
-    transcripts_inf, genes_inf = infiles
-    transcripts_outf, genes_outf = outfiles
-
-    normalisation_method = "total-column"
-
-    rnaseq.normaliseCounts(
-        transcripts_inf, transcripts_outf, normalisation_method)
-    rnaseq.normaliseCounts(
-        genes_inf, genes_outf, normalisation_method)
-
-
-@mkdir("DEresults.dir/edger")
-@transform(mergeCounts,
-           regex("(\S+).dir/transcripts.tsv.gz"),
-           [r"DEresults.dir/edger/\1_normalised_transcripts_expression.tsv.gz",
-            r"DEresults.dir/edger/\1_normalised_genes_expression.tsv.gz"])
-def getEdgeRNormExp(infiles, outfiles):
-    ''' Use edgeR to obtain normalised (CPM)
-    expression values for summary plots '''
-
-    transcripts_inf, genes_inf = infiles
-    transcripts_outf, genes_outf = outfiles
-
-    normalisation_method = "edger"
-
-    rnaseq.normaliseCounts(
-        transcripts_inf, transcripts_outf, normalisation_method)
-    rnaseq.normaliseCounts(
-        genes_inf, genes_outf, normalisation_method)
-
-
-@mkdir("DEresults.dir/sleuth")
-@collate(
-    QUANTTARGETS,
-    formatter(
-        "(?P<QUANTIFIER>(kallisto|salmon|sailfish)).dir/(\S+)/transcripts.tsv.gz"),
-    add_inputs(getTranscript2GeneMap),
-    [r"DEresults.dir/sleuth/{QUANTIFIER[0]}_normalised_transcripts_expression.tsv.gz",
-     r"DEresults.dir/sleuth/{QUANTIFIER[0]}_normalised_genes_expression.tsv.gz"],
-    r"{QUANTIFIER[0]}")
-def getSleuthNormExp(infiles, outfiles, quantifier):
-    ''' get the Normalised expression from the quantification tools
-    which we will run sleuth from'''
-
-    # Sleuth uses TPM so the output from the quantification tools is
-    # already normalised.  However, the alignment-free (runKallisto
-    # etc) tasks all extract the counts so we need to go back to the
-    # raw outfile and extract the "tpm"/"TPM" column
-
-    t2gMap = infiles[0][1]
-    transcript_infiles = [x[0][0] for x in infiles]
-    transcripts_outf, genes_outf = outfiles
-
-    if quantifier == "kallisto":
-        basename = "abundance.h5.tsv"
-        column = "tpm"
-    elif quantifier == "salmon" or quantifier == "sailfish":
-        basename = "quant.sf"
-        column = "TPM"
-    else:
-        raise ValueError("using unknown quantifier!")
-
-    rnaseq.getAlignmentFreeNormExp(
-        transcript_infiles, basename, column,
-        transcripts_outf, genes_outf, t2gMap)
 
 
 # Define the task for differential expression and normalisation
@@ -1449,24 +1320,13 @@ mapToDETargets = {'edger': (runEdgeR, ),
                   'deseq2': (runDESeq2,),
                   'sleuth': (runSleuth,)}
 
-mapToNormTargets = {'edger': (getEdgeRNormExp, ),
-                    'deseq2': (getDESeqNormExp, ),
-                    'sleuth': (getSleuthNormExp,)}
-
 for x in P.as_list(PARAMS["de_tools"]):
     DETARGETS.extend(mapToDETargets[x])
-    if x in mapToNormTargets:
-        NORMTARGETS.extend(mapToNormTargets[x])
 
 
 @follows(*DETARGETS)
 def differentialExpression():
     ''' dummy task to define upstream differential expression tasks'''
-
-
-@follows(*NORMTARGETS)
-def NormaliseExpression():
-    ''' dummy task to define upstream normalisation tasks'''
 
 
 # AH: see below
@@ -1478,57 +1338,15 @@ def loadDifferentialExpression(infiles, outfiles):
         P.load(infile, outfile)
 
 
-# AH: it seems that this task is executed twice (ruffus bug?) and can
-# cause table exist error. Use a sequential load.
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@merge(NORMTARGETS, "normalised_expression.load")
-def loadNormalisedExpression(infiles, outfiles):
-    for infile in iotools.flatten(infiles):
-        outfile = P.snip(infile, ".tsv.gz") + ".load"
-        P.load(infile, outfile)
-
-
-###################################################
-# Summary plots
-###################################################
-@mkdir("summary_plots")
-@product(NORMTARGETS,
-         formatter(
-             "DEresults.dir/(?P<DETOOL>\S+)/(?P<QUANTIFIER>\S+)_normalised_transcripts_expression.tsv.gz"),
-         ["design%s.tsv" % x.asFile() for x in DESIGNS],
-         formatter(".*/design(?P<DESIGN>\S+).tsv$"),
-         ["summary_plots/{DETOOL[0][0]}_{QUANTIFIER[0][0]}_{DESIGN[1][0]}_transcripts_plots.log",
-          "summary_plots/{DETOOL[0][0]}_{QUANTIFIER[0][0]}_{DESIGN[1][0]}_genes_plots.log"])
-def expressionSummaryPlots(infiles, logfiles):
-    ''' make summary plots for expression values for each design file'''
-
-    expression_infs, design_inf = infiles
-    transcript_inf, gene_inf = expression_infs
-    transcript_log, gene_log = logfiles
-
-    job_memory = "10G"
-
-    if not os.path.exists(os.path.dirname(gene_log)):
-        os.mkdir(os.path.dirname(gene_log))
-
-    rnaseq.makeExpressionSummaryPlots(
-        transcript_inf, design_inf, transcript_log, submit=True,
-        job_memory=job_memory)
-
-    rnaseq.makeExpressionSummaryPlots(
-        gene_inf, design_inf, gene_log, submit=True,
-        job_memory=job_memory)
-
 ###################################################
 # target functions for code execution             #
 ###################################################
 
 
-@follows(expressionSummaryPlots,
-         loadDifferentialExpression,
-         loadNormalisedExpression,)
+@follows(exploratoryAnalysis,
+         loadDifferentialExpression)
 def full():
-    ''' collects DE tasks and cufflinks transcript build'''
+    ''' collects DE tasks'''
 
 
 def main(argv=None):

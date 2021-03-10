@@ -18,12 +18,6 @@ version: ''
 # directory for publishing results on the web
 web_dir: ../web
 
-# Use sailfish to estimate gene/transcript abundance?
-sailfish: 1
-
-# if not using sailfish, need to specify location of transcript abundance table
-abundance_file: ''
-
 # maximum intron size - transcripts with longer introns
 # will be ignored
 max_intron_size: 2000000
@@ -58,24 +52,6 @@ annotations:
 
     # directory with annotation information
     dir: ?!
-
-    ################################################################
-sailfish:
-    memory: 6G
-
-    # see `sailfish quant --help` for explanation of library types
-    # ISF == fr-secondstrand in tophat
-    libtype: ISF
-
-    # optional arguments include:
-    # --biasCorrect
-    options: ''
-
-    # optional arguments for indexing include:
-    # --force, --threads N (default=4)
-    index_options: ''
-
-    threads: 1
 
     ################################################################
     ################################################################

@@ -2079,6 +2079,7 @@ def buildBigWig(infile, outfile):
         reads_mapped = BamTools.getNumberOfAlignments(infile)
         scale = 1000000.0 / float(reads_mapped)
         tmpfile = P.get_temp_filename()
+        tmpfile2 = P.get_temp_filename()
         contig_sizes = PARAMS["annotations_interface_contigs"]
         job_memory = PARAMS['bigwig_memory']
         statement = '''bedtools genomecov
@@ -2088,8 +2089,9 @@ def buildBigWig(infile, outfile):
         -split
         -scale %(scale)f
         > %(tmpfile)s &&
-        bedGraphToBigWig %(tmpfile)s %(contig_sizes)s %(outfile)s &&
-        rm -f %(tmpfile)s
+        cat %(tmpfile)s | LC_COLLATE=C sort -k1,1 -k2,2n > %(tmpfile2)s &&
+        bedGraphToBigWig %(tmpfile2)s %(contig_sizes)s %(outfile)s &&
+        rm -f %(tmpfile)s %(tmpfile2)s
         '''
     else:
         # wigToBigWig observed to use 16G

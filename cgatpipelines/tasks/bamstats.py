@@ -84,7 +84,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
     VALIDATION_STRINGENCY=SILENT
     >& %(outfile)s'''
 
-    P.run(statement, job_memory=picardmem)
+    P.run(statement)
 
 
 def addPseudoSequenceQuality(infile, outfile):
@@ -720,7 +720,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         E.warn("no files for %s" % tablename)
         return
 
-    header = ",".join([P.snip(os.path.basename(x), pipeline_suffix)
+    header = ",".join([os.path.basename(x)
                        for x in xfiles])
     filenames = " ".join(["%s.%s" % (x, suffix) for x in xfiles])
 

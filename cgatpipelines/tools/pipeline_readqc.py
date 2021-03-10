@@ -504,10 +504,11 @@ def summarizeFastqScreen(infiles, outfiles):
 
 @jobs_limit(P.get_params().get("jobs_limit_db", 1), "db")
 @transform(summarizeFastqScreen,
-           suffix(".tsv"), ".load")
-def loadFastqScreen(infile, outfile):
+           suffix(".tsv.gz"), ".load")
+def loadFastqScreen(infiles, outfile):
     '''load FASTQC stats into database.'''
-    P.load(infile, outfile, options="--add-index=track")
+    for infile in infiles:
+        P.load(infile, outfile, options="--add-index=track")
 
 
 @follows(loadFastQC,
@@ -529,6 +530,11 @@ def renderMultiqc(infile):
         "mv multiqc_report.html MultiQC_report.dir/")
 
     P.run(statement)
+
+
+@follows(renderMultiqc)
+def build_report():
+    pass
 
 
 def main(argv=None):

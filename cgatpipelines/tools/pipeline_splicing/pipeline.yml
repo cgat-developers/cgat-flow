@@ -102,6 +102,33 @@ DEXSeq:
     refgroup_2: ''
 
 
+    ################################################################
+    #
+    # IRFinder options
+    #
+    ################################################################
+
+    # parameters for analyis. memory should include the estimate for a STAR run.
+    memory: 50G
+    threads: 1
+
+    # Path to ensembl FTP gtf file, the corresponding fasta will be downloaded automatically
+    ensembl_ftp: ftp://ftp.ensembl.org/pub/release-100/gtf/homo_sapiens/Homo_sapiens.GRCh38.100.gtf.gz
+
+    # additional fasta file, usually ERCC or other spike in
+    extra:
+
+    # path to bed to exclude 
+    bed: /path/to/REF/extra-input-files/Human_hg38_nonPolyA_ROI.bed
+
+    # model, contrast, reference group and comparator group. Model must include the term 'IRFinder'
+    model: ~group+group:IRFinder
+    contrast: group
+    reference: CTR
+    comparator: MUT
+
+    #number of permutation (default: 0)
+    permute: 0
 
     ################################################################
     #

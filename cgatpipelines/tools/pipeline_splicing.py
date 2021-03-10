@@ -341,8 +341,8 @@ def filterDEXSeq(infiles, outfile):
 
     design, gfffile = infiles
     countsdir = "counts.dir/"
-    design_name = design.split('.')[0]
-    model = PARAMS["DEXSeq_model_%s" % design_name]
+    designname = design.split(".")[0]
+    model = PARAMS["DEXSeq_model_%s" % designname]
 
     
     outdir = os.path.dirname(outfile)
@@ -397,9 +397,10 @@ def runDEXSeq(infile, outfile, design):
 
     outdir = os.path.dirname(outfile)
     dexseq_fdr = 0.05
-    model = PARAMS["DEXSeq_model_%s" % design]
-    contrast = PARAMS["DEXSeq_contrast_%s" % design]
-    refgroup = PARAMS["DEXSeq_refgroup_%s" % design]
+    designname = design.split(".")[0]
+    model = PARAMS["DEXSeq_model_%s" % designname]
+    contrast = PARAMS["DEXSeq_contrast_%s" % designname]
+    refgroup = PARAMS["DEXSeq_refgroup_%s" % designname]
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
     scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/diffexonexpression.R")
 
@@ -412,6 +413,7 @@ def runDEXSeq(infile, outfile, design):
     --refgroup %(refgroup)s
     --alpha %(dexseq_fdr)s
     --outdir %(outdir)s
+
     > %(outdir)s/dexseq.log;
     '''
 
@@ -448,7 +450,6 @@ def buildIRReference(outfile):
        all ensembl annotations
     '''
 
-    bin = PARAMS['IRFinder_bin']
     extra = PARAMS['IRFinder_extra']
     bedfile = PARAMS['IRFinder_bed']
     gtf = PARAMS['IRFinder_ensembl_ftp']
@@ -502,8 +503,8 @@ def runIRFinder(infiles, outfile):
 
 
 @collate(runIRFinder,
-         regex("IRFiles.dir/(.*)/IRFinder-IR-nondir.txt"),
-         r"IRFiles.dir/filelist.tsv")
+         regex("IRFinder.dir/(.*)/IRFinder-IR-nondir.txt"),
+         r"IRFinder.dir/filelist.tsv")
 def aggregateIRFinder(infiles, outfile):
     ''' Build a matrix of counts with exons and tracks dimensions.
 
@@ -532,33 +533,46 @@ def aggregateIRFinder(infiles, outfile):
 
 
 @mkdir("results.dir/IRFinder")
-@subdivide(["%s" % x.asFile().lower() for x in DESIGNS],
+@subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
            add_inputs(aggregateIRFinder),
-           r"results.dir/IRFinder/\1_results.tsv")
-def diffexIRFinder(infiles, outfile):
-    E.info(os.path.join(os.path.dirname(cgatpipelines.__file__)))
-    design, counts = infiles
-    rscript = PARAMS["Rscript"]
-    IRscript = PARAMS["IRscript"]
-    cgat = PARAMS["cgat_directory"]
-    tmpfile = P.get_temp_filename(shared=True)
-    statement="which IRFinder >> %s" % tmpfile
-    P.run(statement, job_condaenv="IRFinder")
-    with open(tmpfile) as tmppath:
-        IRloc = tmppath.readline().rstrip()
-    IRScript = IRloc
+           r"results.dir/IRFinder/\1/results.tsv")
+def diffIRFinder(infiles, outfile):
 
-    statement = '''Rscript %(rscript)s
-    --file %(counts)s
+    design, counts = infiles
+    designname = design.split(".")[0]
+    model = PARAMS["IRFinder_model_%s" % designname]
+    contrast = PARAMS["IRFinder_contrast_%s" % designname]
+    REF = PARAMS["IRFinder_reference_%s" % designname]
+    COMP = PARAMS['IRFinder_comparator_%s' % designname]
+    permute = PARAMS["IRFinder_permute"]
+    pvalue = PARAMS["IRFinder_pvalue"]
+    
+    outdir = os.path.dirname(outfile)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/IRFinder.R")
+
+    statement = '''
+    export R_ROOT=%(r_root)s &&
+    Rscript %(scriptpath)s
+    --counts %(counts)s
     --design %(design)s
-    --irscript %(IRScript)s
-    --cgat %(cgat)s
-    ''' % locals()
-    E.info(IRloc)
-    E.info(statement)
+    --model %(model)s
+    --contrast %(contrast)s
+    --refgroup %(REF)s
+    --compgroup %(COMP)s
+    --permute %(permute)s
+    --alpha %(pvalue)s
+    --outdir %(outdir)s > %(outdir)s/IRFinder.log
+    '''
+
     P.run(statement)
     return
+
+
 
 ###################################################################
 ###################################################################
@@ -861,7 +875,8 @@ def runSashimi(infiles, outfile):
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,
-         runDEXSeq)
+         runDEXSeq,
+         diffIRFinder)
 def full():
     pass
 

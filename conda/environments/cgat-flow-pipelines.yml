@@ -42,7 +42,6 @@ dependencies:
 - r-dt
 - r-ggplot2
 - r-gmd
-# - r-hiddenmarkov
 - r-hmisc
 - r-knitr
 - r-mass
@@ -54,17 +53,12 @@ dependencies:
 - r-snow
 - r-stringr
 - r-venndiagram
-# - r-wasabi
 - bioconductor-biomart
-# - bioconductor-chipqc
-- bioconductor-cummerbund
-# - bioconductor-hilbertvis
 - bioconductor-hpar
-- bioconductor-deseq
 - bioconductor-edger
 - bioconductor-deseq2
 # Misc dependencies
-# WARNING: macs2 is Py2 only. Please install it on a separate conda env
+- macs2
 # WARNING: sicer is Py2 only. Please install it on a separate conda env
 # WARNING: tophat is Py2 only. Please install it on a separate conda env
 - bedtools
@@ -72,7 +66,6 @@ dependencies:
 - bowtie
 - bowtie2
 - bwa
-# - cufflinks
 - fastq-screen
 - fastqc
 - fastx_toolkit

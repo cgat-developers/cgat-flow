@@ -58,6 +58,7 @@ import cgat.BamTools.bamtools as BamTools
 import cgatcore.experiment as E
 import cgatpipelines.tasks.expression as Expression
 from cgatcore import pipeline as P
+from cgatpipelines.tasks.mapping import SequenceCollectionProcessor
 
 
 def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
@@ -178,3 +179,120 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     ''' % locals()
 
     P.run(statement, job_condaenv="splicing")
+
+
+
+class IRFinder(SequenceCollectionProcessor):
+    '''IRFinder implementation using
+       class for short-read mappers.
+    '''
+
+    datatype = "fastq"
+
+    # strip bam files of sequenca and quality information
+    strip_sequence = False
+
+    # remove non-unique matches in a post-processing step.
+    # Many aligners offer this option in the mapping stage
+    # If only unique matches are required, it is better to
+    # configure the aligner as removing in post-processing
+    # adds to processing time.
+    remove_non_unique = False
+
+    def __init__(self,
+                 executable=None,
+                 strip_sequence=False,
+                 remove_non_unique=False,
+                 tool_options="",
+                 *args, **kwargs):
+        SequenceCollectionProcessor.__init__(self, *args, **kwargs)
+
+        if executable:
+            self.executable = executable
+        self.strip_sequence = strip_sequence
+        self.remove_non_unique = remove_non_unique
+
+        # tool options to be passed on to the mapping tool
+        self.tool_options = tool_options
+
+    def mapper(self, infiles, outfile):
+        '''build mapping statement on infiles.
+        '''
+                
+        num_files = [len(x) for x in infiles]
+        nfiles = max(num_files)
+        if nfiles == 1:
+            files = " ".join([x[0] for x in infiles])
+        elif nfiles == 2:
+            # this section works both for paired-ended fastq files
+            # and single-end color space mapping (separate quality file)
+            infiles1 = " ".join([x[0] for x in infiles])
+            infiles2 = " ".join([x[1] for x in infiles])
+            files = "%(infiles1)s %(infiles2)s" % locals()
+        else:
+            raise ValueError("unexpected number reads to map: %i " % nfiles)
+
+
+        outdir = os.path.dirname(outfile)
+
+        statement = '''
+            IRFinder
+            -r %%(ref_dir)s 
+            -d %(outdir)s 
+            -t %%(IRFinder_threads)s
+            %(files)s;''' % locals()        
+        return statement
+
+    def postprocess(self, infiles, outfile):
+        '''collect output data and postprocess.'''
+        return ""
+
+    def cleanup(self, outfile):
+        '''clean up.'''
+        statement = '''rm -rf %s;''' % (self.tmpdir_fastq)
+
+        return statement
+
+    def build(self, infiles, outfile):
+        '''run mapper
+        This method combines the output of the :meth:`preprocess`,
+        :meth:`mapper`, :meth:`postprocess` and :meth:`clean` sections
+        into a single statement.
+        Arguments
+        ---------
+        infiles : list
+             List of input filenames
+        outfile : string
+             Output filename
+        Returns
+        -------
+        statement : string
+             A command line statement. The statement can be a series
+             of commands separated by ``;`` and/or can be unix pipes.
+        '''
+
+        cmd_preprocess, mapfiles = self.preprocess(infiles, outfile)
+        cmd_mapper = self.mapper(mapfiles, outfile)
+        cmd_postprocess = self.postprocess(infiles, outfile)
+        cmd_clean = self.cleanup(outfile)
+
+        assert cmd_preprocess.strip().endswith(";"),\
+            "missing ';' at end of command %s" % cmd_preprocess.strip()
+        assert cmd_mapper.strip().endswith(";"),\
+            "missing ';' at end of command %s" % cmd_mapper.strip()
+        if cmd_postprocess:
+            assert cmd_postprocess.strip().endswith(";"),\
+                "missing ';' at end of command %s" % cmd_postprocess.strip()
+        if cmd_clean:
+            assert cmd_clean.strip().endswith(";"),\
+                "missing ';' at end of command %s" % cmd_clean.strip()
+
+        statement = " ".join((cmd_preprocess,
+                              cmd_mapper,
+                              cmd_postprocess,
+                              cmd_clean))
+
+        return statement
+
+
+

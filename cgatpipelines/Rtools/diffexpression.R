@@ -261,7 +261,7 @@ run <- function(opt) {
     i = 1
     y= list()
     while(i <= opt$perm) {
-      designperm[, opt$contrast] = as.factor(sample(levels(designperm[, opt$contrast]), length(designperm[, opt$contrast]), replace=TRUE, prob=c(0.5, 0.5)))
+      designperm[, opt$contrast] = as.factor(sample(levels(designperm[, opt$contrast]), length(designperm[, opt$contrast]), replace=TRUE))
       if(sum(designperm$group == levels(designperm[, opt$contrast])[1]) != table(colData(dds)[,opt$contrast])[1]) next
       colData(ddsperm) <- designperm
       ddsperm <- DESeq(ddsperm)

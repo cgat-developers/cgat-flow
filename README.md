@@ -1,6 +1,6 @@
 [![cgat-flow](https://github.com/cgat-developers/cgat-flow/actions/workflows/cgatflow_python.yml/badge.svg)](https://github.com/cgat-developers/cgat-flow/actions/workflows/cgatflow_python.yml)
 
-=========
+
 CGAT Flow
 =========
 
@@ -39,6 +39,9 @@ The installation script will put everything under the specified location. It nee
 35 minutes to complete. The aim of the script is to provide a portable installation that does not interfere with the existing
 software. As a result, you will get a conda environment working with CGAT Flow which can be enabled on demand according to your
 needs.
+
+Configure cluster use
+---------------------
 
 On top of the instructions above, please make sure that you configure the following environment variables::
 

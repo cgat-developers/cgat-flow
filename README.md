@@ -1,13 +1,12 @@
-.. image:: https://travis-ci.org/cgat-developers/cgat-flow.svg?branch=master
-    :target: https://travis-ci.org/cgat-developers/cgat-flow
+[![cgat-flow](https://github.com/cgat-developers/cgat-flow/actions/workflows/cgatflow_python.yml/badge.svg)](https://github.com/cgat-developers/cgat-flow/actions/workflows/cgatflow_python.yml)
 
 =========
 CGAT Flow
 =========
 
-We have developed a set of ruffus_ based pipelines in comparative genomics and NGS analysis. We are working on improving the
+We have developed a set of [ruffus](http://www.ruffus.org.uk) based pipelines in comparative genomics and NGS analysis. We are working on improving the
 existing documentation and portability of the code so stay tuned. The current documentation of the code is
-`here <https://www.cgat.org/downloads/public/cgatpipelines/documentation/>`_
+[here](https://www.cgat.org/downloads/public/cgatpipelines/documentation/)
 
 If you just want to use the production version of the code, please try the following steps::
 
@@ -34,7 +33,7 @@ On the other hand, if you prefer to use the development version of the code, run
 	 --clone-from-repo
 	 --location </full/path/to/folder/without/trailing/slash>
 
-Both scripts use conda_ to create the appropriate environments for the code to run.
+Both scripts use [conda](https://conda.io) to create the appropriate environments for the code to run.
 
 The installation script will put everything under the specified location. It needs 15 GB of disk space and it takes about
 35 minutes to complete. The aim of the script is to provide a portable installation that does not interfere with the existing
@@ -59,9 +58,7 @@ On top of the instructions above, please make sure that you configure the follow
         export SHARED_TMPDIR=/<path-to-network-folder>/scratch
 
 For questions, please open a new issue on
-`GitHub
-<https://github.com/cgat-developers/cgat-flow/issues>`_.
+[GitHub](https://github.com/cgat-developers/cgat-flow/issues)
 
-.. _ruffus: http://www.ruffus.org.uk
-.. _conda: https://conda.io
+
 

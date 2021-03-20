@@ -1039,7 +1039,6 @@ def filterDESeq2(infiles, outfile, design_name, quantifier_name):
 
     counts, design = infiles
     transcripts, genes = counts
-    design_name = design_name.lower()
     quantifier_name = quantifier_name.lower()
     counts = "--counts-dir %s.dir" % quantifier_name     
     model = PARAMS.get('deseq2_model%s' % design_name, None)
@@ -1081,7 +1080,6 @@ def filterEdgeR(infiles, outfile, design_name, quantifier_name):
 
     counts, design = infiles
     transcripts, genes = counts
-    design_name = design_name.lower()
     quantifier_name = quantifier_name.lower()
     counts = "--counts-dir %s.dir" % quantifier_name     
     model = PARAMS.get('edger_model%s' % design_name, None)
@@ -1123,7 +1121,6 @@ def filterEdgeR(infiles, outfile, design_name, quantifier_name):
 def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_name):
 
 
-    design_name = design_name.lower()
     design = "design" + design_name + ".tsv"
     outdir = os.path.dirname(outfile)
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
@@ -1166,7 +1163,6 @@ def exploratoryAnalysis(infile, outfile, design_name, quantifier_name, detool_na
 def runDESeq2(infile, outfile, design_name, quantifier_name):
     ''' run DESeq2 to identify differentially expression transcripts/genes'''
 
-    design_name = design_name.lower()
     design = "design" + design_name + ".tsv"
     outdir = os.path.dirname(outfile)
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
@@ -1216,7 +1212,6 @@ def runDESeq2(infile, outfile, design_name, quantifier_name):
 def runEdgeR(infile, outfile, design_name, quantifier_name):
     ''' run EdgeR to identify differentially expression transcripts/genes'''
 
-    design_name = design_name.lower()
     design = "design" + design_name + ".tsv"
     outdir = os.path.dirname(outfile)
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))

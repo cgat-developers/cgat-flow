@@ -14,7 +14,7 @@
 #'
 #' -> todo: ideas
 
-## conda dependencies: r-cairo
+
 
 suppressMessages(library(futile.logger))
 suppressMessages(library(getopt))
@@ -84,7 +84,7 @@ run <- function(opt) {
   flog.info("Running DEXSeq")
   dxd = estimateSizeFactors(experiment)
   dxd = estimateDispersions(dxd)
-  dxd = testForDEU(dxd)
+  dxd = testForDEU(dxd, reducedModel = formula(opt$reducedmodel))
   dxd = estimateExonFoldChanges( dxd, fitExpToVar=opt$contrast)
   res = DEXSeqResults(dxd)
   
@@ -141,6 +141,53 @@ run <- function(opt) {
     plotDEXSeq(res, gene, legend=TRUE, cex.axis=1.2, cex=1.3, lwd=2 ,fitExpToVar = opt$contrast)
     end_plot()
   }
+
+  if(opt$perm >0){
+    flog.info("... performing permutations")
+    designperm <- colData(dxd)
+    dxdperm = dxd
+    x = 0
+    i = 1
+    y= list()
+    while(i <= opt$perm) {
+      flog.info(paste0("...... Permutation ", i))
+      designperm[, opt$contrast] = sample(designperm[, opt$contrast])
+      if(sum(designperm$group == levels(designperm[, opt$contrast])[1]) != table(colData(dxd)[,opt$contrast])[1]){
+        flog.info(paste0("......... Failed. Skipping design: ", paste(as.character(designperm$group),collapse = ",")))
+        next
+      }
+      colData(dxdperm) <- designperm
+      dxdperm = testForDEU(dxdperm)
+      dxdperm = estimateExonFoldChanges( dxdperm, fitExpToVar=opt$contrast)
+      resperm = DEXSeqResults(dxdperm)
+      x[i] = length(subset(resperm, padj < opt$alpha)$padj)
+      y[[i]] = dxdperm$group
+      i = i+1
+    }
+    flog.info(paste0("Result:   "  , x))
+    start_plot("Simulations", outdir=opt$outdir)
+    theme_set(theme_gray(base_size = 18))
+    sims = qplot(x,
+                 geom="histogram",
+                 breaks=seq(0, 20, by = 1),fill=I("grey"), col=I("black"),
+                 main = "Histogram of DE experiments\n with random group labels", 
+                 xlab = "Number of differentially expressed exons",
+                 ylab = "Number of simulations") +
+      geom_vline(xintercept = length(rownames(subset(res, padj < opt$alpha)))) +
+      theme_classic() + theme(plot.title = element_text(hjust = 0.5, size=22))
+    print(sims)
+    end_plot()
+    flog.info(paste0("... Permutation p value: ",
+                     length(x[x > length(rownames(subset(res, padj < opt$alpha)))])/length(x)))
+    z <- list()
+    for(i in 0:length(x)){
+      z[i] <- paste( unlist(y[i]), collapse=' ')
+    }
+    z <- unlist(z)
+    df <- data.frame(number=x, combination=z)
+    df
+    write_tsv(df,paste0(opt$outdir,"/","Simulations.tsv"))
+  }
 }
 
 main <- function() {
@@ -157,7 +204,14 @@ main <- function() {
       "--model",
       dest = "model",
       type = "character",
-      default = "~ group",
+      default = "~ sample + exon + group:exon",
+      help = paste("model formula for GLM")
+    ),
+    make_option(
+      "--reducedmodel",
+      dest = "reducedmodel",
+      type = "character",
+      default = "~ sample + exon",
       help = paste("model formula for GLM")
     ),
     make_option(
@@ -191,8 +245,8 @@ main <- function() {
     make_option(
       "--permute",
       dest = "perm",
-      type = "logical",
-      default = FALSE,
+      type = "integer",
+      default = 0,
       help = paste("number of permutations")
     ),
     make_option(

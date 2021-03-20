@@ -399,6 +399,7 @@ def runDEXSeq(infile, outfile, design):
     dexseq_fdr = 0.05
     designname = design.split(".")[0]
     model = PARAMS["DEXSeq_model_%s" % designname]
+    reducedmodel = PARAMS["DEXSeq_model_%s" % designname]
     contrast = PARAMS["DEXSeq_contrast_%s" % designname]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % designname]
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
@@ -409,10 +410,12 @@ def runDEXSeq(infile, outfile, design):
     Rscript %(scriptpath)s
     --rds-filename %(infile)s   
     --model %(model)s
+    --reducedmodel %(reducedmodel)s
     --contrast %(contrast)s
     --refgroup %(refgroup)s
-    --alpha %(dexseq_fdr)s
+    --alpha %(DEXSeq_fdr)s
     --outdir %(outdir)s
+    --permute %(DEXSeq_permutations)s
 
     > %(outdir)s/dexseq.log;
     '''

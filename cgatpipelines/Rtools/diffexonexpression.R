@@ -84,7 +84,8 @@ run <- function(opt) {
   flog.info("Running DEXSeq")
   dxd = estimateSizeFactors(experiment)
   dxd = estimateDispersions(dxd)
-  dxd = testForDEU(dxd, reducedModel = formula(opt$reducedmodel))
+  dxd = testForDEU(dxd, reducedModel = formula(opt$reducedmodel),
+                   fullModel =  formula(opt$model))
   dxd = estimateExonFoldChanges( dxd, fitExpToVar=opt$contrast)
   res = DEXSeqResults(dxd)
   

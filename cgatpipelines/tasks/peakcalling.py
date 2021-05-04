@@ -11,9 +11,9 @@ import pysam
 import numpy as np
 import shutil
 from cgatcore.pipeline import cluster_runnable
-from rpy2.robjects import r as R
-from rpy2.robjects import pandas2ri
-pandas2ri.activate()
+#from rpy2.robjects import r as R
+#from rpy2.robjects import pandas2ri
+#pandas2ri.activate()
 
 
 ##############################################
@@ -2841,7 +2841,7 @@ def runCHIPQC(infile, outfiles, rdir):
     }
     ''' % locals())
     cwd = os.getcwd()
-    runCHIPQC_R(pandas2ri.py2ri(infile), rdir, cwd)
+    #runCHIPQC_R(pandas2ri.py2ri(infile), rdir, cwd)
 
 
 # Pipeline Specific Functions

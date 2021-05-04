@@ -837,6 +837,10 @@ def buildBigWig(infile, outfile):
     P.run(statement)
 
 
+
+
+
+
 ###############################################################################
 #
 # 2) IDR  - preparation of files (pooled & pseudobams) for IDR
@@ -1092,9 +1096,14 @@ def makeBamInputTable(outfile):
         chipstem = P.snip(chipstem)
         if PARAMS["have_input"] == 0:
             inputfile = "-"
-        else:
+        # if going to fdo IDR then put in IDR-inputs.dir
+        elif PARAMS['use_input'] == 1:
             inputstem = P.snip(inputstem)
             inputfile = "IDR_inputs.dir/%s_filtered.bam" % inputstem
+        # if not doing IDR don't put filtered bam in IDR_inputs.dir get from filtered.dir instead
+        elif (PARAMS['use_input'] == 0) & (PARAMS['merging_poolinputs'] == "none"):
+            inputstem = P.snip(inputstem)
+            inputfile = "filtered_bams.dir/%s_filtered.bam" % inputstem
 
         for b in bamfiles:
             if b.startswith(chipstem) and b.endswith('bam'):
@@ -1869,9 +1878,44 @@ def makeCHIPQCInputTables(infiles, outfiles):
 #    R('''''')
 
 
+### Build input normalised BigWigs
+
+
+# TODO rationalise this with the other bigwig options!
+# remove hard coded params
+
+@transform(preprocessing,
+           regex("peakcalling_bams.dir/(.*).bam"),
+           add_inputs(makeBamInputTable),
+           r"bigwigs.dir/\1.log2ratio_input_normalised.bw")
+def buildInputNormalizedBigWig(infiles, outfile):
+    ''' make inputnormalised bam file - see deeptools comparebam instructions'''
+    D = peakcalling.readTable(infiles[1])
+    bam = infiles[0]
+    if PARAMS["have_input"] == 0:
+        inputf = None
+    else:
+        inputf = D[bam]
+
+
+
+    statement = ''' bamCompare %(bam)s  %(inputf)s
+                    - frag length
+                    - bin size
+                    - read count
+                    - log2 ratio number of reads
+                    - bigWig
+                    - extend reads_summary- MAPQ
+                    - trear nussubg data as 0'''
+
+    #TODO
+
+
 @follows(filtering, peakcalling_tasks, IDR, buildBigWig)
 def full():
     ''' runs entire pipeline '''
+
+
 
 
 ###############################################################

@@ -31,7 +31,6 @@ jobs:
             hashFiles('conda/environments/cgat-apps.yml') }}
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          mamba-version: "0.12.1"
           python-version: ${{ matrix.python-version }}
           channels: conda-forge, bioconda, defaults
           channel-priority: true

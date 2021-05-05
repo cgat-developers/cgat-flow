@@ -16,6 +16,7 @@ dependencies:
 - biopython
 - cgat-report
 - cgatcore
+- cython
 - httplib2
 - intermine
 - matplotlib

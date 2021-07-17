@@ -341,7 +341,6 @@ import cgatcore.iotools as iotools
 import cgatcore.pipeline as P
 import cgatpipelines.tasks.gtfsubset as gtfsubset
 import cgatpipelines.tasks.geneset as geneset
-import cgatpipelines.tasks.go as go
 
 ###################################################
 # Pipeline configuration
@@ -379,6 +378,7 @@ def connectToUCSC():
 ############################################################
 # Assembly
 ############################################################
+
 
 @follows(mkdir('assembly.dir'))
 @files(os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fasta"),
@@ -1363,53 +1363,10 @@ def loadmiRNATranscripts(infile, outfile):
     > %(outfile)s'''
     P.run(statement, job_memory=PARAMS["job_memory"])
 
-###############################################################
-# Ontologies
-###############################################################
-
-
-@P.add_doc(go.createGOFromENSEMBL)
-@follows(mkdir('ontologies.dir'))
-@files([(None, PARAMS["interface_go_ensembl"]), ])
-def createGO(infile, outfile):
-    '''
-    Downloads GO annotations from ensembl
-    Uses the go_host, go_database and go_port parameters from the ini file
-    and runs the runGO.py "filename-dump" option.
-    This calls DumpGOFromDatabase from GO.py
-    '''
-    go.createGOFromENSEMBL(infile, outfile,
-                                   job_memory=PARAMS["job_highmemory"])
-
-
-@P.add_doc(go.createGOSlimFromENSEMBL)
-@transform(createGO,
-           regex("(.*)"),
-           PARAMS["interface_goslim_ensembl"])
-def createGOSlim(infile, outfile):
-    '''
-    Downloads GO slim annotations from ensembl
-    '''
-    E.warn(PARAMS['go_url_goslim'])
-    go.createGOSlimFromENSEMBL(infile, outfile,
-                                       job_memory=PARAMS["job_highmemory"])
-
-
-@P.add_doc(P.load)
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform((createGO, createGOSlim),
-           suffix(".tsv.gz"),
-           r"\1_assignments.load")
-def loadGOAssignments(infile, outfile):
-    '''
-    Load GO assignments into database.'''
-    P.load(infile, outfile,
-           options="--add-index=gene_id --add-index=go_id")
-
-
 ################################################################
 # Enrichment analysis
 #################################################################
+
 
 @P.add_doc(geneset.annotateGenome)
 @follows(mkdir('enrichment.dir'))
@@ -1487,23 +1444,6 @@ def buildGeneTerritories(infile, outfile):
     P.run(statement, job_memory=PARAMS["job_highmemory"])
 
 
-@P.add_doc(geneset.buildGenomicFunctionalAnnotation)
-@follows(mkdir('enrichment.dir'))
-@merge((buildGeneTerritories, loadGOAssignments),
-       (PARAMS["interface_genomic_function_bed"],
-        PARAMS["interface_genomic_function_tsv"],
-        ))
-def buildGenomicFunctionalAnnotation(infiles, outfiles):
-
-    territories_gtf_file = infiles[0]
-
-    geneset.buildGenomicFunctionalAnnotation(
-        territories_gtf_file,
-        dbh=connect(),
-        outfiles=outfiles,
-        job_memory=PARAMS["job_memory"])
-
-
 @P.add_doc(gtfsubset.buildGenomicContext)
 @follows(mkdir('enrichment.dir'))
 @merge((importRepeatsFromUCSC,
@@ -1539,8 +1479,7 @@ def lite():
     pass
 
 
-@follows(buildGenomicContext,
-         buildGenomicFunctionalAnnotation)
+@follows(buildGenomicContext)
 def enrichment_tasks():
     """convenience target : annotations for enrichment analysis"""
 

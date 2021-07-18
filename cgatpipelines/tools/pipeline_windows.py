@@ -2008,13 +2008,14 @@ def mergeDMRWindows(infile, outfile):
     # the script medip_merge_intervals
 
     prefix = P.snip(outfile, ".tsv.gz")
+    scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts/")
 
     job_memory = "3G"
 
     statement = '''
     zcat %(infile)s
     | grep -v "^spike"
-    | cgat medip_merge_intervals
+    | python %(scripts_path)s/medip_merge_intervals.py
     --log=%(outfile)s.log
     --invert
     --output-filename-pattern=%(prefix)s.%%s.bed.gz

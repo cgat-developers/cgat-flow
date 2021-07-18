@@ -62,7 +62,7 @@ import cgat.IndexedGenome as IndexedGenome
 import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
 import cgat.Bed as Bed
-import cgat.WrapperMACS as WrapperMACS
+import cgatpipelines.tasks.WrapperMACS as WrapperMACS
 
 
 def getPeakShiftFromMacs(infile):

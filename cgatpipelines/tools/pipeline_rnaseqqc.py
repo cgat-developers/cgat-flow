@@ -1471,11 +1471,12 @@ def plotExpression(outfile):
     
     factors = dbh.execute("SELECT DISTINCT factor FROM factors")
     factors = [x[0] for x in factors if x[0] != "genome"]
-
+    f = plt.figure(figsize=(10, 7))
+    plt.style.use("seaborn-colorblind")
     for factor in factors:
 
         plotfile = P.snip(outfile, ".sentinel") + "_%s.png" % factor
-
+        f = plt.figure(figsize=(10, 7))
         factor_statement = '''
         select *
         FROM factors
@@ -1484,28 +1485,29 @@ def plotExpression(outfile):
         WHERE factor = "%(factor)s"''' % locals()
 
         factor_df = pd.read_sql(factor_statement, dbh)
-        full_df = pd.merge(df, factor_df, left_on="sample_id",
-                           right_on="sample_name")
+        factor_df = factor_df.set_index("sample_name")
 
-        plotDistribution = R('''
-        function(df){
+        factor_levels = list(factor_df.factor_value.unique())
+        nlevels = len(factor_levels)
+        f_colour_map = {f:
+                        plt.cm.viridis((i % nlevels + 1)/float(nlevels))
+                        for i, f in enumerate(factor_levels)}
 
-        library(ggplot2)
-        p = ggplot(df, aes(x=logTPM, group=sample_name,
-                           colour=as.factor(factor_value))) +
-        geom_density() +
-        xlab("Log2(TPM)") + ylab("Density") +
-        scale_colour_discrete(name="Factor Level") +
-        theme_bw() +
-        ggtitle("%(factor)s")
+        for sname, subdf in df.groupby("sample_id"):
+            factor_level = str(factor_df.factor_value.loc[sname])
+            subdf.logTPM.plot(kind="density", color=f_colour_map[factor_level],
+                              label=factor_level)
 
-        ggsave("%(plotfile)s")
-        }
-        ''' % locals())
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            r_full_df = ro.conversion.py2ri(full_df)
+        plt.title("TPM distribution by %(factor)s" % locals())
+        plt.xlabel("log2 TPM")
+        plt.ylabel("Density")
+
+        legend_lines = [mlines.Line2D([], [], color=f_colour_map[s], label=s)
+                        for s in factor_levels]
+        plt.legend(handles=legend_lines)
+        f.savefig(plotfile)
+        plt.close()
         
-        plotDistribution(r_full_df)
 
     iotools.touch_file(outfile)
 

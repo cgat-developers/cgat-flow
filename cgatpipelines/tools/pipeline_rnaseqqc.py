@@ -785,7 +785,7 @@ def runSalmon(infiles, outfiles):
 
 
 @collate(runSalmon,
-        regex(".*"),
+         formatter(),
         ["salmon.dir/transcripts.tsv.gz",
         "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
@@ -927,7 +927,7 @@ def plotSalmonSaturation(infiles, outfile):
     # Patro's Wasabi R package for making salmon output
     # compatable with sleuth
     minfo <- rjson::fromJSON(file=file.path(
-      Path, 'highest_counts_subset_9', "aux", "meta_info.json"))
+      Path, 'highest_counts_subset_9', "aux_info", "meta_info.json"))
 
     numBoot <- minfo$num_bootstraps
 
@@ -938,12 +938,12 @@ def plotSalmonSaturation(infiles, outfile):
 
     for (ix in seq(0,9,1)){
       bootCon <- gzcon(file(file.path(
-        Path, paste0('highest_counts_subset_', ix), 'aux',
+        Path, paste0('highest_counts_subset_', ix), 'aux_info',
                      'bootstrap', 'bootstraps.gz'), "rb"))
 
       # read in binary data
       boots <- readBin(bootCon, "double",
-                       n = minfo$num_targets * minfo$num_bootstraps)
+                       n = minfo$num_valid_targets * minfo$num_bootstraps)
       close(bootCon)
 
       # turn data into dataframe
@@ -1007,7 +1007,7 @@ def plotSalmonSaturation(infiles, outfile):
     point_df = read.table(
       file.path(Path, paste0('highest_counts_subset_', ix), "quant.sf"),
       sep="\t", header=T, row.names=1)
-`
+
     tpm_est[[paste0("sample_", ix)]] = (
       abs(point_df$TPM - ref_point_df$TPM) / ref_point_df$TPM)
     }
@@ -1538,7 +1538,7 @@ def checkStrandednessSalmon(infiles, outfile):
                        "compatible_fragment_ratio",
                        "num_compatible_fragments",
                        "num_assigned_fragments",
-                       "num_frags_with_consistent_mappings",
+                       "num_frags_with_concordant_consistent_mappings",
                        "num_frags_with_inconsistent_or_orphan_mappings",
                        "MSF", "OSF", "ISF", "MSR",
                        "OSR", "ISR", "SF", "SR",

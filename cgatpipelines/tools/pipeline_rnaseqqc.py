@@ -750,7 +750,7 @@ def indexForSalmon(infile, outfile):
 
     statement = '''
     salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="8G", job_condaenv="salmon")
+    P.run(statement, job_memory="8G")
 
 
 @collate(SEQUENCEFILES,

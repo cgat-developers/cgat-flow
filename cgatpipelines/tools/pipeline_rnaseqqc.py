@@ -1287,7 +1287,7 @@ def summariseBias(infiles, outfile):
 
         temp_dict[attribute] = function
         means_df = df[["LogTPM", "sample_id"]].groupby(
-            ["sample_id", pd.qcut(df.ix[:, attribute], bins)])
+            ["sample_id", pd.qcut(df.loc[:, attribute], bins)])
 
         means_df = pd.DataFrame(means_df.agg(function))
         means_df.reset_index(inplace=True)
@@ -1372,8 +1372,7 @@ def plotTopGenesHeatmap(outfile):
 
     # set up the empty df
     intersection_df = pd.DataFrame(
-        index=range(0, len(exp_df.columns) **
-                    2 - len(exp_df.columns)),
+        index=[],
         columns=["sample1", "sample2", "intersection", "fraction"])
 
     # populate the df
@@ -1383,13 +1382,22 @@ def plotTopGenesHeatmap(outfile):
         s2_genes = top_genes[col2]
         intersection = set(s1_genes).intersection(set(s2_genes))
         fraction = len(intersection) / float(top_n)
-        intersection_df.ix[n] = [col1, col2, len(intersection), fraction]
+        intersection_df = intersection_df.append(
+            pd.Series({"sample1": col1,
+                       "sample2": col2,
+                       "intersection": len(intersection),
+                       "fraction": fraction}),
+            ignore_index=True)
         n += 1
 
         # if the samples are different, calculate the reverse intersection too
         if col1 != col2:
-            intersection_df.ix[n] = [col2, col1,
-                                     len(intersection), fraction]
+            intersection_df = intersection_df.append(
+                pd.Series({"sample1": col2,
+                           "sample2": col1,
+                           "intersection": len(intersection),
+                           "fraction": fraction}),
+                ignore_index=True)
             n += 1
 
 

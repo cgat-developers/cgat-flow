@@ -1583,7 +1583,13 @@ def plotStrandednessSalmon(infile, outfile):
     a.ticklabel_format(style='plain')
     a.vlines(np.arange(-0.4, a.get_xlim()[1], len(tab)),
              a.get_ylim()[0], a.get_ylim()[1], lw=0.5)
-    a.set_xticks(np.arange(0 + len(tab) / 2, a.get_xlim()[1],
+
+    # There is one bar for each library type for each sample, if we divide
+    # the xaxis up into library types, with as many bars as samples in each
+    # division, then we want the first tick half way through the first
+    # divsion and then the space between ticks is the number of samples.
+    a.set_xticks(np.arange(len(tab)/2,
+                           len(tab)*len(counttab.columns),
                            len(tab)))
     a.set_xticklabels(counttab.columns)
     sns.despine()

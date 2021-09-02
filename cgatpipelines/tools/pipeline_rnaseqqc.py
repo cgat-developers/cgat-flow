@@ -180,6 +180,7 @@ import itertools
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import seaborn as sns
 
 from rpy2.robjects import r as R

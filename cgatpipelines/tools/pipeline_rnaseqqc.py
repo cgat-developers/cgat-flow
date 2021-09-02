@@ -786,8 +786,8 @@ def runSalmon(infiles, outfiles):
 
 @collate(runSalmon,
          formatter(),
-        ["salmon.dir/transcripts.tsv.gz",
-        "salmon.dir/genes.tsv.gz"])
+         ["salmon.dir/transcripts.tsv.gz",
+          "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
     ''' merge counts for alignment-based methods'''
 
@@ -1443,9 +1443,9 @@ def plotTopGenesHeatmap(outfile):
         ''' % locals())
 
         with localconverter(ro.default_converter + pandas2ri.converter):
-            r_intersection_pivot = ro.conversion.py2ri(intersection_pivot)
-            r_factors_df = ro.conversion.py2ri(factors_df)
-        
+            r_intersection_pivot = ro.conversion.py2rpy(intersection_pivot)
+            r_factors_df = ro.conversion.py2rpy(factors_df)
+
         plotHeatmap(r_intersection_pivot,
                     r_factors_df)
 
@@ -1469,7 +1469,7 @@ def plotExpression(outfile):
     # See RnaseqqcReport.ExpressionDistribution tracker
 
     dbh = P.connect()
-
+   
     statement = """
     SELECT * FROM transcripts"""
 
@@ -1501,12 +1501,12 @@ def plotExpression(outfile):
         f_colour_map = {f:
                         plt.cm.viridis((i % nlevels + 1)/float(nlevels))
                         for i, f in enumerate(factor_levels)}
-
+    
         for sname, subdf in df.groupby("sample_id"):
             factor_level = str(factor_df.factor_value.loc[sname])
             subdf.logTPM.plot(kind="density", color=f_colour_map[factor_level],
                               label=factor_level)
-
+            
         plt.title("TPM distribution by %(factor)s" % locals())
         plt.xlabel("log2 TPM")
         plt.ylabel("Density")
@@ -1516,8 +1516,7 @@ def plotExpression(outfile):
         plt.legend(handles=legend_lines)
         f.savefig(plotfile)
         plt.close()
-        
-
+ 
     iotools.touch_file(outfile)
 
 ###################################################################

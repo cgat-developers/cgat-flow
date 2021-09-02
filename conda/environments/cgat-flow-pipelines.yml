@@ -54,6 +54,7 @@ dependencies:
 - r-snow
 - r-stringr
 - r-venndiagram
+- r-rjson
 - bioconductor-biomart
 - bioconductor-hpar
 - bioconductor-edger

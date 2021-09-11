@@ -44,7 +44,7 @@ from cgatcore import pipeline as P
 import cgat.IndexedFasta as IndexedFasta
 import cgat.Masker as Masker
 import cgat.Glam2Scan as Glam2Scan
-import cgat.MAST as MAST
+import cgatpipelines.tasks.MAST as MAST
 import cgatcore.iotools as iotools
 import cgat.Bed as Bed
 # TODO: remove dependency

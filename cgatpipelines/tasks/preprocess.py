@@ -532,13 +532,6 @@ class Cutadapt(ProcessTool):
             in1, in2 = infiles
             out1, out2 = outfiles
 
-            if "fastq" in in1:
-                format = "--format=fastq"
-            elif "fasta" in in1:
-                format = "--format=fasta"
-            else:
-                format = ""
-
             untrimmed_output1, untrimmed_output2 = \
                 [i.replace(".fast", "_untrimmed.fast")
                  for i in infiles]
@@ -550,7 +543,7 @@ class Cutadapt(ProcessTool):
 
             cmds.append('''
             cutadapt %(processing_options)s %(in1)s %(in2)s
-                     -p %(out2)s -o %(out1)s %(format)s
+                     -p %(out2)s -o %(out1)s
             2>> %(output_prefix)s.log; ''' % locals())
 
             if untrimmed:

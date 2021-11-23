@@ -1314,7 +1314,7 @@ class SubsetHeads(Mapper):
             for n, ix in enumerate(range(0, len(limits))):
                 limit = limits[ix]
                 output_filename = output_prefix + "_%i.fastq.gz" % n
-                awk_cmd += '''{if (NR<%(limit)s) print |
+                awk_cmd += '''{if (NR<=%(limit)s) print |
                 "gzip > %(output_filename)s"};''' % locals()
             awk_cmd += '{if (NR>%s) {exit}};' % limits[-1]
 
@@ -1328,7 +1328,7 @@ class SubsetHeads(Mapper):
                     limit = limits[ix]
                     output_filename = output_prefix + \
                         "_%i.fastq.%i.gz" % (n, x + 1)
-                    awk_cmd += '''{if (NR<%(limit)s) print |
+                    awk_cmd += '''{if (NR<=%(limit)s) print |
                     "gzip > %(output_filename)s"};''' % locals()
                 awk_cmd += '{if (NR>%s) {exit}};' % limits[-1]
 

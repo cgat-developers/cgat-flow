@@ -737,7 +737,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         %(insert_macs2opts)s
         >& %(logfile)s
         '''
-        P.run(statement, job_condaenv="macs2")
+        P.run(statement)
 
         with iotools.open_file(logfile) as inf:
             lines = inf.readlines()
@@ -757,7 +757,7 @@ def estimateInsertSize(infile, outfile, pe, nalignments, m2opts):
         Rscript predictd &&
         cp predictd_model.pdf ../%(pdffile)s
         '''
-        P.run(statement, job_condaenv="macs2")
+        P.run(statement)
         # Remove the directory
         shutil.rmtree("%s.dir" % outfile)
     outf = iotools.open_file(outfile, "w")

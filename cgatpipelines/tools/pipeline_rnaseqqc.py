@@ -180,6 +180,7 @@ import itertools
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import seaborn as sns
 
 from rpy2.robjects import r as R
@@ -749,7 +750,7 @@ def indexForSalmon(infile, outfile):
 
     statement = '''
     salmon index -k %(salmon_kmer)i -t %(infile)s -i %(outfile)s >& %(outfile)s.log'''
-    P.run(statement, job_memory="8G", job_condaenv="salmon")
+    P.run(statement, job_memory="8G")
 
 
 @collate(SEQUENCEFILES,
@@ -784,9 +785,9 @@ def runSalmon(infiles, outfiles):
 
 
 @collate(runSalmon,
-        regex(".*"),
-        ["salmon.dir/transcripts.tsv.gz",
-        "salmon.dir/genes.tsv.gz"])
+         formatter(),
+         ["salmon.dir/transcripts.tsv.gz",
+          "salmon.dir/genes.tsv.gz"])
 def mergeSalmonResults(infiles, outfiles):
     ''' merge counts for alignment-based methods'''
 
@@ -926,7 +927,7 @@ def plotSalmonSaturation(infiles, outfile):
     # Patro's Wasabi R package for making salmon output
     # compatable with sleuth
     minfo <- rjson::fromJSON(file=file.path(
-      Path, 'highest_counts_subset_9', "aux", "meta_info.json"))
+      Path, 'highest_counts_subset_9', "aux_info", "meta_info.json"))
 
     numBoot <- minfo$num_bootstraps
 
@@ -937,12 +938,12 @@ def plotSalmonSaturation(infiles, outfile):
 
     for (ix in seq(0,9,1)){
       bootCon <- gzcon(file(file.path(
-        Path, paste0('highest_counts_subset_', ix), 'aux',
+        Path, paste0('highest_counts_subset_', ix), 'aux_info',
                      'bootstrap', 'bootstraps.gz'), "rb"))
 
       # read in binary data
       boots <- readBin(bootCon, "double",
-                       n = minfo$num_targets * minfo$num_bootstraps)
+                       n = minfo$num_valid_targets * minfo$num_bootstraps)
       close(bootCon)
 
       # turn data into dataframe
@@ -1006,7 +1007,7 @@ def plotSalmonSaturation(infiles, outfile):
     point_df = read.table(
       file.path(Path, paste0('highest_counts_subset_', ix), "quant.sf"),
       sep="\t", header=T, row.names=1)
-`
+
     tpm_est[[paste0("sample_", ix)]] = (
       abs(point_df$TPM - ref_point_df$TPM) / ref_point_df$TPM)
     }
@@ -1227,7 +1228,7 @@ def characteriseTranscripts(infile, outfile):
 
     statement = '''
     cat %(infile)s | cgat fasta2table
-    --split-fasta-identifier --section=na;dn;length -v 0
+    --split-fasta-identifier --section na dn length -L %(outfile)s.log
     | gzip > %(outfile)s'''
 
     P.run(statement)
@@ -1286,7 +1287,7 @@ def summariseBias(infiles, outfile):
 
         temp_dict[attribute] = function
         means_df = df[["LogTPM", "sample_id"]].groupby(
-            ["sample_id", pd.qcut(df.ix[:, attribute], bins)])
+            ["sample_id", pd.qcut(df.loc[:, attribute], bins)])
 
         means_df = pd.DataFrame(means_df.agg(function))
         means_df.reset_index(inplace=True)
@@ -1371,8 +1372,7 @@ def plotTopGenesHeatmap(outfile):
 
     # set up the empty df
     intersection_df = pd.DataFrame(
-        index=range(0, len(exp_df.columns) **
-                    2 - len(exp_df.columns)),
+        index=[],
         columns=["sample1", "sample2", "intersection", "fraction"])
 
     # populate the df
@@ -1382,13 +1382,22 @@ def plotTopGenesHeatmap(outfile):
         s2_genes = top_genes[col2]
         intersection = set(s1_genes).intersection(set(s2_genes))
         fraction = len(intersection) / float(top_n)
-        intersection_df.ix[n] = [col1, col2, len(intersection), fraction]
+        intersection_df = intersection_df.append(
+            pd.Series({"sample1": col1,
+                       "sample2": col2,
+                       "intersection": len(intersection),
+                       "fraction": fraction}),
+            ignore_index=True)
         n += 1
 
         # if the samples are different, calculate the reverse intersection too
         if col1 != col2:
-            intersection_df.ix[n] = [col2, col1,
-                                     len(intersection), fraction]
+            intersection_df = intersection_df.append(
+                pd.Series({"sample1": col2,
+                           "sample2": col1,
+                           "intersection": len(intersection),
+                           "fraction": fraction}),
+                ignore_index=True)
             n += 1
 
 
@@ -1434,9 +1443,9 @@ def plotTopGenesHeatmap(outfile):
         ''' % locals())
 
         with localconverter(ro.default_converter + pandas2ri.converter):
-            r_intersection_pivot = ro.conversion.py2ri(intersection_pivot)
-            r_factors_df = ro.conversion.py2ri(factors_df)
-        
+            r_intersection_pivot = ro.conversion.py2rpy(intersection_pivot)
+            r_factors_df = ro.conversion.py2rpy(factors_df)
+
         plotHeatmap(r_intersection_pivot,
                     r_factors_df)
 
@@ -1460,7 +1469,7 @@ def plotExpression(outfile):
     # See RnaseqqcReport.ExpressionDistribution tracker
 
     dbh = P.connect()
-
+   
     statement = """
     SELECT * FROM transcripts"""
 
@@ -1471,11 +1480,12 @@ def plotExpression(outfile):
     
     factors = dbh.execute("SELECT DISTINCT factor FROM factors")
     factors = [x[0] for x in factors if x[0] != "genome"]
-
+    f = plt.figure(figsize=(10, 7))
+    plt.style.use("seaborn-colorblind")
     for factor in factors:
 
         plotfile = P.snip(outfile, ".sentinel") + "_%s.png" % factor
-
+        f = plt.figure(figsize=(10, 7))
         factor_statement = '''
         select *
         FROM factors
@@ -1484,29 +1494,29 @@ def plotExpression(outfile):
         WHERE factor = "%(factor)s"''' % locals()
 
         factor_df = pd.read_sql(factor_statement, dbh)
-        full_df = pd.merge(df, factor_df, left_on="sample_id",
-                           right_on="sample_name")
+        factor_df = factor_df.set_index("sample_name")
 
-        plotDistribution = R('''
-        function(df){
+        factor_levels = list(factor_df.factor_value.unique())
+        nlevels = len(factor_levels)
+        f_colour_map = {f:
+                        plt.cm.viridis((i % nlevels + 1)/float(nlevels))
+                        for i, f in enumerate(factor_levels)}
+    
+        for sname, subdf in df.groupby("sample_id"):
+            factor_level = str(factor_df.factor_value.loc[sname])
+            subdf.logTPM.plot(kind="density", color=f_colour_map[factor_level],
+                              label=factor_level)
+            
+        plt.title("TPM distribution by %(factor)s" % locals())
+        plt.xlabel("log2 TPM")
+        plt.ylabel("Density")
 
-        library(ggplot2)
-        p = ggplot(df, aes(x=logTPM, group=sample_name,
-                           colour=as.factor(factor_value))) +
-        geom_density() +
-        xlab("Log2(TPM)") + ylab("Density") +
-        scale_colour_discrete(name="Factor Level") +
-        theme_bw() +
-        ggtitle("%(factor)s")
-
-        ggsave("%(plotfile)s")
-        }
-        ''' % locals())
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            r_full_df = ro.conversion.py2ri(full_df)
-        
-        plotDistribution(r_full_df)
-
+        legend_lines = [mlines.Line2D([], [], color=f_colour_map[s], label=s)
+                        for s in factor_levels]
+        plt.legend(handles=legend_lines)
+        f.savefig(plotfile)
+        plt.close()
+ 
     iotools.touch_file(outfile)
 
 ###################################################################
@@ -1535,7 +1545,7 @@ def checkStrandednessSalmon(infiles, outfile):
                        "compatible_fragment_ratio",
                        "num_compatible_fragments",
                        "num_assigned_fragments",
-                       "num_frags_with_consistent_mappings",
+                       "num_frags_with_concordant_consistent_mappings",
                        "num_frags_with_inconsistent_or_orphan_mappings",
                        "MSF", "OSF", "ISF", "MSR",
                        "OSR", "ISR", "SF", "SR",
@@ -1572,7 +1582,13 @@ def plotStrandednessSalmon(infile, outfile):
     a.ticklabel_format(style='plain')
     a.vlines(np.arange(-0.4, a.get_xlim()[1], len(tab)),
              a.get_ylim()[0], a.get_ylim()[1], lw=0.5)
-    a.set_xticks(np.arange(0 + len(tab) / 2, a.get_xlim()[1],
+
+    # There is one bar for each library type for each sample, if we divide
+    # the xaxis up into library types, with as many bars as samples in each
+    # division, then we want the first tick half way through the first
+    # divsion and then the space between ticks is the number of samples.
+    a.set_xticks(np.arange(len(tab)/2,
+                           len(tab)*len(counttab.columns),
                            len(tab)))
     a.set_xticklabels(counttab.columns)
     sns.despine()

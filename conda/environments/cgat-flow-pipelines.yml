@@ -26,7 +26,7 @@ dependencies:
 - pandas
 - pep8
 - pybedtools
-- pysam==0.15.2
+- pysam
 - cgat-apps
 - drmaa
 - rpy2 < 3
@@ -54,6 +54,7 @@ dependencies:
 - r-snow
 - r-stringr
 - r-venndiagram
+- r-rjson
 - bioconductor-biomart
 - bioconductor-hpar
 - bioconductor-edger

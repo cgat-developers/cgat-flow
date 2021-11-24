@@ -13,7 +13,7 @@ dependencies:
 # python dependencies
 - python
 - pandas
-- pysam<=0.15.2
+- pysam
 - ruffus
 # Misc dependencies
 - bedtools

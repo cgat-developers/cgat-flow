@@ -190,8 +190,12 @@ def setupPrerequisites(infile, outfile):
     track = P.snip(outfile, ".tgz")
 
     # obtain data - should overwrite pipeline.yml file
-    statement = '''
-    wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
+    if(PARAMS.get("data_url") != None):
+        statement = '''
+        wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
+    else:
+        statement = '''
+        ln -s %(data_dir)s/%(track)s.tgz %(track)s.tgz'''
     P.run(statement)
 
     tf = tarfile.open(outfile)
@@ -228,8 +232,12 @@ def setupTests(infile, outfile):
     P.run(statement)
 
     # obtain data - should overwrite pipeline.yml file
-    statement = '''
-    wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
+    if(PARAMS.get("data_url") != None):
+        statement = '''
+        wget --no-check-certificate -O %(track)s.tgz %(data_url)s/%(track)s.tgz'''
+    else:
+        statement = '''
+        ln -s %(data_dir)s/%(track)s.tgz %(track)s.tgz'''
     P.run(statement)
 
     tf = tarfile.open(outfile)

@@ -26,10 +26,10 @@ dependencies:
 - pandas
 - pep8
 - pybedtools
-- pysam==0.15.2
+- pysam
 - cgat-apps
 - drmaa
-- rpy2 < 3
+- rpy2
 - ruffus
 - scikit-learn
 - scipy

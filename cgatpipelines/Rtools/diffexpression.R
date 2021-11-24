@@ -1,10 +1,10 @@
-#' filtering single cell data based on QC metrics
+#' Differential expression analysis
 #'
 #' WARNING: This script is work-in-progress
 #' 
 #' Example usage:
 #' 
-#' cgat-singlecell sc_diffexpression --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
+#' Rscript PATH/TO/diffexpression.R --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
 #'
 #' `sce.rds` is a single cell experiment object after filtering
 #'
@@ -261,12 +261,19 @@ run <- function(opt) {
     i = 1
     y= list()
     while(i <= opt$perm) {
-      designperm[, opt$contrast] = as.factor(sample(levels(designperm[, opt$contrast]), length(designperm[, opt$contrast]), replace=TRUE))
-      if(sum(designperm$group == levels(designperm[, opt$contrast])[1]) != table(colData(dds)[,opt$contrast])[1]) next
+      flog.info(paste0("...... Permutation ", i))
+      # Code to only shuffle the group labels for groups in coef
+      tempdesign <- designperm[grep(paste(as.list(unlist(strsplit(opt$coef, "_"))) [c(2,4)],collapse = "|"),designperm[, opt$contrast]),]
+      designperm[grep(paste(as.list(unlist(strsplit(opt$coef, "_"))) [c(2,4)],collapse = "|"),designperm[, opt$contrast]),][,opt$contrast] = sample(tempdesign[,opt$contrast])
+      if(sum(designperm$group == levels(designperm[, opt$contrast])[1]) != table(colData(dds)[,opt$contrast])[1]){
+        flog.info(paste0("......... Failed. Skipping design: ", paste(as.character(designperm$group),collapse = ",")))
+        flog.info(paste0("......... Number of reference replicates is: ", sum(designperm$group == levels(designperm[, opt$contrast])[1]), ", but should be: ", table(colData(dds)[,opt$contrast])[1]))
+        next
+      }
       colData(ddsperm) <- designperm
       ddsperm <- DESeq(ddsperm)
       resperm <- results(ddsperm)
-      x[i] = length(subset(resperm, padj < 0.05)$padj)
+      x[i] = length(subset(resperm, padj < opt$alpha)$padj)
       y[[i]] = ddsperm$group
       i = i+1
     }
@@ -278,12 +285,12 @@ run <- function(opt) {
                  main = "Histogram of DE experiments\n with random group labels", 
                  xlab = "Number of differentially expressed genes",
                  ylab = "Number of simulations") +
-      geom_vline(xintercept = length(rownames(subset(res, padj < 0.05)))) +
+      geom_vline(xintercept = length(rownames(subset(res, padj < opt$alpha)))) +
       theme_classic() + theme(plot.title = element_text(hjust = 0.5, size=22))
     print(sims)
     end_plot()
     flog.info(paste0("... Permutation p value: ",
-                     length(x[x < length(rownames(subset(res, padj < 0.05)))])/length(x)))
+                     length(x[x > length(rownames(subset(res, padj < opt$alpha)))])/length(x)))
     z <- list()
     for(i in 0:length(x)){
       z[i] <- paste( unlist(y[i]), collapse=' ')

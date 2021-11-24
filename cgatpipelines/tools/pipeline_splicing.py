@@ -399,6 +399,7 @@ def runDEXSeq(infile, outfile, design):
     dexseq_fdr = 0.05
     designname = design.split(".")[0]
     model = PARAMS["DEXSeq_model_%s" % designname]
+    reducedmodel = PARAMS["DEXSeq_reducedmodel_%s" % designname]
     contrast = PARAMS["DEXSeq_contrast_%s" % designname]
     refgroup = PARAMS["DEXSeq_refgroup_%s" % designname]
     r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
@@ -409,10 +410,12 @@ def runDEXSeq(infile, outfile, design):
     Rscript %(scriptpath)s
     --rds-filename %(infile)s   
     --model %(model)s
+    --reducedmodel %(reducedmodel)s
     --contrast %(contrast)s
     --refgroup %(refgroup)s
-    --alpha %(dexseq_fdr)s
+    --alpha %(DEXSeq_fdr)s
     --outdir %(outdir)s
+    --permute %(DEXSeq_permutations)s
 
     > %(outdir)s/dexseq.log;
     '''
@@ -622,7 +625,7 @@ def runMATS(infile, outfiles):
 @follows(runMATS)
 @transform(runMATS,
            regex("results.dir/rMATS/(\S+).dir/(\S+).MATS.JC.txt"),
-           r"results.dir/rMATS/rMATS_\1_\2_JC.load")
+           r"results.dir/rMATS/rMATS_\1_.dir/\2_JC.load")
 def loadMATS(infile, outfile):
     '''load RMATS results into relational database
 
@@ -634,20 +637,44 @@ def loadMATS(infile, outfile):
     infile: term:`tsv` file containing one type of rMATS results.
     outfile: .load file
     '''
+    
     try:
         P.load(infile, outfile)
     except:
         iotools.touch_file(outfile)
 
 
+@follows(runMATS)
+@transform(runMATS,
+           regex("results.dir/rMATS/(\S+).dir/(\S+).MATS.JC.txt"),
+           r"results.dir/rMATS/\1.dir/\2.novelJunc.JC.tsv")
+def novelJuncMATS(infile, outfile):
+    '''Combine novel Junction result with MATS output.
+
+    Parameters
+    ----------
+    infile: term:`tsv` file containing one type of rMATS results.
+    outfile: .load file
+    '''
+
+    indir = os.path.dirname(infile)
+    event = os.path.basename(infile).split(".")[0]
+    
+    statement = "cut -f 4- %(indir)s/fromGTF.novelJunction.%(event)s.txt |grep -Fwf - %(infile)s > %(outfile)s"
+    P.run(statement)
+
+    
+
+@follows(novelJuncMATS)
 @collate(runMATS,
          regex("results.dir/rMATS/(\S+).dir/\S+.MATS.JC.txt"),
          r"results.dir/rMATS/rMATS_\1_results.summary")
 def collateMATS(infiles, outfile):
-    '''collates summary from all events
+    '''collates summary results from all events
 
     Collates number of events below FDR threshold from all
-    five events into simple table
+    five events into simple table, split for up and 
+    downregulated events
 
     Parameters
     ----------
@@ -662,19 +689,51 @@ def collateMATS(infiles, outfile):
     '''
 
     indir = os.path.dirname(infiles[1])
-    collate = []
-    with open(indir + "/b1.txt", "r") as f:
-        collate.append(f.readline())
-    with open(indir + "/b2.txt", "r") as f:
-        collate.append(f.readline())
+    design = P.snip(os.path.basename(os.path.normpath(indir)))
+
+
+    total = [design, "all", "Total"]
+    up = [design, "all", "Sample1HigherInclusion"]
+    down = [design, "all", "Sample2HigherInclusion"]
+    total_newJunc = [design, "novelJunc", "Total"]
+    up_newJunc = [design, "novelJunc", "Sample1HigherInclusion"]
+    down_newJunc = [design, "novelJunc", "Sample2HigherInclusion"]
+    #total_newSS = [design, "novelSS", "Total"]
+    #up_newSS = [design, "novelSS", "Sample1HigherInclusion"]
+    #down_newSS = [design, "novelSS", "Sample2HigherInclusion"]
+
+
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] <
-                                    float(PARAMS['MATS_fdr'])])))
-    with open(outfile, "w") as f:
-        f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
-        f.write('\t'.join(collate))
+        total.append(int(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
+        up.append(int(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
+        down.append(int(len(temp[(temp['FDR'] <
+                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        temp = pd.read_csv("%s/%s.novelJunc.JC.tsv" %
+                           (indir, event), sep='\t')
+        total_newJunc.append(int(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
+        up_newJunc.append(int(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
+        down_newJunc.append(int(len(temp[(temp['FDR'] <
+                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        #experimental feature - deactivated       
+        #temp = pd.read_csv("%s/%s.novelSS.JC.tsv" %
+        #                   (indir, event), sep='\t')
+        #total_newSS.append(int(len(temp[(temp['FDR'] <
+        #                        float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
+        #up_newSS.append(int(len(temp[(temp['FDR'] <
+        #                        float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
+        #down_newSS.append(int(len(temp[(temp['FDR'] <
+        #                          float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+
+    eventdf = pd.DataFrame([total,up,down,total_newJunc,up_newJunc,down_newJunc], columns=["Design","Type","Subset","SE","A5SS","A3SS","MXE","RI"])
+    eventdf.loc[:,"TOTAL"] = eventdf.sum(numeric_only=True, axis=1)
+
+    eventdf.to_csv(outfile, sep="\t", index=False)
 
 
 @transform(collateMATS,
@@ -784,8 +843,8 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len(temp[temp['FDR'] <
-                                    float(PARAMS['MATS_fdr'])])))
+        collate.append(str(len((temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1))))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))
@@ -859,10 +918,11 @@ def runSashimi(infiles, outfile):
 
     infile, design = infiles
     fdr = PARAMS["MATS_fdr"]
+    plotmax = int(PARAMS["MATS_plotmax"])
     if not os.path.exists(outfile):
         os.makedirs(outfile)
 
-    splicing.rmats2sashimi(infile, design, fdr, outfile)
+    splicing.rmats2sashimi(infile, design, fdr, outfile, plotmax)
 
 
 ###################################################################

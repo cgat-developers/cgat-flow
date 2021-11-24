@@ -54,6 +54,8 @@ Requirements
 
 import os
 import random
+import shutil
+import pandas as pd
 import cgat.BamTools.bamtools as BamTools
 import cgatcore.experiment as E
 import cgatpipelines.tasks.expression as Expression
@@ -98,6 +100,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     with open(outdir + "/b2.txt", "w") as f:
         f.write(group2)
     readlength = BamTools.estimateTagSize(design.samples[0]+".bam")
+    tmpdir = P.get_temp_dir()
 
     statement = '''rMATS
     --b1 %(outdir)s/b1.txt
@@ -107,6 +110,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     --readLength %(readlength)s
     --cstat %(pvalue)s
     --libType %(strand)s
+    --tmp %(tmpdir)s
     ''' % locals()
 
     # if Paired End Reads
@@ -117,10 +121,10 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     > %(outdir)s/%(designfile)s.log
     '''
 
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
 
-def rmats2sashimi(infile, designfile, FDR, outfile):
+def rmats2sashimi(infile, designfile, FDR, outfile, plotmax=20):
     '''Module to generate sashimi plots from rMATS output
 
     Module generates a statement to call rmats2sashimiplot and provides
@@ -161,17 +165,25 @@ def rmats2sashimi(infile, designfile, FDR, outfile):
     event = os.path.basename(os.path.normpath(outfile))
     if "MXE" in infile:
         column = "22"
+        sortby = "25"
     else:
         column = "20"
+        sortby = "23"
 
-    statement = '''cat
-    %(infile)s|grep -v NA|
-    awk '$%(column)s < %(FDR)s' > %(infile)s_sig.txt;
+    temp = pd.read_csv(infile, sep='\t')
+    temp = temp.dropna()
+    temp.sort_values(by=['FDR'], inplace=True)
+    temp = temp[abs(temp['IncLevelDifference']) > 0.2]
+    plotnum = min(int(len(temp[temp['FDR'] < float(FDR)])), plotmax)
+    infile = P.snip(infile)
+    temp.iloc[1:plotnum,:].to_csv("%s_plot.txt" % infile, sep='\t', index=False)
+
+    statement = '''
     rmats2sashimiplot
     --b1 %(group1)s
     --b2 %(group2)s
     -t %(event)s
-    -e %(infile)s_sig.txt
+    -e %(infile)s_plot.txt
     --l1 %(group1name)s
     --l2 %(group2name)s
     -o %(outfile)s

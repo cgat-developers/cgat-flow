@@ -244,6 +244,48 @@ def countReads(infile, outfile):
 
     P.run(statement)
 
+
+@transform(PARAMS["annotations_interface_geneset_all_gtf"],
+           regex("(\S+).gtf.gz"),
+           "rRNA_intervals.tsv")
+def buildRrnaIntervals(infile, outfile):
+    '''
+    Builds a reference list of rRNA intervals for Picard
+
+    Parameters
+    ----------
+    infile: str
+        path to the GTF file containing transcript and gene level annotations
+    genome_dir: str
+        :term: `PARAMS` the directory of the reference genome
+    genome: str
+        :term: `PARAMS` the filename of the reference genome (without .fa)
+    outfile: str
+        path to output file
+    '''
+    
+    genome_index = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa.fai"))
+    tempfile = P.get_temp_filename()
+    
+    statement = r'''
+    cut -f1,2 %(genome_index)s |
+    awk -F, '{$1="@SQ\tSN:" $1;}1' OFS='\t'|
+    awk 'BEGIN{OFS="\t"}$3="LN:"$3' 
+    > %(outfile)s;
+
+    zcat %(infile)s | grep 'gene_biotype "rRNA"' |
+        awk '$3 == "exon"'|cgat gtf2tsv --attributes-as-columns|
+        grep -v '#'| cut -f1,4,5,7,10|sed '1d'|
+        sort -k1V -k2n -k3n 
+        >> %(outfile)s
+    ''' % locals()
+
+    P.run(statement)
+        
+    
+    
+
 #########################################################################
 # QC tasks start here
 #########################################################################
@@ -626,7 +668,8 @@ def buildTranscriptProfiles(infiles, outfile):
 @P.add_doc(bamstats.buildPicardRnaSeqMetrics)
 @transform(intBam,
            regex("BamFiles.dir/(.*).bam$"),
-           add_inputs(PARAMS["annotations_interface_ref_flat"]),
+           add_inputs(PARAMS["annotations_interface_ref_flat"],
+                      buildRrnaIntervals),
            r"Picard_stats.dir/\1.picard_rna_metrics")
 def buildPicardRnaSeqMetrics(infiles, outfile):
     '''Get duplicate stats from picard RNASeqMetrics '''
@@ -637,6 +680,8 @@ def buildPicardRnaSeqMetrics(infiles, outfile):
         strand = "FIRST_READ_TRANSCRIPTION_STRAND"
     else:
         strand = "NONE"
+
+
     bamstats.buildPicardRnaSeqMetrics(infiles, strand, outfile,
                                       PICARD_MEMORY)
 

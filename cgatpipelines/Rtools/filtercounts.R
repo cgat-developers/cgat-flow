@@ -3,7 +3,7 @@
 #' 
 #' Example usage:
 #' 
-#' cgatflow R readandfiltercounts 
+#' Rscript PATH/TO/filtercounts.R 
 #' 
 #' input: directory containing read count files or tsv file containing reads
 #' additional input variables: method used to generate file, model

@@ -58,11 +58,16 @@ MATS:
     # only results below the threshold will be plotted
     fdr: ''
 
+    # Number of plots
+    # Maximum number of plots for sashimiplot
+    # only the top n will be plotted
+    plotmax: 20
+
 
 
     ################################################################
     #
-    # MATS options
+    # DEXSeq options
     #
     ################################################################
 DEXSeq:

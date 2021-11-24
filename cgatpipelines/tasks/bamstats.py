@@ -1293,7 +1293,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile, picardmem):
     job_memory = picardmem
     picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
     job_threads = 3
-    infile, genome = infiles
+    infile, genome, rRNA_intervals = infiles
 
     if BamTools.getNumReads(infile) == 0:
         E.warn("no reads in %s - no metrics" % infile)
@@ -1307,5 +1307,6 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile, picardmem):
     OUTPUT=%(outfile)s
     STRAND=%(strand)s
     VALIDATION_STRINGENCY=SILENT
+    RIBOSOMAL_INTERVALS=%(rRNA_intervals)s
     '''
     P.run(statement)

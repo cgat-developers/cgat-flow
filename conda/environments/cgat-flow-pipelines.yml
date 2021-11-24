@@ -29,7 +29,7 @@ dependencies:
 - pysam
 - cgat-apps
 - drmaa
-- rpy2
+- rpy2 < 3
 - ruffus
 - scikit-learn
 - scipy

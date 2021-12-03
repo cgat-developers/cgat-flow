@@ -15,7 +15,7 @@ exportdir: export
 data_url: http://www.cgat.org/downloads/public/cgat/pipeline_test_data
 
 ## Directory with test data and configurations
-data_dir: /ifs/devel/pipelines/data
+data_dir: /path/to/pipelines/data
 
 ## default options for the pipeline scripts
 pipeline_options: -v 5 -p 10 --is-test
@@ -24,7 +24,7 @@ pipeline_options: -v 5 -p 10 --is-test
 # comma-separated list of pipelines that are required
 # for the below tests to run. Currently it is only annotations
 # and it is downloaded and upacked but not re-run
-#prerequisites=prereq_annotations
+#prerequisites=prereq_genesets,prereq_genome
 
 # comma-separated list of file types to use for
 # md5 comparison

@@ -539,7 +539,7 @@ def buildSalmonIndex(infile, outfile):
        path to output file
     '''
 
-    job_memory = "unlimited"
+    job_memory = "30G"
     threads = 12
     if PARAMS["salmon_threads"] is not None:
         threads = PARAMS["salmon_threads"]

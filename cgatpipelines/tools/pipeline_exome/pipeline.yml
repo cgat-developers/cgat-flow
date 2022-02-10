@@ -4,16 +4,11 @@
 ## Exome pipeline parameters
 ##########################################################
 
-
-
-# Script directory
-scriptsdir: /ifs/devel/katherineb/cgat/scripts
-
 # the genome to use
-genome: hg19
+genome: hg38
 
 # location of indexed genome for SAMtools
-genome_dir: /ifs/mirror/genomes/gatk
+genome_dir: /path/to/genome/dir
 
 ########################################################
 # directory where exported data is located
@@ -27,18 +22,18 @@ web_dir: ../web
 # If you are not running exome data but targetted sequencing on a smaller region then change to 1
 targetted: 0
 
-#pedfile=/ifs/projects/proj024/analysis/illumina_fam8-16/fastq_decon_o5_filt_qc/mapping_human_g1k/samples.ped
+#pedfile=/path/to/pedfile
 
 # seed for random number generation
 randomseed: 1000
 
 # gtf file containing exon annotations
-geneset: /ifs/mirror/annotations/hg19_ensembl75_hierarchical/ensembl.dir/geneset_all.gtf.gz
+geneset: /path/to/ensembl.dir/geneset_all.gtf.gz
 
 bwa:
 
     # location od BWA indexed genome
-    index_dir: /ifs/mirror/genomes/gatk
+    index_dir: /path/to/genome
 
     # threads
     threads: 8
@@ -70,15 +65,15 @@ gatk:
 
     threads: 8
 
-    dbsnp: /ifs/mirror/genomes/gatk/dbsnp_138.hg19.vcf
+    dbsnp: /path/to/dbsnp_138.hg19.vcf
 
-    hapmap: /ifs/mirror/genomes/gatk/hapmap_3.3.hg19.sites.vcf
+    hapmap: /path/to/hapmap_3.3.hg19.sites.vcf
 
-    omni: /ifs/mirror/genomes/gatk/1000G_omni2.5.hg19.sites.vcf
+    omni: /path/to/omni/1000G_omni2.5.hg19.sites.vcf
 
-    kgenomes: /ifs/mirror/genomes/gatk/1000G_phase1.snps.high_confidence.hg19.sites.vcf
+    kgenomes: /path/to/1000G_phase1.snps.high_confidence.hg19.sites.vcf
 
-    mills: /ifs/mirror/genomes/gatk/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+    mills: /path/to/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
 
     solid_options: ''
 
@@ -92,7 +87,7 @@ gatk:
 
 hapmap:
 
-    loc: /ifs/mirror/hapmap/genotype_frequencies
+    loc: /path/to/hapmap/genotype_frequencies
 
     # bgzip compressede and tabix indexed VCF file for Hapmap
     vcf: /ifs/mirror/genomes/gatk/hapmap_3.3.hg19.sites.vcf
@@ -227,7 +222,7 @@ coverage:
     candidates: ''
 
     # path to r script for generating the coverage plots
-    rscript: /ifs/projects/proj024/analysis/GRIN1_coverage/coverage.r
+    rscript: /path/to/coverage.r
 
     # the minimum read depth for counting a base as covered
     threshold: 15

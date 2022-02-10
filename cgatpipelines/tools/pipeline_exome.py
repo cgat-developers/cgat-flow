@@ -212,7 +212,6 @@ def getGATKOptions():
 @files(PARAMS["roi_bed"], "roi.load")
 def loadROI(infile, outfile):
     '''Import regions of interest bed file into SQLite.'''
-    scriptsdir = PARAMS["general_scriptsdir"]
     header = "chr,start,stop,feature"
     tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
@@ -231,7 +230,6 @@ def loadROI(infile, outfile):
 @files(PARAMS["roi_to_gene"], "roi2gene.load")
 def loadROI2Gene(infile, outfile):
     '''Import genes mapping to regions of interest bed file into SQLite.'''
-    scriptsdir = PARAMS["general_scriptsdir"]
     tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
@@ -248,7 +246,6 @@ def loadROI2Gene(infile, outfile):
 @files(PARAMS["samples"], "samples.load")
 def loadSamples(infile, outfile):
     '''Import sample information into SQLite.'''
-    scriptsdir = PARAMS["general_scriptsdir"]
     tablename = P.to_table(outfile)
     statement = '''cat %(infile)s
             | cgat csv2db %(csv2db_options)s
@@ -2006,7 +2003,6 @@ def buildVCFstats(infile, outfile):
 @merge(buildVCFstats, "vcf_stats.load")
 def loadVCFstats(infiles, outfile):
     '''Import variant statistics into SQLite'''
-    scriptsdir = PARAMS["general_scriptsdir"]
     filenames = " ".join(infiles)
     tablename = P.to_table(outfile)
     E.info("Loading vcf stats...")

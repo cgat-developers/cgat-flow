@@ -188,9 +188,9 @@ run <- function(opt) {
   # Currently only supports data from salmon and kallisto
   # Needs implementation of genelength matrix from featurecounts
   if(any(names(assays(experiment)) == "avgTxLength")){
-      res.nona <- subset(resLFC, (!is.na(padj)))
+      res.nona <- subset(resLFC, (!is.na(padj & baseMean) & baseMean > 1))
       res.list <- list(as.integer(res.nona$padj < 0.05), 
-      	       	  as.integer(res.nona$log2FoldChange <0 & res.nona$padj < 0.05), 
+      	       	  as.integer(res.nona$log2FoldChange >0 & res.nona$padj < 0.05), 
                   as.integer(res.nona$log2FoldChange <0 & res.nona$padj < 0.05))
       res.names <- list("all", "up", "down")
       for(i in 1:3) {

@@ -315,12 +315,13 @@ def loadPicardAlignStats(infiles, outfile):
 
 
 @transform(mapReads, regex(r"bam/(\S+).bam"),
-           add_inputs(r"gatk/\1.merged.bam.count"),
+           add_inputs(createSequenceDictionary),
            r"gatk/\1.readgroups.bam")
-def GATKReadGroups(infile, dictionary, outfile):
+def GATKReadGroups(infiles, outfile):
     '''Reorders BAM according to reference fasta and adds read groups using
     GATK'''
 
+    infile, dictionary = infiles
     track = re.sub(r'-\w+-\w+\.bam', '', os.path.basename(infile))
     tmpdir_gatk = P.get_temp_dir('.')
     job_threads = PARAMS["gatk_threads"]

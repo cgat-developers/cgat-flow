@@ -163,7 +163,7 @@ Code
 # load modules
 from ruffus import transform, mkdir, follows, merge, regex, suffix, \
     jobs_limit, files, collate, add_inputs, formatter, \
-    active_if
+    active_if, originate
 from ruffus.combinatorics import permutations
 import sys
 import os

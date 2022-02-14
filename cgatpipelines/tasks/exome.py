@@ -48,11 +48,11 @@ def GATKReadGroups(infile, outfile, dictionary,
     job_threads = 3
 
     statement = '''picard ReorderSam
-                    -INPUT=%(infile)s
-                    -OUTPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
-                    -SEQUENCE_DICTIONARY=%(dictionary)s
-                    -ALLOW_INCOMPLETE_DICT_CONCORDANCE=true
-                    -VALIDATION_STRINGENCY=SILENT ;''' % locals()
+                    -INPUT %(infile)s
+                    -OUTPUT %(tmpdir_gatk)s/%(track)s.reordered.bam
+                    -SEQUENCE_DICTIONARY %(dictionary)s
+                    -ALLOW_INCOMPLETE_DICT_CONCORDANCE true
+                    -VALIDATION_STRINGENCY SILENT ;''' % locals()
 
     statement += '''samtools index %(tmpdir_gatk)s/%(track)s.reordered.bam ;
                  ''' % locals()

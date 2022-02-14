@@ -30,6 +30,9 @@ randomseed: 1000
 # gtf file containing exon annotations
 geneset: /path/to/ensembl.dir/geneset_all.gtf.gz
 
+#picard memory
+picard_memory: 9G
+
 bwa:
 
     # location od BWA indexed genome
@@ -64,6 +67,8 @@ dedup:
 gatk:
 
     threads: 8
+
+    memory: 2G
 
     dbsnp: /path/to/dbsnp_138.hg19.vcf
 

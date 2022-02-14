@@ -177,7 +177,7 @@ import cgatcore.experiment as E
 import cgatcore.iotools as iotools
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.mapping as mapping
-import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.bamstats as bamstats
 import cgatpipelines.tasks.exome as exome
 import cgatpipelines.tasks.exomeancestry as exomeancestry
 
@@ -196,9 +196,10 @@ REGEX_FORMATS = regex(r"(\S+).(fastq.1.gz|fastq.gz|sra|csfasta.gz)")
 matches = glob.glob("*.fastq.1.gz") + glob.glob(
     "*.fastq.gz") + glob.glob("*.sra") + glob.glob("*.csfasta.gz")
 
+PICARD_MEMORY = PARAMS["picard_memory"]
 
-def getGATKOptions():
-    return "-l mem_free=1.4G"
+GATK_MEMORY = PARAMS["gatk_memory"]
+
 
 ###############################################################################
 ###############################################################################
@@ -255,6 +256,17 @@ def loadSamples(infile, outfile):
             > %(outfile)s  '''
     P.run(statement)
 
+@originate("genome.dict")
+def createSequenceDictionary(outfile):
+    '''creates a sequence dictionary required for running
+    gatk/picard tools'''
+    genome_file = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
+
+    statement = '''picard CreateSequenceDictionary 
+                        -R %(genome_file)s -O %(outfile)s'''
+    P.run(statement)
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -280,8 +292,8 @@ def mapReads(infiles, outfile):
 @transform(mapReads, regex(r"bam/(\S+).bam"), r"bam/\1.picard_stats")
 def PicardAlignStats(infile, outfile):
     '''Run Picard CollectMultipleMetrics on each BAM file'''
-    genome = PARAMS["bwa_index_dir"] + "/" + PARAMS["genome"] + ".fa"
-    mappingqc.buildPicardAlignmentStats(infile, outfile, genome)
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    bamstats.buildPicardAlignmentStats(infile, outfile, genome, PICARD_MEMORY)
 
 ###############################################################################
 
@@ -290,7 +302,7 @@ def PicardAlignStats(infile, outfile):
 @merge(PicardAlignStats, "picard_stats.load")
 def loadPicardAlignStats(infiles, outfile):
     '''Merge Picard alignment stats into single table and load into SQLite.'''
-    mappingqc.loadPicardAlignmentStats(infiles, outfile)
+    bamstats.loadPicardAlignmentStats(infiles, outfile)
 
 ###############################################################################
 ###############################################################################
@@ -299,27 +311,26 @@ def loadPicardAlignStats(infiles, outfile):
 
 
 @follows(loadPicardAlignStats, mkdir("gatk"))
-@transform(mapReads, regex(r"bam/(\S+).bam"), r"gatk/\1.readgroups.bam")
-def GATKReadGroups(infile, outfile):
+
+
+
+@transform(mapReads, regex(r"bam/(\S+).bam"),
+           add_inputs(r"gatk/\1.merged.bam.count"),
+           r"gatk/\1.readgroups.bam")
+def GATKReadGroups(infile, dictionary, outfile):
     '''Reorders BAM according to reference fasta and adds read groups using
     GATK'''
-    '''Reorders BAM according to reference fasta and add read groups using
-    SAMtools, realigns around indels and recalibrates base quality
-    scores using GATK
-
-    '''
 
     track = re.sub(r'-\w+-\w+\.bam', '', os.path.basename(infile))
     tmpdir_gatk = P.get_temp_dir('.')
-    job_options = getGATKOptions()
     job_threads = PARAMS["gatk_threads"]
     library = PARAMS["readgroup_library"]
     platform = PARAMS["readgroup_platform"]
     platform_unit = PARAMS["readgroup_platform_unit"]
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
-    exome.GATKReadGroups(infile, outfile, genome,
+    exome.GATKReadGroups(infile, outfile, dictionary,
                                  library, platform,
-                                 platform_unit, track)
+                                 platform_unit, track,
+                                 GATK_MEMORY)
     iotools.zap_file(infile)
 
 ###############################################################################
@@ -333,7 +344,7 @@ def GATKReadGroups(infile, outfile):
            r"gatk/\1.dedup.bam")
 def RemoveDuplicatesLane(infile, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
-    mappingqc.buildPicardDuplicateStats(infile, outfile)
+    bamstats.buildPicardDuplicateStats(infile, outfile, PICARD_MEMORY)
     iotools.zap_file(infile)
 
 ###############################################################################
@@ -343,7 +354,7 @@ def RemoveDuplicatesLane(infile, outfile):
 @merge(RemoveDuplicatesLane, "picard_duplicate_stats_lane.load")
 def loadPicardDuplicateStatsLane(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
-    mappingqc.loadPicardDuplicateStats(infiles, outfile)
+    bamstats.loadPicardDuplicateStats(infiles, outfile)
 
 ###############################################################################
 
@@ -358,7 +369,7 @@ def GATKIndelRealignLane(infile, outfile):
     intervals = PARAMS["roi_intervals"]
     padding = PARAMS["roi_padding"]
     exome.GATKIndelRealign(infile, outfile, genome, intervals, padding,
-                                   threads)
+                                   threads, GATK_MEMORY)
     iotools.zap_file(infile)
 
 ###############################################################################
@@ -381,7 +392,8 @@ def GATKBaseRecal(infile, outfile):
         shutil.copyfile(intrack + ".bai", outtrack + ".bai")
     else:
         exome.GATKBaseRecal(infile, outfile, genome, intervals,
-                                    padding, dbsnp, solid_options)
+                                    padding, dbsnp, solid_options,
+                                    GATK_MEMORY)
     iotools.zap_file(infile)
 
 ###############################################################################
@@ -425,7 +437,7 @@ def RemoveDuplicatesSample(infiles, outfile):
     infile, countfile = infiles
     countf = open(countfile, "r")
     if countf.read() != '1':
-        mappingqc.buildPicardDuplicateStats(infile, outfile)
+        bamstats.buildPicardDuplicateStats(infile, outfile, PICARD_MEMORY)
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
@@ -439,7 +451,7 @@ def RemoveDuplicatesSample(infiles, outfile):
 @merge(RemoveDuplicatesSample, "picard_duplicate_stats_sample.load")
 def loadPicardDuplicateStatsSample(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
-    mappingqc.loadPicardDuplicateStats(infiles, outfile)
+    bamstats.loadPicardDuplicateStats(infiles, outfile)
 
 ###############################################################################
 ###############################################################################
@@ -461,7 +473,7 @@ def GATKIndelRealignSample(infiles, outfile):
     countf = open(countfile, "r")
     if countf.read() > '1':
         exome.GATKIndelRealign(infiles[0], outfile, genome, intervals,
-                                       padding, threads)
+                                       padding, threads, GATK_MEMORY)
     else:
         shutil.copyfile(infile, outfile)
         shutil.copyfile(infile + ".bai", outfile + ".bai")
@@ -481,8 +493,8 @@ def buildCoverageStats(infile, outfile):
     file using Picard'''
     baits = PARAMS["roi_baits"]
     regions = PARAMS["roi_regions"]
-    mappingqc.buildPicardCoverageStats(infile, outfile,
-                                               baits, regions)
+    bamstats.buildPicardCoverageStats(infile, outfile,
+                                               baits, regions, PICARD_MEMORY)
 
 ###############################################################################
 
@@ -491,7 +503,7 @@ def buildCoverageStats(infile, outfile):
 @merge(buildCoverageStats, "coverage_stats.load")
 def loadCoverageStats(infiles, outfile):
     '''Import coverage statistics into SQLite'''
-    mappingqc.loadPicardCoverageStats(infiles, outfile)
+    bamstats.loadPicardCoverageStats(infiles, outfile)
 
 ###############################################################################
 ###############################################################################
@@ -544,15 +556,14 @@ def loadXYRatio(infile, outfile):
            r"variants/\1.haplotypeCaller.g.vcf")
 def haplotypeCaller(infile, outfile):
     '''Call SNVs and indels using GATK HaplotypeCaller in individuals'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
-    job_options = getGATKOptions()
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     job_threads = PARAMS["gatk_threads"]
     dbsnp = PARAMS["gatk_dbsnp"]
     intervals = PARAMS["roi_intervals"]
     padding = PARAMS["roi_padding"]
     options = PARAMS["gatk_hc_options"]
     exome.haplotypeCaller(infile, outfile, genome, dbsnp,
-                                  intervals, padding, options)
+                                  intervals, padding, options, GATK_MEMORY)
 
 ###############################################################################
 
@@ -755,9 +766,8 @@ def variantAnnotator(infiles, outfile):
            r"variants/all_samples.snp_vqsr.recal")
 def variantRecalibratorSnps(infile, outfile):
     '''Create variant recalibration file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     dbsnp = PARAMS["gatk_dbsnp"]
-    job_options = getGATKOptions()
     job_threads = PARAMS["gatk_threads"]
     track = P.snip(outfile, ".recal")
     kgenomes = PARAMS["gatk_kgenomes"]
@@ -765,7 +775,7 @@ def variantRecalibratorSnps(infile, outfile):
     omni = PARAMS["gatk_omni"]
     mode = 'SNP'
     exome.variantRecalibrator(infile, outfile, genome, mode, dbsnp,
-                                      kgenomes, hapmap, omni)
+                                      kgenomes, hapmap, omni, GATK_MEMORY)
 
 ###############################################################################
 
@@ -779,10 +789,10 @@ def variantRecalibratorSnps(infile, outfile):
 def applyVariantRecalibrationSnps(infiles, outfile):
     '''Perform variant quality score recalibration using GATK '''
     vcf, recal, tranches = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     mode = 'SNP'
     exome.applyVariantRecalibration(vcf, recal, tranches,
-                                            outfile, genome, mode)
+                                            outfile, genome, mode, GATK_MEMORY)
 
 ###############################################################################
 # Indel recalibration
@@ -793,15 +803,14 @@ def applyVariantRecalibrationSnps(infiles, outfile):
            r"variants/all_samples.vqsr.recal")
 def variantRecalibratorIndels(infile, outfile):
     '''Create variant recalibration file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
-    job_options = getGATKOptions()
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     job_threads = PARAMS["gatk_threads"]
     track = P.snip(outfile, ".recal")
     mills = PARAMS["gatk_mills"]
     dbsnp = PARAMS["gatk_dbsnp"]
     mode = 'INDEL'
     exome.variantRecalibrator(infile, outfile, genome, mode,
-                                      mills=mills)
+                                      mills=mills, gatkmem=GATK_MEMORY)
 
 ###############################################################################
 
@@ -818,7 +827,7 @@ def applyVariantRecalibrationIndels(infiles, outfile):
     genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
     mode = 'INDEL'
     exome.applyVariantRecalibration(vcf, recal, tranches,
-                                            outfile, genome, mode)
+                                            outfile, genome, mode, GATK_MEMORY)
 
 
 ###############################################################################
@@ -829,7 +838,7 @@ def applyVariantRecalibrationIndels(infiles, outfile):
            r"variants/all_samples_dbnsfp.snpsift.vcf")
 def annotateVariantsDBNSFP(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     dbNSFP = PARAMS["annotation_dbnsfp"]
     dbN_annotators = PARAMS["annotation_dbnsfpannotators"]
@@ -849,7 +858,7 @@ def annotateVariantsDBNSFP(infile, outfile):
            r"variants/all_samples_clinvar.snpsift.vcf")
 def annotateVariantsClinvar(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     clinvar = PARAMS["annotation_clinvar"]
     intout = outfile.replace("samples", "samples_clinvar")
@@ -863,7 +872,7 @@ def annotateVariantsClinvar(infile, outfile):
            r"variants/all_samples_exac.snpsift.vcf")
 def annotateVariantsExAC(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     exac = PARAMS["annotation_exac"]
     statement = """SnpSift.sh annotate
@@ -877,7 +886,7 @@ def annotateVariantsExAC(infile, outfile):
            r"variants/all_samples_gwasc.snpsift.vcf")
 def annotateVariantsGWASC(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
 
     gwas_catalog = PARAMS["annotation_gwas_catalog"]
@@ -891,7 +900,7 @@ def annotateVariantsGWASC(infile, outfile):
            r"variants/all_samples_phastcons.snpsift.vcf")
 def annotateVariantsPhastcons(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     genomeind = "%s/%s.fa.fai" % (
         PARAMS['general_genome_dir'],
@@ -909,7 +918,7 @@ def annotateVariantsPhastcons(infile, outfile):
            r"variants/all_samples_1000G.snpsift.vcf")
 def annotateVariants1000G(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
 
     vcfs = []
@@ -941,7 +950,7 @@ def annotateVariants1000G(infile, outfile):
            r"variants/all_samples_dbsnp.snpsift.vcf")
 def annotateVariantsDBSNP(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
 
     dbsnp = PARAMS["annotation_dbsnp"]
@@ -967,7 +976,7 @@ def annotateVariantsVEP(infile, outfile):
     '''
     # infile - VCF
     # outfile - VCF with vep annotations
-    job_options = "-l mem_free=6G"
+    job_memory = "6G"
     job_threads = 4
 
     VEP = PARAMS["annotation_vepannotators"].split(",")
@@ -1565,8 +1574,8 @@ def confirmParentage(infiles, outfile):
            r"variants/\1.filtered.vcf")
 def deNovoVariants(infiles, outfile):
     '''Filter de novo variants based on provided jexl expression'''
-    job_options = getGATKOptions()
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    job_memory = GATK_MEMORY
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
         iotools.open_file(pedfile), delimiter='\t', fieldnames=[
@@ -1585,7 +1594,7 @@ def deNovoVariants(infiles, outfile):
            r"variants/\1.filtered.table")
 def tabulateDeNovos(infile, outfile):
     '''Tabulate de novo variants'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1610,7 +1619,7 @@ def loadDeNovos(infile, outfile):
 def lowerStringencyDeNovos(infiles, outfile):
     '''Filter lower stringency de novo variants based on provided jexl
     expression'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(
         iotools.open_file(pedfile), delimiter='\t', fieldnames=[

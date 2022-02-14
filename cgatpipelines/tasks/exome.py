@@ -27,11 +27,6 @@ import copy
 # Set PARAMS in calling module
 PARAMS = {}
 
-
-def getGATKOptions():
-    return "-l mem_free=1.4G"
-
-
 def makeSoup(address):
     sock = urlopen(address)
     htmlSource = sock.read()
@@ -41,23 +36,23 @@ def makeSoup(address):
 ##############################################################################
 
 
-def GATKReadGroups(infile, outfile, genome,
+def GATKReadGroups(infile, outfile, dictionary,
                    library="unknown", platform="Illumina",
-                   platform_unit="1", track="unknown"):
+                   platform_unit="1", track="unknown", gatkmem="2G"):
     '''Reorders BAM according to reference fasta and adds read groups'''
 
     if track == 'unknown':
         track = P.snip(os.path.basename(infile), ".bam")
     tmpdir_gatk = P.get_temp_dir('.')
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''picard ReorderSam
-                    INPUT=%(infile)s
-                    OUTPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
-                    REFERENCE=%(genome)s
-                    ALLOW_INCOMPLETE_DICT_CONCORDANCE=true
-                    VALIDATION_STRINGENCY=SILENT ;''' % locals()
+                    -INPUT=%(infile)s
+                    -OUTPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
+                    -SEQUENCE_DICTIONARY=%(dictionary)s
+                    -ALLOW_INCOMPLETE_DICT_CONCORDANCE=true
+                    -VALIDATION_STRINGENCY=SILENT ;''' % locals()
 
     statement += '''samtools index %(tmpdir_gatk)s/%(track)s.reordered.bam ;
                  ''' % locals()
@@ -80,11 +75,11 @@ def GATKReadGroups(infile, outfile, genome,
 ##############################################################################
 
 
-def GATKIndelRealign(infile, outfile, genome, intervals, padding, threads=4):
+def GATKIndelRealign(infile, outfile, genome, intervals, padding, threads=4, gatkmem="2G"):
     '''Realigns BAMs around indels using GATK'''
 
     intervalfile = outfile.replace(".bam", ".intervals")
-    job_options = getGATKOptions()
+    job_memory = gatkmem 
     job_threads = 3
 
     statement = '''GenomeAnalysisTK
@@ -108,12 +103,12 @@ def GATKIndelRealign(infile, outfile, genome, intervals, padding, threads=4):
 
 
 def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
-                  solid_options=""):
+                  solid_options="", gatkmem="2G"):
     '''Recalibrates base quality scores using GATK'''
 
     track = P.snip(os.path.basename(infile), ".bam")
     tmpdir_gatk = P.get_temp_dir('.')
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''GenomeAnalysisTK
@@ -140,10 +135,10 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
 
 
 def haplotypeCaller(infile, outfile, genome,
-                    dbsnp, intervals, padding, options):
+                    dbsnp, intervals, padding, options, gatkmem = "2G"):
     '''Call SNVs and indels using GATK HaplotypeCaller in all members of a
     family together'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''GenomeAnalysisTK
@@ -164,9 +159,9 @@ def haplotypeCaller(infile, outfile, genome,
 ##############################################################################
 
 
-def genotypeGVCFs(inputfiles, outfile, genome, options):
+def genotypeGVCFs(inputfiles, outfile, genome, options, gatkmem="2G"):
     '''Joint genotyping of all samples together'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''GenomeAnalysisTK
@@ -246,9 +241,9 @@ def strelkaINDELCaller(infile_control, infile_tumor, outfile, genome, config,
 
 
 def variantAnnotator(vcffile, bamlist, outfile, genome,
-                     dbsnp, annotations="", snpeff_file=""):
+                     dbsnp, annotations="", snpeff_file="", gatkmem="2G"):
     '''Annotate variant file using GATK VariantAnnotator'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     if "--useAllAnnotations" in annotations:
@@ -274,9 +269,9 @@ def variantAnnotator(vcffile, bamlist, outfile, genome,
 
 
 def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
-                        kgenomes=None, hapmap=None, omni=None, mills=None):
+                        kgenomes=None, hapmap=None, omni=None, mills=None, gatkmem = "2G"):
     '''Create variant recalibration file'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     track = P.snip(outfile, ".recal")
@@ -314,9 +309,9 @@ def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
 ##############################################################################
 
 
-def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode):
+def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode, gatkmem):
     '''Perform variant quality score recalibration using GATK '''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''GenomeAnalysisTK -T ApplyRecalibration
@@ -332,9 +327,9 @@ def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode):
 ##############################################################################
 
 
-def vcfToTable(infile, outfile, genome, columns):
+def vcfToTable(infile, outfile, genome, columns, gatkmem):
     '''Converts vcf to tab-delimited file'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''GenomeAnalysisTK -T VariantsToTable

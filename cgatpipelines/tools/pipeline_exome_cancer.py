@@ -155,7 +155,7 @@ import os
 import sqlite3
 import cgatcore.iotools as iotools
 import cgatpipelines.tasks.mapping as mapping
-import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.bamstats as bamstats
 from cgatcore import pipeline as P
 import re
 import cgatpipelines.tasks.exome as exome
@@ -187,9 +187,11 @@ P.get_parameters(
 
 PARAMS = P.PARAMS
 
+PICARD_MEMORY = PARAMS["picard_memory"]
+
 mapping.PARAMS = PARAMS
-mappingqc.PARAMS = PARAMS
 exome.PARAMS = PARAMS
+
 #########################################################################
 
 
@@ -251,7 +253,7 @@ def mapReads(infile, outfile):
 @merge(mapReads, "picard_duplicate_stats.load")
 def loadPicardDuplicateStats(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
-    mappingqc.loadPicardDuplicateStats(infiles, outfile)
+    bamstats.loadPicardDuplicateStats(infiles, outfile)
 
 
 #########################################################################
@@ -263,7 +265,7 @@ def loadPicardDuplicateStats(infiles, outfile):
 @merge("bam/*.picard_stats", "picard_stats.load")
 def loadPicardAlignStats(infiles, outfile):
     '''Merge Picard alignment stats into single table and load into SQLite.'''
-    mappingqc.loadPicardAlignmentStats(infiles, outfile)
+    bamstats.loadPicardAlignmentStats(infiles, outfile)
 
 #########################################################################
 
@@ -292,8 +294,8 @@ def buildCoverageStats(infile, outfile):
                 '''
     P.run(statement)
 
-    mappingqc.buildPicardCoverageStats(
-        infile, outfile, modified_baits, modified_baits)
+    bamstats.buildPicardCoverageStats(
+        infile, outfile, modified_baits, modified_baits, PICARD_MEMORY)
 
     iotools.zap_file(modified_baits)
 
@@ -301,7 +303,7 @@ def buildCoverageStats(infile, outfile):
 @follows(buildCoverageStats)
 @merge(buildCoverageStats, "coverage_stats.load")
 def loadCoverageStats(infiles, outfile):
-    mappingqc.loadPicardCoverageStats(infiles, outfile)
+    bamstats.loadPicardCoverageStats(infiles, outfile)
 
 #########################################################################
 #########################################################################
@@ -463,16 +465,16 @@ def runPicardOnRealigned(infile, outfile):
     genome = "%s/%s.fa" % (PARAMS["bwa_index_dir"],
                            PARAMS["genome"])
 
-    mappingqc.buildPicardAlignmentStats(infile, outfile, genome)
-    mappingqc.buildPicardAlignmentStats(infile_tumor,
-                                                outfile_tumor, genome)
+    bamstats.buildPicardAlignmentStats(infile, outfile, genome, PICARD_MEMORY)
+    bamstats.buildPicardAlignmentStats(infile_tumor,
+                                                outfile_tumor, genome, PICARD_MEMORY)
 
 
 @follows(runPicardOnRealigned)
 @merge("bam/*.realigned.picard_stats", "realigned_picard_stats.load")
 def loadPicardRealigenedAlignStats(infiles, outfile):
     '''Merge Picard alignment stats into single table and load into SQLite.'''
-    mappingqc.loadPicardAlignmentStats(infiles, outfile)
+    bamstats.loadPicardAlignmentStats(infiles, outfile)
 
 #########################################################################
 #########################################################################

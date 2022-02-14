@@ -225,7 +225,6 @@ import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.mapping as mapping
-import cgatpipelines.tasks.mappingqc as mappingqc
 
 # Pipeline configuration
 P.get_parameters(
@@ -247,7 +246,6 @@ PARAMS.update(P.peek_parameters(
     restrict_interface=True))
 
 geneset.PARAMS = PARAMS
-mappingqc.PARAMS = PARAMS
 
 # Helper functions mapping tracks to conditions, etc
 # determine the location of the input files (reads).

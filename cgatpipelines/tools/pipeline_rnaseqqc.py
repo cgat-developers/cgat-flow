@@ -193,7 +193,7 @@ import cgat.GTF as GTF
 import cgatcore.iotools as iotools
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.windows as windows
-import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.bamstats as bamstats
 import cgatpipelines.tasks.rnaseq as rnaseq
 from cgatcore import pipeline as P
 
@@ -634,12 +634,12 @@ def buildBAMStats(infile, outfile):
     P.run(statement)
 
 
-@P.add_doc(mappingqc.loadBAMStats)
+@P.add_doc(bamstats.loadBAMStats)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(buildBAMStats, "bam_stats.load")
 def loadBAMStats(infiles, outfile):
     ''' load bam statistics into bam_stats table '''
-    mappingqc.loadBAMStats(infiles, outfile)
+    bamstats.loadBAMStats(infiles, outfile)
 
 
 @P.add_doc(windows.summarizeTagsWithinContext)
@@ -842,7 +842,7 @@ def buildRefFlat(infile, outfile):
     os.unlink(tmpflat)
 
 
-@P.add_doc(mappingqc.buildPicardRnaSeqMetrics)
+@P.add_doc(bamstats.buildPicardRnaSeqMetrics)
 @transform(mapReadsWithHisat,
            suffix(".bam"),
            add_inputs(buildRefFlat),
@@ -857,16 +857,16 @@ def buildPicardRnaSeqMetrics(infiles, outfile):
     else:
         strand = "NONE"
 
-    mappingqc.buildPicardRnaSeqMetrics(infiles, strand, outfile)
+    bamstats.buildPicardRnaSeqMetrics(infiles, strand, outfile, "9G")
 
 
-@P.add_doc(mappingqc.loadPicardRnaSeqMetrics)
+@P.add_doc(bamstats.loadPicardRnaSeqMetrics)
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(buildPicardRnaSeqMetrics, ["picard_rna_metrics.load",
                                   "picard_rna_histogram.load"])
 def loadPicardRnaSeqMetrics(infiles, outfiles):
     '''merge alignment stats into single tables.'''
-    mappingqc.loadPicardRnaSeqMetrics(infiles, outfiles)
+    bamstats.loadPicardRnaSeqMetrics(infiles, outfiles)
 
 
 ###################################################################

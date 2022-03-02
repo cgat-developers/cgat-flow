@@ -222,7 +222,6 @@ def buildGenomicContext(infiles, outfile, distance=10, job_memory="4G"):
     distance : int
        Merge adajcent features of the same type within this distance.
     '''
-
     repeats_gff, rna_gff, annotations_gtf, utr_gtf, intron_gtf = infiles
 
     tmpfile = P.get_temp_filename(shared=True)

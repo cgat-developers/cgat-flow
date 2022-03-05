@@ -246,6 +246,7 @@ run <- function(opt) {
             theme(text=element_text(family='serif')))
       end_plot()
     }
+  }
   else {
       futile.logger::flog.info(paste("... not done - too few degrees of freedom"))
   }

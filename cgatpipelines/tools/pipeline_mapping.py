@@ -1286,12 +1286,36 @@ def mapReadsWithSTAR(infile, outfile):
     P.run(statement)
 
 
+@merge(mapReadsWithSTAR,
+       "star.dir/merged.junctions")
+def mergeSTARJunctions(infiles,outfile):
+    '''
+    Merges and filters STAR junction out files for suse in second
+    pass mapping.
+
+    Parameters
+    ----------
+    infile: list
+        list of :term:`bam` format output files.
+
+    outfile: str
+        merged and filtered BAM junctions file
+    '''
+
+    infiles = " ".join(infiles).replace(".bam", ".bam.junctions")
+    
+    statement = '''
+    cat %(infiles)s | awk '($5 > 0 && $7 > 2 && $6==0)' | cut -f1-6 | sort | uniq > %(outfile)s
+    '''
+    P.run(statement)
+
+
 @active_if(SPLICED_MAPPING)
 @active_if("star2pass" in P.as_list(PARAMS["mappers"]))
 @follows(mkdir("star2pass.dir"))
 @transform(SEQUENCEFILES,
            SEQUENCEFILES_REGEX,
-           add_inputs(mapReadsWithSTAR),
+           add_inputs(mergeSTARJunctions),
            r"star2pass.dir/\1.star.bam")
 def mapReadsWithSTAR2nd(infiles, outfile):
     '''
@@ -1337,13 +1361,12 @@ def mapReadsWithSTAR2nd(infiles, outfile):
     '''
 
     infile = infiles[0]
-    junctions = infiles[1:]
+    junctions = infiles[1]
 
     job_threads = PARAMS["star_threads"]
     job_memory = PARAMS["star_memory"]
 
     star_mapping_genome = PARAMS["star_genome"] or PARAMS["genome"]
-    junctions = " ".join(junctions).replace(".bam", ".bam.junctions")
 
     try:
         star_options_2ndpass

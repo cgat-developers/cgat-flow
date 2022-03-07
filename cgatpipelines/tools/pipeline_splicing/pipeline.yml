@@ -19,6 +19,12 @@ version: 0.1
 # The full version, including alpha/beta/rc tags.
 release: 0.1
 
+# Genome, e.g. hg38
+genome: ''
+
+# Directory containing genome files
+genome_dir: ''
+
 #should permutation testing be carried out on design tables
 # 0 > no, 1 > yes, currently rMATS only
 # if yes, please specify number of permutations (100 good start)
@@ -112,16 +118,17 @@ DEXSeq:
     # IRFinder options
     #
     ################################################################
+IRFinder:
 
     # parameters for analyis. memory should include the estimate for a STAR run.
     memory: 50G
     threads: 1
 
-    # Path to ensembl FTP gtf file, the corresponding fasta will be downloaded automatically
-    ensembl_ftp: ftp://ftp.ensembl.org/pub/release-100/gtf/homo_sapiens/Homo_sapiens.GRCh38.100.gtf.gz
-
     # additional fasta file, usually ERCC or other spike in
     extra:
+
+    # path to directory with STAR index
+    star: /path/to/REF/STAR/directory.dir
 
     # path to bed to exclude 
     bed: /path/to/REF/extra-input-files/Human_hg38_nonPolyA_ROI.bed

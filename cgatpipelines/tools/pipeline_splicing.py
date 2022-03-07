@@ -245,7 +245,7 @@ def buildGff(infile, outfile):
     ps = PYTHONSCRIPTSDIR
     statement = '''python %(ps)s/dexseq_prepare_annotation.py
                 %(tmpgff)s %(outfile)s'''
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
     os.unlink(tmpgff)
 
@@ -293,7 +293,7 @@ def countDEXSeq(infiles, outfile):
     -s %(strandedness)s
     -r pos
     -f bam  %(gfffile)s %(infile)s %(outfile)s'''
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
 
 @collate(countDEXSeq,
@@ -455,16 +455,22 @@ def buildIRReference(outfile):
 
     extra = PARAMS['IRFinder_extra']
     bedfile = PARAMS['IRFinder_bed']
-    gtf = PARAMS['IRFinder_ensembl_ftp']
+    gtf = PARAMS["annotations_interface_geneset_all_gtf"]
+    star = PARAMS['IRFinder_ensembl_star']
+    genome = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
 
-    statement = '''IRFinder -m BuildRef 
-                   -r IRFinder.dir/REF '''
+    statement = '''IRFinder -m BuildRefFromSTARRef 
+                   -r IRFinder.dir/REF
+                   -x %(star)s
+                   -g %(gtf)s
+                   -f %(genome)s '''
     if extra is not None:
         statement += "-e %(extra)s "
     if bedfile is not None:
         statement += "-b %(bedfile)s "
 
-    statement +=  "%(gtf)s > IRFinder.dir/REF.log"
+    statement +=  " > IRFinder.dir/REF.log"
 
     P.run(statement)
 
@@ -502,7 +508,7 @@ def runIRFinder(infiles, outfile):
     m = splicing.IRFinder()
     statement = m.build((infile,), outfile)
 
-    P.run(statement, job_condaenv="IRFinder")
+    P.run(statement)
 
 
 @collate(runIRFinder,

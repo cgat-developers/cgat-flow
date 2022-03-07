@@ -102,7 +102,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     readlength = BamTools.estimateTagSize(design.samples[0]+".bam")
     tmpdir = P.get_temp_dir()
 
-    statement = '''rMATS
+    statement = '''rmats.py
     --b1 %(outdir)s/b1.txt
     --b2 %(outdir)s/b2.txt
     --gtf <(gunzip -c %(gtffile)s)

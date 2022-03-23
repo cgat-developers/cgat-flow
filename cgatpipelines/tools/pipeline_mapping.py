@@ -619,6 +619,8 @@ def buildJunctions(infile, outfile):
     for gffs in GTF.transcript_iterator(
             GTF.iterator(iotools.open_file(infile, "r"))):
 
+        gffs = [e for e in gffs if e.feature == "exon"]
+        
         gffs.sort(key=lambda x: x.start)
         end = gffs[0].end
         for gff in gffs[1:]:

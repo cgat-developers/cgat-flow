@@ -396,7 +396,9 @@ def runDEXSeq(infile, outfile, design):
 
 
     outdir = os.path.dirname(outfile)
-    dexseq_fdr = 0.05
+    DEXSeq_fdr = 0.05
+    DEXSeq_permutations = 0
+    
     designname = design.split(".")[0]
     model = PARAMS["DEXSeq_model_%s" % designname]
     reducedmodel = PARAMS["DEXSeq_reducedmodel_%s" % designname]
@@ -459,12 +461,23 @@ def buildIRReference(outfile):
     star = PARAMS['IRFinder_ensembl_star']
     genome = os.path.abspath(
         os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
+    irfinder = PARAMS["IRFinder_singularity"]
 
-    statement = '''IRFinder -m BuildRefFromSTARRef 
-                   -r IRFinder.dir/REF
-                   -x %(star)s
-                   -g %(gtf)s
-                   -f %(genome)s '''
+    job_threads = PARAMS["IRFinder_threads"]
+    job_memory = PARAMS["IRFinder_memory"]
+
+    statement = '''singularity run -H $PWD:/home
+                   -B %(star)s,%(gtf)s,%(genome)s'''
+    if extra is not None:
+        statement += ",%(extra)s"
+    if bedfile is not None:
+        statement += ",%(bedfile)s "
+    statement += '''%(irfinder)s BuildRefFromSTARRef 
+                    -r IRFinder.dir/REF
+                    -x %(star)s
+                    -g %(gtf)s
+                    -f %(genome)s
+                    -t %(job_threads)s '''
     if extra is not None:
         statement += "-e %(extra)s "
     if bedfile is not None:
@@ -473,7 +486,6 @@ def buildIRReference(outfile):
     statement +=  " > IRFinder.dir/REF.log"
 
     P.run(statement)
-
 
 
 @transform(SEQUENCEFILES,
@@ -490,9 +502,9 @@ def runIRFinder(infiles, outfile):
         filename of reads file
         can be :term:`fastq`, :term:`sra`, csfasta
 
-    IRFinder_executable: str
+    IRFinder_singularity: str
         :term:`PARAMS`
-        path to IRFinder executable
+        path to IRFinder singularity executable
 
     outfile: str
         :term:`txt` filename to write .
@@ -500,12 +512,11 @@ def runIRFinder(infiles, outfile):
 
     infile, reference = infiles
     ref_dir = P.snip(reference)
-    bin = PARAMS['IRFinder_bin']
 
     job_threads = PARAMS["IRFinder_threads"]
     job_memory = PARAMS["IRFinder_memory"]
 
-    m = splicing.IRFinder()
+    m = splicing.IRFinder(executable=P.substitute_parameters(**locals())["IRFinder_singularity"])
     statement = m.build((infile,), outfile)
 
     P.run(statement)
@@ -805,7 +816,7 @@ def runPermuteMATS(infiles, outfile, design):
 
     Runs rMATS command on permutations and then collates results into
     small summary table for each permutation
-
+ 
     Parameters
     ---------
     infiles[0] : string
@@ -849,8 +860,8 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len((temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1))))
+        collate.append(str(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))

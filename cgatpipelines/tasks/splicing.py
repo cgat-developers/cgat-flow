@@ -190,7 +190,7 @@ def rmats2sashimi(infile, designfile, FDR, outfile, plotmax=20):
     > %(outfile)s/%(event)s.log
     ''' % locals()
 
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
 
 
@@ -233,6 +233,7 @@ class IRFinder(SequenceCollectionProcessor):
                 
         num_files = [len(x) for x in infiles]
         nfiles = max(num_files)
+        executable = self.executable
         if nfiles == 1:
             files = " ".join([x[0] for x in infiles])
         elif nfiles == 2:
@@ -244,11 +245,16 @@ class IRFinder(SequenceCollectionProcessor):
         else:
             raise ValueError("unexpected number reads to map: %i " % nfiles)
 
+        # Need to provide directory that contains both the CWD containing infiles
+        # and data directory to which it links (normal practice is to link to Data Dir)
+        singularity_dir = os.path.dirname(os.getcwd())
 
         outdir = os.path.dirname(outfile)
 
         statement = '''
-            IRFinder
+            singularity run -H $PWD:/home
+            -B %(singularity_dir)s
+            %(executable)s FastQ
             -r %%(ref_dir)s 
             -d %(outdir)s 
             -t %%(IRFinder_threads)s

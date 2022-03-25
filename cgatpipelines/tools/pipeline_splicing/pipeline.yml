@@ -127,6 +127,9 @@ IRFinder:
     # additional fasta file, usually ERCC or other spike in
     extra:
 
+    # path to singularity container.
+    singularity: path/to/singularity/IRFinder
+
     # path to directory with STAR index
     star: /path/to/REF/STAR/directory.dir
 

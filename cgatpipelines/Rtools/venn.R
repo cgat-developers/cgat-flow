@@ -34,7 +34,8 @@ run <- function(opt) {
   
   dataframes <- lapply(opt$filenames, read.table)
   names(dataframes) <- opt$names
-  x <- lapply(dataframes, function(x) subset(x, padj < opt$pvalue))
+  x1 <- lapply(dataframes, function(x) subset(x, padj < opt$pvalue))
+  x <- lapply(x1, function(x) subset(x, abs(log2FoldChange) >= opt$lfc))
   if(opt$sign == "positive"){
     x <- lapply(x, function(y) subset(y, log2FoldChange >0))}
   if(opt$sign == "negative"){
@@ -97,11 +98,18 @@ main <- function() {
       help = paste("p value threshold")
     ),
     make_option(
+      "--lfc",
+      dest = "lfc",
+      type = "numeric",
+      default = 0,
+      help = paste("LFC value threshold")
+    ),
+    make_option(
       "--sign",
       dest = "sign",
       type = "character",
       default = "",
-      help = paste("p value threshold")
+      help = paste("optional - possibilities are positive/negative")
     )
   )
   opt <- experiment_start(option_list = option_list,

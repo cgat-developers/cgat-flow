@@ -466,6 +466,10 @@ def buildIRReference(outfile):
     job_threads = PARAMS["IRFinder_threads"]
     job_memory = PARAMS["IRFinder_memory"]
 
+    tmpgtf = P.get_temp_filename(".")
+    statement = "gunzip -c %(gtf)s > %(tmpgtf)s"
+    P.run(statement)
+
     statement = '''singularity run -H $PWD:/home
                    -B %(star)s,%(gtf)s,%(genome)s'''
     if extra is not None:
@@ -475,7 +479,7 @@ def buildIRReference(outfile):
     statement += '''%(irfinder)s BuildRefFromSTARRef 
                     -r IRFinder.dir/REF
                     -x %(star)s
-                    -g %(gtf)s
+                    -g %(tmpgtf)s
                     -f %(genome)s
                     -t %(job_threads)s '''
     if extra is not None:
@@ -487,6 +491,7 @@ def buildIRReference(outfile):
 
     P.run(statement)
 
+    os.unlink(tmpgtf)
 
 @transform(SEQUENCEFILES,
            SEQUENCEFILES_REGEX,

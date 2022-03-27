@@ -190,23 +190,6 @@ Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
 
-SEQUENCESUFFIXES = ("*.fastq.1.gz",
-                    "*.fastq.gz",
-                    "*.fa.gz",
-                    "*.sra",
-                    "*.export.txt.gz",
-                    "*.csfasta.gz",
-                    "*.csfasta.F3.gz",
-                    )
-
-SEQUENCEFILES = tuple([suffix_name
-                       for suffix_name in SEQUENCESUFFIXES])
-
-SEQUENCEFILES_REGEX = regex(
-    r"(.*\/)*(\S+).(fastq.1.gz|fastq.gz|fa.gz|sra|"
-    "csfasta.gz|csfasta.F3.gz|export.txt.gz)")
-
-
 
 ###################################################################
 ###################################################################
@@ -493,10 +476,10 @@ def buildIRReference(outfile):
 
     os.unlink(tmpgtf)
 
-@transform(SEQUENCEFILES,
-           SEQUENCEFILES_REGEX,
+@transform(glob.glob("*.bam"),
+           regex("(\S+).bam"),
            add_inputs(buildIRReference),           
-           r"IRFinder.dir/\2/IRFinder-IR-nondir.txt")
+           r"IRFinder.dir/\1/IRFinder-IR-nondir.txt")
 def runIRFinder(infiles, outfile):
     '''
     Maps reads using STAR and creates Intron quantification tables.
@@ -517,12 +500,22 @@ def runIRFinder(infiles, outfile):
 
     infile, reference = infiles
     ref_dir = P.snip(reference)
+    singularity_dir = os.path.dirname(os.getcwd())
+
 
     job_threads = PARAMS["IRFinder_threads"]
     job_memory = PARAMS["IRFinder_memory"]
+    outdir = os.path.dirname(outfile)
+    executable = PARAMS["IRFinder_singularity"]
 
-    m = splicing.IRFinder(executable=P.substitute_parameters(**locals())["IRFinder_singularity"])
-    statement = m.build((infile,), outfile)
+    statement = '''
+    singularity run -H $PWD:/home
+    -B %(singularity_dir)s
+    %(executable)s BAM
+    -r %(ref_dir)s 
+    -d %(outdir)s
+    -t %(IRFinder_threads)s
+    %(infile)s;'''
 
     P.run(statement)
 
@@ -572,13 +565,13 @@ def diffIRFinder(infiles, outfile):
     COMP = PARAMS['IRFinder_comparator_%s' % designname]
     permute = PARAMS["IRFinder_permute"]
     pvalue = PARAMS["IRFinder_pvalue"]
+    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
+    scriptpath = os.path.join(r_root, "Rtools/IRFinder.R")
+
     
     outdir = os.path.dirname(outfile)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
-    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
-    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/IRFinder.R")
 
     statement = '''
     export R_ROOT=%(r_root)s &&
@@ -635,12 +628,13 @@ def runMATS(infile, outfiles):
 
     design, gtffile = infile
     strand = PARAMS["MATS_libtype"]
+    cutoff = PARAMS["MATS_cutoff"]
     outdir = os.path.dirname(outfiles[0])
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     splicing.runRMATS(gtffile=gtffile, designfile=design,
-                              pvalue=PARAMS["MATS_cutoff"],
+                              pvalue=cutoff,
                               strand=strand, outdir=outdir)
 
 
@@ -849,12 +843,13 @@ def runPermuteMATS(infiles, outfile, design):
     init, gtffile = infiles
     directory = os.path.dirname(init)
     strand = PARAMS["MATS_libtype"]
+    cutoff = PARAMS["MATS_cutoff"]
     outdir = os.path.dirname(outfile)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     splicing.runRMATS(gtffile=gtffile, designfile=design,
-                              pvalue=PARAMS["MATS_cutoff"],
+                              pvalue=cutoff,
                               strand=strand, outdir=directory, permute=1)
 
     collate = []

@@ -29,7 +29,7 @@ suppressMessages(library(Cairo))
 suppressMessages(library(goseq))
 
 
-source(file.path("/ifs/projects/jakubs/cgat-developers-v2/cgat-flow/cgatpipelines" , "experiment.R"))
+source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 
 mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl", host = "jul2018.archive.ensembl.org")
@@ -61,7 +61,7 @@ end_plot <- function() {
 }
 
 
-DESeqDataSetFromIRFinder = function(filePaths,designMatrix,designFormula){
+DESeqDataSetFromIRFinder = function(filePaths,designMatrix,designFormula,irratio_thr=0, warning_filter="^$" ){
     res=c()
     libsz=c()
     spl=c()
@@ -69,6 +69,8 @@ DESeqDataSetFromIRFinder = function(filePaths,designMatrix,designFormula){
     if (irtest[1,1]=="Chr"){irtest=irtest[-1,]}
     irnames=unname(apply(as.matrix(irtest),1,FUN=function(x){return(paste0(x[4],"/",x[1],":",x[2],"-",x[3],":",x[6]))}))
     n=1
+    warns=c()
+    ratio_mask=c()
     for (i in filePaths){
         print(paste0("processing file ",n," at ",i))
         irtab=read.table(i)
@@ -86,17 +88,35 @@ DESeqDataSetFromIRFinder = function(filePaths,designMatrix,designFormula){
         res=cbind(res,tmp1)
         libsz=cbind(libsz,tmp2)
         spl=cbind(spl,tmp6)
+        if (length(warns) == 0){
+          warns= ! grepl(as.character(irtab[,21]), pattern = warning_filter )  
+        } else {
+          warns=warns & ! grepl(as.character(irtab[,21]), pattern = warning_filter )
+        }
+        ratios=(tmp1 / (tmp6+tmp1))
+        rmsk=(! is.nan(ratios)) & ratios >= irratio_thr
+        if (length(ratio_mask) == 0 ){
+          ratio_mask = rmsk
+        } else {
+          ratio_mask = ratio_mask | rmsk
+        }
         n=n+1
     }
-    res.rd=round(res)
-    libsz.rd=round(libsz)
-    spl.rd=round(spl)
+    print(warning_filter)
+    print(irratio_thr)
+    print(paste0("Warning removed: ", sum(! warns)))
+    print(paste0("Ratio removed: ", sum(! ratio_mask)))
+    warns=warns & ratio_mask
+    print(paste0("Combined removed: ", sum(! warns)))
+    res.rd=round(res)[warns,]
+    libsz.rd=round(libsz)[warns,]
+    spl.rd=round(spl)[warns,]
     colnames(res.rd)=paste("intronDepth",as.vector(designMatrix[,1]),sep=".")
-    rownames(res.rd)=irnames
+    rownames(res.rd)=irnames[warns]
     colnames(libsz.rd)=paste("totalSplice",as.vector(designMatrix[,1]),sep=".")
-    rownames(libsz.rd)=irnames
+    rownames(libsz.rd)=irnames[warns]
     colnames(spl.rd)=paste("maxSplice",as.vector(designMatrix[,1]),sep=".")
-    rownames(spl.rd)=irnames
+    rownames(spl.rd)=irnames[warns]
     
     ir=c(rep("IR",dim(designMatrix)[1]),rep("Splice",dim(designMatrix)[1]))
     group=rbind(designMatrix,designMatrix)
@@ -108,7 +128,7 @@ DESeqDataSetFromIRFinder = function(filePaths,designMatrix,designFormula){
     
     dd = DESeqDataSetFromMatrix(countData = counts.IRFinder, colData = group, design = designFormula)
     sizeFactors(dd)=rep(1,dim(group)[1])
-    rownames(dd)=irnames
+    rownames(dd)=irnames[warns]
     final=list(dd,res,libsz,spl)
     names(final)=c("DESeq2Object","IntronDepth","SpliceDepth","MaxSplice")
     return(final)
@@ -191,9 +211,9 @@ run <- function(opt) {
         }
         start_plot("Simulations", outdir=opt$outdir)
         theme_set(theme_gray(base_size = 18))
-        sims = qplot(x,
+          sims = qplot(x,
             geom="histogram",
-            breaks=seq(0, length(rownames(subset(res.diff, padj < 0.05))), by = signif(length(rownames(subset(res.diff, padj < 0.05)))/10,digits=1),fill=I("grey"), col=I("black"),
+            breaks=seq(0, length(rownames(subset(res.diff, padj < 0.05))), by = signif(length(rownames(subset(res.diff, padj < 0.05)))/10,digits=1)),fill=I("grey"), col=I("black"),
             main = "Histogram of DE experiments\n with random group labels", 
             xlab = "Number of differentially expressed genes",
             ylab = "Number of simulations") +

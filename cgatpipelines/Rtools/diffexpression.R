@@ -4,10 +4,9 @@
 #' 
 #' Example usage:
 #' 
-#' Rscript PATH/TO/diffexpression.R --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
+#' Rscript PATH/TO/diffexpression.R --rds-filename=sce.rds --model=~group --coef=group_MUT_vs_CTR --refgroup=CTR
 #'
 
-## conda dependencies: bioconductor-scater r-cairo
 
 suppressMessages(library(futile.logger))
 suppressMessages(library(getopt))
@@ -365,7 +364,7 @@ main <- function() {
             dest = "outdir",
             type = "character",
             default = "experiment",
-            help = paste("Libraries for gsea")
+            help = paste("Directory for output")
         ),
         make_option(
             "--permute",

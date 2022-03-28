@@ -192,3 +192,57 @@ def rmats2sashimi(infile, designfile, FDR, outfile, plotmax=20):
 
     P.run(statement)
 
+
+def diffIR(singularity, designfile, outdir, irratio="0.05", permute=0):
+    '''Module to generate IRFinder Diff statment
+
+    Module offers the option to permute group name labels.
+
+    Arguments
+    ---------
+    singularity: string
+        path to IRFinder :term:`singularity` file
+    designfile: string
+        path to design file
+    irratio: string
+        minimum IR ratio met in at least one sample
+    outdir: string
+        directory path for rMATS results
+    permute : 1 or 0
+        option to activate random shuffling of sample groups
+    '''
+
+    design = Expression.ExperimentalDesign(designfile)
+    if permute == 1:
+        permutelist = design.table.group.tolist()
+        random.shuffle(permutelist)
+        design.table.group = permutelist
+
+    group1_list = ["IRFinder.dir/%s/IRFinder-IR-nondir.txt" % x for x in design.getSamplesInGroup(design.groups[0])]
+    group1_list_dir = [filename.replace("nondir","dir") for filename in group1_list]
+    if os.path.exists(group1_list_dir[1]):
+        group1_list = group1_list_dir
+    groupname1 = design.groups[0]
+    group1 = " ".join(["".join(["-g:",groupname1," ",item]) for item in group1_list])  
+
+    group2_list = ["IRFinder.dir/%s/IRFinder-IR-nondir.txt" % x for x in design.getSamplesInGroup(design.groups[1])]
+    group2_list_dir = [filename.replace("nondir","dir") for filename in group2_list]
+    if os.path.exists(group2_list_dir[1]):
+        group2_list = group2_list_dir
+    groupname2 = design.groups[1]  
+    group2 = " ".join(["".join(["-g:",groupname2," ",item]) for item in group2_list])
+
+    statement = '''
+    singularity run -H $PWD:/home
+    %(singularity)s Diff
+    %(group1)s
+    %(group2)s
+    -ir %(irratio)s
+    -o %(outdir)s
+    ''' % locals()
+
+    statement += '''
+    > %(outdir)s/%(designfile)s.log
+    '''
+
+    P.run(statement)

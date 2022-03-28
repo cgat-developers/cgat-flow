@@ -4,13 +4,10 @@
 #' 
 #' Example usage:
 #' 
-#' Rscript PATH/TO/diffexonexpression.R --rds-filename=experiment.rds --model=~group --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint
+#' Rscript PATH/TO/diffexonexpression.R --rds-filename=experiment.rds --model=~sample+exon+group:exon --reducedmodel=~sample+exon
 #'
 #' `experiment.rds` is a DEXSeq experiment object after filtering
 #'
-#'
-#' Features can then be selected in the `--factor` option to be
-#' plotted.
 #'
 #' -> todo: ideas
 

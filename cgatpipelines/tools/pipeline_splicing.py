@@ -454,7 +454,7 @@ def buildIRReference(outfile):
     P.run(statement)
 
     statement = '''singularity run -H $PWD:/home
-                   -B %(star)s,%(gtf)s,%(genome)s'''
+                   -B %(star)s,%(tmpgtf)s,%(genome)s'''
     if extra is not None:
         statement += ",%(extra)s"
     if bedfile is not None:
@@ -475,6 +475,7 @@ def buildIRReference(outfile):
     P.run(statement)
 
     os.unlink(tmpgtf)
+
 
 @transform(glob.glob("*.bam"),
            regex("(\S+).bam"),
@@ -593,6 +594,7 @@ def permuteIRFinder(infile, outfiles, outdir):
         iotools.touch_file("%s/run%i.dir/init" % (outdir, i))
 
 
+@follows(runIRFinder)
 @transform(permuteIRFinder,
            regex("results.dir/IRFinder/(\S+).dir/permutations/(\S+).dir/init"),
            r"results.dir/IRFinder/\1.dir/permutations/\2.dir/result.tsv",

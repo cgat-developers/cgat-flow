@@ -362,22 +362,6 @@ def loadPicardDuplicateStatsLane(infiles, outfile):
 
 @transform(RemoveDuplicatesLane,
            regex(r"gatk/(\S+).dedup.bam"),
-           r"gatk/\1.realigned2.bam")
-def GATKIndelRealignLane(infile, outfile):
-    '''realigns around indels using GATK'''
-    threads = PARAMS["gatk_threads"]
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
-    intervals = PARAMS["roi_intervals"]
-    padding = PARAMS["roi_padding"]
-    exome.GATKIndelRealign(infile, outfile, genome, intervals, padding,
-                                   threads, GATK_MEMORY)
-    iotools.zap_file(infile)
-
-###############################################################################
-
-
-@transform(GATKIndelRealignLane,
-           regex(r"gatk/(\S+).realigned2.bam"),
            r"gatk/\1.bqsr.bam")
 def GATKBaseRecal(infile, outfile):
     '''recalibrates base quality scores using GATK'''
@@ -457,37 +441,11 @@ def loadPicardDuplicateStatsSample(infiles, outfile):
 ###############################################################################
 ###############################################################################
 ###############################################################################
-# Realign sample-by-sample
+# Coverage of targetted area
 
 
 @transform(RemoveDuplicatesSample,
            regex(r"gatk/(\S+).dedup2.bam"),
-           add_inputs(r"gatk/\1.merged.bam.count"),
-           r"gatk/\1.realigned.bam")
-def GATKIndelRealignSample(infiles, outfile):
-    '''realigns around indels using GATK'''
-    infile, countfile = infiles
-    threads = PARAMS["gatk_threads"]
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
-    intervals = PARAMS["roi_intervals"]
-    padding = PARAMS["roi_padding"]
-    countf = open(countfile, "r")
-    if countf.read() > '1':
-        exome.GATKIndelRealign(infiles[0], outfile, genome, intervals,
-                                       padding, threads, GATK_MEMORY)
-    else:
-        shutil.copyfile(infile, outfile)
-        shutil.copyfile(infile + ".bai", outfile + ".bai")
-#    iotools.zap_file(infile)
-
-###############################################################################
-###############################################################################
-###############################################################################
-# Coverage of targetted area
-
-
-@transform(GATKIndelRealignSample,
-           regex(r"gatk/(\S+).realigned.bam"),
            r"gatk/\1.cov")
 def buildCoverageStats(infile, outfile):
     '''Generate coverage statistics for regions of interest from a bed
@@ -513,8 +471,8 @@ def loadCoverageStats(infiles, outfile):
 
 
 @follows(mkdir("xy_ratio"))
-@transform(GATKIndelRealignSample,
-           regex(r"gatk/(\S+).realigned.bam"),
+@transform(RemoveDuplicatesSample,
+           regex(r"gatk/(\S+).dedup2.bam"),
            r"xy_ratio/\1.sex")
 def calcXYratio(infile, outfile):
     '''Guess the sex of a sample based on ratio of reads
@@ -553,7 +511,7 @@ def loadXYRatio(infile, outfile):
 
 
 @follows(mkdir("variants"))
-@transform(GATKIndelRealignSample, regex(r"gatk/(\S+).realigned.bam"),
+@transform(RemoveDuplicatesSample, regex(r"gatk/(\S+).dedup2.bam"),
            r"variants/\1.haplotypeCaller.g.vcf")
 def haplotypeCaller(infile, outfile):
     '''Call SNVs and indels using GATK HaplotypeCaller in individuals'''
@@ -598,8 +556,8 @@ def SelectExonicHapmapVariants(infile, outfile):
 
 
 @follows(SelectExonicHapmapVariants)
-@transform(GATKIndelRealignSample,
-           regex(r"gatk/(\S+).realigned.bam"),
+@transform(RemoveDuplicatesSample,
+           regex(r"gatk/(\S+).dedup2.bam"),
            add_inputs("hapmap/hapmap_exome.bed"),
            r"hapmap/\1.hapmap.vcf")
 def HapMapGenotype(infiles, outfile):
@@ -733,7 +691,7 @@ def loadTableSnpEff(infile, outfile):
 # GATK Variant Annotator
 
 
-@merge(GATKIndelRealignSample, "gatk/all_samples.list")
+@merge(RemoveDuplicatesSample, "gatk/all_samples.list")
 def listOfBAMs(infiles, outfile):
     '''generates a file containing a list of BAMs for use in VQSR'''
     with iotools.open_file(outfile, "w") as outf:
@@ -999,7 +957,7 @@ def annotateVariantsVEP(infile, outfile):
 
 
 @follows(mkdir("variant_tables"))
-@transform(GATKIndelRealignSample, regex(r"gatk/(.*).realigned.bam"),
+@transform(RemoveDuplicatesSample, regex(r"gatk/(.*).dedup2.bam"),
            add_inputs(annotateVariantsVEP), r"variant_tables/\1.tsv")
 def makeAnnotationsTables(infiles, outfile):
     '''
@@ -1010,7 +968,7 @@ def makeAnnotationsTables(infiles, outfile):
     bamname = infiles[0]
     inputvcf = infiles[1]
     TF = P.get_temp_filename(".")
-    samplename = bamname.replace(".realigned.bam",
+    samplename = bamname.replace(".dedup2.bam",
                                  ".bam").replace("gatk/", "")
 
     statement = '''bcftools view -h %(inputvcf)s |
@@ -2060,7 +2018,7 @@ def mapping_tasks():
 
 @follows(GATKBaseRecal,
          loadPicardDuplicateStatsLane,
-         GATKIndelRealignSample,
+         RemoveDuplicatesSample,
          loadCoverageStats)
 def gatk():
     pass

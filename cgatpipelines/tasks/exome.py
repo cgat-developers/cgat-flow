@@ -75,33 +75,6 @@ def GATKReadGroups(infile, outfile, dictionary,
 ##############################################################################
 
 
-def GATKIndelRealign(infile, outfile, genome, intervals, padding, threads=4, gatkmem="2G"):
-    '''Realigns BAMs around indels using GATK'''
-
-    intervalfile = outfile.replace(".bam", ".intervals")
-    job_memory = gatkmem 
-    job_threads = 3
-
-    statement = '''GenomeAnalysisTK
-                    -T RealignerTargetCreator
-                    -o %(intervalfile)s
-                    --num_threads %(threads)s
-                    -R %(genome)s
-                    -L %(intervals)s
-                    -ip %(padding)s
-                    -I %(infile)s; ''' % locals()
-
-    statement += '''GenomeAnalysisTK
-                    -T IndelRealigner
-                    -o %(outfile)s
-                    -R %(genome)s
-                    -I %(infile)s
-                    -targetIntervals %(intervalfile)s;''' % locals()
-    P.run(statement)
-
-##############################################################################
-
-
 def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
                   solid_options="", gatkmem="2G"):
     '''Recalibrates base quality scores using GATK'''

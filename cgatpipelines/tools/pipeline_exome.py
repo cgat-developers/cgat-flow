@@ -369,7 +369,7 @@ def GATKBaseRecal(infile, outfile):
     outtrack = P.snip(os.path.basename(outfile), ".bam")
     dbsnp = PARAMS["gatk_dbsnp"]
     solid_options = PARAMS["gatk_solid_options"]
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     intervals = PARAMS["roi_intervals"]
     padding = PARAMS["roi_padding"]
     if PARAMS["targetted"]:
@@ -530,7 +530,7 @@ def haplotypeCaller(infile, outfile):
 @merge(haplotypeCaller, "variants/all_samples.vcf")
 def genotypeGVCFs(infiles, outfile):
     '''Joint genotyping of all samples together'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     inputfiles = " --variant ".join(infiles)
     options = PARAMS["gatk_genotype_options"]
     exome.genotypeGVCFs(inputfiles, outfile, genome, options)
@@ -563,7 +563,7 @@ def SelectExonicHapmapVariants(infile, outfile):
 def HapMapGenotype(infiles, outfile):
     '''Genotype HapMap SNPs using HaplotypeCaller in each individual'''
     infile, intervals = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     dbsnp = PARAMS["gatk_dbsnp"]
     padding = PARAMS["hapmap_padding"]
     options = PARAMS["hapmap_hc_options"]
@@ -674,7 +674,7 @@ def annotateVariantsSNPeff(infile, outfile):
            r"variants/all_samples.snpeff.table")
 def vcfToTableSnpEff(infile, outfile):
     '''Converts vcf to tab-delimited file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["annotation_snpeff_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -709,7 +709,7 @@ def listOfBAMs(infiles, outfile):
 def variantAnnotator(infiles, outfile):
     '''Annotate variant file using GATK VariantAnnotator'''
     vcffile, bamlist, snpeff_file = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     dbsnp = PARAMS["gatk_dbsnp"]
     annotations = PARAMS["gatk_variant_annotations"]
     exome.variantAnnotator(vcffile, bamlist, outfile, genome,
@@ -783,7 +783,7 @@ def variantRecalibratorIndels(infile, outfile):
 def applyVariantRecalibrationIndels(infiles, outfile):
     '''Perform variant quality score recalibration using GATK '''
     vcf, recal, tranches = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     mode = 'INDEL'
     exome.applyVariantRecalibration(vcf, recal, tranches,
                                             outfile, genome, mode, GATK_MEMORY)
@@ -1394,7 +1394,7 @@ def findGenes(infile, outfile):
     geneList = P.as_list(PARAMS["annotation_genes_of_interest"])
     expression = '\'||SNPEFF_GENE_NAME==\''.join(geneList)
     statement = '''GenomeAnalysisTK -T VariantFiltration
-                   -R %%(genome_dir)s/%%(gatkgenome)s.fa
+                   -R %%(genome_dir)s/%%(genome)s.fa
                    --variant %(infile)s
                    --filterExpression "SNPEFF_GENE_NAME=='%(expression)s'"
                    --filterName "GENE_OF_INTEREST" -o %(outfile)s''' % locals()
@@ -1416,7 +1416,7 @@ TABULATION_INPUT = {'': annotateVariantsVEP,
            r"variants/all_samples.snpsift.table")
 def vcfToTable(infile, outfile):
     '''Converts vcf to tab-delimited file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1598,7 +1598,7 @@ def lowerStringencyDeNovos(infiles, outfile):
            r"variants/\1.denovos.table")
 def tabulateLowerStringencyDeNovos(infile, outfile):
     '''Tabulate lower stringency de novo variants'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1626,7 +1626,7 @@ def loadLowerStringencyDeNovos(infile, outfile):
 def dominantVariants(infiles, outfile):
     '''Filter variants according to autosomal dominant disease model'''
     pedfile, infile = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     pedigree = csv.DictReader(open(pedfile), delimiter='\t',
                               fieldnames=['family', 'sample', 'father',
                                           'mother', 'sex', 'status'])
@@ -1659,7 +1659,7 @@ def dominantVariants(infiles, outfile):
            r"variants/\1.dominant.table")
 def tabulateDoms(infile, outfile):
     '''Tabulate dominant disease candidate variants'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1688,7 +1688,7 @@ def loadDoms(infile, outfile):
            r"variants/\1.recessive.vcf")
 def recessiveVariants(infiles, outfile):
     '''Filter variants according to autosomal recessive disease model'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(open(pedfile), delimiter='\t',
                               fieldnames=['family', 'sample', 'father',
@@ -1732,7 +1732,7 @@ def recessiveVariants(infiles, outfile):
            r"variants/\1.recessive.table")
 def tabulateRecs(infile, outfile):
     '''Tabulate potential homozygous recessive disease variants'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1760,7 +1760,7 @@ def loadRecs(infile, outfile):
 def xlinkedVariants(infiles, outfile):
     '''Find maternally inherited X chromosome variants in male patients'''
     track = P.snip(os.path.basename(outfile), ".vcf")
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     pedfile, infile = infiles
     pedigree = csv.DictReader(open(pedfile), delimiter='\t',
                               fieldnames=['family', 'sample', 'father',
@@ -1816,7 +1816,7 @@ def xlinkedVariants(infiles, outfile):
            r"variants/\1.xlinked.table")
 def tabulateXs(infile, outfile):
     '''Tabulate potential X-linked disease variants'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
     exome.vcfToTable(infile, outfile, genome, columns)
 
@@ -1848,7 +1848,7 @@ def loadXs(infile, outfile):
 def phasing(infiles, outfile):
     '''phase variants with GATK'''
     infile, pedfile, bamlist = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     statement = '''GenomeAnalysisTK -T PhaseByTransmission
                    -R %(genome)s
                    -V %(infile)s
@@ -1867,7 +1867,7 @@ def readbackedphasing(infiles, outfile):
     '''phase variants with ReadBackedPhasing'''
     job_memory = "32G"
     infile, bamlist = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     statement = '''GenomeAnalysisTK -T ReadBackedPhasing -nt 4
                    -R %(genome)s
                    -I %(bamlist)s
@@ -1926,7 +1926,7 @@ def candidateCoverage(infile, outfile):
     all_exons = PARAMS["coverage_all_exons"]
     candidates = PARAMS["coverage_candidates"]
     candidates = candidates.replace(",", " -e ")
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["gatkgenome"] + ".fa"
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     threshold = PARAMS["coverage_threshold"]
     statement = '''zcat %(all_exons)s | grep -e %(candidates)s
                    | awk '{print $1 ":" $4 "-" $5}' - | sed 's/chr//' - >

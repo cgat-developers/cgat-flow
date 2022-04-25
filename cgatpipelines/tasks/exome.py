@@ -84,19 +84,19 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK
-                    -T BaseRecalibrator
-                    --out %(tmpdir_gatk)s/%(track)s.recal.grp
+    statement = '''gatk
+                    BaseRecalibrator
+                    -O %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -L %(intervals)s
                     -ip %(padding)s
                     -I %(infile)s
-                    --knownSites %(dbsnp)s %(solid_options)s ;
+                    --known-sites %(dbsnp)s %(solid_options)s ;
                     ''' % locals()
 
-    statement += '''GenomeAnalysisTK
-                    -T PrintReads -o %(outfile)s
-                    -BQSR %(tmpdir_gatk)s/%(track)s.recal.grp
+    statement += '''gatk
+                    ApplyBSQR -O %(outfile)s
+                    --bsqr-recal-file %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -I %(infile)s ;
                     ''' % locals()
@@ -114,12 +114,12 @@ def haplotypeCaller(infile, outfile, genome,
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK
+    statement = '''gatk
                     -T HaplotypeCaller
                     -ERC GVCF
                     -variant_index_type LINEAR
                     -variant_index_parameter 128000
-                    -o %(outfile)s
+                    -O %(outfile)s
                     -R %(genome)s
                     -I %(infile)s
                     --dbsnp %(dbsnp)s
@@ -137,8 +137,8 @@ def genotypeGVCFs(inputfiles, outfile, genome, options, gatkmem="2G"):
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK
-                    -T GenotypeGVCFs
+    statement = '''gatk
+                    GenotypeGVCFs
                     -o %(outfile)s
                     -R %(genome)s
                     --variant %(inputfiles)s''' % locals()
@@ -226,7 +226,7 @@ def variantAnnotator(vcffile, bamlist, outfile, genome,
     else:
         anno = ""
 
-    statement = '''GenomeAnalysisTK -T VariantAnnotator
+    statement = '''gatk VariantAnnotator
                     -R %(genome)s
                     -I %(bamlist)s
                     -A SnpEff
@@ -249,7 +249,7 @@ def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
 
     track = P.snip(outfile, ".recal")
     if mode == 'SNP':
-        statement = '''GenomeAnalysisTK -T VariantRecalibrator
+        statement = '''gatk VariantRecalibrator
         -R %(genome)s
         -input %(infile)s
         -resource:hapmap,known=false,training=true,truth=true,prior=15.0 %(hapmap)s
@@ -265,7 +265,7 @@ def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
         -rscriptFile %(track)s.plots.R ''' % locals()
         P.run(statement)
     elif mode == 'INDEL':
-        statement = '''GenomeAnalysisTK -T VariantRecalibrator
+        statement = '''gatk VariantRecalibrator
         -R %(genome)s
         -input %(infile)s
         -resource:mills,known=true,training=true,truth=true,prior=12.0 %(mills)s
@@ -287,7 +287,7 @@ def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode, gatkm
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK -T ApplyRecalibration
+    statement = '''gatk ApplyRecalibration
     -R %(genome)s
     -input:VCF %(vcf)s
     -recalFile %(recal)s
@@ -305,7 +305,7 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK -T VariantsToTable
+    statement = '''gatk VariantsToTable
                    -R %(genome)s
                    -V %(infile)s
                    --showFiltered
@@ -319,7 +319,7 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
 
 def selectVariants(infile, outfile, genome, select):
     '''Filter de novo variants based on provided jexl expression'''
-    statement = '''GenomeAnalysisTK -T SelectVariants
+    statement = '''gatk SelectVariants
                     -R %(genome)s
                     --variant %(infile)s
                     -select '%(select)s'

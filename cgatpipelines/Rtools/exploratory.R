@@ -10,6 +10,7 @@
 #'
 #' Output: png images of: PCA, clustering, Surrogate Variable Analysis, Heatmaps
 #'
+
 suppressMessages(library(getopt))
 suppressMessages(library(tidyverse))
 suppressMessages(library(data.table))
@@ -115,8 +116,13 @@ run <- function(opt) {
     variable.group <- colData(dds)[, factor]
     names(variable.group) <- factor
     percentVar <- round(100 * summary(pca)$importance[2,])
-    futile.logger::flog.info(paste("PCA", dim(pca$x)))
-    scores <- data.frame(variable.group, pca$x[,1:8])
+    futile.logger::flog.info(paste("number of PCA dimensions", dim(pca$x)))
+    if(dim(pca$x)[1]>7){
+      dim_pca = 8
+    } else {
+      dim_pca = dim(pca$x)
+    }
+    scores <- data.frame(variable.group, pca$x[,1:dim_pca])
     start_plot(paste0('PCA_', factor), outdir=opt$outdir)
       print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
         theme(legend.position="right") +  
@@ -138,15 +144,22 @@ run <- function(opt) {
   }
   variable.group <- colData(dds)[, opt$contrast]
   names(variable.group) <- opt$contrast
-  scores <- data.frame(variable.group, pca$x[,1:8])
+  scores <- data.frame(variable.group, pca$x[,1:dim_pca])
   start_plot(paste0('PCA_grid'), outdir=opt$outdir)
-  print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
-    geom_point(shape = 16, size = 0.5, position = 'auto') + 
-    geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
-    facet_matrix(vars(PC1:PC8), layer.diag = 2))
+  if(dim_pca>7){
+    print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
+      geom_point(shape = 16, size = 0.5, position = 'auto') + 
+      geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
+      facet_matrix(vars(PC1:PC8), layer.diag = 2))
+  }else{
+    print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
+      geom_point(shape = 16, size = 0.5, position = 'auto') + 
+      geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
+      facet_matrix(vars(everything()), layer.diag = 2))
+  }
   end_plot()
   
-  loadings <- pca$rotation[,1:8]
+  loadings <- pca$rotation[,1:dim_pca]
   loadings <- data.frame(loadings[order(loadings[,1]), ])
   data <- getmart(rownames(loadings))
   loadings$symbol<-data$mgi_symbol[match(rownames(loadings), data$ensembl_gene_id)]
@@ -173,6 +186,7 @@ run <- function(opt) {
   end_plot()
   # Heatmap of Genes of interest
   if (!is.null(opt$genes_of_interest)) {
+    print(rownames(assay(vsd)))
     mat <- assay(vsd)[opt$genes_of_interest, ]
     mat <- mat - rowMeans(mat)
     temp <- getmart(rownames(mat))
@@ -213,16 +227,17 @@ run <- function(opt) {
   
   ### EXPLORE BATCH EFFECTS ###
   futile.logger::flog.info(paste("Exploring Batch Effects"))
-  for(factor in opt$factors){
-    factor_transformed <- vsd
-    assay(factor_transformed) <- limma::removeBatchEffect(assay(factor_transformed), colData(factor_transformed)[,factor])
-    pca = prcomp(t(assay(factor_transformed)))
-    sample.group <- as_factor(colData(dds)[, factor])
-    variable.group <- colData(dds)[, opt$contrast]
-    percentVar <- round(100 * summary(pca)$importance[2,])
-    scores <- data.frame(variable.group, sample.group, pca$x[,1:8])
-    start_plot(paste0('PCA_', factor, '_removed'), outdir=opt$outdir)
-    print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
+  if(dim_pca == 8){
+    for(factor in opt$factors){
+      factor_transformed <- vsd
+      assay(factor_transformed) <- limma::removeBatchEffect(assay(factor_transformed), colData(factor_transformed)[,factor])
+      pca = prcomp(t(assay(factor_transformed)))
+      sample.group <- as_factor(colData(dds)[, factor])
+      variable.group <- colData(dds)[, opt$contrast]
+      percentVar <- round(100 * summary(pca)$importance[2,])
+      scores <- data.frame(variable.group, sample.group, pca$x[,1:2])
+      start_plot(paste0('PCA_', factor, '_removed'), outdir=opt$outdir)
+      print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
             theme(legend.position="right") +  
             labs(colour=opt$contrast, shape=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
                  y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
@@ -230,7 +245,11 @@ run <- function(opt) {
             theme_grey(base_size = 15) +
             theme(plot.title = element_text(lineheight=1, face="bold"))  + geom_point(size=2) +
             theme(text=element_text(family='serif')))
-    end_plot()
+      end_plot()
+    }
+  }
+  else {
+      futile.logger::flog.info(paste("... not done - too few degrees of freedom"))
   }
 }
 

@@ -4,18 +4,9 @@
 #' 
 #' Example usage:
 #' 
-#' Rscript PATH/TO/diffexpression.R --rds-filename=sce.rds --phenotypes-filename=phenodata.tsv --factor=group,mouse_id,collection_date,slice_depth,slice_number,pipette_visual,timepoint > filtered_counts.tsv
+#' Rscript PATH/TO/diffexpression.R --rds-filename=sce.rds --model=~group --coef=group_MUT_vs_CTR --refgroup=CTR
 #'
-#' `sce.rds` is a single cell experiment object after filtering
-#'
-#'
-#' Features can then be selected in the `--factor` option to be
-#' plotted.
-#'
-#' -> todo: parameterize detection of ERCC (pattern?)
-#' -> todo: parameterize definition of mitochondrial genes - currently hardcoded for mouse.
 
-## conda dependencies: bioconductor-scater r-cairo
 
 suppressMessages(library(futile.logger))
 suppressMessages(library(getopt))
@@ -196,20 +187,27 @@ run <- function(opt) {
   # Currently only supports data from salmon and kallisto
   # Needs implementation of genelength matrix from featurecounts
   if(any(names(assays(experiment)) == "avgTxLength")){
-      res.nona <- subset(resLFC, (!is.na(padj)))
-      de.genes <- as.integer(res.nona$padj < 0.05)
-      names(de.genes) <- rownames(res.nona)
-      temp <- rowMeans(assays(experiment)$avgTxLength[match(names(de.genes), rownames(assays(experiment)$avgTxLength)),])
-      pwf=nullp(de.genes,bias.data=temp)
-      all = goseq(pwf,"hg38","ensGene", method="Hypergeometric")
-      sigall <- all
-      names(sigall) <- c("category","pvalue","underrepresented_pvalue","numberDE", "numberTOT", "term", "ontology")
-      sigall$pvalue <- p.adjust(sigall$pvalue, method="BH")
-      sigall$percent <- sigall$numberDE/sigall$numberTOT
-      sigall <- sigall[which(sigall[,2] < 0.05),]
-      cats <- sigall$category
-      write.table(sigall[,c("category", "pvalue")], file=paste0(opt$outdir,"/",'GO.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
-      write.table(sigall, file=paste0(opt$outdir,"/",'GOall.tsv'), quote=FALSE, sep='\t', row.names = FALSE)
+      res.nona <- subset(resLFC, (!is.na(padj & baseMean) & baseMean > 1))
+      res.list <- list(as.integer(res.nona$padj < 0.05), 
+      	       	  as.integer(res.nona$log2FoldChange >0 & res.nona$padj < 0.05), 
+                  as.integer(res.nona$log2FoldChange <0 & res.nona$padj < 0.05))
+      res.names <- list("all", "up", "down")
+      for(i in 1:3) {
+      	    de.genes <- res.list[[i]]
+            names(de.genes) <- rownames(res.nona)
+            temp <- rowMeans(assays(experiment)$avgTxLength[match(names(de.genes), rownames(assays(experiment)$avgTxLength)),])
+      	    pwf=nullp(de.genes,bias.data=temp)
+      	    all = goseq(pwf,"hg38","ensGene", method="Hypergeometric")
+      	    sigall <- all
+      	    names(sigall) <- c("category","pvalue","underrepresented_pvalue","numberDE", "numberTOT", "term", "ontology")
+      	    sigall$pvalue <- p.adjust(sigall$pvalue, method="BH")
+      	    sigall$percent <- sigall$numberDE/sigall$numberTOT
+      	    sigall <- sigall[which(sigall[,2] < 0.05),]
+      	    cats <- sigall$category
+      	    write.table(sigall[,c("category", "pvalue")], file=paste0(opt$outdir,"/GO_",res.names[[i]],".tsv"), quote=FALSE, sep='\t', row.names = FALSE)
+      	    write.table(sigall, paste0(opt$outdir,"/GO_annotated_",res.names[[i]],".tsv"), quote=FALSE, sep='\t', row.names = FALSE)
+      	    write.table(all, paste0(opt$outdir,"/GO_complete_",res.names[[i]],".tsv"), quote=FALSE, sep='\t', row.names = FALSE)
+      }
    }
   
   
@@ -366,7 +364,7 @@ main <- function() {
             dest = "outdir",
             type = "character",
             default = "experiment",
-            help = paste("Libraries for gsea")
+            help = paste("Directory for output")
         ),
         make_option(
             "--permute",

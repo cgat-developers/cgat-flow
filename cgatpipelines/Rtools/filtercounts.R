@@ -1,4 +1,4 @@
-#' Reading in Data and Basic filtering analysis Script
+#' Basic filtering analysis Script
 #'
 #' 
 #' Example usage:

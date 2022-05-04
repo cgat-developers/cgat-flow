@@ -190,23 +190,6 @@ Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
 
-SEQUENCESUFFIXES = ("*.fastq.1.gz",
-                    "*.fastq.gz",
-                    "*.fa.gz",
-                    "*.sra",
-                    "*.export.txt.gz",
-                    "*.csfasta.gz",
-                    "*.csfasta.F3.gz",
-                    )
-
-SEQUENCEFILES = tuple([suffix_name
-                       for suffix_name in SEQUENCESUFFIXES])
-
-SEQUENCEFILES_REGEX = regex(
-    r"(.*\/)*(\S+).(fastq.1.gz|fastq.gz|fa.gz|sra|"
-    "csfasta.gz|csfasta.F3.gz|export.txt.gz)")
-
-
 
 ###################################################################
 ###################################################################
@@ -245,7 +228,7 @@ def buildGff(infile, outfile):
     ps = PYTHONSCRIPTSDIR
     statement = '''python %(ps)s/dexseq_prepare_annotation.py
                 %(tmpgff)s %(outfile)s'''
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
     os.unlink(tmpgff)
 
@@ -293,7 +276,7 @@ def countDEXSeq(infiles, outfile):
     -s %(strandedness)s
     -r pos
     -f bam  %(gfffile)s %(infile)s %(outfile)s'''
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
 
 @collate(countDEXSeq,
@@ -396,7 +379,9 @@ def runDEXSeq(infile, outfile, design):
 
 
     outdir = os.path.dirname(outfile)
-    dexseq_fdr = 0.05
+    DEXSeq_fdr = 0.05
+    DEXSeq_permutations = 0
+    
     designname = design.split(".")[0]
     model = PARAMS["DEXSeq_model_%s" % designname]
     reducedmodel = PARAMS["DEXSeq_reducedmodel_%s" % designname]
@@ -455,25 +440,47 @@ def buildIRReference(outfile):
 
     extra = PARAMS['IRFinder_extra']
     bedfile = PARAMS['IRFinder_bed']
-    gtf = PARAMS['IRFinder_ensembl_ftp']
+    gtf = PARAMS["annotations_interface_geneset_all_gtf"]
+    star = PARAMS['IRFinder_ensembl_star']
+    genome = os.path.abspath(
+        os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa"))
+    irfinder = PARAMS["IRFinder_singularity"]
 
-    statement = '''IRFinder -m BuildRef 
-                   -r IRFinder.dir/REF '''
+    job_threads = PARAMS["IRFinder_threads"]
+    job_memory = PARAMS["IRFinder_memory"]
+
+    tmpgtf = P.get_temp_filename(".")
+    statement = "gunzip -c %(gtf)s > %(tmpgtf)s"
+    P.run(statement)
+
+    statement = '''singularity run -H $PWD:/home
+                   -B %(star)s,%(tmpgtf)s,%(genome)s'''
+    if extra is not None:
+        statement += ",%(extra)s"
+    if bedfile is not None:
+        statement += ",%(bedfile)s "
+    statement += '''%(irfinder)s BuildRefFromSTARRef 
+                    -r IRFinder.dir/REF
+                    -x %(star)s
+                    -g %(tmpgtf)s
+                    -f %(genome)s
+                    -t %(job_threads)s '''
     if extra is not None:
         statement += "-e %(extra)s "
     if bedfile is not None:
         statement += "-b %(bedfile)s "
 
-    statement +=  "%(gtf)s > IRFinder.dir/REF.log"
+    statement +=  " > IRFinder.dir/REF.log"
 
     P.run(statement)
 
+    os.unlink(tmpgtf)
 
 
-@transform(SEQUENCEFILES,
-           SEQUENCEFILES_REGEX,
+@transform(glob.glob("*.bam"),
+           regex("(\S+).bam"),
            add_inputs(buildIRReference),           
-           r"IRFinder.dir/\2/IRFinder-IR-nondir.txt")
+           r"IRFinder.dir/\1/IRFinder-IR-nondir.txt")
 def runIRFinder(infiles, outfile):
     '''
     Maps reads using STAR and creates Intron quantification tables.
@@ -484,9 +491,9 @@ def runIRFinder(infiles, outfile):
         filename of reads file
         can be :term:`fastq`, :term:`sra`, csfasta
 
-    IRFinder_executable: str
+    IRFinder_singularity: str
         :term:`PARAMS`
-        path to IRFinder executable
+        path to IRFinder singularity executable
 
     outfile: str
         :term:`txt` filename to write .
@@ -494,87 +501,184 @@ def runIRFinder(infiles, outfile):
 
     infile, reference = infiles
     ref_dir = P.snip(reference)
-    bin = PARAMS['IRFinder_bin']
+    singularity_dir = os.path.dirname(os.getcwd())
+
 
     job_threads = PARAMS["IRFinder_threads"]
     job_memory = PARAMS["IRFinder_memory"]
+    outdir = os.path.dirname(outfile)
+    executable = PARAMS["IRFinder_singularity"]
 
-    m = splicing.IRFinder()
-    statement = m.build((infile,), outfile)
+    statement = '''
+    singularity run -H $PWD:/home
+    -B %(singularity_dir)s
+    %(executable)s BAM
+    -r %(ref_dir)s 
+    -d %(outdir)s
+    -t %(IRFinder_threads)s
+    %(infile)s;'''
 
-    P.run(statement, job_condaenv="IRFinder")
-
-
-@collate(runIRFinder,
-         regex("IRFinder.dir/(.*)/IRFinder-IR-nondir.txt"),
-         r"IRFinder.dir/filelist.tsv")
-def aggregateIRFinder(infiles, outfile):
-    ''' Build a matrix of counts with exons and tracks dimensions.
-
-    Uses `combine_tables.py` to combine all the `txt` files output from
-    countDEXSeq into a single :term:`tsv` file named
-    "summarycounts.tsv". A `.log` file is also produced.
-
-    Parameters
-    ---------
-    infiles : list
-        a list of `tsv.gz` files from the counts.dir that were the
-        output from dexseq_count.py
-
-    outfile : string
-        a filename denoting the file containing a matrix of counts with genes
-        as rows and tracks as the columns - this is a `tsv.gz` file      '''
-
-    # if stranded/directional output exists use that instead
-    infiles_dir = [infile.replace("nondir","dir") for infile in infiles]
-    if os.path.exists(infiles_dir[1]):
-        infiles = infiles_dir
-
-    with open(outfile, 'a') as outputfile:
-        for infile in infiles:
-            outputfile.write(os.path.abspath(infile+"\n"))
+    P.run(statement)
 
 
+@follows(runIRFinder)
 @mkdir("results.dir/IRFinder")
 @subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
            regex("(\S+).design.tsv"),
-           add_inputs(aggregateIRFinder),
-           r"results.dir/IRFinder/\1/results.tsv")
-def diffIRFinder(infiles, outfile):
+           r"results.dir/IRFinder/\1.dir/results.tsv")
+def diffIRFinder(infile, outfile):
 
-    design, counts = infiles
-    designname = design.split(".")[0]
-    model = PARAMS["IRFinder_model_%s" % designname]
-    contrast = PARAMS["IRFinder_contrast_%s" % designname]
-    REF = PARAMS["IRFinder_reference_%s" % designname]
-    COMP = PARAMS['IRFinder_comparator_%s' % designname]
-    permute = PARAMS["IRFinder_permute"]
-    pvalue = PARAMS["IRFinder_pvalue"]
-    
+    design = infile
+    executable = PARAMS["IRFinder_singularity"]
+    cutoff = PARAMS["IRFinder_cutoff"]
     outdir = os.path.dirname(outfile)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
 
-    r_root = os.path.abspath(os.path.dirname(cgatpipelines.__file__))
-    scriptpath = os.path.join(os.path.abspath(os.path.dirname(cgatpipelines.__file__)), "Rtools/IRFinder.R")
+    splicing.diffIR(singularity=executable, designfile=design,
+                              outdir=outdir,
+                              irratio=cutoff, permute=0)
 
-    statement = '''
-    export R_ROOT=%(r_root)s &&
-    Rscript %(scriptpath)s
-    --counts %(counts)s
-    --design %(design)s
-    --model %(model)s
-    --contrast %(contrast)s
-    --refgroup %(REF)s
-    --compgroup %(COMP)s
-    --permute %(permute)s
-    --alpha %(pvalue)s
-    --outdir %(outdir)s > %(outdir)s/IRFinder.log
+    collate = []
+    groups = pd.read_csv("%s/groups.tsv" %
+	os.path.dirname(outfile), sep='\t')
+    groupnames = groups['Condition'].unique().tolist()
+    collate.append(groupnames[0])
+    collate.append(groupnames[1])
+ 
+    res_filename = "_".join(groupnames) + "_DESeq2.tsv"
+    res = pd.read_csv("%s/%s" %
+	(os.path.dirname(outfile), res_filename), sep='\t')
+    collate.append(str(len(res[(res['padj'] <
+		                float(PARAMS['IRFinder_fdr'])) ])))
+    collate.append(str(len(res[(res['padj'] <
+		                float(PARAMS['IRFinder_fdr'])) & (res['log2FoldChange'] > 0) ])))
+    collate.append(str(len(res[(res['padj'] <
+		                float(PARAMS['IRFinder_fdr'])) & (res['log2FoldChange'] < 0) ])))
+    with open(outfile, "w") as f:
+        f.write("Group1\tGroup2\tIR_events\tGroup2_IR\tGroup1_IR\n")
+        f.write('\t'.join(collate))
+
+
+@active_if(PARAMS["permute"] == 1)
+@subdivide(["%s.design.tsv" % x.asFile().lower() for x in DESIGNS],
+           regex("(\S+).design.tsv"),
+           r"results.dir/IRFinder/\1.dir/permutations/run*.dir/init",
+           r"results.dir/IRFinder/\1.dir/permutations")
+def permuteIRFinder(infile, outfiles, outdir):
+    '''creates directories for permutation testing
+
+    Creates directories for permutation testing and leaves dummy
+    init file in directory (for timestamping)
+    Only becomes active if :term:`PARAMS` permute is set to 1
+
+    Parameters
+    ----------
+    infile: string
+        name and path to design
+
+    outfile: list
+        list of unknown length, capturing all permutations
+        retrospectively
+
+    outdir: string
+        directory to generate permutations in
+
+    permutations : string
+       :term:`PARAMS`. number of directories to be generated
     '''
 
-    P.run(statement)
-    return
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    for i in range(0, PARAMS["permutations"]):
+        if not os.path.exists("%s/run%i.dir" % (outdir, i)):
+            os.makedirs("%s/run%i.dir" % (outdir, i))
+        iotools.touch_file("%s/run%i.dir/init" % (outdir, i))
 
+
+@follows(runIRFinder)
+@transform(permuteIRFinder,
+           regex("results.dir/IRFinder/(\S+).dir/permutations/(\S+).dir/init"),
+           r"results.dir/IRFinder/\1.dir/permutations/\2.dir/result.tsv",
+           r"\1.design.tsv")
+def diffPermuteIRFinder(infile, outfile, design):
+    '''run rMATS-turbo permutation testing
+
+    Runs rMATS command on permutations and then collates results into
+    small summary table for each permutation
+ 
+    Parameters
+    ---------
+    infiles[0] : string
+        filename and path of design file
+
+    infiles[1] : string
+        filename and path of :term:`gtf` file
+
+    outfile : :term:`tsv` file
+        file containing summary results meeting the user-specified FDR
+        threshold
+
+    design : string
+        name and path of design file
+
+    MATS_libtype : string
+       :term:`PARAMS`. Specifies library type. Can be "fr-firstrand",
+       "fr-secondstrand" or "fr-unstranded"
+
+    MATS_fdr : string
+       :term:`PARAMS`. User specified threshold for result counting
+
+    '''
+
+    init = infile
+    directory = os.path.dirname(init)
+    executable = PARAMS["IRFinder_singularity"]
+    cutoff = PARAMS["IRFinder_cutoff"]
+    outdir = os.path.dirname(outfile)
+
+    splicing.diffIR(singularity=executable, designfile=design,
+                              outdir=directory,
+                              irratio=cutoff, permute=1)
+
+    collate = []
+    groups = pd.read_csv("%s/groups.tsv" %
+	os.path.dirname(outfile), sep='\t')
+    groupnames = groups['Condition'].unique().tolist()
+    collate.append(",".join(groups[(groups['Condition'] == groupnames[0])]['Files']))
+    collate.append(",".join(groups[(groups['Condition'] == groupnames[1])]['Files']))
+
+    res_filename = "_".join(groupnames) + "_DESeq2.tsv"
+    res = pd.read_csv("%s/%s" %
+	(os.path.dirname(outfile), res_filename), sep='\t')
+    collate.append(str(len(res[(res['padj'] <
+		                float(PARAMS['IRFinder_fdr'])) ])))
+    with open(outfile, "w") as f:
+        f.write("Group1\tGroup2\IR_events\n")
+        f.write('\t'.join(collate))
+
+
+@collate(diffPermuteIRFinder,
+         regex("results.dir/IRFinder/(\S+).dir/permutations/\S+.dir/result.tsv"),
+         r"results.dir/IRFinder/IRFinder_\1_permutations.summary")
+def collatePermuteIRFinder(infiles, outfile):
+    '''collates summary table of all permutations
+
+    Collates number of events below FDR threshold from all
+    permutation runs.
+
+    Parameters
+    ----------
+    infiles: list
+        list of rMATS result summaries from all permutation runs
+
+    outfile: string
+        summary file containing a table with all permutation run
+        results
+    '''
+
+    collate = []
+    for infile in infiles:
+        collate.append(pd.read_csv(infile, sep='\t'))
+    pd.concat(collate).to_csv(outfile, sep='\t', index=0)
 
 
 ###################################################################
@@ -613,12 +717,13 @@ def runMATS(infile, outfiles):
 
     design, gtffile = infile
     strand = PARAMS["MATS_libtype"]
+    cutoff = PARAMS["MATS_cutoff"]
     outdir = os.path.dirname(outfiles[0])
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     splicing.runRMATS(gtffile=gtffile, designfile=design,
-                              pvalue=PARAMS["MATS_cutoff"],
+                              pvalue=cutoff,
                               strand=strand, outdir=outdir)
 
 
@@ -799,7 +904,7 @@ def runPermuteMATS(infiles, outfile, design):
 
     Runs rMATS command on permutations and then collates results into
     small summary table for each permutation
-
+ 
     Parameters
     ---------
     infiles[0] : string
@@ -827,12 +932,13 @@ def runPermuteMATS(infiles, outfile, design):
     init, gtffile = infiles
     directory = os.path.dirname(init)
     strand = PARAMS["MATS_libtype"]
+    cutoff = PARAMS["MATS_cutoff"]
     outdir = os.path.dirname(outfile)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     splicing.runRMATS(gtffile=gtffile, designfile=design,
-                              pvalue=PARAMS["MATS_cutoff"],
+                              pvalue=cutoff,
                               strand=strand, outdir=directory, permute=1)
 
     collate = []
@@ -843,8 +949,8 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len((temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1))))
+        collate.append(str(len(temp[(temp['FDR'] <
+                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))
@@ -896,7 +1002,7 @@ def loadPermuteMATS(infile, outfile):
 @transform(runMATS,
            regex("results.dir/rMATS/(\S+).dir/(\S+).MATS.JC.txt"),
            add_inputs(r"\1.design.tsv"),
-           r"results.dir/sashimi/\1.dir/\2")
+           r"results.dir/sashimi/\1.dir/\2/\2.log")
 def runSashimi(infiles, outfile):
     '''draws sashimi plots
 
@@ -919,10 +1025,12 @@ def runSashimi(infiles, outfile):
     infile, design = infiles
     fdr = PARAMS["MATS_fdr"]
     plotmax = int(PARAMS["MATS_plotmax"])
-    if not os.path.exists(outfile):
-        os.makedirs(outfile)
+    outdir = os.path.dirname(outfile)
 
-    splicing.rmats2sashimi(infile, design, fdr, outfile, plotmax)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    splicing.rmats2sashimi(infile, design, fdr, outdir, plotmax)
 
 
 ###################################################################
@@ -936,7 +1044,8 @@ def runSashimi(infiles, outfile):
          loadPermuteMATS,
          runSashimi,
          runDEXSeq,
-         diffIRFinder)
+         diffIRFinder,
+         collatePermuteIRFinder)
 def full():
     pass
 

@@ -1,5 +1,5 @@
 """
-=================
+================
 Genesets Pipeline
 =================
 
@@ -606,7 +606,7 @@ def buildUCSCGeneSet(infile, outfile):
 
 
 @transform(buildUCSCGeneSet,
-           suffix("ensembl.dir/geneset_all.gtf.gz"),
+           regex(".*.gtf.gz"),
            PARAMS['interface_geneset_cds_gtf'])
 def buildCdsTranscript(infile, outfile):
     '''
@@ -638,7 +638,7 @@ def buildCdsTranscript(infile, outfile):
 
 
 @transform(buildUCSCGeneSet,
-           suffix("ensembl.dir/geneset_all.gtf.gz"),
+           regex("*.gtf.gz"),
            PARAMS['interface_geneset_exons_gtf'])
 def buildExonTranscript(infile, outfile):
     '''
@@ -1153,7 +1153,7 @@ def identifyProteinCodingGenes(outfile):
 
 
 @transform(buildUCSCGeneSet,
-           regex(".*"),
+           regex(".*.gtf.gz"),
            PARAMS['interface_utr_all_gtf'])
 def buildUtrGeneSet(infile, outfile):
 
@@ -1163,7 +1163,7 @@ def buildUtrGeneSet(infile, outfile):
 
 
 @transform(buildFlatGeneSet,
-           regex(".*"),
+           regex(".*.gtf.gz"),
            add_inputs(identifyProteinCodingGenes,
                       buildExonTranscript),
            PARAMS['interface_geneset_intron_gtf'])

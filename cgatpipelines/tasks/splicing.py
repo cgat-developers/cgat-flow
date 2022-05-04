@@ -102,7 +102,7 @@ def runRMATS(gtffile, designfile, pvalue, strand, outdir, permute=0):
     readlength = BamTools.estimateTagSize(design.samples[0]+".bam")
     tmpdir = P.get_temp_dir()
 
-    statement = '''rMATS
+    statement = '''rmats.py
     --b1 %(outdir)s/b1.txt
     --b2 %(outdir)s/b2.txt
     --gtf <(gunzip -c %(gtffile)s)
@@ -190,121 +190,59 @@ def rmats2sashimi(infile, designfile, FDR, outfile, plotmax=20):
     > %(outfile)s/%(event)s.log
     ''' % locals()
 
-    P.run(statement, job_condaenv="splicing")
+    P.run(statement)
 
 
+def diffIR(singularity, designfile, outdir, irratio="0.05", permute=0):
+    '''Module to generate IRFinder Diff statment
 
-class IRFinder(SequenceCollectionProcessor):
-    '''IRFinder implementation using
-       class for short-read mappers.
+    Module offers the option to permute group name labels.
+
+    Arguments
+    ---------
+    singularity: string
+        path to IRFinder :term:`singularity` file
+    designfile: string
+        path to design file
+    irratio: string
+        minimum IR ratio met in at least one sample
+    outdir: string
+        directory path for rMATS results
+    permute : 1 or 0
+        option to activate random shuffling of sample groups
     '''
 
-    datatype = "fastq"
+    design = Expression.ExperimentalDesign(designfile)
+    if permute == 1:
+        permutelist = design.table.group.tolist()
+        random.shuffle(permutelist)
+        design.table.group = permutelist
 
-    # strip bam files of sequenca and quality information
-    strip_sequence = False
+    group1_list = ["IRFinder.dir/%s/IRFinder-IR-nondir.txt" % x for x in design.getSamplesInGroup(design.groups[0])]
+    group1_list_dir = [filename.replace("nondir","dir") for filename in group1_list]
+    if os.path.exists(group1_list_dir[1]):
+        group1_list = group1_list_dir
+    groupname1 = design.groups[0]
+    group1 = " ".join(["".join(["-g:",groupname1," ",item]) for item in group1_list])  
 
-    # remove non-unique matches in a post-processing step.
-    # Many aligners offer this option in the mapping stage
-    # If only unique matches are required, it is better to
-    # configure the aligner as removing in post-processing
-    # adds to processing time.
-    remove_non_unique = False
+    group2_list = ["IRFinder.dir/%s/IRFinder-IR-nondir.txt" % x for x in design.getSamplesInGroup(design.groups[1])]
+    group2_list_dir = [filename.replace("nondir","dir") for filename in group2_list]
+    if os.path.exists(group2_list_dir[1]):
+        group2_list = group2_list_dir
+    groupname2 = design.groups[1]  
+    group2 = " ".join(["".join(["-g:",groupname2," ",item]) for item in group2_list])
 
-    def __init__(self,
-                 executable=None,
-                 strip_sequence=False,
-                 remove_non_unique=False,
-                 tool_options="",
-                 *args, **kwargs):
-        SequenceCollectionProcessor.__init__(self, *args, **kwargs)
+    statement = '''
+    singularity run -H $PWD:/home
+    %(singularity)s Diff
+    %(group1)s
+    %(group2)s
+    -ir %(irratio)s
+    -o %(outdir)s
+    ''' % locals()
 
-        if executable:
-            self.executable = executable
-        self.strip_sequence = strip_sequence
-        self.remove_non_unique = remove_non_unique
+    statement += '''
+    > %(outdir)s/%(designfile)s.log
+    '''
 
-        # tool options to be passed on to the mapping tool
-        self.tool_options = tool_options
-
-    def mapper(self, infiles, outfile):
-        '''build mapping statement on infiles.
-        '''
-                
-        num_files = [len(x) for x in infiles]
-        nfiles = max(num_files)
-        if nfiles == 1:
-            files = " ".join([x[0] for x in infiles])
-        elif nfiles == 2:
-            # this section works both for paired-ended fastq files
-            # and single-end color space mapping (separate quality file)
-            infiles1 = " ".join([x[0] for x in infiles])
-            infiles2 = " ".join([x[1] for x in infiles])
-            files = "%(infiles1)s %(infiles2)s" % locals()
-        else:
-            raise ValueError("unexpected number reads to map: %i " % nfiles)
-
-
-        outdir = os.path.dirname(outfile)
-
-        statement = '''
-            IRFinder
-            -r %%(ref_dir)s 
-            -d %(outdir)s 
-            -t %%(IRFinder_threads)s
-            %(files)s;''' % locals()        
-        return statement
-
-    def postprocess(self, infiles, outfile):
-        '''collect output data and postprocess.'''
-        return ""
-
-    def cleanup(self, outfile):
-        '''clean up.'''
-        statement = '''rm -rf %s;''' % (self.tmpdir_fastq)
-
-        return statement
-
-    def build(self, infiles, outfile):
-        '''run mapper
-        This method combines the output of the :meth:`preprocess`,
-        :meth:`mapper`, :meth:`postprocess` and :meth:`clean` sections
-        into a single statement.
-        Arguments
-        ---------
-        infiles : list
-             List of input filenames
-        outfile : string
-             Output filename
-        Returns
-        -------
-        statement : string
-             A command line statement. The statement can be a series
-             of commands separated by ``;`` and/or can be unix pipes.
-        '''
-
-        cmd_preprocess, mapfiles = self.preprocess(infiles, outfile)
-        cmd_mapper = self.mapper(mapfiles, outfile)
-        cmd_postprocess = self.postprocess(infiles, outfile)
-        cmd_clean = self.cleanup(outfile)
-
-        assert cmd_preprocess.strip().endswith(";"),\
-            "missing ';' at end of command %s" % cmd_preprocess.strip()
-        assert cmd_mapper.strip().endswith(";"),\
-            "missing ';' at end of command %s" % cmd_mapper.strip()
-        if cmd_postprocess:
-            assert cmd_postprocess.strip().endswith(";"),\
-                "missing ';' at end of command %s" % cmd_postprocess.strip()
-        if cmd_clean:
-            assert cmd_clean.strip().endswith(";"),\
-                "missing ';' at end of command %s" % cmd_clean.strip()
-
-        statement = " ".join((cmd_preprocess,
-                              cmd_mapper,
-                              cmd_postprocess,
-                              cmd_clean))
-
-        return statement
-
-
-
+    P.run(statement)

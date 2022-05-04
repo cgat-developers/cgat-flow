@@ -70,6 +70,11 @@ gatk:
 
     memory: 2G
 
+    # memory required for merging GVCF files
+    # PLEASE NOTE: this is the memory allocated to picard
+    # 1.2x this memory will be requested from the cluster to provide sufficent memory for the database tool.
+    dbmem: 20G
+
     dbsnp: /path/to/dbsnp_138.hg19.vcf
 
     hapmap: /path/to/hapmap_3.3.hg19.sites.vcf

@@ -323,7 +323,6 @@ def GATKReadGroups(infiles, outfile):
 
     infile, dictionary = infiles
     track = re.sub(r'-\w+-\w+\.bam', '', os.path.basename(infile))
-    tmpdir_gatk = P.get_temp_dir('.')
     job_threads = PARAMS["gatk_threads"]
     library = PARAMS["readgroup_library"]
     platform = PARAMS["readgroup_platform"]
@@ -527,11 +526,24 @@ def haplotypeCaller(infile, outfile):
 ###############################################################################
 
 
-@merge(haplotypeCaller, "variants/all_samples.vcf")
-def genotypeGVCFs(infiles, outfile):
+@merge(haplotypeCaller, "variants/genomicsdb")
+def consolidateGVCFs(infiles, outfile):
+    '''generates a GenomicsDB workspace from all GVCF files, this is an
+       easy-access database of all samples developed by the Intel-Broad team.'''
+    inputlen = len(infiles)
+    inputfiles = " -V ".join(infiles)
+    
+    DB_MEMORY  = PARAMS["gatk_dbmem"]
+
+    exome.consolidateGVCFs(inputfiles, outfile, inputlen, DB_MEMORY)
+
+###############################################################################
+
+
+@merge(consolidateGVCFs, "variants/all_samples.vcf")
+def genotypeGVCFs(infile, outfile):
     '''Joint genotyping of all samples together'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    inputfiles = " --variant ".join(infiles)
     options = PARAMS["gatk_genotype_options"]
     exome.genotypeGVCFs(inputfiles, outfile, genome, options)
 

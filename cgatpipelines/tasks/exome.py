@@ -95,8 +95,8 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
                     ''' % locals()
 
     statement += '''gatk
-                    ApplyBSQR -O %(outfile)s
-                    --bsqr-recal-file %(tmpdir_gatk)s/%(track)s.recal.grp
+                    ApplyBQSR -O %(outfile)s
+                    --bqsr-recal-file %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -I %(infile)s ;
                     ''' % locals()
@@ -115,14 +115,12 @@ def haplotypeCaller(infile, outfile, genome,
     job_threads = 3
 
     statement = '''gatk
-                    -T HaplotypeCaller
+                    HaplotypeCaller
                     -ERC GVCF
-                    -variant_index_type LINEAR
-                    -variant_index_parameter 128000
                     -O %(outfile)s
                     -R %(genome)s
                     -I %(infile)s
-                    --dbsnp %(dbsnp)s
+                    --dbsnp %(dbsnp)s 
                     -L %(intervals)s
                     -ip %(padding)s
                     %(options)s''' % locals()
@@ -132,7 +130,44 @@ def haplotypeCaller(infile, outfile, genome,
 ##############################################################################
 
 
-def genotypeGVCFs(inputfiles, outfile, genome, options, gatkmem="2G"):
+def consolidateGVCFs(inputfiles, outfile, inputlen, dbmem="20G"):
+    '''Joint genotyping of all samples together'''
+
+    runmem = dbmem
+    if not re.match(r' ', runmem):
+       runmem  = re.sub(r'([KMGT])', r' \1', runmem)
+    number, unit = [string.strip() for string in runmem.split()]
+    job_threads = 2
+    job_memory = f"{float(number)*1.2/job_threads:.1f}{unit}"
+    tmpdir = P.get_temp_dir('.')
+
+    tmpfile = P.get_temp_filename(".", suffix=".list")
+    chrID = [ 'chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y'] ]
+    with open(tmpfile, 'w+') as f:
+        for contig in chrID:
+            f.write('%s\n' % contig)
+
+    statement = '''gatk
+                    --java-options "-Xmx%(dbmem)s -Xms%(dbmem)s"
+                    GenomicsDBImport
+                    -V %(inputfiles)s
+                    -L %(tmpfile)s
+                    --reader-threads %(job_threads)s
+                    --tmp-dir %(tmpdir)s
+                    --genomicsdb-workspace-path %(outfile)s
+                    ''' % locals()
+    if inputlen > 50:
+        statement += ''' --batch-size 50'''
+    statement += ''' ;rm -rf %(tmpdir)s ;''' % locals()
+    P.run(statement)
+
+    os.unlink(tmpfile)
+
+
+##############################################################################
+
+
+def genotypeGVCFs(infile, outfile, genome, options, gatkmem="2G"):
     '''Joint genotyping of all samples together'''
     job_memory = gatkmem
     job_threads = 3

@@ -158,7 +158,9 @@ def consolidateGVCFs(inputfiles, outfile, inputlen, dbmem="20G"):
                     ''' % locals()
     if inputlen > 50:
         statement += ''' --batch-size 50'''
-    statement += ''' ;rm -rf %(tmpdir)s ;''' % locals()
+    statement += ''' > %(outfile)s.log.tmp 2>&1;
+                     rm -rf %(tmpdir)s ;
+                     mv %(outfile)s.log.tmp %(outfile)s.log''' % locals()
     P.run(statement)
 
     os.unlink(tmpfile)
@@ -171,12 +173,18 @@ def genotypeGVCFs(infile, outfile, genome, options, gatkmem="2G"):
     '''Joint genotyping of all samples together'''
     job_memory = gatkmem
     job_threads = 3
+    infile = P.snip(infile, ".log")
+    tmpdir = P.get_temp_dir('.')
+    logfile = P.snip(outfile,".vcf")+".log"
 
     statement = '''gatk
                     GenotypeGVCFs
-                    -o %(outfile)s
+                    -O %(outfile)s
                     -R %(genome)s
-                    --variant %(inputfiles)s''' % locals()
+                    -V gendb://%(infile)s
+                    --tmp-dir %(tmpdir)s
+                    %(options)s > %(logfile)s 2>&1;
+                    rm -rf %(tmpdir)s''' % locals()
     P.run(statement)
 
 ##############################################################################

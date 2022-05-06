@@ -526,12 +526,13 @@ def haplotypeCaller(infile, outfile):
 ###############################################################################
 
 
-@merge(haplotypeCaller, "variants/genomicsdb")
+@merge(haplotypeCaller, "variants/genomicsdb.log")
 def consolidateGVCFs(infiles, outfile):
     '''generates a GenomicsDB workspace from all GVCF files, this is an
        easy-access database of all samples developed by the Intel-Broad team.'''
     inputlen = len(infiles)
     inputfiles = " -V ".join(infiles)
+    
     
     DB_MEMORY  = PARAMS["gatk_dbmem"]
 
@@ -540,12 +541,14 @@ def consolidateGVCFs(infiles, outfile):
 ###############################################################################
 
 
-@merge(consolidateGVCFs, "variants/all_samples.vcf")
+@transform(consolidateGVCFs, regex(r"variants/genomicsdb.log"),
+          "variants/all_samples.vcf")
 def genotypeGVCFs(infile, outfile):
     '''Joint genotyping of all samples together'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     options = PARAMS["gatk_genotype_options"]
-    exome.genotypeGVCFs(inputfiles, outfile, genome, options)
+    
+    exome.genotypeGVCFs(infile, outfile, genome, options)
 
 ###############################################################################
 ###############################################################################

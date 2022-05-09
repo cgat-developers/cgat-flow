@@ -44,16 +44,27 @@ annotations:
     dir: ''
 
 
-    ################################################################
-    #
-    # MATS options
-    #
-    ################################################################
+################################################################
+#
+# MATS options
+#
+################################################################
 MATS:
     # Cutoff splicing difference
     # The cutoff used in the null hypothesis test for differential splicing. 
     # The default is 0.0001 for 0.01% difference. Valid: 0 <= cutoff < 1
     cutoff: ''
+
+    # PSI threshold
+    # This allows for setting a fixed minimum PSI change (e.g. 0.1) for filtering
+    # results. This can be used with a more lenient cstat, to increase the number
+    # of results. The threshold is not hypothesis-tested
+    psi: ''
+
+    # Coverage threshold
+    # This allows for setting a fixed minimum number of reads that support this
+    # alternative splicing 
+    coverage: ''
 
     # Strandednes
     # fr-firststrand, fr-secondstrand or fr-unstranded
@@ -71,11 +82,11 @@ MATS:
 
 
 
-    ################################################################
-    #
-    # DEXSeq options
-    #
-    ################################################################
+################################################################
+#
+# DEXSeq options
+#
+ ################################################################
 DEXSeq:
 
     # Strand specific library prep

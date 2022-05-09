@@ -789,6 +789,9 @@ def collateMATS(infiles, outfile):
     MATS_fdr : string
        :term:`PARAMS`. User specified threshold for result counting
 
+    MATS_psi: string
+       :term: `PARAMS`. User specified PSI threshold for result counting
+
     outfile: string
         summary file containing number of results below FDR threshold
     '''
@@ -811,20 +814,44 @@ def collateMATS(infiles, outfile):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
-        total.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
-        up.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
-        down.append(int(len(temp[(temp['FDR'] <
-                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        # calculate mean coverage for particular junction for each variable
+        temp['SJC_SUM_1'] = [mean(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [mean(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [mean(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [mean(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = [['SJC_SUM_1','IJC_SUM_1']].max()
+        temp['2_MAX'] = [['SJC_SUM_2','IJC_SUM_2']].max()
+
+        # three conditions to be met:
+        # 1. FDR thrshold
+        # 2. Fixed PSI threshold
+        # 3. minimum coverage in both conditions
+        total.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                  (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                  (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                  (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        up.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                               (temp['IncLevelDifference'] > PARAMS['MATS_psi']) &
+                               (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                               (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        down.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                 (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
+                                 (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                 (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
         temp = pd.read_csv("%s/%s.novelJunc.JC.tsv" %
                            (indir, event), sep='\t')
-        total_newJunc.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
-        up_newJunc.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
-        down_newJunc.append(int(len(temp[(temp['FDR'] <
-                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        total_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                          (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                          (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                          (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        up_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                       (temp['IncLevelDifference'] > PARAMS['MATS_psi']) &
+                                       (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                       (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        down_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                         (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
+                                         (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                         (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
         #experimental feature - deactivated       
         #temp = pd.read_csv("%s/%s.novelSS.JC.tsv" %
         #                   (indir, event), sep='\t')
@@ -949,8 +976,10 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
+        collate.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                  (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                  (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                  (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))

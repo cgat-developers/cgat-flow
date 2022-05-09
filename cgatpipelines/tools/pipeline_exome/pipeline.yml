@@ -75,9 +75,9 @@ gatk:
     # 1.2x this memory will be requested from the cluster to provide sufficent memory for the database tool.
     dbmem: 20G
 
-    dbsnp: /path/to/dbsnp_138.hg19.vcf
+    dbsnp: /path/to/dbsnp.vcf
 
-    hapmap: /path/to/hapmap_3.3.hg19.sites.vcf
+    hapmap: /path/to/hapmap.vcf
 
     omni: /path/to/omni/1000G_omni2.5.hg19.sites.vcf
 
@@ -113,18 +113,18 @@ annotation:
     threads: 3
 
     #Config file specifies that the genome must be downloaded into your home directory
-    snpeff_config: /ifs/apps/bio/snpEff-4.3/snpEff.config
+    snpeff_config: path/to/snpEff-VERSION/snpEff.config
 
-    snpeff_genome: hg19
+    snpeff_genome: hg38
 
     # path to dbNSFP database
-    dbnsfp: /ifs/mirror/snpsift/data_2016/dbNFSP.txt.gz
+    dbnsfp: /path/to/dbNFSP.txt.gz
 
     #dbNSFP columns to include
     dbnsfpannotators: [SIFT_pred,Polyphen2_HDIV_pred,Polyphen2_HVAR_pred,MutationTaster_pred]
 
     # path to clinvar vcf
-    clinvar: /ifs/mirror/clinvar/clinvar_20160531.vcf.gz
+    clinvar: /path/to/clinvar_DATE.vcf.gz
 
     # path to ExAC vcf
     exac: /ifs/mirror/ExAC/sites/ExAC.r0.3.1.sites.vep.vcf.gz

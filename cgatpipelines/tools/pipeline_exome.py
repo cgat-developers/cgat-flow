@@ -675,7 +675,6 @@ def annotateVariantsSNPeff(infile, outfile):
     config = PARAMS["annotation_snpeff_config"]
     statement = (
         "snpEff -Xmx%(job_memory)s "
-        "eff "
         "-c %(config)s "
         "-v %(snpeff_genome)s "
         "-o gatk %(infile)s > %(outfile)s" % locals())

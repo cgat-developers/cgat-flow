@@ -990,7 +990,7 @@ def runPermuteMATS(infiles, outfile, design):
         temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
         temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
         temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
-        collate.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+        collate.append(str(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
                                   (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
                                   (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
                                   (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))

@@ -815,13 +815,12 @@ def collateMATS(infiles, outfile):
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
         # calculate mean coverage for particular junction for each variable
-        temp['SJC_SUM_1'] = [mean(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
-        temp['IJC_SUM_1'] = [mean(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
-        temp['SJC_SUM_2'] = [mean(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
-        temp['SJC_SUM_2'] = [mean(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
-        temp['1_MAX'] = [['SJC_SUM_1','IJC_SUM_1']].max()
-        temp['2_MAX'] = [['SJC_SUM_2','IJC_SUM_2']].max()
-
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
         # three conditions to be met:
         # 1. FDR thrshold
         # 2. Fixed PSI threshold
@@ -838,8 +837,15 @@ def collateMATS(infiles, outfile):
                                  (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
                                  (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
                                  (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+
         temp = pd.read_csv("%s/%s.novelJunc.JC.tsv" %
                            (indir, event), sep='\t')
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
         total_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
                                           (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
                                           (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
@@ -852,6 +858,7 @@ def collateMATS(infiles, outfile):
                                          (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
                                          (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
                                          (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+
         #experimental feature - deactivated       
         #temp = pd.read_csv("%s/%s.novelSS.JC.tsv" %
         #                   (indir, event), sep='\t')
@@ -976,6 +983,13 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
+        
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
         collate.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
                                   (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
                                   (temp['1_MAX'] >= PARAMS['MATS_coverage']) &

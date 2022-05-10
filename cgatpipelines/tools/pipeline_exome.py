@@ -208,7 +208,6 @@ GATK_MEMORY = PARAMS["gatk_memory"]
 # The following functions are designed to upload meta-data to the csvdb
 # These haven't been fully implemented yet
 
-
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @files(PARAMS["roi_bed"], "roi.load")
 def loadROI(infile, outfile):
@@ -224,9 +223,6 @@ def loadROI(infile, outfile):
             > %(outfile)s  '''
     P.run(statement)
 
-###############################################################################
-
-
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @files(PARAMS["roi_to_gene"], "roi2gene.load")
 def loadROI2Gene(infile, outfile):
@@ -239,9 +235,6 @@ def loadROI2Gene(infile, outfile):
               --table=%(tablename)s
             > %(outfile)s  '''
     P.run(statement)
-
-###############################################################################
-
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @files(PARAMS["samples"], "samples.load")
@@ -267,11 +260,15 @@ def createSequenceDictionary(outfile):
                         -R %(genome_file)s -O %(outfile)s'''
     P.run(statement)
 
-###############################################################################
-###############################################################################
-###############################################################################
-# Alignment to a reference genome
 
+
+###############################################################################
+###############################################################################
+###############################################################################
+# Pre-Processing for Variant Discovery
+
+###############################################################################
+# Alignment & post-alignment QC & GATK preparation
 
 @follows(mkdir("bam"))
 @transform(INPUT_FORMATS, REGEX_FORMATS, r"bam/\1.bam")
@@ -283,19 +280,12 @@ def mapReads(infiles, outfile):
     statement = m.build((infiles,), outfile)
     P.run(statement, job_memory="8G", job_threads=PARAMS["bwa_threads"])
 
-###############################################################################
-###############################################################################
-###############################################################################
-# Post-alignment QC
-
 
 @transform(mapReads, regex(r"bam/(\S+).bam"), r"bam/\1.picard_stats")
 def PicardAlignStats(infile, outfile):
     '''Run Picard CollectMultipleMetrics on each BAM file'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     bamstats.buildPicardAlignmentStats(infile, outfile, genome, PICARD_MEMORY)
-
-###############################################################################
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -304,16 +294,8 @@ def loadPicardAlignStats(infiles, outfile):
     '''Merge Picard alignment stats into single table and load into SQLite.'''
     bamstats.loadPicardAlignmentStats(infiles, outfile)
 
-###############################################################################
-###############################################################################
-###############################################################################
-# GATK
-
 
 @follows(loadPicardAlignStats, mkdir("gatk"))
-
-
-
 @transform(mapReads, regex(r"bam/(\S+).bam"),
            add_inputs(createSequenceDictionary),
            r"gatk/\1.readgroups.bam")
@@ -333,11 +315,9 @@ def GATKReadGroups(infiles, outfile):
                                  GATK_MEMORY)
     iotools.zap_file(infile)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Remove duplicates, realign and recalibrate lane-by-lane
-
 
 @transform(GATKReadGroups,
            regex(r"gatk/(\S+).readgroups.bam"),
@@ -347,16 +327,12 @@ def RemoveDuplicatesLane(infile, outfile):
     bamstats.buildPicardDuplicateStats(infile, outfile, PICARD_MEMORY)
     iotools.zap_file(infile)
 
-###############################################################################
-
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(RemoveDuplicatesLane, "picard_duplicate_stats_lane.load")
 def loadPicardDuplicateStatsLane(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
     bamstats.loadPicardDuplicateStats(infiles, outfile)
-
-###############################################################################
 
 
 @transform(RemoveDuplicatesLane,
@@ -380,11 +356,9 @@ def GATKBaseRecal(infile, outfile):
                                     GATK_MEMORY)
     iotools.zap_file(infile)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Merge BAMs across different lanes for the same sample
-
 
 @collate(GATKBaseRecal,
          regex(r"gatk/(.*).bqsr.bam"),
@@ -406,11 +380,9 @@ def mergeBAMs(infiles, outfile):
     for inputfile in infiles:
         iotools.zap_file(inputfile)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Remove duplicates sample-by-sample
-
 
 @transform(mergeBAMs,
            regex(r"gatk/(\S+).merged.bam"),
@@ -428,17 +400,13 @@ def RemoveDuplicatesSample(infiles, outfile):
         iotools.zap_file(infile)
 
 
-###############################################################################
-
-
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(RemoveDuplicatesSample, "picard_duplicate_stats_sample.load")
 def loadPicardDuplicateStatsSample(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite.'''
     bamstats.loadPicardDuplicateStats(infiles, outfile)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Coverage of targetted area
 
@@ -454,8 +422,6 @@ def buildCoverageStats(infile, outfile):
     bamstats.buildPicardCoverageStats(infile, outfile,
                                                baits, regions, PICARD_MEMORY)
 
-###############################################################################
-
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @merge(buildCoverageStats, "coverage_stats.load")
@@ -463,11 +429,9 @@ def loadCoverageStats(infiles, outfile):
     '''Import coverage statistics into SQLite'''
     bamstats.loadPicardCoverageStats(infiles, outfile)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Guess sex
-
 
 @follows(mkdir("xy_ratio"))
 @transform(RemoveDuplicatesSample,
@@ -477,8 +441,6 @@ def calcXYratio(infile, outfile):
     '''Guess the sex of a sample based on ratio of reads
     per megabase of sequence on X and Y'''
     exome.guessSex(infile, outfile)
-
-###############################################################################
 
 
 @merge(calcXYratio, "xy_ratio/xy_ratio.tsv")
@@ -493,8 +455,6 @@ def mergeXYRatio(infiles, outfile):
                    > %(outfile)s'''
     P.run(statement)
 
-###############################################################################
-
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(mergeXYRatio, regex(r"xy_ratio/xy_ratio.tsv"),
@@ -503,10 +463,12 @@ def loadXYRatio(infile, outfile):
     '''load into database'''
     P.load(infile, outfile, "--header-names=Track,X,Y,XY_ratio")
 
+
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
-# Variant Calling
+# GATK germline cohort calling
 
 
 @follows(mkdir("variants"))
@@ -523,8 +485,6 @@ def haplotypeCaller(infile, outfile):
     exome.haplotypeCaller(infile, outfile, genome, dbsnp,
                                   intervals, padding, options, GATK_MEMORY)
 
-###############################################################################
-
 
 @merge(haplotypeCaller, "variants/genomicsdb.log")
 def consolidateGVCFs(infiles, outfile):
@@ -538,8 +498,6 @@ def consolidateGVCFs(infiles, outfile):
 
     exome.consolidateGVCFs(inputfiles, outfile, inputlen, DB_MEMORY)
 
-###############################################################################
-
 
 @transform(consolidateGVCFs, regex(r"variants/genomicsdb.log"),
           "variants/all_samples.vcf")
@@ -549,6 +507,112 @@ def genotypeGVCFs(infile, outfile):
     options = PARAMS["gatk_genotype_options"]
     
     exome.genotypeGVCFs(infile, outfile, genome, options)
+
+
+@transform(genotypeGVCFs,
+           regex(r"variants/all_samples.vcf"),
+           r"variants/all_samples_excesshet.vcf")
+def filterExcessHets(infile, outfile):
+    '''
+    Hard filter on Excess Heterozygotes
+    Should not make a difference on small cohorts unless related
+    54.69 corresponds to a Z score of -4.5
+    '''
+    job_memory = GATK_MEMORY
+    statement = '''
+    gatk --java-options "-Xmx%(job_memory)s -Xms%(job_memory)s" 
+    VariantFiltration
+    -V %(infile)s
+    --filter-expression "ExcessHet > 54.69"
+    --filter-name ExcessHet
+    -O %(outfile)s
+    > %(outfile)s.log 2>&1
+    '''
+    P.run(statement)
+
+
+@transform(filterExcessHets,
+           regex(r"variants/all_samples_excesshet.vcf"),
+           r"variants/all_samples_sitesonly.vcf")
+def sitesOnlyVcf(infile,outfile):
+    '''
+    Create sites-only VCF with MakeSitesOnlyVcf
+    '''
+    job_memory = GATK_MEMORY
+    statement = '''gatk MakeSitesOnlyVcf
+    -I %(infile)s
+    -O %(outfile)s
+    > %(outfile)s.log 2>&1 '''
+    P.run(statement)
+
+
+
+###############################################################################
+# SNP Recalibration
+
+@transform(sitesOnlyVcf,
+           regex(r"variants/all_samples_sitesonly.vcf"),
+           r"variants/all_samples.snp_vqsr.recal")
+def variantRecalibratorSnps(infile, outfile):
+    '''Create variant recalibration file'''
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    dbsnp = PARAMS["gatk_dbsnp"]
+    job_threads = PARAMS["gatk_threads"]
+    kgenomes = PARAMS["gatk_kgenomes"]
+    hapmap = PARAMS["gatk_hapmap"]
+    omni = PARAMS["gatk_omni"]
+    mode = 'SNP'
+    exome.variantRecalibrator(infile, outfile, genome, mode, dbsnp,
+                                      kgenomes, hapmap, omni, GATK_MEMORY)
+
+
+@follows(variantRecalibratorSnps)
+@transform(filterExcessHets,
+           regex(r"variants/all_samples_excesshet.vcf"),
+           add_inputs(r"variants/all_samples.snp_vqsr.recal",
+                      r"variants/all_samples.snp_vqsr.tranches"),
+           r"variants/all_samples.snp_vqsr.vcf")
+def applyVQSRSnps(infiles, outfile):
+    '''Perform variant quality score recalibration using GATK '''
+    vcf, recal, tranches = infiles
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    mode = 'SNP'
+    exome.applyVQSR(vcf, recal, tranches,
+                                            outfile, genome, mode, GATK_MEMORY)
+
+###############################################################################
+# Indel recalibration
+
+
+@transform(sitesOnlyVcf,
+           regex(r"variants/all_samples_sitesonly.vcf"),
+           r"variants/all_samples.indel_vqsr.recal")
+def variantRecalibratorIndels(infile, outfile):
+    '''Create variant recalibration file'''
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    job_threads = PARAMS["gatk_threads"]
+    mills = PARAMS["gatk_mills"]
+    dbsnp = PARAMS["gatk_dbsnp"]
+    axiom = PARAMS["gatk_axiom"]
+    mode = 'INDEL'
+    exome.variantRecalibrator(infile, outfile, genome, mode,
+                                      mills=mills, axiom=axiom, dbsnp=dbsnp, gatkmem=GATK_MEMORY)
+
+
+@follows(variantRecalibratorIndels)
+@transform(applyVQSRSnps,
+           regex(r"variants/all_samples.snp_vqsr.vcf"),
+           add_inputs(r"variants/all_samples.indel_vqsr.recal",
+                      r"variants/all_samples.indel_vqsr.tranches"),
+           r"variants/all_samples.vqsr.vcf")
+def applyVQSRIndels(infiles, outfile):
+    '''Perform variant quality score recalibration using GATK '''
+    vcf, recal, tranches = infiles
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    mode = 'INDEL'
+    exome.applyVQSR(vcf, recal, tranches,
+                                            outfile, genome, mode, GATK_MEMORY)
+
 
 ###############################################################################
 ###############################################################################
@@ -567,8 +631,6 @@ def SelectExonicHapmapVariants(infile, outfile):
                    > %(outfile)s''' % locals()
     P.run(statement)
 
-###############################################################################
-
 
 @follows(SelectExonicHapmapVariants)
 @transform(RemoveDuplicatesSample,
@@ -585,8 +647,6 @@ def HapMapGenotype(infiles, outfile):
     exome.haplotypeCaller(infile, outfile, genome, dbsnp,
                                   intervals, padding, options)
 
-###############################################################################
-
 
 @transform(HapMapGenotype, regex(r"hapmap/(\S+).hapmap.vcf"),
            r"hapmap/\1.hapmap.vcf.gz")
@@ -596,11 +656,9 @@ def indexVCFs(infile, outfile):
                    tabix -p vcf %(outfile)s; '''
     P.run(statement)
 
-###############################################################################
-###############################################################################
+
 ###############################################################################
 # Compare Hapmap genotypes to assess relatedness
-
 
 @follows(indexVCFs, mkdir("hapmap/vcfcompare"))
 @permutations("hapmap/*.hapmap.vcf.gz",
@@ -616,8 +674,6 @@ def vcfCompare(infiles, outfile):
                    %(sample1)s %(sample2)s > %(outfile)s'''
     P.run(statement)
 
-###############################################################################
-
 
 @transform(vcfCompare,
            regex(r"hapmap/vcfcompare/(\S+).vcfcompare"),
@@ -629,8 +685,6 @@ def parseVcfCompare(infile, outfile):
                    | cut -f 3
                    > %(outfile)s'''
     P.run(statement)
-
-###############################################################################
 
 
 @merge(parseVcfCompare, "hapmap/vcfcompare/ndr.tsv")
@@ -648,8 +702,6 @@ def mergeNDR(infiles, outfile):
         inf.close()
     outf.close()
 
-###############################################################################
-
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
 @transform(mergeNDR, regex(r"hapmap/vcfcompare/ndr.tsv"),
@@ -658,14 +710,17 @@ def loadNDR(infile, outfile):
     '''Load NDR into database'''
     P.load(infile, outfile)
 
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
 # Variant Annotation
 
+###############################################################################
+# SnpSift
 
-@transform(genotypeGVCFs,
-           regex(r"variants/all_samples.vcf"),
+@transform(applyVQSRIndels,
+           regex(r"variants/all_samples.vqsr.vcf"),
            r"variants/all_samples.snpeff.vcf")
 def annotateVariantsSNPeff(infile, outfile):
     '''Annotate variants using SNPeff'''
@@ -677,10 +732,8 @@ def annotateVariantsSNPeff(infile, outfile):
         "snpEff -Xmx%(job_memory)s "
         "-c %(config)s "
         "-v %(snpeff_genome)s "
-        "-o gatk %(infile)s > %(outfile)s" % locals())
+        "%(infile)s > %(outfile)s 2> %(outfile)s.log"  % locals())
     P.run(statement, job_memory=PARAMS["annotation_memory"])
-
-###############################################################################
 
 
 @transform(annotateVariantsSNPeff,
@@ -690,7 +743,7 @@ def vcfToTableSnpEff(infile, outfile):
     '''Converts vcf to tab-delimited file'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["annotation_snpeff_to_table"]
-    exome.vcfToTable(infile, outfile, genome, columns)
+    exome.vcfToTable(infile, outfile, genome, columns, GATK_MEMORY)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -700,115 +753,12 @@ def loadTableSnpEff(infile, outfile):
     '''Load VCF annotations into database'''
     P.load(infile, outfile, options="--retry --ignore-empty")
 
-
-###############################################################################
-# GATK Variant Annotator
-
-
-@merge(RemoveDuplicatesSample, "gatk/all_samples.list")
-def listOfBAMs(infiles, outfile):
-    '''generates a file containing a list of BAMs for use in VQSR'''
-    with iotools.open_file(outfile, "w") as outf:
-        for infile in infiles:
-            outf.write(infile + '\n')
-
-###############################################################################
-
-
-@follows(annotateVariantsSNPeff)
-@transform(genotypeGVCFs,
-           regex(r"variants/all_samples.vcf"),
-           add_inputs(listOfBAMs, r"variants/all_samples.snpeff.vcf"),
-           r"variants/all_samples.annotated.vcf")
-def variantAnnotator(infiles, outfile):
-    '''Annotate variant file using GATK VariantAnnotator'''
-    vcffile, bamlist, snpeff_file = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    dbsnp = PARAMS["gatk_dbsnp"]
-    annotations = PARAMS["gatk_variant_annotations"]
-    exome.variantAnnotator(vcffile, bamlist, outfile, genome,
-                                   dbsnp, annotations, snpeff_file)
-
-
-###############################################################################
-# SNP Recalibration
-
-
-@transform(variantAnnotator,
-           regex(r"variants/all_samples.annotated.vcf"),
-           r"variants/all_samples.snp_vqsr.recal")
-def variantRecalibratorSnps(infile, outfile):
-    '''Create variant recalibration file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    dbsnp = PARAMS["gatk_dbsnp"]
-    job_threads = PARAMS["gatk_threads"]
-    track = P.snip(outfile, ".recal")
-    kgenomes = PARAMS["gatk_kgenomes"]
-    hapmap = PARAMS["gatk_hapmap"]
-    omni = PARAMS["gatk_omni"]
-    mode = 'SNP'
-    exome.variantRecalibrator(infile, outfile, genome, mode, dbsnp,
-                                      kgenomes, hapmap, omni, GATK_MEMORY)
-
-###############################################################################
-
-
-@follows(variantRecalibratorSnps)
-@transform(variantAnnotator,
-           regex(r"variants/all_samples.annotated.vcf"),
-           add_inputs(r"variants/all_samples.snp_vqsr.recal",
-                      r"variants/all_samples.snp_vqsr.tranches"),
-           r"variants/all_samples.snp_vqsr.vcf")
-def applyVariantRecalibrationSnps(infiles, outfile):
-    '''Perform variant quality score recalibration using GATK '''
-    vcf, recal, tranches = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    mode = 'SNP'
-    exome.applyVariantRecalibration(vcf, recal, tranches,
-                                            outfile, genome, mode, GATK_MEMORY)
-
-###############################################################################
-# Indel recalibration
-
-
-@transform(applyVariantRecalibrationSnps,
-           regex(r"variants/all_samples.snp_vqsr.vcf"),
-           r"variants/all_samples.vqsr.recal")
-def variantRecalibratorIndels(infile, outfile):
-    '''Create variant recalibration file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    job_threads = PARAMS["gatk_threads"]
-    track = P.snip(outfile, ".recal")
-    mills = PARAMS["gatk_mills"]
-    dbsnp = PARAMS["gatk_dbsnp"]
-    mode = 'INDEL'
-    exome.variantRecalibrator(infile, outfile, genome, mode,
-                                      mills=mills, gatkmem=GATK_MEMORY)
-
-###############################################################################
-
-
-@follows(variantRecalibratorIndels)
-@transform(applyVariantRecalibrationSnps,
-           regex(r"variants/all_samples.snp_vqsr.vcf"),
-           add_inputs(r"variants/all_samples.vqsr.recal",
-                      r"variants/all_samples.vqsr.tranches"),
-           r"variants/all_samples.vqsr.vcf")
-def applyVariantRecalibrationIndels(infiles, outfile):
-    '''Perform variant quality score recalibration using GATK '''
-    vcf, recal, tranches = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    mode = 'INDEL'
-    exome.applyVariantRecalibration(vcf, recal, tranches,
-                                            outfile, genome, mode, GATK_MEMORY)
-
-
 ###############################################################################
 # SnpSift
 
-@transform(applyVariantRecalibrationIndels,
-           regex(r"variants/all_samples.vqsr.vcf"),
-           r"variants/all_samples_dbnsfp.snpsift.vcf")
+@transform(annotateVariantsSNPeff,
+           regex(r"variants/all_samples.snpeff.vcf"),
+           r"variants/all_samples.snpsift.vcf")
 def annotateVariantsDBNSFP(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
@@ -820,7 +770,7 @@ def annotateVariantsDBNSFP(infile, outfile):
     else:
         annostring = "-f %s" % dbN_annotators
 
-    statement = """SnpSift.sh dbnsfp -db %(dbNSFP)s -v %(infile)s
+    statement = """SnpSift.sh dbnsxfp -db %(dbNSFP)s -v %(infile)s
                    %(annostring)s >
                    %(outfile)s;"""
     P.run(statement)
@@ -1432,7 +1382,7 @@ def vcfToTable(infile, outfile):
     '''Converts vcf to tab-delimited file'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
-    exome.vcfToTable(infile, outfile, genome, columns)
+    exome.vcfToTable(infile, outfile, genome, columns, GATK_MEMORY)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1569,7 +1519,7 @@ def tabulateDeNovos(infile, outfile):
     '''Tabulate de novo variants'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["gatk_vcf_to_table"]
-    exome.vcfToTable(infile, outfile, genome, columns)
+    exome.vcfToTable(infile, outfile, genome, columns, GATK_MEMORY)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -1932,6 +1882,12 @@ def loadCompoundHets(infile, outfile):
 ###############################################################################
 # coverage over candidate genes
 
+@merge(RemoveDuplicatesSample, "gatk/all_samples.list")
+def listOfBAMs(infiles, outfile):
+    '''generates a file containing a list of BAMs for use in VQSR'''
+    with iotools.open_file(outfile, "w") as outf:
+        for infile in infiles:
+            outf.write(infile + '\n')
 
 @active_if(PARAMS["coverage_calculate"] == 1)
 @transform(listOfBAMs, regex(r"gatk/all_samples.list"), r"candidate.sample_interval_summary")

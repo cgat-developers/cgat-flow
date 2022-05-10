@@ -91,8 +91,6 @@ gatk:
 
     genotype_options: ''
 
-    variant_annotations: [AlleleBalance,AlleleBalanceBySample,AlleleCountBySample,BaseCounts,BaseQualityRankSumTest,ChromosomeCounts,ClippingRankSumTest,Coverage,DepthPerAlleleBySample,FisherStrand,GCContent,GenotypeSummaries,HardyWeinberg,HomopolymerRun,LikelihoodRankSumTest,LowMQ,MappingQualityRankSumTest,MappingQualityZero,MappingQualityZeroBySample,NBaseCount,QualByDepth,RMSMappingQuality,ReadPosRankSumTest,SampleList,SpanningDeletions,StrandBiasBySample,StrandOddsRatio,TandemRepeatAnnotator,VariantType]
-
     vcf_to_table: -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F FILTER -F AC -F AF -F AN -F BaseQRankSum -F DB -F DP -F Dels -F FS -F HaplotypeScore -F MLEAC -F MLEAF -F MQ -F MQ0 -F MQRankSum -F QD -F ReadPosRankSum -F SB -F SNPEFF_EFFECT -F SNPEFF_IMPACT -F SNPEFF_FUNCTIONAL_CLASS -F SNPEFF_CODON_CHANGE -F SNPEFF_AMINO_ACID_CHANGE -F SNPEFF_GENE_NAME -F SNPEFF_GENE_BIOTYPE -F SNPEFF_TRANSCRIPT_ID -F SNPEFF_EXON_ID -F dbNSFP_GERP++_RS -F dbNSFP_GERP++_NR -F dbNSFP_Ensembl_transcriptid -F dbNSFP_Uniprot_acc -F dbNSFP_Interpro_domain -F dbNSFP_SIFT_score -F dbNSFP_Polyphen2_HVAR_pred -F dbNSFP_29way_logOdds -F dbNSFP_1000Gp1_AF -F dbNSFP_1000Gp1_AFR_AF -F dbNSFP_1000Gp1_EUR_AF -F dbNSFP_1000Gp1_AMR_AF -F dbNSFP_1000Gp1_ASN_AF -F dbNSFP_ESP6500_AA_AF -F dbNSFP_ESP6500_EA_AF -F RSPOS -F SSR -F SAO -F VP -F VC -F PM -F TPA -F PMC -F MUT -F VLD -F OTHERKG -F PH3 -F CDA -F MTP -F OM -F CAF -F COMMON -GF GT -GF AD -GF GQ -GF PL -GF PQ -GF TP -GF AB -GF DP
 
 hapmap:
@@ -100,7 +98,7 @@ hapmap:
     loc: /path/to/hapmap/genotype_frequencies
 
     # bgzip compressede and tabix indexed VCF file for Hapmap
-    vcf: /ifs/mirror/genomes/gatk/hapmap_3.3.hg19.sites.vcf
+    vcf: /path/to/hapmap_3.3.hg19.sites.vcf
 
     padding: 0
 
@@ -127,19 +125,19 @@ annotation:
     clinvar: /path/to/clinvar_DATE.vcf.gz
 
     # path to ExAC vcf
-    exac: /ifs/mirror/ExAC/sites/ExAC.r0.3.1.sites.vep.vcf.gz
+    exac: /path/to/ExAC.r0.3.1.sites.vep.vcf.gz
 
     # path to dbsnp vcf
-    dbsnp: /ifs/mirror/dbsnp/All_20160527.vcf.gz
+    dbsnp: /path/to/All_20160527.vcf.gz
 
     # path to chromosome by chromosome 1000g vcfs
-    tgdir: /ifs/mirror/1000_genomes/phase3
+    tgdir: /path/to/1000_genomes/phase3
 
     # path to gwas catalog files
-    gwas_catalog: /ifs/mirror/gwascatalog/gwas_catalog_v1.0-downloaded_2015-07-14.txt
+    gwas_catalog: /path/to/gwas_catalog_v1.0-downloaded_2015-07-14.txt
 
     # path to "phastcons100way" files
-    phastcons: /ifs/mirror/phastcons
+    phastcons: /path/to/phastcons
 
     snpeff_to_table: -F CHROM -F POS -F ID -F REF -F ALT -F EFF
 
@@ -157,10 +155,10 @@ annotation:
     vepannotators: --sift b --variant_class --regulatory --domains
 
     # path to VEP scripts
-    veppath: /ifs/apps/bio/ensembl-vep-80/variant_effect_predictor
+    veppath: /path/to/ensembl-vep-80/variant_effect_predictor
 
     # location of cached annotations
-    vepcache: /ifs/mirror/VEP
+    vepcache: /path/to/VEP
 
     # species name
     vepspecies: homo_sapiens
@@ -215,10 +213,10 @@ filtering:
 
 king:
     #path to king
-    path: /ifs/apps/bio/king
+    path: /path/to/king
 
     #path to plink
-    plink: /ifs/apps/bio/plink-1.07/plink-1.07-x86_64
+    plink: /path/to/plink-1.07/plink-1.07-x86_64
 
 coverage:
 
@@ -226,7 +224,7 @@ coverage:
     calculate: 0
 
     # supply gtf
-    all_exons: /ifs/mirror/annotations/hg19_ensembl75/geneset_coding_exons.gtf.gz
+    all_exons: /path/to/hg19_ensembl75/geneset_coding_exons.gtf.gz
 
     # comma-separated list of canonical ensembl identifiers for candidate genes of interest
     candidates: ''
@@ -242,16 +240,16 @@ roi:
     bed: ''
 
     # Regions of interest
-    roi: /ifs/projects/proj048/agilent/S04380110_Regions.bed
+    roi: /path/to/agilent/S04380110_Regions.bed
 
-    intervals: /ifs/projects/proj048/agilent/S04380110_Regions.interval_list
+    intervals: /path/to/agilent/S04380110_Regions.interval_list
 
     # File mapping regions of interest to genes
-    to_gene: /ifs/projects/proj048/agilent/regions_to_genes.txt
+    to_gene: /path/to/agilent/regions_to_genes.txt
 
-    baits: /ifs/projects/proj048/agilent/S04380110_Probes_5col_samheader_ucsc.bed
+    baits: /path/to/agilent/S04380110_Probes_5col_samheader_ucsc.bed
 
-    regions: /ifs/projects/proj048/agilent/S04380110_Regions_5col_samheader_ucsc.bed
+    regions: /path/to/agilent/S04380110_Regions_5col_samheader_ucsc.bed
 
     padding: 100
 

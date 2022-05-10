@@ -262,30 +262,21 @@ def variantAnnotator(vcffile, bamlist, outfile, genome,
     job_memory = gatkmem
     job_threads = 3
 
-    if "--useAllAnnotations" in annotations:
-        anno = "--useAllAnnotations"
-    elif annotations:
-        anno = " -A " + " -A ".join(annotations)
-    else:
-        anno = ""
-
     statement = '''gatk VariantAnnotator
                     -R %(genome)s
                     -I %(bamlist)s
-                    -A SnpEff
-                    --snpEffFile %(snpeff_file)s
-                    -o %(outfile)s
-                    --variant %(vcffile)s
-                    -L %(vcffile)s
+                    --
+                    -V %(vcffile)s
                     --dbsnp %(dbsnp)s
-                    %(anno)s''' % locals()
+                    -O %(outfile)s''' % locals()
     P.run(statement)
 
 ##############################################################################
 
 
 def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
-                        kgenomes=None, hapmap=None, omni=None, mills=None, gatkmem = "2G"):
+                        kgenomes=None, hapmap=None, omni=None, mills=None, 
+                        axiom=None, gatkmem = "2G"):
     '''Create variant recalibration file'''
     job_memory = gatkmem
     job_threads = 3
@@ -294,50 +285,55 @@ def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
     if mode == 'SNP':
         statement = '''gatk VariantRecalibrator
         -R %(genome)s
-        -input %(infile)s
-        -resource:hapmap,known=false,training=true,truth=true,prior=15.0 %(hapmap)s
-        -resource:omni,known=false,training=true,truth=true,prior=12.0 %(omni)s
-        -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 %(dbsnp)s
-        -resource:1000G,known=false,training=true,truth=false,prior=10.0 %(kgenomes)s
-        -an QD -an SOR -an MQRankSum
-        -an ReadPosRankSum -an FS -an MQ
-        --maxGaussians 4
+        -V %(infile)s
+        --trust-all-polymorphic
+        -tranche 100.0 -tranche 99.95 -tranche 99.9 -tranche 99.8 -tranche 99.6 -tranche 99.5 -tranche 99.4 -tranche 99.3 -tranche 99.0 -tranche 98.0 -tranche 97.0 -tranche 90.0
+        -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ -an SOR -an InbreedingCoeff
         -mode %(mode)s
-        -recalFile %(outfile)s
-        -tranchesFile %(track)s.tranches
-        -rscriptFile %(track)s.plots.R ''' % locals()
+        --max-gaussians 6
+        --resource:hapmap,known=false,training=true,truth=true,prior=15 %(hapmap)s
+        --resource:omni,known=false,training=true,truth=true,prior=12 %(omni)s
+        --resource:1000G,known=false,training=true,truth=false,prior=10 %(kgenomes)s
+        --resource:dbsnp,known=true,training=false,truth=false,prior=7 %(dbsnp)s
+        -O %(track)s.recal
+        --tranches-file %(track)s.tranches
+        --rscript-file %(track)s.plots.R
+        > %(track)s.log 2>&1 ''' % locals()
         P.run(statement)
     elif mode == 'INDEL':
         statement = '''gatk VariantRecalibrator
         -R %(genome)s
-        -input %(infile)s
-        -resource:mills,known=true,training=true,truth=true,prior=12.0 %(mills)s
-        -an QD -an MQRankSum
-        -an ReadPosRankSum -an FS -an MQ
-        --maxGaussians 4
-        --minNumBadVariants 5000
+        -V %(infile)s
+        --resource:mills,known=true,training=true,truth=true,prior=12 %(mills)s
+        --resource:axiomPoly,known=false,training=true,truth=false,prior=10 %(axiom)s
+        --resource:dbsnp,known=true,training=false,truth=false,prior=2 %(dbsnp)s
+        -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ
+        --max-gaussians 4
         -mode %(mode)s
-        -recalFile %(outfile)s
-        -tranchesFile %(track)s.tranches
-        -rscriptFile %(track)s.plots.R ''' % locals()
+        -O %(track)s.recal
+        --tranches-file %(track)s.tranches
+        --rscript-file %(track)s.plots.R 
+        > %(track)s.log 2>&1 ''' % locals()
         P.run(statement)
 
 ##############################################################################
 
 
-def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode, gatkmem):
+def applyVSQR(vcf, recal, tranches, outfile, genome, mode, gatkmem):
     '''Perform variant quality score recalibration using GATK '''
     job_memory = gatkmem
     job_threads = 3
 
-    statement = '''gatk ApplyRecalibration
+    statement = '''gatk ApplyVQSR
     -R %(genome)s
-    -input:VCF %(vcf)s
-    -recalFile %(recal)s
-    -tranchesFile %(tranches)s
-    --ts_filter_level 99.0
+    -V %(vcf)s
+    --recal-file %(recal)s
+    --tranches-file %(tranches)s
+    --truth-sensitivity-filter-level 99.7
+    --create-output-variant-index true
     -mode %(mode)s
-    -o %(outfile)s ''' % locals()
+    -O %(outfile)s
+    > %(outfile)s.log 2>&1  ''' % locals()
     P.run(statement)
 
 ##############################################################################
@@ -351,17 +347,16 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
     statement = '''gatk VariantsToTable
                    -R %(genome)s
                    -V %(infile)s
-                   --showFiltered
-                   --allowMissingData
+                   --show-filtered
                    %(columns)s
-                   -o %(outfile)s''' % locals()
+                   -O %(outfile)s''' % locals()
     P.run(statement)
 
 ##############################################################################
 
 
 def selectVariants(infile, outfile, genome, select):
-    '''Filter de novo variants based on provided jexl expression'''
+    '''Filter de novo variants based on provided expression'''
     statement = '''gatk SelectVariants
                     -R %(genome)s
                     --variant %(infile)s
@@ -1287,3 +1282,5 @@ def CleanVariantTables(genes, variants, cols, outfile):
     df.columns = ['gene', 'CHROM', 'POS']
     variants = vp1.merge(df, 'left')
     variants.to_csv(outfile, sep="\t")
+
+    

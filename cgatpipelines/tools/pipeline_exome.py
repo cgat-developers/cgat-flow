@@ -430,40 +430,6 @@ def loadCoverageStats(infiles, outfile):
     bamstats.loadPicardCoverageStats(infiles, outfile)
 
 
-###############################################################################
-# Guess sex
-
-@follows(mkdir("xy_ratio"))
-@transform(RemoveDuplicatesSample,
-           regex(r"gatk/(\S+).dedup2.bam"),
-           r"xy_ratio/\1.sex")
-def calcXYratio(infile, outfile):
-    '''Guess the sex of a sample based on ratio of reads
-    per megabase of sequence on X and Y'''
-    exome.guessSex(infile, outfile)
-
-
-@merge(calcXYratio, "xy_ratio/xy_ratio.tsv")
-def mergeXYRatio(infiles, outfile):
-    '''merge XY ratios from all samples and load into database'''
-    inlist = " ".join(infiles)
-    statement = '''cgat combine_tables
-                   --add-file-prefix --regex-filename="xy_ratio/(\S+).sex"
-                   --no-titles --missing-value=0 --ignore-empty
-                   -L %(outfile)s.log -v 6
-                   --cat=Track %(inlist)s
-                   > %(outfile)s'''
-    P.run(statement)
-
-
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(mergeXYRatio, regex(r"xy_ratio/xy_ratio.tsv"),
-           r"xy_ratio/xy_ratio.load")
-def loadXYRatio(infile, outfile):
-    '''load into database'''
-    P.load(infile, outfile, "--header-names=Track,X,Y,XY_ratio")
-
-
 
 ###############################################################################
 ###############################################################################
@@ -1955,11 +1921,6 @@ def gatk():
     pass
 
 
-@follows(loadXYRatio)
-def sampleFeatures():
-    pass
-
-
 @follows(haplotypeCaller,
          genotypeGVCFs)
 def callVariants():
@@ -2020,7 +1981,6 @@ def vcfstats():
 
 @follows(mapping_tasks,
          gatk,
-         # sampleFeatures,
          callVariants,
          annotation,
          filtering,

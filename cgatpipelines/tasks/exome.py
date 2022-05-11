@@ -337,6 +337,20 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
 ##############################################################################
 
 
+def snpSift(infile, outfile, vcf, bgzip=True, memory="6G"):
+    '''Annotate VCF with other VCF'''
+    job_memory=memory
+    statement = '''SnpSift annotate %(vcf)s
+    %(infile)s > %(outfile)s 2> %(outfile).log;'''
+    if bgzip:
+        statement +=  '''bgzip %(outfile)s;
+        tabix -p vcf %(outfile)s.gz'''
+    P.run(statement)
+
+
+##############################################################################
+
+
 def selectVariants(infile, outfile, genome, select):
     '''Filter de novo variants based on provided expression'''
     statement = '''gatk SelectVariants
@@ -408,22 +422,6 @@ def buildSelectStatementfromPed(filter_type, pedfile, template):
     return select
 
 ##############################################################################
-
-
-def guessSex(infile, outfile):
-    '''Guess the sex of a sample based on ratio of reads
-    per megabase of sequence on X and Y'''
-    statement = '''calc `samtools idxstats %(infile)s
-                    | grep 'X'
-                    | awk '{print $3/($2/1000000)}'`
-                    /`samtools idxstats %(infile)s | grep 'Y'
-                    | awk '{print $3/($2/1000000)}'`
-                    | tr -d " " | tr "=" "\\t" | tr "/" "\\t"
-                    > %(outfile)s'''
-    P.run(statement)
-
-##############################################################################
-
 
 def filterMutect(infile, outfile, logfile,
                  control_id, tumour_id,

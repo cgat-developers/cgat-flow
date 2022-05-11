@@ -18,18 +18,18 @@ dominant, and recessive).
    3. Local realignment and BQSR in GATK and deduplication in Picard
    4. Calculate the ratio of reads on the X and Y chromosomes to assert sex
    5. Variant calling in families (SNVs & indels) using GATK HaplotypeCaller
-   7. Comparison of join VCF genotypes to assess relatedness (somalier)
-   8. Variant annotation using SNPeff, GATK VariantAnnotator, and SnpSift
-   9. Variant quality score recalibration (GATK)
-   10. Flags variants within genes of interest (such as known disease genes)
+   6. Comparison of join VCF genotypes to assess relatedness (somalier)
+   7. Variant annotation using SNPeff, GATK VariantAnnotator, and SnpSift
+   8. Variant quality score recalibration (GATK)
+   9. Flags variants within genes of interest (such as known disease genes)
       (GATK) (optional)
-   11. Filters potential de novo variants
-   12. Filters potential de novo variants using lower stringency criteria
-   13. Filters potential dominant mutations
-   14. Filters potential homozygous recessive mutations
-   15. Filters potential compound heterozygous mutations
-   16. Generates summary statistics for unfiltered vcf file
-   17. Generates report
+   10. Filters potential de novo variants
+   11. Filters potential de novo variants using lower stringency criteria
+   12. Filters potential dominant mutations
+   13. Filters potential homozygous recessive mutations
+   14. Filters potential compound heterozygous mutations
+   15. Generates summary statistics for unfiltered vcf file
+   16. Generates report
 
 .. note::
 
@@ -684,88 +684,75 @@ def loadTableSnpEff(infile, outfile):
 # SnpSift
 
 @transform(annotateVariantsSNPeff,
-           regex(r"variants/all_samples.snpeff.vcf"),
-           r"variants/all_samples.snpsift.vcf")
+           regex(r"variants/all_samples.snpeff.vcf.gz"),
+           r"variants/all_samples.snpsift_1.vcf.gz")
 def annotateVariantsDBNSFP(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     dbNSFP = PARAMS["annotation_dbnsfp"]
-    dbN_annotators = PARAMS["annotation_dbnsfpannotators"]
-    if len(dbN_annotators) == 0:
+    dbNSFP_columns = PARAMS["annotation_dbnsfp_columns"]
+    outfile = P.snip(outfile,".gz")
+    if not dbNSFP_columns:
         annostring = ""
     else:
-        annostring = "-f %s" % dbN_annotators
+        annostring = "-f %s" % dbNSFP_columns
 
-    statement = """SnpSift.sh dbnsxfp -db %(dbNSFP)s -v %(infile)s
-                   %(annostring)s >
-                   %(outfile)s;"""
+    statement = '''SnpSift dbnsfp 
+    -db %(dbNSFP)s -v %(infile)s
+    %(annostring)s >
+    %(outfile)s 2> %(outfile)s.log;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz'''
     P.run(statement)
 
 
 @transform(annotateVariantsDBNSFP,
-           regex(r"variants/all_samples_dbnsfp.snpsift.vcf"),
-           r"variants/all_samples_clinvar.snpsift.vcf")
+           regex(r"variants/all_samples.snpsift_1.vcf.gz"),
+           r"variants/all_samples.snpsift_2.vcf.gz")
 def annotateVariantsClinvar(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
     clinvar = PARAMS["annotation_clinvar"]
-    intout = outfile.replace("samples", "samples_clinvar")
-    statement = """SnpSift.sh annotate %(clinvar)s
-                %(infile)s > %(outfile)s;"""
-    P.run(statement)
+    outfile = P.snip(outfile,".gz")
+    exome.snpSift(infile,outfile,clinvar)
 
 
 @transform(annotateVariantsClinvar,
-           regex(r"variants/all_samples_clinvar.snpsift.vcf"),
-           r"variants/all_samples_exac.snpsift.vcf")
-def annotateVariantsExAC(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_memory = "6G"
-    job_threads = PARAMS["annotation_threads"]
-    exac = PARAMS["annotation_exac"]
-    statement = """SnpSift.sh annotate
-                %(exac)s
-                %(infile)s > %(outfile)s;"""
-    P.run(statement)
-
-
-@transform(annotateVariantsExAC,
-           regex(r"variants/all_samples_exac.snpsift.vcf"),
-           r"variants/all_samples_gwasc.snpsift.vcf")
+           regex(r"variants/all_samples_exac.snpsift_2.vcf.gz"),
+           r"variants/all_samples_gwasc.snpsift_3.vcf.gz")
 def annotateVariantsGWASC(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
 
     gwas_catalog = PARAMS["annotation_gwas_catalog"]
-    statement = """SnpSift.sh gwasCat -db %(gwas_catalog)s
+    statement = """SnpSift gwasCat -db %(gwas_catalog)s
                    %(infile)s > %(outfile)s;"""
     P.run(statement)
 
 
 @transform(annotateVariantsGWASC,
-           regex(r"variants/all_samples_gwasc.snpsift.vcf"),
-           r"variants/all_samples_phastcons.snpsift.vcf")
+           regex(r"variants/all_samples.snpsift_3.vcf.gz"),
+           r"variants/all_samples.snpsift_4.vcf.gz")
 def annotateVariantsPhastcons(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
-    genomeind = "%s/%s.fa.fai" % (
-        PARAMS['general_genome_dir'],
-        PARAMS['general_genome'])
+    genome_index = "%s/%s.fa.fai" % (
+        PARAMS['genome_dir'],
+        PARAMS['genome'])
     phastcons = PARAMS["annotation_phastcons"]
     intout = outfile.replace("samples", "samples_phastc")
-    statement = """ln -sf %(genomeind)s %(phastcons)s/genome.fai &&
-                   SnpSift.sh phastCons %(phastcons)s %(infile)s >
+    statement = """ln -sf %(genome_index)s %(phastcons)s/genome.fai &&
+                   SnpSift phastCons %(phastcons)s %(infile)s >
                    %(outfile)s;"""
     P.run(statement)
 
 
 @transform(annotateVariantsPhastcons,
-           regex(r"variants/all_samples_phastcons.snpsift.vcf"),
-           r"variants/all_samples_1000G.snpsift.vcf")
+           regex(r"variants/all_samples.snpsift_4.vcf.gz"),
+           r"variants/all_samples.snpsift_5.vcf.gz")
 def annotateVariants1000G(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
@@ -774,11 +761,7 @@ def annotateVariants1000G(infile, outfile):
     vcfs = []
     for f in os.listdir(PARAMS["annotation_tgdir"]):
         if f.endswith(".vcf.gz"):
-            if PARAMS['test'] == 1:
-                if "chr14" in f:
-                    vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
-            else:
-                vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
+            vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
 
     T = P.get_temp_filename(".")
     shutil.copy(infile, T)
@@ -786,7 +769,7 @@ def annotateVariants1000G(infile, outfile):
     tempout = P.get_temp_filename(".")
 
     for vcf in vcfs:
-        statement = """SnpSift.sh annotate
+        statement = """SnpSift annotate
                        %(vcf)s
                        %(tempin)s > %(tempout)s &&
                        mv %(tempout)s %(tempin)s"""
@@ -796,18 +779,13 @@ def annotateVariants1000G(infile, outfile):
 
 
 @transform(annotateVariants1000G,
-           regex(r"variants/all_samples_1000G.snpsift.vcf"),
-           r"variants/all_samples_dbsnp.snpsift.vcf")
+           regex(r"variants/all_samples.snpsift_5.vcf.gz"),
+           r"variants/all_samples_dbsnp.snpsift_final.vcf.gz")
 def annotateVariantsDBSNP(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
-
     dbsnp = PARAMS["annotation_dbsnp"]
-    statement = """SnpSift.sh annotate
-                %(dbsnp)s
-                %(infile)s > %(outfile)s;"""
-
+    exome.snpSift(infile,outfile,dbsnp)
     P.run(statement)
 
 
@@ -896,229 +874,7 @@ def makeAnnotationsTables(infiles, outfile):
                    -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
                    %(inputvcf)s >> %(outfile)s'''
     P.run(statement)
-
-
-###############################################################################
-# Ancestry Functions #
-HAPMAP = "%s/*txt.gz" % PARAMS['hapmap_loc']
-
-
-@merge(HAPMAP, ["snpdict.json",
-                "randomsnps.tsv"])
-def makeRandomSNPSet(infiles, outfiles):
-    '''
-    Generates a random set of SNPs to use to characterise the ancestry
-    and relatedness of the samples.
-
-    1. Finds all SNPs which have a known genotype frequency for all 11
-       hapmap ancestries
-    2. Picks a random 50000 of these SNPs
-    3. Stores a list of these SNPs as randomsnps.tsv
-    4. Builds a dictionary of dictionaries of dictionaries where:
-           At Level 1 each key is a HapMap ancestry ID
-               each of these keys leads to another dictionary - level 2.
-           At Level 2 each key is a dbSNP SNP ID
-               each of these keys leads to another dictionary - level 3.
-           At Level 3 each key is a genotype:
-               the values of these keys are the genotype frequency of this
-               genotype at this SNP in this ancestry.
-       e.g. snpdict['ASW']['rs000000001']['CT'] -->
-            frequency of the CT genotype at the rs0000001 SNP in the
-            ASW population
-    5.  Stores this dictionary in json format as randomsnps.json
-    '''
-    rs = PARAMS['general_randomseed']
-    exomeancestry.MakeSNPFreqDict(infiles, outfiles, rs, submit=True)
-
-
-@follows(mkdir("sample_genotypes.dir"))
-@transform(makeAnnotationsTables, regex("variant_tables/(.*).tsv"),
-           add_inputs(makeRandomSNPSet), r"sample_genotypes.dir/\1.tsv")
-def getSampleGenotypes(infiles, outfile):
-    '''
-    Fetches the genotype from the variant tables for all samples
-    for SNPs in the hapmap sample from makeRandomSNPSet.
-
-    Complex sites are ignored (as simple SNPs are sufficient for these
-    calculations).
-    These are:
-        Sites which failed QC (column 3 in the variant table is not PASS)
-        Sites with more than 2 alleles defined (column 6 in the variant table
-        contains more than one alternative allele)
-        SNPs with more than one ID
-        Indels
-    '''
-    snps = set([line.strip()
-                for line in iotools.open_file(infiles[1][1]).readlines()])
-    exomeancestry.GenotypeSNPs(infiles[0], snps, outfile, submit=True)
-
-
-@merge(getSampleGenotypes, "calledsnps.tsv")
-def concatenateSNPs(infiles, outfile):
-    '''
-    Lists all the SNPs in the sample from makeRandomSNPSet where a variant has
-    been called in any of the input files.
-    Stores the reference genotype, chromosome and position to use later.
-    '''
-    snps = set()
-    for f in infiles:
-        with iotools.open_file(f) as inp:
-            for line in inp:
-                line = line.strip().split("\t")
-                snps.add("%s\t%s\t%s\t%s" % (line[0], line[4],
-                                             line[1], line[2]))
-    out = iotools.open_file(outfile, "w")
-    for snp in snps:
-        out.write("%s\n" % (snp))
-    out.close()
-
-
-@follows(mkdir("sample_freqs"))
-@transform(getSampleGenotypes, regex("sample_genotypes.dir/(.*).tsv"),
-           add_inputs(concatenateSNPs, makeRandomSNPSet),
-           [r"sample_freqs/\1.tsv", r"sample_freqs/\1_anc.tsv"])
-def calculateAncestry(infiles, outfiles):
-    '''
-    Takes the data stored in MakeRandomSNPSet and the genotype of each sample
-    at each site in calledsnps.tsv and tabulates the frequency of this
-    genotype in each of the HapMap ancestry categories.
-    The overall probability of each ancestry is then calculated as the
-    product of these frequencies. These can only be used in comparison to
-    each other - to show which of the 11 ancestries is most probable.
-    '''
-    calledsnps = infiles[1]
-    snpdict = infiles[2][0]
-    exomeancestry.CalculateAncestry(infiles[0], calledsnps, snpdict,
-                                            outfiles, submit=True)
-
-
-@merge(calculateAncestry, "ancestry_estimate.tsv")
-def mergeAncestry(infiles, outfile):
-    '''
-    Merges the output of the ancestry calculations for each sample into a
-    single table.
-    Draws a plot showing the score (probabilty) for each individual
-    for their assigned ancestry and the second closest match.
-    x = individual
-    y = score
-    large diamonds represent the best match and small triangles the second
-    best match
-    '''
-    out = iotools.open_file(outfile, "w")
-    for f in infiles:
-        infile = f[1]
-        scores = []
-        ancs = []
-        for line in iotools.open_file(infile).readlines():
-            line = line.strip().split("\t")
-            anc = line[0]
-            score = decimal.Decimal(line[1])
-            ancs.append(anc)
-            scores.append(score)
-        z = list(zip(ancs, scores))
-        s = sorted(z, key=lambda x: x[1])[::-1]
-        out.write("%s\t%s\t%s\t%s\t%s\n" % (f[0],
-                                            s[0][0], s[0][1],
-                                            s[1][0], s[1][1]))
-    out.close()
-    exomeancestry.PlotAncestry(outfile)
-
-
-@active_if(len(matches) > 1)
-@merge((calculateAncestry, concatenateSNPs),
-       ["all_samples.ped", "all_samples.map"])
-def makePed(infiles, outfiles):
-    '''
-    Generates the required input for the Plink and King software packages.
-       - PED file - columns are SNPs and rows are samples, each cell is the
-         genotype of the sample at this SNP
-       - MAP file - rows are SNPs in the same order as the columns in the ped
-         file, each row shows chromosome, snp id and position.
-    '''
-    exomeancestry.MakePEDFile(infiles, outfiles)
-
-
-@active_if(len(matches) > 1)
-@transform(makePed, suffix(".ped"), ".ibs0")
-def runPlinkandKing(infiles, outfile):
-    '''
-    Uses King software to calculate relatedness of pairs of samples as
-    described here - http://people.virginia.edu/~wc9c/KING/manual.html
-    Plink is used just to reformat the PED files into the format required by
-    King.
-    '''
-    pref = infiles[0].split(".")[0]
-    k = PARAMS['king_path']
-    p = PARAMS['king_plink']
-    statement = """
-    %(p)s/plink --file %(pref)s --make-bed --no-fid --noweb --map3
-          --no-parents --no-sex --no-pheno &&
-    %(k)s/king -b plink.bed --binary --prefix %(pref)s &&
-    %(k)s/king -b %(pref)s.bgeno --kinship --ibs --prefix %(pref)s"""
-    P.run(statement)
-
-
-@active_if(len(matches) > 1)
-@merge(runPlinkandKing, "family_estimate.tsv")
-def calculateFamily(infile, outfile):
-    '''
-    Translates and filters the output from King.
-    Pairs of related samples are written to the output file along with the
-    degree of relatedness.  Degrees are decided using thresholds from
-    the King documentation, here
-    http://people.virginia.edu/~wc9c/KING/manual.html
-    '''
-    exomeancestry.CalculateFamily(infile, outfile)
-
-
-@active_if(len(matches) > 1)
-@merge(makeAnnotationsTables, "sex_estimate.tsv")
-def calculateSex(infiles, outfile):
-    '''
-    Approximates the sex of the sample using the data in the variant table.
-    Basic estimate based on heterozygosity on the X chromosome - genotypes
-    are taken for all called variants on X passing QC and the percentage
-    of heterozygotes is taken.
-    This tends to produce two clear populations so Kmeans clustering
-    is used to split the data into two - male and female.  Samples which are
-    unclear are marked in the output.
-    '''
-    exomeancestry.CalculateSex(infiles, outfile, submit=True)
-
-
-@merge((mergeAncestry, calculateFamily, calculateSex), "summary.tsv")
-def summarise(infiles, outfile):
-    '''
-    Builds a summary table for ancestry, family and sex.
-    '''
-    ancestry = pd.read_csv(infiles[0], sep="\t", header=None)
-    if len(matches) > 1:
-        family = pd.read_csv(infiles[1], sep="\t", header=None)
-        sex = pd.read_csv(infiles[2], sep="\t", header=None)
-        ancestry[0] = [a[-1] for a in ancestry[0].str.split("/")]
-        family[0] = [a[-1] for a in family[0].str.split("/")]
-        sex[0] = [a[-1] for a in sex[0].str.split("/")]
-        sex = sex.drop([1, 2], 1)
-        sex.columns = ['id', 'sex', 'sex_significance']
-        family.columns = ['id', 'related_to', 'degree_relatedness']
-        family['degree_relatedness'] = family['degree_relatedness'].astype(int)
-        ancestry = ancestry.drop([2, 3, 4], 1)
-        ancestry.columns = ['id', 'ancestry']
-        summary = ancestry.merge(sex).merge(family, 'left')
-        summary = summary.fillna("NA")
-        summary.to_csv(outfile, sep="\t")
-    else:
-        ancestry[0] = [a[-1] for a in ancestry[0].str.split("/")]
-        ancestry = ancestry.drop([2, 3, 4], 1)
-        ancestry.columns = ['id', 'ancestry']
-        ancestry = ancestry.fillna("NA")
-        ancestry.to_csv(outfile, sep="\t")
-
-
-@follows(summarise)
-def ancestry():
-    pass
-
+        
 
 ###############################################################################
 # Quality Filtering #

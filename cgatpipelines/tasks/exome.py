@@ -256,24 +256,6 @@ def strelkaINDELCaller(infile_control, infile_tumor, outfile, genome, config,
 ##############################################################################
 
 
-def variantAnnotator(vcffile, bamlist, outfile, genome,
-                     dbsnp, annotations="", snpeff_file="", gatkmem="2G"):
-    '''Annotate variant file using GATK VariantAnnotator'''
-    job_memory = gatkmem
-    job_threads = 3
-
-    statement = '''gatk VariantAnnotator
-                    -R %(genome)s
-                    -I %(bamlist)s
-                    --
-                    -V %(vcffile)s
-                    --dbsnp %(dbsnp)s
-                    -O %(outfile)s''' % locals()
-    P.run(statement)
-
-##############################################################################
-
-
 def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
                         kgenomes=None, hapmap=None, omni=None, mills=None, 
                         axiom=None, gatkmem = "2G"):
@@ -319,7 +301,7 @@ def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
 ##############################################################################
 
 
-def applyVSQR(vcf, recal, tranches, outfile, genome, mode, gatkmem):
+def applyVQSR(vcf, recal, tranches, outfile, genome, mode, gatkmem):
     '''Perform variant quality score recalibration using GATK '''
     job_memory = gatkmem
     job_threads = 3

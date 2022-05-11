@@ -79,11 +79,13 @@ gatk:
 
     hapmap: /path/to/hapmap.vcf
 
-    omni: /path/to/omni/1000G_omni2.5.hg19.sites.vcf
+    omni: /path/to/1000G_omni2.5.hg19.sites.vcf
 
     kgenomes: /path/to/1000G_phase1.snps.high_confidence.hg19.sites.vcf
 
     mills: /path/to/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+
+    axiom: /path/to/axioum
 
     solid_options: ''
 

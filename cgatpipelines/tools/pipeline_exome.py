@@ -18,8 +18,7 @@ dominant, and recessive).
    3. Local realignment and BQSR in GATK and deduplication in Picard
    4. Calculate the ratio of reads on the X and Y chromosomes to assert sex
    5. Variant calling in families (SNVs & indels) using GATK HaplotypeCaller
-   6. HapMap genotyping in individuals using GATK HaplotypeCaller
-   7. Comparison of Hapmap genotypes to assess relatedness (VCFtools)
+   7. Comparison of join VCF genotypes to assess relatedness (somalier)
    8. Variant annotation using SNPeff, GATK VariantAnnotator, and SnpSift
    9. Variant quality score recalibration (GATK)
    10. Flags variants within genes of interest (such as known disease genes)
@@ -152,6 +151,7 @@ Requirements:
 * samtools >= 1.1
 * GATK >= 2.7
 * snpEff >= 4.0
+* somalier
 * Gemini >= ?
 * VCFtools >= 0.1.8a
 
@@ -511,7 +511,7 @@ def genotypeGVCFs(infile, outfile):
 
 @transform(genotypeGVCFs,
            regex(r"variants/all_samples.vcf"),
-           r"variants/all_samples_excesshet.vcf")
+           r"variants/all_samples_excesshet.vcf.gz")
 def filterExcessHets(infile, outfile):
     '''
     Hard filter on Excess Heterozygotes
@@ -532,8 +532,8 @@ def filterExcessHets(infile, outfile):
 
 
 @transform(filterExcessHets,
-           regex(r"variants/all_samples_excesshet.vcf"),
-           r"variants/all_samples_sitesonly.vcf")
+           regex(r"variants/all_samples_excesshet.vcf.gz"),
+           r"variants/all_samples_sitesonly.vcf.gz")
 def sitesOnlyVcf(infile,outfile):
     '''
     Create sites-only VCF with MakeSitesOnlyVcf
@@ -551,7 +551,7 @@ def sitesOnlyVcf(infile,outfile):
 # SNP Recalibration
 
 @transform(sitesOnlyVcf,
-           regex(r"variants/all_samples_sitesonly.vcf"),
+           regex(r"variants/all_samples_sitesonly.vcf.gz"),
            r"variants/all_samples.snp_vqsr.recal")
 def variantRecalibratorSnps(infile, outfile):
     '''Create variant recalibration file'''
@@ -568,10 +568,10 @@ def variantRecalibratorSnps(infile, outfile):
 
 @follows(variantRecalibratorSnps)
 @transform(filterExcessHets,
-           regex(r"variants/all_samples_excesshet.vcf"),
+           regex(r"variants/all_samples_excesshet.vcf.gz"),
            add_inputs(r"variants/all_samples.snp_vqsr.recal",
                       r"variants/all_samples.snp_vqsr.tranches"),
-           r"variants/all_samples.snp_vqsr.vcf")
+           r"variants/all_samples.snp_vqsr.vcf.gz")
 def applyVQSRSnps(infiles, outfile):
     '''Perform variant quality score recalibration using GATK '''
     vcf, recal, tranches = infiles
@@ -585,7 +585,7 @@ def applyVQSRSnps(infiles, outfile):
 
 
 @transform(sitesOnlyVcf,
-           regex(r"variants/all_samples_sitesonly.vcf"),
+           regex(r"variants/all_samples_sitesonly.vcf.gz"),
            r"variants/all_samples.indel_vqsr.recal")
 def variantRecalibratorIndels(infile, outfile):
     '''Create variant recalibration file'''
@@ -601,10 +601,10 @@ def variantRecalibratorIndels(infile, outfile):
 
 @follows(variantRecalibratorIndels)
 @transform(applyVQSRSnps,
-           regex(r"variants/all_samples.snp_vqsr.vcf"),
+           regex(r"variants/all_samples.snp_vqsr.vcf.gz"),
            add_inputs(r"variants/all_samples.indel_vqsr.recal",
                       r"variants/all_samples.indel_vqsr.tranches"),
-           r"variants/all_samples.vqsr.vcf")
+           r"variants/all_samples.vqsr.vcf.gz")
 def applyVQSRIndels(infiles, outfile):
     '''Perform variant quality score recalibration using GATK '''
     vcf, recal, tranches = infiles
@@ -614,130 +614,91 @@ def applyVQSRIndels(infiles, outfile):
                                             outfile, genome, mode, GATK_MEMORY)
 
 
-###############################################################################
-###############################################################################
-###############################################################################
-# HapMap Genotypes
-
-
-@follows(mkdir("hapmap"))
-@files(PARAMS["hapmap_vcf"], "hapmap/hapmap_exome.bed")
-def SelectExonicHapmapVariants(infile, outfile):
-    '''Select variants from HapMap project that are located within
-    exome target regions. Assumes bgzipped & tabix indexed Hapmap VCF file.'''
-    bed = PARAMS["roi_regions"]
-    statement = '''tabix -B %(infile)s %(bed)s |
-                   awk '{OFS="\\t" if (!/^#/){print $1,$2-1,$2}}'
-                   > %(outfile)s''' % locals()
-    P.run(statement)
-
-
-@follows(SelectExonicHapmapVariants)
-@transform(RemoveDuplicatesSample,
-           regex(r"gatk/(\S+).dedup2.bam"),
-           add_inputs("hapmap/hapmap_exome.bed"),
-           r"hapmap/\1.hapmap.vcf")
-def HapMapGenotype(infiles, outfile):
-    '''Genotype HapMap SNPs using HaplotypeCaller in each individual'''
-    infile, intervals = infiles
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    dbsnp = PARAMS["gatk_dbsnp"]
-    padding = PARAMS["hapmap_padding"]
-    options = PARAMS["hapmap_hc_options"]
-    exome.haplotypeCaller(infile, outfile, genome, dbsnp,
-                                  intervals, padding, options)
-
-
-@transform(HapMapGenotype, regex(r"hapmap/(\S+).hapmap.vcf"),
-           r"hapmap/\1.hapmap.vcf.gz")
-def indexVCFs(infile, outfile):
-    '''Genotype HapMap SNPs using HaplotypeCaller in each individual'''
-    statement = '''bgzip -c %(infile)s > %(outfile)s &&
-                   tabix -p vcf %(outfile)s; '''
-    P.run(statement)
-
-
-###############################################################################
-# Compare Hapmap genotypes to assess relatedness
-
-@follows(indexVCFs, mkdir("hapmap/vcfcompare"))
-@permutations("hapmap/*.hapmap.vcf.gz",
-              formatter("hapmap/(\S+).hapmap.vcf.gz$"),
-              2,
-              r"hapmap/vcfcompare/{basename[0][0]}_vs_{basename[1][0]}.vcfcompare")
-def vcfCompare(infiles, outfile):
-    '''Compare HapMap genotypes from each pair of calls '''
-    sample1, sample2 = infiles
-    name1 = P.snip(os.path.basename(sample1), ".hapmap.vcf.gz")
-    name2 = P.snip(os.path.basename(sample2), ".hapmap.vcf.gz")
-    statement = '''vcf-compare -g -m %(name1)s:%(name2)s
-                   %(sample1)s %(sample2)s > %(outfile)s'''
-    P.run(statement)
-
-
-@transform(vcfCompare,
-           regex(r"hapmap/vcfcompare/(\S+).vcfcompare"),
-           r"hapmap/vcfcompare/\1.ndr")
-def parseVcfCompare(infile, outfile):
-    '''Extract non-reference discordance rate for each comparison'''
-    statement = '''cat %(infile)s
-                   | grep "Non-reference Discordance Rate (NDR):"
-                   | cut -f 3
-                   > %(outfile)s'''
-    P.run(statement)
-
-
-@merge(parseVcfCompare, "hapmap/vcfcompare/ndr.tsv")
-def mergeNDR(infiles, outfile):
-    '''Merge NDR values for all files'''
-    outf = open(outfile, "w")
-    outf.write("sample1\tsample2\tNDR\n")
-    for infile in infiles:
-        inbase = P.snip(os.path.basename(infile), ".ndr")
-        sample1, sample2 = inbase.split("_vs_")
-        inf = open(infile, "r")
-        ndr = inf.readline().strip()
-        result = "\t".join([sample1, sample2, ndr])
-        outf.write(result + "\n")
-        inf.close()
-    outf.close()
-
-
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(mergeNDR, regex(r"hapmap/vcfcompare/ndr.tsv"),
-           r"hapmap/vcfcompare/ndr.load")
-def loadNDR(infile, outfile):
-    '''Load NDR into database'''
-    P.load(infile, outfile)
-
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 # Variant Annotation
 
+
+###############################################################################
+# Somalier - assessing relatedness of samples
+
+@transform(applyVQSRIndels,
+           regex(r"variants/all_samples.vqsr.vcf.gz"),
+           r"variants/somalier/somalier.log")
+def extractSomalier(infile,outfile):
+    '''extract list of polymorphic sites using Somalier'''
+
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    somalier = PARAMS['annotation_somalier_path']
+    sites = PARAMS['annotation_somalier_sites']
+    outdir = os.path.dirname(outfile)
+    statement = '''%(somalier)s extract 
+    -d %(outdir)s
+    --sites %(sites)s
+    -f %(genome)s 
+    %(infile)s
+    > %(outfile)s 2>&1
+    '''
+    P.run(statement)
+
+
+@transform(extractSomalier,
+           regex(r"variants/somalier/somalier.log"),
+           r"variants/somalier/relate.log")
+def relateSomalier(infile,outfile):
+    '''Calculate Ancestry based on 1000G project'''
+
+    somalier = PARAMS['annotation_somalier_path']
+    outdir = os.path.dirname(outfile)
+    statement ='''%(somalier)s relate
+    %(outdir)s/*.somalier
+    > %(outfile)s 2>&1'''
+    P.run(statement)
+
+
+@transform(extractSomalier,
+           regex(r"variants/somalier/somalier.log"),
+           r"variants/somalier/ancestry.log")
+def ancestrySomalier(infile,outfile):
+    '''Calculate Ancestry based on 1000G project'''
+
+    somalier = PARAMS['annotation_somalier_path']
+    labels = PARAMS['annotation_somalier_labels']
+    reference = PARAMS['annotation_somalier_1kg']
+    outdir = os.path.dirname(outfile)
+    statement ='''%(somalier)s ancestry 
+    --labels %(labels)s %(reference)s/*.somalier ++ 
+    %(outdir)s/*.somalier
+    > %(outfile)s 2>&1'''
+    P.run(statement)
+
+
 ###############################################################################
 # SnpSift
 
 @transform(applyVQSRIndels,
-           regex(r"variants/all_samples.vqsr.vcf"),
-           r"variants/all_samples.snpeff.vcf")
+           regex(r"variants/all_samples.vqsr.vcf.gz"),
+           r"variants/all_samples.snpeff.vcf.gz")
 def annotateVariantsSNPeff(infile, outfile):
     '''Annotate variants using SNPeff'''
     job_memory = PARAMS["annotation_memory"]
     job_threads = PARAMS["annotation_threads"]
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
-    statement = (
-        "snpEff -Xmx%(job_memory)s "
-        "-c %(config)s "
-        "-v %(snpeff_genome)s "
-        "%(infile)s > %(outfile)s 2> %(outfile)s.log"  % locals())
+    outfile = P.snip(outfile,".gz")
+    statement = ''' snpEff -Xmx%(job_memory)s 
+    -c %(config)s 
+    -v %(snpeff_genome)s 
+    %(infile)s > %(outfile)s 2> %(outfile)s.log;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz'''  % locals()
     P.run(statement, job_memory=PARAMS["annotation_memory"])
 
 
 @transform(annotateVariantsSNPeff,
-           regex(r"variants/all_samples.snpeff.vcf"),
+           regex(r"variants/all_samples.snpeff.vcf.gz"),
            r"variants/all_samples.snpeff.table")
 def vcfToTableSnpEff(infile, outfile):
     '''Converts vcf to tab-delimited file'''
@@ -1994,9 +1955,7 @@ def gatk():
     pass
 
 
-@follows(loadXYRatio,
-         indexVCFs,
-         loadNDR)
+@follows(loadXYRatio)
 def sampleFeatures():
     pass
 

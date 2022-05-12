@@ -110,7 +110,7 @@ annotation:
 
     memory: 6G
 
-    threads: 3
+    threads: 1
 
     #Config file specifies that the genome must be downloaded into your home directory
     snpeff_config: path/to/snpEff-VERSION/snpEff.config

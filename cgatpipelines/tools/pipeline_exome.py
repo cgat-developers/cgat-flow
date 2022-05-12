@@ -196,8 +196,8 @@ matches = glob.glob("*.fastq.1.gz") + glob.glob(
     "*.fastq.gz") + glob.glob("*.sra") + glob.glob("*.csfasta.gz")
 
 PICARD_MEMORY = PARAMS["picard_memory"]
-
 GATK_MEMORY = PARAMS["gatk_memory"]
+ANNOTATION_MEMORY = PARAMS["annotation_memory"]
 
 
 ###############################################################################
@@ -648,7 +648,7 @@ def ancestrySomalier(infile,outfile):
            r"variants/all_samples.snpeff.vcf.gz")
 def annotateVariantsSNPeff(infile, outfile):
     '''Annotate variants using SNPeff'''
-    job_memory = PARAMS["annotation_memory"]
+    job_memory = ANNOTATION_MEMORY
     job_threads = PARAMS["annotation_threads"]
     snpeff_genome = PARAMS["annotation_snpeff_genome"]
     config = PARAMS["annotation_snpeff_config"]
@@ -669,7 +669,7 @@ def vcfToTableSnpEff(infile, outfile):
     '''Converts vcf to tab-delimited file'''
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     columns = PARAMS["annotation_snpeff_to_table"]
-    exome.vcfToTable(infile, outfile, genome, columns, GATK_MEMORY)
+    exome.vcfToTable(infile, outfile, genome, columns, ANNOTATION_MEMORY)
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -687,7 +687,7 @@ def loadTableSnpEff(infile, outfile):
            r"variants/all_samples.snpsift_1.vcf.gz")
 def annotateVariantsDBNSFP(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
+    job_memory = ANNOTATION_MEMORY
     job_threads = PARAMS["annotation_threads"]
     dbNSFP = PARAMS["annotation_dbnsfp"]
     dbNSFP_columns = PARAMS["annotation_dbnsfp_columns"]
@@ -697,7 +697,8 @@ def annotateVariantsDBNSFP(infile, outfile):
     else:
         annostring = "-f %s" % dbNSFP_columns
 
-    statement = '''SnpSift dbnsfp 
+    statement = '''SnpSift dbnsfp
+    -Xmx%(job_memory)s
     -db %(dbNSFP)s -v %(infile)s
     %(annostring)s >
     %(outfile)s 2> %(outfile)s.log;
@@ -714,7 +715,7 @@ def annotateVariantsClinvar(infile, outfile):
     job_threads = PARAMS["annotation_threads"]
     clinvar = PARAMS["annotation_clinvar"]
     outfile = P.snip(outfile,".gz")
-    exome.snpSift(infile,outfile,clinvar)
+    exome.snpSift(infile,outfile,clinvar, memory=ANNOTATION_MEMORY)
 
 
 @transform(annotateVariantsClinvar,
@@ -722,12 +723,14 @@ def annotateVariantsClinvar(infile, outfile):
            r"variants/all_samples.snpsift_3.vcf.gz")
 def annotateVariantsGWASC(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
+    job_memory = ANNOTATION_MEMORY
     job_threads = PARAMS["annotation_threads"]
     gwas_catalog = PARAMS["annotation_gwas_catalog"]
     outfile = P.snip(outfile,".gz")
 
-    statement = """SnpSift gwasCat -db %(gwas_catalog)s
+    statement = """SnpSift gwasCat
+    -Xmx%(job_memory)s 
+    -db %(gwas_catalog)s
     %(infile)s > %(outfile)s  2> %(outfile)s.log;
     bgzip %(outfile)s;
     tabix -p vcf %(outfile)s.gz;"""
@@ -739,7 +742,7 @@ def annotateVariantsGWASC(infile, outfile):
            r"variants/all_samples.snpsift_4.vcf.gz")
 def annotateVariantsPhastcons(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
+    job_memory = ANNOTATION_MEMORY
     job_threads = PARAMS["annotation_threads"]
     genome_index = "%s/%s.fa.fai" % (
         PARAMS['genome_dir'],
@@ -748,7 +751,9 @@ def annotateVariantsPhastcons(infile, outfile):
     outfile = P.snip(outfile,".gz")
 
     statement = """ln -sf %(genome_index)s %(phastcons)s/genome.fai &&
-    SnpSift phastCons %(phastcons)s %(infile)s >
+    SnpSift phastCons 
+    -Xmx%(job_memory)s 
+    %(phastcons)s %(infile)s >
     %(outfile)s  2> %(outfile)s.log;
     bgzip %(outfile)s;
     tabix -p vcf %(outfile)s.gz;"""
@@ -760,7 +765,7 @@ def annotateVariantsPhastcons(infile, outfile):
            r"variants/all_samples.snpsift_5.vcf.gz")
 def annotateVariants1000G(infile, outfile):
     '''Add annotations using SNPsift'''
-    job_memory = "6G"
+    job_memory = ANNOTATION_MEMORY
     job_threads = PARAMS["annotation_threads"]
     outfile = P.snip(outfile,".gz")
 
@@ -769,16 +774,22 @@ def annotateVariants1000G(infile, outfile):
         if f.endswith(".vcf.gz"):
             vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
 
-    T = P.get_temp_filename(".")
-    shutil.copy(infile, T)
-    tempin = T
+    tempin = P.get_temp_filename(".")
+    statement='''cp %(infile)s %(tempin)s.gz &&
+    tabix -p vcf %(tempin)s.gz'''
+    P.run(statement)
+
     tempout = P.get_temp_filename(".")
 
     for vcf in vcfs:
         statement = """SnpSift annotate
-                       %(vcf)s
-                       %(tempin)s > %(tempout)s &&
-                       mv %(tempout)s %(tempin)s"""
+        -Xmx%(job_memory)s 
+        %(vcf)s
+        %(tempin)s.gz > %(tempout)s  
+        2>> %(outfile)s.log &&
+        mv %(tempout)s %(tempin)s &&
+        bgzip -f %(tempin)s &&
+        tabix -f %(tempin)s.gz"""
         P.run(statement)
 
     shutil.move(tempin, outfile)
@@ -794,7 +805,7 @@ def annotateVariantsDBSNP(infile, outfile):
     '''Add annotations using SNPsift'''
     job_threads = PARAMS["annotation_threads"]
     dbsnp = PARAMS["annotation_dbsnp"]
-    exome.snpSift(infile,outfile,dbsnp)
+    exome.snpSift(infile,outfile,dbsnp,memory=ANNOTATION_MEMORY)
     P.run(statement)
 
 

@@ -340,7 +340,8 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
 def snpSift(infile, outfile, vcf, bgzip=True, memory="6G"):
     '''Annotate VCF with other VCF'''
     job_memory=memory
-    statement = '''SnpSift annotate %(vcf)s
+    statement = '''SnpSift annotate 
+    -Xmx%(job_memory)s %(vcf)s
     %(infile)s > %(outfile)s 2> %(outfile)s.log;'''
     if bgzip:
         statement +=  '''bgzip %(outfile)s;

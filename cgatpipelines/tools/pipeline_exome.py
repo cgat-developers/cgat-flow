@@ -179,7 +179,6 @@ from cgatcore import pipeline as P
 import cgatpipelines.tasks.mapping as mapping
 import cgatpipelines.tasks.bamstats as bamstats
 import cgatpipelines.tasks.exome as exome
-import cgatpipelines.tasks.exomeancestry as exomeancestry
 
 ###############################################################################
 ###############################################################################
@@ -719,16 +718,19 @@ def annotateVariantsClinvar(infile, outfile):
 
 
 @transform(annotateVariantsClinvar,
-           regex(r"variants/all_samples_exac.snpsift_2.vcf.gz"),
-           r"variants/all_samples_gwasc.snpsift_3.vcf.gz")
+           regex(r"variants/all_samples.snpsift_2.vcf.gz"),
+           r"variants/all_samples.snpsift_3.vcf.gz")
 def annotateVariantsGWASC(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
-
     gwas_catalog = PARAMS["annotation_gwas_catalog"]
+    outfile = P.snip(outfile,".gz")
+
     statement = """SnpSift gwasCat -db %(gwas_catalog)s
-                   %(infile)s > %(outfile)s;"""
+    %(infile)s > %(outfile)s  2> %(outfile)s.log;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz;"""
     P.run(statement)
 
 
@@ -743,10 +745,13 @@ def annotateVariantsPhastcons(infile, outfile):
         PARAMS['genome_dir'],
         PARAMS['genome'])
     phastcons = PARAMS["annotation_phastcons"]
-    intout = outfile.replace("samples", "samples_phastc")
+    outfile = P.snip(outfile,".gz")
+
     statement = """ln -sf %(genome_index)s %(phastcons)s/genome.fai &&
-                   SnpSift phastCons %(phastcons)s %(infile)s >
-                   %(outfile)s;"""
+    SnpSift phastCons %(phastcons)s %(infile)s >
+    %(outfile)s  2> %(outfile)s.log;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz;"""
     P.run(statement)
 
 
@@ -757,6 +762,7 @@ def annotateVariants1000G(infile, outfile):
     '''Add annotations using SNPsift'''
     job_memory = "6G"
     job_threads = PARAMS["annotation_threads"]
+    outfile = P.snip(outfile,".gz")
 
     vcfs = []
     for f in os.listdir(PARAMS["annotation_tgdir"]):
@@ -776,7 +782,10 @@ def annotateVariants1000G(infile, outfile):
         P.run(statement)
 
     shutil.move(tempin, outfile)
-
+    statement = '''  bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz''';
+    P.run(statement)
+ 
 
 @transform(annotateVariants1000G,
            regex(r"variants/all_samples.snpsift_5.vcf.gz"),
@@ -795,7 +804,7 @@ def annotateVariantsSNPsift():
 
 
 @transform(annotateVariantsDBSNP,
-           regex(r"variants/all_samples_dbsnp.snpsift.vcf"),
+           regex(r"variants/all_samples.snpsift_final.vcf.gz"),
            r"variants/all_samples.vep.vcf")
 def annotateVariantsVEP(infile, outfile):
     '''
@@ -935,13 +944,13 @@ def damageFilterVariants(infiles, outfiles):
 
 @follows(mkdir("variant_tables_family"))
 @transform(damageFilterVariants, regex("variant_tables_damaging/(.*).tsv"),
-           add_inputs(calculateFamily),
            [r'variant_tables_family/\1.tsv',
             r'variant_tables_family/\1_failed.tsv'])
 def familyFilterVariants(infiles, outfiles):
     '''
     Filter variants according to the output of calculateFamily -
     only variants shared by both members of a family will be kept.
+    BROKEN - NEED TO ADD FAMILY INPUTS
     '''
     if len(matches) > 1:
         infile = infiles[0][0]
@@ -1650,8 +1659,7 @@ def loadVCFstats(infiles, outfile):
 
 
 @follows(loadVariantAnnotation,
-         finalVariantTables,
-         ancestry)
+         finalVariantTables)
 def testFromVariantRecal():
     pass
 
@@ -1740,7 +1748,6 @@ def vcfstats():
          callVariants,
          annotation,
          filtering,
-         ancestry,
          makeAnnotationsTables)
 def full():
     pass

@@ -792,21 +792,19 @@ def annotateVariants1000G(infile, outfile):
         tabix -f %(tempin)s.gz"""
         P.run(statement)
 
-    shutil.move(tempin, outfile)
-    statement = '''  bgzip %(outfile)s;
+    statement = '''  mv %(tempin)s.gz %(outfile)s &&
     tabix -p vcf %(outfile)s.gz''';
     P.run(statement)
  
 
 @transform(annotateVariants1000G,
            regex(r"variants/all_samples.snpsift_5.vcf.gz"),
-           r"variants/all_samples_dbsnp.snpsift_final.vcf.gz")
+           r"variants/all_samples.snpsift_final.vcf.gz")
 def annotateVariantsDBSNP(infile, outfile):
     '''Add annotations using SNPsift'''
     job_threads = PARAMS["annotation_threads"]
     dbsnp = PARAMS["annotation_dbsnp"]
     exome.snpSift(infile,outfile,dbsnp,memory=ANNOTATION_MEMORY)
-    P.run(statement)
 
 
 @follows(annotateVariantsDBSNP)
@@ -833,21 +831,55 @@ def annotateVariantsVEP(infile, outfile):
     vep_cache = PARAMS["annotation_vepcache"]
     vep_species = PARAMS["annotation_vepspecies"]
     vep_assembly = PARAMS["annotation_vepassembly"]
-    if len(vep_annotators) != 0:
-        annostring = vep_annotators
-        statement = '''perl %(vep_path)s/variant_effect_predictor.pl
-                       --cache --dir %(vep_cache)s --vcf
-                       --species %(vep_species)s
-                       --fork 2
-                       --assembly %(vep_assembly)s --input_file %(infile)s
-                       --output_file %(outfile)s --force_overwrite
-                       %(annostring)s --offline;'''
-        P.run(statement)
+    statement = '''vep
+    -i %(infile)s
+    --cache --dir %(vep_cache)s --vcf
+    --species %(vep_species)s
+    --fork 2
+    --compress_output bgzip
+    --assembly %(vep_assembly)s
+    -o %(outfile)s --force_overwrite
+    %(annostring)s;''' 
+    P.run(statement)
+
+
+
+
+@transform(annotateVariantsVEP,
+           regex(r"variants/all_samples.vep.vcf.gz"),
+           r"variants/all_samples.SpliceAI.vcf.gz")
+def annotateVariantsSpliceAI(infile, outfile):
+    '''
+    Adds annotations as specified in the pipeline.yml using Ensembl
+    variant effect predictor (VEP).
+    '''
+    # infile - VCF
+    # outfile - VCF with vep annotations
+    job_memory = "6G"
+    job_threads = 4
+
+    vep_annotators = PARAMS["annotation_vepannotators"]
+    vep_path = PARAMS["annotation_veppath"]
+    vep_cache = PARAMS["annotation_vepcache"]
+    vep_species = PARAMS["annotation_vepspecies"]
+    vep_assembly = PARAMS["annotation_vepassembly"]
+    statement = '''vep 
+    -i %(infile)s
+    --plugin SpliceAI,snv=%(spliceAI_snv)s,indel=%(spliceAI_indel)s
+    --cache --dir %(vep_cache)s --vcf
+    --species %(vep_species)s
+    --fork 2
+    --compress_output bgzip
+    --assembly %(vep_assembly)s
+    -o %(outfile)s --force_overwrite
+    %(annostring)s;'''
+    P.run(statement)
+
 
 
 @follows(mkdir("variant_tables"))
 @transform(RemoveDuplicatesSample, regex(r"gatk/(.*).dedup2.bam"),
-           add_inputs(annotateVariantsVEP), r"variant_tables/\1.tsv")
+           add_inputs(annotateVariantsSpliceAI), r"variant_tables/\1.tsv")
 def makeAnnotationsTables(infiles, outfile):
     '''
     Converts the multi sample vcf generated with Haplotype caller into

@@ -180,7 +180,7 @@ annotation:
     vepspecies: homo_sapiens
 
     # assembly - needs to correspond to data in cache directory
-    vepassembly: GRCh37
+    vepassembly: GRCh38
 
     # filtering of vcfs to select variants of interest
 filtering:
@@ -226,13 +226,6 @@ filtering:
 
     # columns to keep in the final variant tables (apart from CHROM,POS,ID,REF1,ALT,GT)
     columns: [GQ,DP,FS,SOR,POPMAX_calc,Adj_calc,EUR_AF_calc,EAS_AF_calc,AFR_AF_calc,SAS_AF_calc,ESP_AF_POPMAX_calc,ESP_AF_GLOBAL_calc,CSQ,dbNSFP_MutationTaster_pred,dbNSFP_Polyphen2_HDIV_pred,dbNSFP_Polyphen2_HVAR_pred,dbNSFP_SIFT_pred,SNPEFF_IMPACT]
-
-king:
-    #path to king
-    path: /path/to/king
-
-    #path to plink
-    plink: /path/to/plink-1.07/plink-1.07-x86_64
 
 coverage:
 

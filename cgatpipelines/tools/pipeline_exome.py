@@ -163,7 +163,7 @@ Code
 # load modules
 from ruffus import transform, mkdir, follows, merge, regex, suffix, \
     jobs_limit, files, collate, add_inputs, formatter, \
-    active_if, originate
+    active_if, originate, subdivide
 from ruffus.combinatorics import permutations
 import sys
 import os
@@ -198,6 +198,8 @@ matches = glob.glob("*.fastq.1.gz") + glob.glob(
 PICARD_MEMORY = PARAMS["picard_memory"]
 GATK_MEMORY = PARAMS["gatk_memory"]
 ANNOTATION_MEMORY = PARAMS["annotation_memory"]
+
+PANELS = glob.glob("*.panel.tsv")
 
 
 ###############################################################################
@@ -259,7 +261,41 @@ def createSequenceDictionary(outfile):
                         -R %(genome_file)s -O %(outfile)s'''
     P.run(statement)
 
+@originate("ensembl.dict")
+def createEnsemblDictionary(outfile):
+    '''creates a dictionary converting ensembl gene_id
+    to symbol/gene_name'''
+    geneset = PARAMS['geneset']
 
+    statement = '''zcat %(geneset)s|
+    cgat gtf2tsv --attributes-as-columns|grep -v ^#|
+    awk -F '\\t' '{print $9, $16}'|uniq > %(outfile)s'''
+
+    P.run(statement)
+
+@mkdir("panels")
+@subdivide([x for x in PANELS],
+           regex("(\S+).panel.tsv"),
+           add_inputs(createEnsemblDictionary),
+           r"\1.bed")
+def createPanelBed(infiles, outfile):
+
+    geneset = PARAMS['geneset']
+    panel_path,dict_path = infiles
+    ensembl_dict = pd.read_csv(dict_path, sep=" ")
+    with open(panel_path) as f:
+        panellist = [line.strip() for line in f]
+    panel = ensembl_dict[ensembl_dict["gene_name"].isin(panellist)]
+    panelgenes = " -e ".join(panel['gene_id'].to_list())
+    
+
+    statement = '''zcat  %(geneset)s
+    |grep -e %(panelgenes)s|cgat gtf2gtf --method=sort|
+    cgat gff2bed --is-gtf --log %(outfile)s.log | sort -k1,1 -k2,2n|
+    cgat bed2bed --method=merge --merge-by-name 
+    --log %(outfile)s.log > %(outfile)s'''
+
+    P.run(statement)
 
 ###############################################################################
 ###############################################################################
@@ -342,7 +378,7 @@ def GATKBaseRecal(infile, outfile):
     intrack = P.snip(os.path.basename(infile), ".bam")
     outtrack = P.snip(os.path.basename(outfile), ".bam")
     dbsnp = PARAMS["gatk_dbsnp"]
-    solid_options = PARAMS["gatk_solid_options"]
+    options = PARAMS["gatk_baserecalibrator_options"]
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
     intervals = PARAMS["roi_intervals"]
     padding = PARAMS["roi_padding"]
@@ -351,7 +387,7 @@ def GATKBaseRecal(infile, outfile):
         shutil.copyfile(intrack + ".bai", outtrack + ".bai")
     else:
         exome.GATKBaseRecal(infile, outfile, genome, intervals,
-                                    padding, dbsnp, solid_options,
+                                    padding, dbsnp, options,
                                     GATK_MEMORY)
     iotools.zap_file(infile)
 
@@ -496,6 +532,9 @@ def filterExcessHets(infile, outfile):
     P.run(statement)
 
 
+###############################################################################
+# SNP Recalibration
+
 @transform(filterExcessHets,
            regex(r"variants/all_samples_excesshet.vcf.gz"),
            r"variants/all_samples_sitesonly.vcf.gz")
@@ -510,10 +549,6 @@ def sitesOnlyVcf(infile,outfile):
     > %(outfile)s.log 2>&1 '''
     P.run(statement)
 
-
-
-###############################################################################
-# SNP Recalibration
 
 @transform(sitesOnlyVcf,
            regex(r"variants/all_samples_sitesonly.vcf.gz"),
@@ -578,6 +613,44 @@ def applyVQSRIndels(infiles, outfile):
     exome.applyVQSR(vcf, recal, tranches,
                                             outfile, genome, mode, GATK_MEMORY)
 
+###############################################################################
+# coverage over candidate genes
+
+@merge(RemoveDuplicatesSample, "gatk/all_samples.list")
+def listOfBAMs(infiles, outfile):
+    '''generates a file containing a list of BAMs'''
+    with iotools.open_file(outfile, "w") as outf:
+        for infile in infiles:
+            outf.write(infile + '\n')
+
+@active_if(PARAMS["coverage_calculate"] == 1)
+@transform(listOfBAMs, regex(r"gatk/all_samples.list"), r"candidate.sample_interval_summary")
+def candidateCoverage(infile, outfile):
+    '''Calculate coverage over exons of candidate genes'''
+    all_exons = PARAMS["coverage_all_exons"]
+    candidates = PARAMS["coverage_candidates"]
+    candidates = candidates.replace(",", " -e ")
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    threshold = PARAMS["coverage_threshold"]
+    statement = '''zcat %(all_exons)s | grep -e %(candidates)s
+                   | awk '{print $1 ":" $4 "-" $5}' - | sed 's/chr//' - >
+                   candidate.interval_list ; ''' % locals()
+    statement += '''zcat %(all_exons)s | grep -e %(candidates)s
+                    | awk '{print $16}' - | sed 's/"//g;s/;//g' - >
+                    candidate_gene_names.txt ;''' % locals()
+    statement += '''GenomeAnalysisTK -T DepthOfCoverage -R %(genome)s
+                    -o candidate -I %(infile)s -ct %(threshold)s -L candidate.interval_list ;''' % locals()
+    P.run(statement)
+
+@active_if(PARAMS["coverage_calculate"] == 1)
+@transform(candidateCoverage, regex(r"candidate.sample_interval_summary"), r"candidate_coverage_plot.pdf")
+def candidateCoveragePlots(infile, outfile):
+    '''Produce plots of coverage'''
+    rscript = PARAMS["coverage_rscript"]
+    threshold = PARAMS["coverage_threshold"]
+    statement = '''Rscript %(rscript)s %(infile)s candidate_gene_names.txt %(threshold)s %(outfile)s ;'''
+    P.run(statement)
+
 
 
 ###############################################################################
@@ -613,7 +686,7 @@ def extractSomalier(infile,outfile):
            regex(r"variants/somalier/somalier.log"),
            r"variants/somalier/relate.log")
 def relateSomalier(infile,outfile):
-    '''Calculate Ancestry based on 1000G project'''
+    '''Calculate relatedness based on 1000G project'''
 
     somalier = PARAMS['annotation_somalier_path']
     outdir = os.path.dirname(outfile)
@@ -640,182 +713,13 @@ def ancestrySomalier(infile,outfile):
     P.run(statement)
 
 
+
 ###############################################################################
-# SnpSift
+# VEP
 
 @transform(applyVQSRIndels,
            regex(r"variants/all_samples.vqsr.vcf.gz"),
-           r"variants/all_samples.snpeff.vcf.gz")
-def annotateVariantsSNPeff(infile, outfile):
-    '''Annotate variants using SNPeff'''
-    job_memory = ANNOTATION_MEMORY
-    job_threads = PARAMS["annotation_threads"]
-    snpeff_genome = PARAMS["annotation_snpeff_genome"]
-    config = PARAMS["annotation_snpeff_config"]
-    outfile = P.snip(outfile,".gz")
-    statement = ''' snpEff -Xmx%(job_memory)s 
-    -c %(config)s 
-    -v %(snpeff_genome)s 
-    %(infile)s > %(outfile)s 2> %(outfile)s.log;
-    bgzip %(outfile)s;
-    tabix -p vcf %(outfile)s.gz'''  % locals()
-    P.run(statement, job_memory=PARAMS["annotation_memory"])
-
-
-@transform(annotateVariantsSNPeff,
-           regex(r"variants/all_samples.snpeff.vcf.gz"),
-           r"variants/all_samples.snpeff.table")
-def vcfToTableSnpEff(infile, outfile):
-    '''Converts vcf to tab-delimited file'''
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    columns = PARAMS["annotation_snpeff_to_table"]
-    exome.vcfToTable(infile, outfile, genome, columns, ANNOTATION_MEMORY)
-
-
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@transform(vcfToTableSnpEff, regex(r"variants/(\S+).table"),
-           r"variants/\1.table.load")
-def loadTableSnpEff(infile, outfile):
-    '''Load VCF annotations into database'''
-    P.load(infile, outfile, options="--retry --ignore-empty")
-
-###############################################################################
-# SnpSift
-
-@transform(annotateVariantsSNPeff,
-           regex(r"variants/all_samples.snpeff.vcf.gz"),
-           r"variants/all_samples.snpsift_1.vcf.gz")
-def annotateVariantsDBNSFP(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_memory = ANNOTATION_MEMORY
-    job_threads = PARAMS["annotation_threads"]
-    dbNSFP = PARAMS["annotation_dbnsfp"]
-    dbNSFP_columns = PARAMS["annotation_dbnsfp_columns"]
-    outfile = P.snip(outfile,".gz")
-    if not dbNSFP_columns:
-        annostring = ""
-    else:
-        annostring = "-f %s" % dbNSFP_columns
-
-    statement = '''SnpSift dbnsfp
-    -Xmx%(job_memory)s
-    -db %(dbNSFP)s -v %(infile)s
-    %(annostring)s >
-    %(outfile)s 2> %(outfile)s.log;
-    bgzip %(outfile)s;
-    tabix -p vcf %(outfile)s.gz'''
-    P.run(statement)
-
-
-@transform(annotateVariantsDBNSFP,
-           regex(r"variants/all_samples.snpsift_1.vcf.gz"),
-           r"variants/all_samples.snpsift_2.vcf.gz")
-def annotateVariantsClinvar(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_threads = PARAMS["annotation_threads"]
-    clinvar = PARAMS["annotation_clinvar"]
-    outfile = P.snip(outfile,".gz")
-    exome.snpSift(infile,outfile,clinvar, memory=ANNOTATION_MEMORY)
-
-
-@transform(annotateVariantsClinvar,
-           regex(r"variants/all_samples.snpsift_2.vcf.gz"),
-           r"variants/all_samples.snpsift_3.vcf.gz")
-def annotateVariantsGWASC(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_memory = ANNOTATION_MEMORY
-    job_threads = PARAMS["annotation_threads"]
-    gwas_catalog = PARAMS["annotation_gwas_catalog"]
-    outfile = P.snip(outfile,".gz")
-
-    statement = """SnpSift gwasCat
-    -Xmx%(job_memory)s 
-    -db %(gwas_catalog)s
-    %(infile)s > %(outfile)s  2> %(outfile)s.log;
-    bgzip %(outfile)s;
-    tabix -p vcf %(outfile)s.gz;"""
-    P.run(statement)
-
-
-@transform(annotateVariantsGWASC,
-           regex(r"variants/all_samples.snpsift_3.vcf.gz"),
-           r"variants/all_samples.snpsift_4.vcf.gz")
-def annotateVariantsPhastcons(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_memory = ANNOTATION_MEMORY
-    job_threads = PARAMS["annotation_threads"]
-    genome_index = "%s/%s.fa.fai" % (
-        PARAMS['genome_dir'],
-        PARAMS['genome'])
-    phastcons = PARAMS["annotation_phastcons"]
-    outfile = P.snip(outfile,".gz")
-
-    statement = """ln -sf %(genome_index)s %(phastcons)s/genome.fai &&
-    SnpSift phastCons 
-    -Xmx%(job_memory)s 
-    %(phastcons)s %(infile)s >
-    %(outfile)s  2> %(outfile)s.log;
-    bgzip %(outfile)s;
-    tabix -p vcf %(outfile)s.gz;"""
-    P.run(statement)
-
-
-@transform(annotateVariantsPhastcons,
-           regex(r"variants/all_samples.snpsift_4.vcf.gz"),
-           r"variants/all_samples.snpsift_5.vcf.gz")
-def annotateVariants1000G(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_memory = ANNOTATION_MEMORY
-    job_threads = PARAMS["annotation_threads"]
-    outfile = P.snip(outfile,".gz")
-
-    vcfs = []
-    for f in os.listdir(PARAMS["annotation_tgdir"]):
-        if f.endswith(".vcf.gz"):
-            vcfs.append("%s/%s" % (PARAMS['annotation_tgdir'], f))
-
-    tempin = P.get_temp_filename(".")
-    statement='''cp %(infile)s %(tempin)s.gz &&
-    tabix -p vcf %(tempin)s.gz'''
-    P.run(statement)
-
-    tempout = P.get_temp_filename(".")
-
-    for vcf in vcfs:
-        statement = """SnpSift annotate
-        -Xmx%(job_memory)s 
-        %(vcf)s
-        %(tempin)s.gz > %(tempout)s  
-        2>> %(outfile)s.log &&
-        mv %(tempout)s %(tempin)s &&
-        bgzip -f %(tempin)s &&
-        tabix -f %(tempin)s.gz"""
-        P.run(statement)
-
-    statement = '''  mv %(tempin)s.gz %(outfile)s.gz &&
-    tabix -p vcf %(outfile)s.gz''';
-    P.run(statement)
- 
-
-@transform(annotateVariants1000G,
-           regex(r"variants/all_samples.snpsift_5.vcf.gz"),
-           r"variants/all_samples.snpsift_final.vcf.gz")
-def annotateVariantsDBSNP(infile, outfile):
-    '''Add annotations using SNPsift'''
-    job_threads = PARAMS["annotation_threads"]
-    dbsnp = PARAMS["annotation_dbsnp"]
-    outfile = P.snip(outfile,".gz")
-    exome.snpSift(infile,outfile,dbsnp,memory=ANNOTATION_MEMORY)
-
-
-@follows(annotateVariantsDBSNP)
-def annotateVariantsSNPsift():
-    pass
-
-
-@transform(annotateVariantsDBSNP,
-           regex(r"variants/all_samples.snpsift_final.vcf.gz"),
-           r"variants/all_samples.vep.vcf.gz")
+           r"variants/all_samples.vep.txt.gz")
 def annotateVariantsVEP(infile, outfile):
    
     #Adds annotations as specified in the pipeline.yml using Ensembl
@@ -823,38 +727,69 @@ def annotateVariantsVEP(infile, outfile):
     
     # infile - VCF
     # outfile - VCF with vep annotations
-    job_memory = "6G"
-    job_threads = 4
+    job_memory = PARAMS["annotation_memory"]
+    job_threads = PARAMS["annotation_threads"]
 
     genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    vep_annotators = PARAMS["annotation_vepannotators"]
+    vep_options = PARAMS["annotation_vepoptions"]
     vep_cache = PARAMS["annotation_vepcache"]
     vep_species = PARAMS["annotation_vepspecies"]
     vep_assembly = PARAMS["annotation_vepassembly"]
     spliceAI_snv = PARAMS["annotation_spliceAI_snv"]
     spliceAI_indel = PARAMS["annotation_spliceAI_indel"]
+    dbNSFP_path = PARAMS["annotation_dbnsfp_path"]
+    dbNSFP_columns = PARAMS["annotation_dbnsfp_columns"]
+    if dbNSFP_columns is None:
+        dbNSFP_columns = "ALL"
+
     statement = '''vep
     -i %(infile)s
-    --cache --dir %(vep_cache)s --vcf
-    --plugin SpliceAI,snv=%(spliceAI_snv)s,indel=%(spliceAI_indel)s
+    --cache --dir %(vep_cache)s --tab
     --species %(vep_species)s
-    --fork 2
+    --fork %(job_threads)s
     --compress_output bgzip
     --assembly %(vep_assembly)s
     -o %(outfile)s --force_overwrite'''
-    if vep_annotators is not None:
-        statement += "  %(vep_annotators)s" 
+    if dbNSFP_path is not None:
+        statement +='''
+        --plugin dbNSFP,%(dbNSFP_path)s,%(dbNSFP_columns)s'''
+    if spliceAI_snv is not None:
+        statement +='''
+        --plugin SpliceAI,snv=%(spliceAI_snv)s,indel=%(spliceAI_indel)s'''
+    if vep_options is not None:
+        statement += "  %(vep_options)s" 
     statement += ''' > %(outfile)s.log 2>&1;
     tabix -p vcf %(outfile)s'''
     P.run(statement)
 
 
+@transform(annotateVariantsVEP, regex("variants/all_samples.vep.vcf.gz"),
+           r'all_samples.filtered.vcf.gz')
+def filterVEP(infile, outfiles):
+    '''
+    Filter variants using vep-filter.
+    More docs 
+    '''
+    
+    filters = PARAMS["annotation"]
+
+    statement = '''filter_vep
+    --gz
+    -i %(infile)s
+    -o %(outfile)s
+    --only-matched
+    --force-overwrite
+    -f %(filter)s
+    '''
+    P.run(statement)
+
+
 @follows(mkdir("variant_tables"))
 @transform(RemoveDuplicatesSample, regex(r"gatk/(.*).dedup2.bam"),
-           add_inputs(annotateVariantsVEP), r"variant_tables/\1.tsv")
+           add_inputs(filterVEP), r"variant_tables/\1.tsv")
 def makeAnnotationsTables(infiles, outfile):
     '''
-    Converts the multi sample vcf generated with Haplotype caller into
+    Converts the multi sample vcf into
     a single table for each sample contain only positions called as variants
     in that sample and all columns from the vcf.
     '''
@@ -898,7 +833,7 @@ def makeAnnotationsTables(infiles, outfile):
                    -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
                    %(inputvcf)s >> %(outfile)s'''
     P.run(statement)
-        
+
 
 ###############################################################################
 # Quality Filtering #
@@ -916,143 +851,24 @@ def qualityFilterVariants(infile, outfiles):
     '''
     qualstring = PARAMS['filtering_quality']
     qualfilter = PARAMS['filtering_quality_ft']
-    exome.filterQuality(infile, qualstring, qualfilter,
-                                outfiles, submit=True)
-
-
-@follows(mkdir("variant_tables_rare"))
-@transform(qualityFilterVariants, regex("variant_tables_highqual/(.*).tsv"),
-           [r'variant_tables_rare/\1.tsv',
-            r'variant_tables_rare/\1_failed.tsv'])
-def rarityFilterVariants(infiles, outfiles):
-    '''
-    Filter out variants which are common in any of the exac or other
-    population datasets as specified in the pipeline.yml.
-    '''
-    infile = infiles[0]
-    thresh = PARAMS['filtering_rarethresh']
-    freqs = PARAMS['filtering_freqs']
-    exac = PARAMS['filtering_exac']
-    exome.filterRarity(infile, exac, freqs, thresh, outfiles,
-                               submit=True)
-
-
-@follows(mkdir("variant_tables_damaging"))
-@transform(rarityFilterVariants, regex("variant_tables_rare/(.*).tsv"),
-           [r'variant_tables_damaging/\1.tsv',
-            r'variant_tables_damaging/\1_failed.tsv'])
-def damageFilterVariants(infiles, outfiles):
-    '''
-    Filter variants which have not been assessed as damaging by any
-    of the specified tools.
-    Tools and thresholds can be specified in the pipeline.yml.
-
-    Does not account for multiple alt alleles - if any ALT allele has
-    been assessed as damaging with any tool the variant is kept,
-    regardless of if this is the allele called in the sample.
-
-    '''
-    infile = infiles[0]
-    exome.filterDamage(infile, PARAMS['filtering_damage'], outfiles,
-                               submit=True)
-
-
-@follows(mkdir("variant_tables_family"))
-@transform(damageFilterVariants, regex("variant_tables_damaging/(.*).tsv"),
-           [r'variant_tables_family/\1.tsv',
-            r'variant_tables_family/\1_failed.tsv'])
-def familyFilterVariants(infiles, outfiles):
-    '''
-    Filter variants according to the output of calculateFamily -
-    only variants shared by both members of a family will be kept.
-    BROKEN - NEED TO ADD FAMILY INPUTS
-    '''
-    if len(matches) > 1:
-        infile = infiles[0][0]
-
-        infilenam = infile.split("/")[-1]
-        infilestem = "/".join(infile.split("/")[:-1])
-
-        # figure out who is related to who
-        families = [line.strip().split("\t")[:2]
-                    for line in iotools.open_file(infiles[1]).readlines()]
-        infam = [line[0] for line in families] + [line[1] for line in families]
-
-        # no relatives - copy the input file to the output file and generate
-        # a blank "failed" file
-        if infilenam not in infam or PARAMS['filtering_family'] == 0:
-            shutil.copy(infile, outfiles[0])
-            o = iotools.open_file(outfiles[1], "w")
-            o.close()
-        else:
-            for line in families:
-                if infilenam in line:
-                    i = line.index(infilenam)
-                    if i == 0:
-                        infile2 = "%s/%s" % (infilestem, line[1])
-                    else:
-                        infile2 = "%s/%s" % (infilestem, line[0])
-            exome.filterFamily(infile, infile2, outfiles)
+    outfile1 = outfiles[0]
+    outfile2 = outfiles[1]
+    
+    if qualstring is not None:
+        exome.filterQuality(infile, qualstring, qualfilter,
+                            outfiles, submit=True)
     else:
-        infile = infiles[0][0]
-        shutil.copy(infile, outfiles[0])
-        out = iotools.open_file(outfiles[1], "w")
-        out.close()
+        statement = '''cp %(infile)s %(outfile1)s &&
+        touch %(outfile2)s'''
+        P.run(statement)
 
 
-@follows(familyFilterVariants)
+@follows(filterVEP)
 def filter():
     pass
 
-
-@follows(mkdir("genelists"))
-@transform(familyFilterVariants, regex("variant_tables_family/(.*).tsv"),
-           [r'genelists/\1.tsv',
-            r'genelists/\1.bed'])
-def makeGeneLists(infiles, outfiles):
-    infile = infiles[0]
-    outfile = outfiles[1]
-    genes = PARAMS['general_geneset']
-
-    # four %s because they need to be escaped in generating the statement
-    # then again when submitting the P.run(statement)
-    statement = '''awk 'NR > 2 {printf("%%%%s\\t%%%%s\\t%%%%s\\n",\
-    $1, $2, $2 + 1)}'\
-    %(infile)s |\
-    bedtools intersect -wo -a stdin -b %(genes)s > %(outfile)s''' % locals()
-    P.run(statement)
-
-    geneids = set()
-    with iotools.open_file(outfile) as inp:
-        for line in inp:
-            line = line.strip().split("\t")
-            details = line[11].split(";")
-            for detail in details:
-                r = re.search('gene_id', detail)
-                if r:
-                    geneid = detail.split(" ")[-1]
-                    geneids.add(geneid.replace("\"", ""))
-    out = iotools.open_file(outfiles[0], "w")
-    for geneid in geneids:
-        out.write("%s\n" % geneid)
-    out.close()
-
-
-@follows(mkdir('final_variant_tables'))
-@collate((makeGeneLists, familyFilterVariants), regex('(.*)/(.*).tsv'),
-         r'final_variant_tables/\2.tsv')
-def finalVariantTables(infiles, outfile):
-    genes = infiles[0]
-    variants = infiles[1][0]
-    cols = PARAMS['filtering_columns'].split(",")
-    exome.CleanVariantTables(genes, variants, cols, outfile,
-                                     submit=True)
-
-###############################################################################
-###############################################################################
 ###############################################################################
 # Genes of interest
-
 
 @active_if(PARAMS["annotation_add_genes_of_interest"] == 1)
 @transform((annotateVariantsVEP),
@@ -1102,49 +918,6 @@ def loadVariantAnnotation(infile, outfile):
 ###############################################################################
 ###############################################################################
 ###############################################################################
-# coverage over candidate genes
-
-@merge(RemoveDuplicatesSample, "gatk/all_samples.list")
-def listOfBAMs(infiles, outfile):
-    '''generates a file containing a list of BAMs for use in VQSR'''
-    with iotools.open_file(outfile, "w") as outf:
-        for infile in infiles:
-            outf.write(infile + '\n')
-
-@active_if(PARAMS["coverage_calculate"] == 1)
-@transform(listOfBAMs, regex(r"gatk/all_samples.list"), r"candidate.sample_interval_summary")
-def candidateCoverage(infile, outfile):
-    '''Calculate coverage over exons of candidate genes'''
-    all_exons = PARAMS["coverage_all_exons"]
-    candidates = PARAMS["coverage_candidates"]
-    candidates = candidates.replace(",", " -e ")
-    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
-    threshold = PARAMS["coverage_threshold"]
-    statement = '''zcat %(all_exons)s | grep -e %(candidates)s
-                   | awk '{print $1 ":" $4 "-" $5}' - | sed 's/chr//' - >
-                   candidate.interval_list ; ''' % locals()
-    statement += '''zcat %(all_exons)s | grep -e %(candidates)s
-                    | awk '{print $16}' - | sed 's/"//g;s/;//g' - >
-                    candidate_gene_names.txt ;''' % locals()
-    statement += '''GenomeAnalysisTK -T DepthOfCoverage -R %(genome)s
-                    -o candidate -I %(infile)s -ct %(threshold)s -L candidate.interval_list ;''' % locals()
-    P.run(statement)
-
-###############################################################################
-
-
-@active_if(PARAMS["coverage_calculate"] == 1)
-@transform(candidateCoverage, regex(r"candidate.sample_interval_summary"), r"candidate_coverage_plot.pdf")
-def candidateCoveragePlots(infile, outfile):
-    '''Produce plots of coverage'''
-    rscript = PARAMS["coverage_rscript"]
-    threshold = PARAMS["coverage_threshold"]
-    statement = '''Rscript %(rscript)s %(infile)s candidate_gene_names.txt %(threshold)s %(outfile)s ;'''
-    P.run(statement)
-
-###############################################################################
-###############################################################################
-###############################################################################
 # vcf statistics
 
 
@@ -1188,8 +961,7 @@ def loadVCFstats(infiles, outfile):
 # Targets
 
 
-@follows(loadVariantAnnotation,
-         finalVariantTables)
+@follows(loadVariantAnnotation)
 def testFromVariantRecal():
     pass
 
@@ -1221,10 +993,8 @@ def callVariants():
     pass
 
 
-@follows(loadTableSnpEff,
-         listOfBAMs,
-         loadVariantAnnotation,
-         finalVariantTables)
+@follows(listOfBAMs,
+         loadVariantAnnotation)
 def annotation():
     pass
 

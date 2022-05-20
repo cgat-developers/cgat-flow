@@ -20,12 +20,8 @@ samples: ''
 web_dir: ../web
 
 # If you are not running exome data but targetted sequencing on a smaller region then change to 1
+# Effect of this option is to skip base quality recalibration step
 targetted: 0
-
-#pedfile=/path/to/pedfile
-
-# seed for random number generation
-randomseed: 1000
 
 # gtf file containing exon annotations
 geneset: /path/to/ensembl.dir/geneset_all.gtf.gz
@@ -48,7 +44,7 @@ bwa:
     mem_options: ''
 
     # BWA end-pairing parameters
-    sampe_options: ''
+    sample_options: ''
 
 readgroup:
 
@@ -59,10 +55,6 @@ readgroup:
     platform_unit: 1
 
     sample: blood
-
-dedup:
-
-    method: picard
 
 gatk:
 
@@ -75,105 +67,65 @@ gatk:
     # 1.2x this memory will be requested from the cluster to provide sufficent memory for the database tool.
     dbmem: 20G
 
+    # path to dbsnp VCF (provided by GATK)
     dbsnp: /path/to/dbsnp.vcf
 
+    # path to hapmap VCF (provided by GATK)
     hapmap: /path/to/hapmap.vcf
 
-    omni: /path/to/1000G_omni2.5.hg19.sites.vcf
+    # path to OMNI VCF (privided by GATK)
+    omni: /path/to/1000G_omni
 
-    kgenomes: /path/to/1000G_phase1.snps.high_confidence.hg19.sites.vcf
+    # path to 1000G VDF (provided by GATK)
+    kgenomes: /path/to/1000G_phase1.snps.high_confidence
 
-    mills: /path/to/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf
+    mills: /path/to/Mills_and_1000G_gold_standard
 
-    axiom: /path/to/axioum
+    axiom: /path/to/axiom
 
-    solid_options: ''
+    # Additional options for GATK baserecalibrator
+    baserecalibrator_options: ''
 
+    # Additional options for GATK HaplotypeCaller
     hc_options: -A StrandOddsRatio -A DepthPerSampleHC
 
+    # Additional options for GATK GenotypeGVCFs
     genotype_options: ''
 
     vcf_to_table: -F CHROM -F POS -F ID -F REF -F ALT -F QUAL -F FILTER -F AC -F AF -F AN -F BaseQRankSum -F DB -F DP -F Dels -F FS -F HaplotypeScore -F MLEAC -F MLEAF -F MQ -F MQ0 -F MQRankSum -F QD -F ReadPosRankSum -F SB -F SNPEFF_EFFECT -F SNPEFF_IMPACT -F SNPEFF_FUNCTIONAL_CLASS -F SNPEFF_CODON_CHANGE -F SNPEFF_AMINO_ACID_CHANGE -F SNPEFF_GENE_NAME -F SNPEFF_GENE_BIOTYPE -F SNPEFF_TRANSCRIPT_ID -F SNPEFF_EXON_ID -F dbNSFP_GERP++_RS -F dbNSFP_GERP++_NR -F dbNSFP_Ensembl_transcriptid -F dbNSFP_Uniprot_acc -F dbNSFP_Interpro_domain -F dbNSFP_SIFT_score -F dbNSFP_Polyphen2_HVAR_pred -F dbNSFP_29way_logOdds -F dbNSFP_1000Gp1_AF -F dbNSFP_1000Gp1_AFR_AF -F dbNSFP_1000Gp1_EUR_AF -F dbNSFP_1000Gp1_AMR_AF -F dbNSFP_1000Gp1_ASN_AF -F dbNSFP_ESP6500_AA_AF -F dbNSFP_ESP6500_EA_AF -F RSPOS -F SSR -F SAO -F VP -F VC -F PM -F TPA -F PMC -F MUT -F VLD -F OTHERKG -F PH3 -F CDA -F MTP -F OM -F CAF -F COMMON -GF GT -GF AD -GF GQ -GF PL -GF PQ -GF TP -GF AB -GF DP
 
-hapmap:
 
-    loc: /path/to/hapmap/genotype_frequencies
-
-    # bgzip compressede and tabix indexed VCF file for Hapmap
-    vcf: /path/to/hapmap_3.3.hg19.sites.vcf
-
-    padding: 0
-
-    hc_options: --emitRefConfidence GVCF
-
+# annotation is done using Ensembl! VEP
 annotation:
 
     memory: 6G
 
-    threads: 1
+    threads: 4
 
-    #Config file specifies that the genome must be downloaded into your home directory
-    snpeff_config: path/to/snpEff-VERSION/snpEff.config
-
-    snpeff_genome: hg38
-
-    # path to dbNSFP database
-    dbnsfp: /path/to/dbNFSP.txt.gz
+    # path to dbNSFP database (aggregation database for annotations)
+    # leave blank if not required
+    dbnsfp_path: /path/to/dbNFSP.txt.gz
 
     # dbNSFP columns to include
-    # Default (if left empty): Uniprot_acc, Interpro_domain, 
+    # If left empty will fetch ALL annotations.
+    # Examples: Uniprot_acc, Interpro_domain, 
     # SIFT_pred, Polyphen2_HDIV_pred, Polyphen2_HVAR_pred, 
     # LRT_pred, MutationTaster_pred, GERP++_NR, GERP++_RS, 
-    # phastCons100way_vertebrate, 1000Gp1_AF, 1000Gp1_AFR_AF, 
-    # 1000Gp1_EUR_AF, 1000Gp1_AMR_AF, 1000Gp1_ASN_AF, 
+    # phastCons100way_vertebrate, 1000Gp1_AF, 1000Gp1_AFR_AF
     # ESP6500_AA_AF, ESP6500_EA_AF, MutationTaster_pred, 
     # MutationAssessor_pred, FATHMM_pred, PROVEAN_pred, 
     # CADD_phred, MetaSVM_pred, 1000Gp3_AC, 1000Gp3_AF, 
-    # 1000Gp3_AFR_AC, 1000Gp3_AFR_AF, 1000Gp3_EUR_AC, 
-    # 1000Gp3_EUR_AF, 1000Gp3_AMR_AC, 1000Gp3_AMR_AF, 
-    # 1000Gp3_EAS_AC, 1000Gp3_EAS_AF, 1000Gp3_SAS_AC, 
-    # 1000Gp3_SAS_AF, ESP6500_AA_AC, ESP6500_AA_AF, 
-    # ESP6500_EA_AC, ESP6500_EA_AF, ExAC_AC, ExAC_AF, 
-    # ExAC_Adj_AC, ExAC_Adj_AF, ExAC_AFR_AC, ExAC_AFR_AF, 
-    # ExAC_AMR_AC, ExAC_AMR_AF, ExAC_EAS_AC, 
-    # ExAC_EAS_AF, ExAC_FIN_AC, ExAC_FIN_AF, ExAC_NFE_AC, 
-    # ExAC_NFE_AF, ExAC_SAS_AC, ExAC_SAS_AF
-    dbnsfp_columns:  
-
-    # path to clinvar vcf
-    clinvar: /path/to/clinvar_DATE.vcf.gz
-
-    # path to dbsnp vcf
-    dbsnp: /path/to/All_20160527.vcf.gz
-
-    # path to chromosome by chromosome 1000g vcfs
-    tgdir: /path/to/1000_genomes/phase3
-
-    # path to gwas catalog files
-    gwas_catalog: /path/to/gwas_catalog_v1.0-downloaded_2015-07-14.txt
-
-    # path to "phastcons100way" files
-    phastcons: /path/to/phastcons
-
-    snpeff_to_table: -F CHROM -F POS -F ID -F REF -F ALT -F EFF
-
-    add_genes_of_interest: 0
-
-    genes_of_interest: ''
-
-    # vep parameters - see vep docs here
-    # http://www.ensembl.org/info/docs/tools/vep/script/vep_options.html
-
-    # options to pass to vep - this string is appended directly
-    # to the command when vep is called so should be formatted
-    # e.g. as
-    # --sift b --regulatory --domains
-    vepannotators: --sift b --variant_class --regulatory --domains
+    # 1000Gp3_AFR_AC, 1000Gp3_AFR_AF, 1000Gp3_EUR_AC,
+    # ESP6500_EA_AC, ESP6500_EA_AF, ExAC_AC, ExAC_AF,
+    # ExAC_Adj_AC, ExAC_Adj_AF, ExAC_AFR_AC, ExAC_AFR_AF
+    dbnsfp_columns:
 
     # path to VEP scripts
     veppath: /path/to/ensembl-vep-80/variant_effect_predictor
 
     # location of cached annotations
+    # cached annotations should have the same version number
+    # as the VEP executable 
     vepcache: /path/to/VEP
 
     # species name
@@ -182,9 +134,40 @@ annotation:
     # assembly - needs to correspond to data in cache directory
     vepassembly: GRCh38
 
-    # filtering of vcfs to select variants of interest
+    # vep parameters - see vep docs here
+    # http://www.ensembl.org/info/docs/tools/vep/script/vep_options.html
+    # format as for command line e.g. as --sift b --regulatory --domains
+    # Option -e covers almost all annotations
+    vepoptions: -e
+
+    # Path to Somalier package (currently not available as conda package)
+    # Website: https://github.com/brentp/somalier
+    somalier_path: /path/to/somalier
+
+    # Path to Somalier VCF specifying sites used for determination of relatedness
+    # Provided by Somalier Project
+    somalier_sites: /path/to/sites.hg38.vcf.gz
+
+    # Path to 1000G data folder (provided by Somalier project)
+    somalier_1kg: /path/to/1kg-somalier
+
+    # Path to Somalier Ancestry Labels for 1000G (provided by Somalier project)
+    somalier_labels: /path/to/ancestry-labels-1kg.tsv
+
+    add_genes_of_interest: 0
+
+    genes_of_interest: ''
+
+
+# filtering of vcfs to select variants of interest
+# filtering is done using 
 filtering:
 
+    # Quality Filtering can be done either by VQSR, a GATK machine-learning
+    # algorithm, or by hard-filtering QC scores based on prespecified conditions
+    quality: [VQSR OR hard]
+
+    # 
     # quality filters, seperated by commas, as column'symbol'score where
     # column is the column to filter
     # symbol is '>', '<', '>=', '<=' (including quote marks)
@@ -198,31 +181,10 @@ filtering:
     # any = keep variants filling any of the quality criteria specified above
     quality_ft: all
 
-    rarethresh: 0.01
-
-    # columns containing comma delimiated allele frequencies to filter by
-    freqs: [EUR_AF,EAS_AF,AFR_AF,AMR_AF,SAS_AF,ESP_AF_POPMAX,ESP_AF_GLOBAL]
-
-    #populations to use when filtering Exac allele frequencies
-    #xxx for any columns where an AC_xxx and AN_xxx column is provided in the
-    #Exac VCF, e.g. Adj will calculate allele frequency from
-    # the AC_Adj and AN_Adj columns
-    # currently available Adj (all populations), POPMAX (highest af in any population),
-    # specific populations e.g. EUR, AFR and others
-    exac: [Adj,POPMAX]
-
-    # columns containing information about predicted damage from this mutation
-    # and strings to search for in these columns
-    # columns containing the strings are kept
-    # specified as column|string-string-...,column|string...
-    # e.g. SNPEFF_IMPACT|HIGH-MODERATE,CSQ|HIGH would look for
-    # "HIGH" or "MODERATE" in the SNPEFF_IMPACT column and
-    # "HIGH" in the CSQ column
-    damage: [CSQ|HIGH,dbNSFP_MutationTaster_pred|A-D,dbNSFP_Polyphen2_HDIV_pred|D-P,dbNSFP_Polyphen2_HVAR_pred|D-P,dbNSFP_SIFT_pred|D,SNPEFF_IMPACT|HIGH]
-
-    # if family is 1, keep only variants shared by any family members identified in
-    # the calculateFamily step
-    family: 1
+    # VEP filtering
+    # Provide filtering command for filter_vep.
+    # Can be multiple commands separated
+    vep: 
 
     # columns to keep in the final variant tables (apart from CHROM,POS,ID,REF1,ALT,GT)
     columns: [GQ,DP,FS,SOR,POPMAX_calc,Adj_calc,EUR_AF_calc,EAS_AF_calc,AFR_AF_calc,SAS_AF_calc,ESP_AF_POPMAX_calc,ESP_AF_GLOBAL_calc,CSQ,dbNSFP_MutationTaster_pred,dbNSFP_Polyphen2_HDIV_pred,dbNSFP_Polyphen2_HVAR_pred,dbNSFP_SIFT_pred,SNPEFF_IMPACT]
@@ -230,10 +192,10 @@ filtering:
 coverage:
 
     # to activate calculating coverage of candidate genes, specified below.
-    calculate: 0
+    calculate: 1
 
     # supply gtf
-    all_exons: /path/to/hg19_ensembl75/geneset_coding_exons.gtf.gz
+    all_exons: /path/to/geneset_coding_exons.gtf.gz
 
     # comma-separated list of canonical ensembl identifiers for candidate genes of interest
     candidates: ''

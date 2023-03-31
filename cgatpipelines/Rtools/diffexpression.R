@@ -35,7 +35,7 @@ getmart <- function(values){
   return(data)
 }
 
-start_plot <- function(section, height = 6, width = 6, type = "png", outdir="") {
+start_plot <- function(section, height = 10, width = 10, type = "png", outdir="") {
     file = get_output_filename(paste0(outdir,"/",section, ".", type))
     Cairo(file = file,
           type = type,
@@ -78,7 +78,8 @@ plotTPMs <- function(dftemp, contrast_name){
     ggplot(aes(x = contrast, y = value, color = contrast)) +
     geom_point(position = position_jitter(w = 0.15, h = 0)) +
     facet_wrap(~ var, scales = "free") + theme_bw() +
-    ylab("normalised counts") + xlab (contrast_name) + guides(color = "none")
+    ylab("normalised counts") + xlab (contrast_name) + guides(color = "none")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 }
 
 
@@ -114,7 +115,7 @@ run <- function(opt) {
   flog.info("... plotting MA")
   ## MA Plot
   start_plot("MAPlot", outdir=opt$outdir)
-    DESeq2::plotMA(resLFC, ylim = c(-3,3))
+    DESeq2::plotMA(resLFC, ylim = c(ceiling(max(resLFC$log2FoldChange)),floor(min(resLFC$log2FoldChange))))
   end_plot()
   
   flog.info("... saving DE data")
@@ -178,6 +179,7 @@ run <- function(opt) {
 
   flog.info("... plotting user-defined genes")
   genelist <- unlist(strsplit(opt$userlist, ","))
+  genelist <- genelist[genelist %in% rownames(dds)]
   dftemp <- makeTPMtable(genelist, counts(dds, normalized=TRUE), colData(dds), opt$contrast)
   start_plot("Userdefined", outdir=opt$outdir)
     print(plotTPMs(dftemp, opt$contrast))

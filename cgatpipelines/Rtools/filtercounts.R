@@ -28,9 +28,10 @@ run <- function(opt) {
   ### READING DATA ###
   # Read in sampleData Table
   futile.logger::flog.info(paste("reading sampleData table from", normalizePath(opt$sampleData)))
-  sampleData <- read.table(opt$sampleData, header = TRUE)
+  sampleData <- read_tsv(opt$sampleData)
   sampleData <-sampleData[sampleData$include ==1, ]
   futile.logger::flog.info(paste("read sampleData ", paste(dim(sampleData), collapse = ",")))
+  futile.logger::flog.info(paste(sampleData))
   rownames(sampleData) <- sampleData$track
 
   futile.logger::flog.info(paste("reading in data from ", opt$source))
@@ -81,7 +82,8 @@ run <- function(opt) {
       flattenedfile=opt$flattenedFile)
   } else if(opt$source == "counts_table"){
     # Read in Data
-    raw <- read.table(file = gzfile(opt$counts_tsv), header=TRUE, row.name=1)
+    raw <- read.table(file = gzfile(opt$counts_tsv), header=TRUE, row.name=1, check.names = FALSE)
+    futile.logger::flog.info(paste("Colnames: ", colnames(raw)))
     experiment_tsv <- raw[,sampleData$track,drop=FALSE]
     if(opt$method == "deseq2"){
       dataset = DESeqDataSetFromMatrix(experiment_tsv, sampleData, design = formula(opt$model))
@@ -107,6 +109,9 @@ run <- function(opt) {
       futile.logger::flog.info(paste("Counts before filtering ", paste(dim(counts(dataset)), collapse = ",")))
       keep <- rowSums(counts(dataset)) >= 10
       dataset <- dataset[keep,]
+      #dataset <- dataset[Reduce('|', dataset[sapply(dataset, is.numeric)]),]
+      #dataset <- dataset[rowSums(dataset[,sapply(dataset, is.numeric)]==0)<6,]
+      #dataset <- subset(dataset, !rowSums(assay(dataset) == 0) > 6)
       counts_table <- counts(dataset)
       futile.logger::flog.info(paste("Counts after filtering ", paste(dim(counts(dataset)), collapse = ",")))
     } else if(opt$method == "dexseq"){

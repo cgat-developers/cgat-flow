@@ -146,7 +146,7 @@ run <- function(opt) {
   names(variable.group) <- opt$contrast
   scores <- data.frame(variable.group, pca$x[,1:dim_pca])
   start_plot(paste0('PCA_grid'), outdir=opt$outdir)
-  if(dim_pca>7){
+  if(dim_pca==8){
     print(ggplot(scores, aes(x = .panel_x, y = .panel_y, fill = variable.group, colour = variable.group)) + 
       geom_point(shape = 16, size = 0.5, position = 'auto') + 
       geom_autodensity(alpha = 0.3, colour = NA, position = 'identity') + 
@@ -187,7 +187,9 @@ run <- function(opt) {
   # Heatmap of Genes of interest
   if (!is.null(opt$genes_of_interest)) {
     print(rownames(assay(vsd)))
-    mat <- assay(vsd)[opt$genes_of_interest, ]
+    goi <- opt$genes_of_interest
+    goi <- goi[goi %in% rownames(assay(vsd))]
+    mat <- assay(vsd)[goi, ]
     mat <- mat - rowMeans(mat)
     temp <- getmart(rownames(mat))
     row.names(temp) <- temp$ensembl_gene_id
@@ -227,6 +229,7 @@ run <- function(opt) {
   
   ### EXPLORE BATCH EFFECTS ###
   futile.logger::flog.info(paste("Exploring Batch Effects"))
+  futile.logger::flog.info(dim_pca)
   if(dim_pca == 8){
     for(factor in opt$factors){
       factor_transformed <- vsd

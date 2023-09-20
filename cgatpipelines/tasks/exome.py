@@ -337,21 +337,6 @@ def vcfToTable(infile, outfile, genome, columns, gatkmem):
 ##############################################################################
 
 
-def snpSift(infile, outfile, vcf, bgzip=True, memory="6G"):
-    '''Annotate VCF with other VCF'''
-    job_memory=memory
-    statement = '''SnpSift annotate 
-    -Xmx%(job_memory)s %(vcf)s
-    %(infile)s > %(outfile)s 2> %(outfile)s.log;'''
-    if bgzip:
-        statement +=  '''bgzip %(outfile)s;
-        tabix -p vcf %(outfile)s.gz'''
-    P.run(statement)
-
-
-##############################################################################
-
-
 def selectVariants(infile, outfile, genome, select):
     '''Filter de novo variants based on provided expression'''
     statement = '''gatk SelectVariants

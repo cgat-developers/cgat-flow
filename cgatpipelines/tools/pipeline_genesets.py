@@ -638,7 +638,7 @@ def buildCdsTranscript(infile, outfile):
 
 
 @transform(buildUCSCGeneSet,
-           regex("*.gtf.gz"),
+           regex(".*.gtf.gz"),
            PARAMS['interface_geneset_exons_gtf'])
 def buildExonTranscript(infile, outfile):
     '''

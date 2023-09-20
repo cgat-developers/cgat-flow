@@ -164,7 +164,7 @@ Code
 from ruffus import transform, mkdir, follows, merge, regex, suffix, \
     jobs_limit, files, collate, add_inputs, formatter, \
     active_if, originate, subdivide
-from ruffus.combinatorics import permutations
+from ruffus.combinatorics import permutations, product
 import sys
 import os
 import csv
@@ -200,6 +200,8 @@ GATK_MEMORY = PARAMS["gatk_memory"]
 ANNOTATION_MEMORY = PARAMS["annotation_memory"]
 
 PANELS = glob.glob("*.panel.tsv")
+
+FILTERS = glob.glob ("*.filter.tsv")
 
 
 ###############################################################################
@@ -277,7 +279,7 @@ def createEnsemblDictionary(outfile):
 @subdivide([x for x in PANELS],
            regex("(\S+).panel.tsv"),
            add_inputs(createEnsemblDictionary),
-           r"\1.bed")
+           r"panels/\1.bed")
 def createPanelBed(infiles, outfile):
 
     geneset = PARAMS['geneset']
@@ -713,13 +715,34 @@ def ancestrySomalier(infile,outfile):
     P.run(statement)
 
 
+###############################################################################
+# Expansionhunter
+
+
+@follows(mkdir("expansionhunter"))
+@transform(RemoveDuplicatesSample, regex(r"gatk/(\S+).dedup2.bam"),
+           r"expansionhunter/\1.vcf")
+def expansionHunter(infile, outfile):
+    
+    genome = PARAMS["genome_dir"] + "/" + PARAMS["genome"] + ".fa"
+    catalog = PARAMS["expansionhunter"]
+    outfile = P.snip(outfile)
+
+    statement = '''ExpansionHunter
+    --reads %(infile)s
+    --reference %(genome)s
+    --variant-catalog %(catalog)s
+    --output-prefix %(outfile)s
+    > %(outfile)s.log 2>&1
+    '''
+    P.run(statement, job_condaenv="expansionhunter")
 
 ###############################################################################
 # VEP
 
 @transform(applyVQSRIndels,
            regex(r"variants/all_samples.vqsr.vcf.gz"),
-           r"variants/all_samples.vep.txt.gz")
+           r"variants/all_samples.vep.vcf.gz")
 def annotateVariantsVEP(infile, outfile):
    
     #Adds annotations as specified in the pipeline.yml using Ensembl
@@ -744,11 +767,12 @@ def annotateVariantsVEP(infile, outfile):
 
     statement = '''vep
     -i %(infile)s
-    --cache --dir %(vep_cache)s --tab
+    --cache --dir %(vep_cache)s --vcf
     --species %(vep_species)s
     --fork %(job_threads)s
     --compress_output bgzip
     --assembly %(vep_assembly)s
+    --plugin SameCodon
     -o %(outfile)s --force_overwrite'''
     if dbNSFP_path is not None:
         statement +='''
@@ -763,30 +787,62 @@ def annotateVariantsVEP(infile, outfile):
     P.run(statement)
 
 
-@transform(annotateVariantsVEP, regex("variants/all_samples.vep.vcf.gz"),
-           r'all_samples.filtered.vcf.gz')
-def filterVEP(infile, outfiles):
+
+@subdivide([x for x in FILTERS],
+           regex("(\S+).filter.tsv"),
+           add_inputs(annotateVariantsVEP),
+           r"variants/all_samples.\1.vcf.gz")
+def filterVEP(infiles, outfile):
     '''
     Filter variants using vep-filter.
-    More docs 
+    More docs
     '''
     
-    filters = PARAMS["annotation"]
+    filter_file,infile = infiles
+    with open(filter_file) as f:
+        filters = f.read()
+    outfile = P.snip(outfile, ".gz")
 
     statement = '''filter_vep
     --gz
     -i %(infile)s
     -o %(outfile)s
-    --only-matched
-    --force-overwrite
-    -f %(filter)s
+    --only_matched
+    --force_overwrite
+    -f "%(filters)s";
+    > %(outfile)s.log  2>&1;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz
     '''
     P.run(statement)
 
 
-@follows(mkdir("variant_tables"))
-@transform(RemoveDuplicatesSample, regex(r"gatk/(.*).dedup2.bam"),
-           add_inputs(filterVEP), r"variant_tables/\1.tsv")
+@product(filterVEP, formatter("variants/all_samples.(?P<FILTER>.*).vcf.gz$"),
+         createPanelBed, formatter("panels/(?P<PANEL>.*).bed$"),
+         "results/{FILTER[0][0]}/{PANEL[1][0]}.vcf.gz")
+def filterPanel(infiles, outfile):
+    '''
+    Filter variants using vep-filter.
+    More docs
+    '''
+    vcf, panelbed = infiles
+    outfile = P.snip(outfile, ".gz")
+
+    statement = '''gatk
+    SelectVariants
+    -V %(vcf)s
+    -O %(outfile)s
+    -L %(panelbed)s
+    > %(outfile)s.log  2>&1;
+    bgzip %(outfile)s;
+    tabix -p vcf %(outfile)s.gz
+    '''
+    P.run(statement)
+
+
+@product(RemoveDuplicatesSample, formatter("gatk/(?P<TRACK>.*).dedup2.bam$"),
+         filterPanel, formatter("results/(?P<FILTER>.*)/(?P<PANEL>.*).vcf.gz$"),
+         "results/{FILTER[1][0]}/{PANEL[1][0]}/{TRACK[0][0]}.tsv")
 def makeAnnotationsTables(infiles, outfile):
     '''
     Converts the multi sample vcf into
@@ -814,7 +870,8 @@ def makeAnnotationsTables(infiles, outfile):
             cols2.append(line.split("\t")[0])
     l1 = "\t".join(cols2)
     l2 = "\t".join(colds)
-    out = open(outfile, "w")
+    os.unlink(TF)
+    out = open(TF, "w")
     out.write('''CHROM\tPOS\tQUAL\tID\tFILTER\tREF1\tALT\tGT\t%s\n\
                  chromosome\tposition\tquality\tid\tfilter\tref\talt\t\
                  genotype\t%s\n''' % (l1, l2))
@@ -822,17 +879,81 @@ def makeAnnotationsTables(infiles, outfile):
     cstring = "\\t".join(cols)
     cstring = "%CHROM\\t%POS\\t%QUAL\\t%ID\\t%FILTER\\t%REF\\t\
                %ALT\\t[%GT]\\t" + cstring
-    if PARAMS['test'] == 1:
-        statement = '''bcftools query
-                   -f '%(cstring)s\\n'
-                   -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
-                   %(inputvcf)s >> %(outfile)s'''
-    else:
-        statement = '''bcftools query -s %(samplename)s
-                   -f '%(cstring)s\\n'
-                   -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
-                   %(inputvcf)s >> %(outfile)s'''
+    statement = '''bcftools query -s %(samplename)s
+                -f '%(cstring)s\\n'
+                -i 'FILTER=="PASS" && GT!="0/0" && GT!="./."'
+                %(inputvcf)s >> %(TF)s'''
     P.run(statement)
+
+    maxInt = sys.maxsize
+    while True:
+        # decrease the maxInt value by factor 10 
+        # as long as the OverflowError occurs.
+        try:
+            csv.field_size_limit(maxInt)
+            break
+        except OverflowError:
+            maxInt = int(maxInt/10)
+
+    df = pd.read_table(TF, sep = '\t', engine='python', quoting=3)
+    CSQ_index = df['CSQ'][0].split("Format:_")[-1].rstrip('\"')
+    df = df.drop(0)
+
+    if len(df)==0:
+        df.drop('CSQ',axis=1,inplace=True)
+        temp_df = pd.DataFrame(columns=CSQ_index.split("|"))
+    else:
+        df['CSQ'] = df.CSQ.str.split(",")
+        df = df.explode('CSQ').reset_index(drop=True)
+        temp_df = df.CSQ.str.split("|", expand = True)
+        temp_df.columns = CSQ_index.split("|")
+        df.drop('CSQ',axis=1,inplace=True)
+    df = df.join(temp_df, rsuffix="_VEP")
+    if "SYMBOL" in df.columns:
+        col = df.pop("SYMBOL")
+        df.insert(0, "SYMBOL", col)
+    if "HGVSp_VEP" in df.columns:
+        col = df.pop("HGVSp_VEP")
+        df.insert(0, "HGVSp_VEP", col)
+    if  len(df)!=0 and "CANONICAL" in df.columns and "PolyPhen" in df.columns:
+        # Select canonical variant, then most deleterious
+        df_final = df.sort_values(by = ['CANONICAL', 'PolyPhen'], ascending = [False, False]).drop_duplicates(["CHROM", "POS"])
+        df_final.to_csv(outfile, sep="\t")
+        outfile_full = P.snip(outfile, ".tsv") + ".tsv_full"
+        df.to_csv(outfile_full, sep="\t")
+    else:
+        df.to_csv(outfile, sep="\t")
+    os.unlink(TF)
+
+
+
+@collate(makeAnnotationsTables, formatter("results/(?P<FILTER>.*)/(?P<PANEL>.*)/.*.tsv$"),
+         "results/{FILTER[0]}/{PANEL[0]}_merged.tsv")
+def mergeAnnotationsTables(infiles, outfile):
+
+    result = False
+    for infile in infiles:
+        lines = 0
+        with open(infile) as f:
+            for line in f:
+                lines = lines + 1
+        if lines > 1:
+            result = True
+            break
+
+    path = os.path.dirname(infiles[1])
+    infiles = " ".join(infiles)
+
+    if result == True:
+        statement = ''' cgat tables2table %(infiles)s
+        --cat patient_id
+        --regex-filename '%(path)s/(\S+).tsv'
+        | awk '!/^#/{print > "%(outfile)s" ;next} 1'
+        > %(outfile)s.log 2>&1'''
+    else:
+        statement = '''touch %(outfile)s'''
+    P.run(statement)
+
 
 
 ###############################################################################

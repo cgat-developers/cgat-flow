@@ -74,26 +74,7 @@ run <- function(opt) {
     dds = DESeqDataSetFromMatrix(experiment$counts, experiment$sample, design = formula(opt$model))
   }
   futile.logger::flog.info(paste("reading  Experiment object", paste(dim(counts(experiment)), collapse = ",")))
-  
-  ### SVA - ANALYSIS OF BIASES ###
-  futile.logger::flog.info(paste("Performing Surrogate Variable Analysis"))
-  dds <- estimateSizeFactors(dds)
-  dat  <- counts(dds, normalized = TRUE)
-  idx  <- rowMeans(dat) > 1
-  dat  <- dat[idx, ]
-  mod  <- model.matrix(formula(opt$model), colData(dds))
-  mod0 <- model.matrix(~ 1, colData(dds))
-  svseq <- svaseq(dat, mod, mod0, n.sv = 2)
-  for(factor in opt$factors){
-    start_plot(paste0('SVA for ', factor), outdir=opt$outdir)
-    par(mfrow = c(2, 1), mar = c(3,5,3,1))
-    for (i in 1:2) {
-      stripchart(svseq$sv[, i] ~ colData(dds)[, factor], vertical = TRUE, main = paste0("SV", i))
-      abline(h = 0)
-    }
-    end_plot()
-  }
-  
+
   ### TRANSFORMATION OF DATA ###
   futile.logger::flog.info(paste("Transforming data"))
   rld<- rlog(dds)

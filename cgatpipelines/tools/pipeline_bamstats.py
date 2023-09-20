@@ -356,6 +356,26 @@ def buildPicardDuplicationStats(infile, outfile):
                                          PICARD_MEMORY)
 
 
+@follows(mkdir("RSeQC.dir"))
+@follows(countReads)
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           r"RSeQC.dir/\1.read_distribution")
+def runRSeQC(infile, outfile):
+
+    bed_file = "/ceph/project/talbotlab/jscaber/iPS-C9TrapYan/bamstats-fullgenome/hg38_GENCODE.v38.bed"
+
+    job_memory = "6G"
+
+    statement = '''
+    read_distribution.py
+         -i %(infile)s
+         -r %(bed_file)s
+    > %(outfile)s
+    '''
+
+    P.run(statement)
+
 @follows(mkdir("BamStats.dir"))
 @follows(countReads)
 @transform(intBam,

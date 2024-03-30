@@ -70,7 +70,7 @@ if major < 3:
     raise SystemExit("""CGAT requires Python 3 or later.""")
 
 cgat_packages = find_packages()
-cgat_package_dirs = {'cgatpipelines': 'cgatpipelines'}
+cgat_package_dirs = {'cgatpipelines': 'cgatpipelines', 'Rtools': 'Rtools'}
 
 # Classifiers
 classifiers = """

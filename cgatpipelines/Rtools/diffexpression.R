@@ -22,11 +22,11 @@ suppressMessages(library(goseq))
 source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 
 
-mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl", host = "jul2018.archive.ensembl.org")
+mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl", host = "https://aug2020.archive.ensembl.org")
 getmart <- function(values){
   data<- getBM(
     filters= "ensembl_gene_id", 
-    attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene", 'chromosome_name',
+    attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene_id", 'chromosome_name',
                    'start_position', 'end_position'),
     values= values,
     mart= mart,

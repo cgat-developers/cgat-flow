@@ -1060,7 +1060,7 @@ def loadIdxstats(infiles, outfile):
                                       columns=(['region', 'mapped']))
 
         # reformat the df
-        df = df.append(reformatted_df, ignore_index=True)
+        df = df._append(reformatted_df, ignore_index=True)
         df.set_index('region', inplace=True)
         df1 = df[['mapped']].T
         dfs.append(df1)

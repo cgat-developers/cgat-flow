@@ -33,11 +33,11 @@ source(file.path(Sys.getenv("R_ROOT"), "experiment.R"))
 # Dependencies: biomaRt package
 # Input: vector of ensembl gene ids
 # Output: data frame with description, symbol and entrez gene
-mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl", host = "jul2018.archive.ensembl.org")
+mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",dataset="hsapiens_gene_ensembl", host = "https://aug2020.archive.ensembl.org")
 getmart <- function(values){
   data<- getBM(
     filters= "ensembl_gene_id", 
-    attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene"),
+    attributes= c("ensembl_gene_id", "external_gene_name", "description","entrezgene_id"),
     values= values,
     mart= mart,
     useCache = FALSE)
@@ -77,13 +77,12 @@ run <- function(opt) {
 
   ### TRANSFORMATION OF DATA ###
   futile.logger::flog.info(paste("Transforming data"))
-  rld<- rlog(dds)
+  dds <- estimateSizeFactors(dds)
   vsd<- vst(dds)
   df <- bind_rows(
     as_tibble(log2(counts(dds, normalized=TRUE)[, 1:2]+1)) %>%
       mutate(transformation = "log2(x + 1)"),
-    as_tibble(assay(vsd)[, 1:2]) %>% mutate(transformation = "vst"),
-    as_tibble(assay(rld)[, 1:2]) %>% mutate(transformation = "rlog"))
+    as_tibble(assay(vsd)[, 1:2]) %>% mutate(transformation = "vst"))
   colnames(df)[1:2] <- c("x", "y")
   start_plot('Variance_Transformations', outdir=opt$outdir)
     print(ggplot(df, aes(x = x, y = y)) + geom_hex(bins = 80) +
@@ -101,11 +100,12 @@ run <- function(opt) {
     if(dim(pca$x)[1]>7){
       dim_pca = 8
     } else {
-      dim_pca = dim(pca$x)
+      dim_pca = dim(pca$x)[1]
     }
     scores <- data.frame(variable.group, pca$x[,1:dim_pca])
     start_plot(paste0('PCA_', factor), outdir=opt$outdir)
-      print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group)) +
+      print(ggplot(scores, aes(x=PC1, y=PC2, colour=factor(variable.group))) +
+	      geom_point() +
         theme(legend.position="right") +  
         labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
              y=paste0("PC2 (", percentVar[2],"% of variance)")) + 
@@ -114,7 +114,8 @@ run <- function(opt) {
         theme(text=element_text(family='serif')))
     end_plot()
     start_plot(paste0('PCA_13_', factor), outdir=opt$outdir)
-          print(qplot(x=PC1, y=PC3, data=scores, colour=factor(variable.group)) +
+          print(ggplot(scores, aes(x=PC1, y=PC3, colour=factor(variable.group))) +
+          geom_point() +
         theme(legend.position="right") +  
         labs(colour=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
              y=paste0("PC3 (", percentVar[3],"% of variance)")) + 
@@ -152,14 +153,18 @@ run <- function(opt) {
   df <- as.data.frame(colData(dds)[,opt$factors])
   rownames(df) <- colData(dds)$track
   # Heatmap of Top 20 Expressed Genes
-  select <- order(rowMeans(counts(dds,normalized=TRUE)),decreasing=TRUE)[1:20]
+  selected <- order(rowMeans(counts(dds,normalized=TRUE)),decreasing=TRUE)[1:20]
   start_plot('Heatmap_topExpressed', outdir=opt$outdir)
-    pheatmap(assay(vsd)[select,], cluster_rows=FALSE, cluster_cols=FALSE, show_rownames=FALSE, annotation_col=df)
+    pheatmap(assay(vsd)[selected,], cluster_rows=FALSE, cluster_cols=FALSE, show_rownames=FALSE, annotation_col=df)
   end_plot()
   # Heatmap of Top 20 Variable Genes
   topVarGenes <- head(order(rowVars(assay(vsd)),decreasing=TRUE),20)
+  futile.logger::flog.info(paste("topVarGenes            ",topVarGenes))
   mat <- assay(vsd)[ topVarGenes, ]
+  futile.logger::flog.info(paste("mat           ",rownames(mat)))
   temp <- getmart(rownames(mat))
+  temp <- temp[!duplicated(temp$ensembl_gene_id), ]
+  futile.logger::flog.info(paste("temp            ",temp))
   row.names(temp) <- temp$ensembl_gene_id
   rownames(mat) <- temp[rownames(mat),"external_gene_name"]
   start_plot('Heatmap_topVariable', outdir=opt$outdir)
@@ -221,7 +226,8 @@ run <- function(opt) {
       percentVar <- round(100 * summary(pca)$importance[2,])
       scores <- data.frame(variable.group, sample.group, pca$x[,1:2])
       start_plot(paste0('PCA_', factor, '_removed'), outdir=opt$outdir)
-      print(qplot(x=PC1, y=PC2, data=scores, colour=factor(variable.group), shape=factor(sample.group)) +
+      print(ggplot(scores, aes(x=PC1, y=PC2, colour=factor(variable.group), shape=factor(sample.group))) + 
+            geom_point() +
             theme(legend.position="right") +  
             labs(colour=opt$contrast, shape=factor, x=paste0("PC1 (", percentVar[1],"% of variance)"),
                  y=paste0("PC2 (", percentVar[2],"% of variance)")) + 

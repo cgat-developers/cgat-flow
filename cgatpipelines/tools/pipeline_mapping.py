@@ -1980,7 +1980,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         infiles = " ".join(infiles)
         statement = '''
-        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log &&
+        samtools merge -f %(outfile)s %(infiles)s >& %(outfile)s.log &&
         samtools index %(outfile)s
         '''
         P.run(statement)

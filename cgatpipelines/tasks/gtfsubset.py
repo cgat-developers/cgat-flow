@@ -14,6 +14,7 @@ import cgatcore.iotools as iotools
 import cgat.GTF as GTF
 import cgatcore.pipeline as P
 import cgatcore.database as Database
+from sqlalchemy import text
 
 
 class SubsetGTF():
@@ -142,10 +143,12 @@ def getRepeatDataFromUCSC(dbhandle,
        expression given.
 
     '''
-    cc = dbhandle.execute("SHOW TABLES LIKE '%%rmsk'")
-    tables = [x[0] for x in cc.fetchall()]
-    if len(tables) == 0:
-        raise ValueError("could not find any `rmsk` tables")
+    with dbhandle.connect() as conn:
+        query = "SHOW TABLES LIKE '%%rmsk'"
+        cc = conn.execute(text(query))
+        tables = [x[0] for x in cc.fetchall()]
+        if len(tables) == 0:
+            raise ValueError("could not find any `rmsk` tables")
 
     # now collect repeats
     tmpfile = P.get_temp_file(".")
@@ -166,9 +169,10 @@ def getRepeatDataFromUCSC(dbhandle,
         sql = sql % locals()
 
         E.debug("executing sql statement: %s" % sql)
-        cc = dbhandle.execute(sql)
-        for data in cc.fetchall():
-            tmpfile.write("\t".join(map(str, data)) + "\n")
+        with dbhandle.connect() as conn:
+            cc = conn.execute(text(sql))
+            for data in cc.fetchall():
+                tmpfile.write("\t".join(map(str, data)) + "\n")
 
     tmpfile.close()
 

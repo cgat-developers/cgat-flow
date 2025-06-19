@@ -204,8 +204,8 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
         if self.save:
             statement = ''
         else:
-            statement = 'rm -rf %s;' % self.outdir
-        statement += '''rm -rf %s;''' % (self.tmpdir_fastq)
+            statement = 'rm -rf %s' % self.outdir
+        statement += ''' && rm -rf %s''' % (self.tmpdir_fastq)
         return statement
 
     def build(self, infile, output_prefix, track):
@@ -287,11 +287,11 @@ class MasterProcessor(Mapping.SequenceCollectionProcessor):
         cmd_process = " ".join(cmd_processors)
         cmd_clean = self.cleanup()
 
-        assert cmd_preprocess.strip().endswith(";")
-        assert cmd_process.strip().endswith(";")
-        assert cmd_clean.strip().endswith(";")
+        assert not cmd_preprocess.strip().endswith(";")
+        assert not cmd_process.strip().endswith(";")
+        assert not cmd_clean.strip().endswith(";")
 
-        statement = " ".join((cmd_preprocess,
+        statement = " && ".join((cmd_preprocess,
                               cmd_process,
                               cmd_clean))
         return statement
@@ -371,12 +371,14 @@ class Trimgalore(ProcessTool):
             outfile = outfiles[0]
             outdir = os.path.dirname(outfile)
             trim_out = "%s/%s_trimmed.fq.gz" % (outdir, infile.replace(".fastq.gz", ""))
-            cmd = '''trim_galore %(processing_options)s
-            --phred%(offset)s
-            --output_dir %(outdir)s
-            %(infile)s
-            2>>%(output_prefix)s.log;
-            mv %(trim_out)s %(outfile)s;
+            cmd = '''
+            trim_galore %(processing_options)s
+                --phred%(offset)s
+                --output_dir %(outdir)s
+                %(infile)s
+                2>>%(output_prefix)s.log &&
+                
+            mv %(trim_out)s %(outfile)s
             ''' % locals()
             outfiles = (outfile,)
 
@@ -384,14 +386,17 @@ class Trimgalore(ProcessTool):
             infile1, infile2 = infiles
             outfile1, outfile2 = outfiles
             outdir = os.path.dirname(outfile1)
-            cmd = '''trim_galore %(processing_options)s
-            --paired
-            --phred%(offset)s
-            --output_dir %(outdir)s
-            %(infile1)s %(infile2)s
-            2>>%(output_prefix)s.log;
-            mv %(outdir)s/%(infile1)s_val_1.fq.gz %(outfile1)s;
-            mv %(outdir)s/%(infile2)s_val_2.fq.gz %(outfile2)s;
+            cmd = '''
+            trim_galore %(processing_options)s
+                --paired
+                --phred%(offset)s
+                --output_dir %(outdir)s
+                %(infile1)s %(infile2)s
+                2>>%(output_prefix)s.log &&
+                
+            mv %(outdir)s/%(infile1)s_val_1.fq.gz 
+               %(outdir)s/%(infile2)s_val_2.fq.gz 
+               %(outfile2)s
             ''' % locals()
 
         return cmd
@@ -421,8 +426,7 @@ class Sickle(ProcessTool):
             --qual-type %(quality)s
             --output-file %(outfile)s
             --fastq-file %(infile)s
-            2>>%(output_prefix)s.log
-            ;''' % locals()
+            2>>%(output_prefix)s.log''' % locals()
 
         elif len(infiles) == 2:
             infile1, infile2 = infiles
@@ -432,8 +436,7 @@ class Sickle(ProcessTool):
             --qual-type %(quality)s
             -f %(infile1)s -r %(infile2)s
             -o %(outfile1)s -p %(outfile2)s
-            2>>%(output_prefix)s.log
-            ;''' % locals()
+            2>>%(output_prefix)s.log''' % locals()
 
         return cmd
 
@@ -460,8 +463,7 @@ class Trimmomatic(ProcessTool):
             -phred%(offset)s
             %(infile)s %(outfile)s
             %(processing_options)s
-            2>> %(output_prefix)s.log
-            ;''' % locals()
+            2>> %(output_prefix)s.log''' % locals()
 
         elif len(infiles) == 2:
             infile1, infile2 = infiles
@@ -474,8 +476,9 @@ class Trimmomatic(ProcessTool):
             %(outfile1)s %(output_prefix)s.1.unpaired
             %(outfile2)s %(output_prefix)s.2.unpaired
             %(processing_options)s
-            2>> %(output_prefix)s.log;
-            gzip %(output_prefix)s.*.unpaired;
+            2>> %(output_prefix)s.log &&
+            
+            gzip %(output_prefix)s.*.unpaired
             ''' % locals()
 
         return cmd
@@ -502,13 +505,12 @@ class FastxTrimmer(ProcessTool):
 
             cmds.append('''zcat %(infile)s
             | fastx_trimmer
-            -Q%(offset)s
-            %(processing_options)s
-            2>> %(output_prefix)s.log
-            | gzip > %(outfile)s
-            ;''' % locals())
+              -Q%(offset)s
+               %(processing_options)s
+              2>> %(output_prefix)s.log
+            | gzip > %(outfile)s''' % locals())
 
-        return " ; ".join(cmds)
+        return " && ".join(cmds)
 
 
 class Cutadapt(ProcessTool):
@@ -544,11 +546,11 @@ class Cutadapt(ProcessTool):
             cmds.append('''
             cutadapt %(processing_options)s %(in1)s %(in2)s
                      -p %(out2)s -o %(out1)s
-            2>> %(output_prefix)s.log; ''' % locals())
+            2>> %(output_prefix)s.log ''' % locals())
 
             if untrimmed:
-                cmds.append("gzip %s;" % untrimmed_output1)
-                cmds.append("gzip %s;" % untrimmed_output2)
+                cmds.append("gzip %s" % untrimmed_output1)
+                cmds.append("gzip %s" % untrimmed_output2)
 
         else:
             for infile, outfile in zip(infiles, outfiles):
@@ -561,12 +563,12 @@ class Cutadapt(ProcessTool):
                 cmds.append('''zcat %(infile)s
                 | cutadapt %(processing_options)s -
                 2>> %(output_prefix)s.log
-                | gzip > %(outfile)s;''' % locals())
+                | gzip > %(outfile)s''' % locals())
 
                 if untrimmed:
-                    cmds.append("gzip %s;" % outfile_untrimmed)
+                    cmds.append("gzip %s" % outfile_untrimmed)
 
-        return " ".join(cmds)
+        return " && ".join(cmds)
 
 
 class Reconcile(ProcessTool):
@@ -590,7 +592,7 @@ class Reconcile(ProcessTool):
         cmd = """cgat fastqs2fastqs
         --method=reconcile
         --output-filename-pattern=%(output_prefix)s.fastq.%%%%s.gz
-        %(infile1)s %(infile2)s;
+        %(infile1)s %(infile2)s
         """ % locals()
 
         return cmd
@@ -622,9 +624,11 @@ class Flash(ProcessTool):
         %(processing_options)s
         -o %(track)s
         -d %(outdir)s
-        >& %(output_prefix)s-flash.log;
-        gzip %(outdir)s/*;
-        mv %(outdir)s/%(track)s.extendedFrags.fastq.gz %(outfile)s;
+        >& %(output_prefix)s-flash.log &&
+        
+        gzip %(outdir)s/* &&
+        
+        mv %(outdir)s/%(track)s.extendedFrags.fastq.gz %(outfile)s
         ''' % locals()
 
         return cmd
@@ -643,15 +647,16 @@ class Flash(ProcessTool):
             infile_base1 = os.path.basename(infile1)
             infile_base2 = re.sub(".1.fastq.gz", ".2.fastq.gz", infile_base1)
             infile = re.sub(".fastq.1.gz", ".fastq.gz", infile1)
-            postprocess_cmd = '''zcat %(infile)s |
-            cgat fastq2summary
-            --guess-format=illumina-1.8 -v0
-            > summary.dir/%(infile_base1)s.summary;
-            zcat %(infile)s |
-            cgat fastq2summary
-            --guess-format=illumina-1.8 -v0
-            > summary.dir/%(infile_base2)s.summary
-            ;''' % locals()
+            postprocess_cmd = '''
+            zcat %(infile)s 
+            | cgat fastq2summary
+                --guess-format=illumina-1.8 -v0
+                > summary.dir/%(infile_base1)s.summary &&
+                
+            zcat %(infile)s 
+            | cgat fastq2summary
+                --guess-format=illumina-1.8 -v0
+                > summary.dir/%(infile_base2)s.summary''' % locals()
         else:
             postprocess_cmd = ""
 
@@ -673,10 +678,10 @@ class ReverseComplement(ProcessTool):
             | cgat fastq2fastq
             --method=reverse-complement
             --log=%(output_prefix)s.log
-            | gzip > %(outfile)s;
+            | gzip > %(outfile)s 
             ''' % locals())
 
-        return " ".join(cmds)
+        return " && ".join(cmds)
 
 
 class Pandaseq(ProcessTool):
@@ -702,15 +707,17 @@ class Pandaseq(ProcessTool):
         infile1, infile2 = infiles
         outfile = outfiles[0]
 
-        cmd = '''pandaseq -f %(infile1)s -r %(infile2)s
-        %(processing_options)s
-        -T %(threads)i
-        -U >(gzip > %(outfile)s.unpaired.gz)
-        -w >(gzip > %(outfile)s)
-        -F
-        -G %(output_prefix)s-pandaseq.log.bgz;
-        >& %(output_prefix)s-pandaseq.log;
-        gzip %(outdir)s/*;
+        cmd = '''
+        pandaseq -f %(infile1)s -r %(infile2)s
+            %(processing_options)s
+            -T %(threads)i
+            -U >(gzip > %(outfile)s.unpaired.gz)
+            -w >(gzip > %(outfile)s)
+            -F
+            -G %(output_prefix)s-pandaseq.log.bgz
+            >& %(output_prefix)s-pandaseq.log &&
+            
+        gzip %(outdir)s/*
         ''' % locals()
 
         return cmd

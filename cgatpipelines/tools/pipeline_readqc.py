@@ -250,7 +250,7 @@ if P.get_params().get("preprocessors", None):
                 P.get_params()["trimmomatic_keep_both_reads"]) + trimmomatic_options
 
         job_threads = P.get_params()["threads"]
-        job_memory = "12G"
+        job_memory = str(12/float(job_threads)) + "G"
 
         track = re.match(REGEX_TRACK, infile).groups()[0]
 
@@ -360,6 +360,7 @@ def runFastQC(infiles, outfile):
                                   "reconciled.dir/trimmed")
 
     statement = m.build((infiles,), outfile)
+
     P.run(statement)
 
 

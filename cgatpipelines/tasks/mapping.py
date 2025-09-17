@@ -928,10 +928,13 @@ class Mapper(SequenceCollectionProcessor):
         cmd_postprocess = self.postprocess(infiles, outfile)
         cmd_clean = self.cleanup(outfile)
 
-        statement = " && ".join((cmd_preprocess,
-                              cmd_mapper,
-                              cmd_postprocess,
-                              cmd_clean))
+        steps = (cmd_preprocess,
+                 cmd_mapper,
+                 cmd_postprocess,
+                 cmd_clean)
+
+        # check for empty stages and don't concat them
+        statement = " && ".join(s for s in steps if s)
 
         return statement
 

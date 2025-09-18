@@ -439,7 +439,7 @@ def combineExperimentLevelReadQualities(infiles, outfile):
     Combine summaries of read quality for different experiments
     """
     infiles = " ".join(infiles)
-    statement = ("cgat combine_tables "
+    statement = ("cgat tables2table "
                  "  --log=%(outfile)s.log "
                  "  --regex-filename='.+/(.+)_per_sequence_quality.tsv' "
                  "%(infiles)s"

@@ -370,7 +370,7 @@ def mergeSailfish(infiles, outfile):
 
     infiles = " ".join(infiles)
     statement = (
-        "cgat combine_tables "
+        "cgat tables2table "
         "--cat=track "
         "--regex-filename='tpm.dir/(.+).quant' "
         "--log=%(outfile)s.log "
@@ -493,7 +493,7 @@ def aggregateFeatureCounts(infiles, outfile):
 
     infiles = " ".join(infiles)
     statement = '''
-    cgat combine_tables
+    cgat tables2table
     --columns=1
     --take=7
     --use-file-prefix
@@ -674,7 +674,7 @@ def aggregateQcTables(infiles, outfile):
     infiles = " ".join(infiles)
 
     statement = '''
-    cgat combine_tables
+    cgat tables2table
     --columns=1
     --skip-titles
     --log=%(outfile)s.log

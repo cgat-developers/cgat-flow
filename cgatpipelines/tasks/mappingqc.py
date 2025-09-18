@@ -401,7 +401,7 @@ def loadPicardHistogram(infiles, outfile, suffix, column,
         " --allow-empty-file"
         " --replace-header" % (column, header))
 
-    statement = """cgat combine_tables
+    statement = """cgat tables2table
     --regex-start="## HISTOGRAM"
     --missing-value=0
     --take=2
@@ -597,7 +597,7 @@ def loadBAMStats(infiles, outfile):
         " --allow-empty-file")
 
     E.info("loading bam stats - summary")
-    statement = """cgat combine_tables
+    statement = """cgat tables2table
     --header-names=%(header)s
     --missing-value=0
     --ignore-empty
@@ -619,7 +619,7 @@ def loadBAMStats(infiles, outfile):
             "%s_%s" % (tablename, suffix),
             options="--allow-empty-file")
 
-        statement = """cgat combine_tables
+        statement = """cgat tables2table
         --header-names=%(header)s
         --skip-titles
         --missing-value=0
@@ -644,7 +644,7 @@ def loadBAMStats(infiles, outfile):
             "%s_%s" % (tablename, suffix),
             options=" --allow-empty-file")
 
-        statement = """cgat combine_tables
+        statement = """cgat tables2table
         --header-names=%(header)s
         --skip-titles
         --missing-value=0

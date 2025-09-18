@@ -518,7 +518,7 @@ def calcXYratio(infile, outfile):
 def mergeXYRatio(infiles, outfile):
     '''merge XY ratios from all samples and load into database'''
     inlist = " ".join(infiles)
-    statement = '''cgat combine_tables
+    statement = '''cgat tables2table
                    --add-file-prefix --regex-filename="xy_ratio/(\S+).sex"
                    --no-titles --missing-value=0 --ignore-empty
                    -L %(outfile)s.log -v 6

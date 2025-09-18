@@ -2693,7 +2693,7 @@ def buildIntervalCounts(infile, outfile, track, fg_replicates, bg_replicates):
         P.run(statement)
 
         statement = '''
-        python %(toolsdir)s/combine_tables.py
+        python %(toolsdir)s/tables2table.py
                --add-file-prefix
                --regex-filename="[.](\S+)$"
         %(tmpfile1)s %(tmpfile2)s > %(outfile)s
@@ -2705,7 +2705,7 @@ def buildIntervalCounts(infile, outfile, track, fg_replicates, bg_replicates):
 
     else:
         statement = '''
-        python %(toolsdir)s/combine_tables.py
+        python %(toolsdir)s/tables2table.py
                --add-file-prefix
                --regex-filename="[.](\S+)$"
         %(tmpfile1)s > %(outfile)s

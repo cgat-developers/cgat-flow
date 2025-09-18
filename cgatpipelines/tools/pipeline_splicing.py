@@ -285,7 +285,7 @@ def countDEXSeq(infiles, outfile):
 def aggregateExonCounts(infiles, outfile):
     ''' Build a matrix of counts with exons and tracks dimensions.
 
-    Uses `combine_tables.py` to combine all the `txt` files output from
+    Uses `tables2table.py` to combine all the `txt` files output from
     countDEXSeq into a single :term:`tsv` file named
     "summarycounts.tsv". A `.log` file is also produced.
 
@@ -300,7 +300,7 @@ def aggregateExonCounts(infiles, outfile):
         as rows and tracks as the columns - this is a `tsv.gz` file      '''
 
     infiles = " ".join(infiles)
-    statement = '''cgat combine_tables
+    statement = '''cgat tables2table
     --columns=1
     --take=2
     --use-file-prefix

@@ -2156,7 +2156,7 @@ def loadBigWigStats(infiles, outfile):
         P.to_table(outfile),
         options="--add-index=track")
 
-    statement = '''cgat combine_tables
+    statement = '''cgat tables2table
     --header-names=%(headers)s
     --skip-titles
     --missing-value=0

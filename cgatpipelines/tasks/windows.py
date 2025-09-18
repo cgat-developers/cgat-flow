@@ -637,7 +637,7 @@ def runDE(design_file,
     if spike_file is None:
         statement = "zcat %(counts_file)s"
     else:
-        statement = '''cgat combine_tables
+        statement = '''cgat tables2table
         --missing-value=0
         --cat=filename
         --log=%(outfile)s.log
@@ -1225,7 +1225,7 @@ def mergeSummarizedContextStats(infiles, outfile, samples_in_columns=False):
     else:
         transpose_cmd = ""
 
-    statement = """cgat combine_tables
+    statement = """cgat tables2table
     --header-names=%(header)s
     --missing-value=0
     --skip-titles
@@ -1264,7 +1264,7 @@ def loadSummarizedContextStats(infiles,
         P.to_table(outfile),
         options="--add-index=track")
 
-    statement = """cgat combine_tables
+    statement = """cgat tables2table
     --header-names=%(header)s
     --missing-value=0
     --skip-titles

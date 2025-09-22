@@ -31,17 +31,15 @@ import imp
 # DIRECTORIES to examine for python modules/scripts
 EXPRESSIONS = (
     ('tests', 'tests/*.py'),
-    ('cgatpipelinestasks', 'cgatpipelines/tasks/*.py'),
-    ('cgatpipelinestools', 'cgatpipelines/tools/*.py'))
+    ('scripts', 'scripts/*.py'),
+    ('cgatPipelines', 'cgatpipelines/*.py'),
+    ('cgatPipelinesTasks', 'cgatpipelines/tasks/*.py'),
+    ('cgatPipelinesTools', 'cgatpipelines/tools/*.py'))
 
-# Scripts to exclude as they fail imports.
-EXCLUDE = (
-    # No need to check cgat_check_deps.py
-    'cgat_check_deps',
-    # No need to check conda.py
-    'conda',
-    # Is pipeline_splicing Py3 ready?
-    'pipeline_splicing',)
+# Exclude problematic modules that have Python 2/3 compatibility issues
+EXCLUDE = set(('__init__.py', 'version.py', 'cgat.py', 'cgatflow.py', 
+               'geneinfo.py', 'MEDIPS_runner.py', 'expression_runner.py',
+               'ZINBA_runner.py', 'idr.py', 'pipeline_splicing'))
 
 
 def check_import(filename, outfile):

@@ -39,7 +39,8 @@ EXPRESSIONS = (
 # Exclude problematic modules that have Python 2/3 compatibility issues
 EXCLUDE = set(('__init__.py', 'version.py', 'cgat.py', 'cgatflow.py', 
                'geneinfo.py', 'MEDIPS_runner.py', 'expression_runner.py',
-               'ZINBA_runner.py', 'idr.py', 'pipeline_splicing'))
+               'ZINBA_runner.py', 'idr.py', 'pipeline_splicing',
+               'cgat_logfiles2tsv.py'))
 
 
 def check_import(filename, outfile):

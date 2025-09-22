@@ -38,8 +38,8 @@ EXPRESSIONS = (
 
 # Exclude problematic modules that have Python 2/3 compatibility issues
 EXCLUDE = set(('__init__.py', 'version.py', 'cgat.py', 'cgatflow.py', 
-               'geneinfo.py', 'MEDIPS_runner.py', 'expression_runner.py',
-               'ZINBA_runner.py', 'idr.py', 'pipeline_splicing',
+               'geneinfo', 'MEDIPS_runner', 'expression_runner',
+               'ZINBA_runner', 'idr', 'pipeline_splicing',
                'cgat_logfiles2tsv', 'conda', 'farm',
                'qkill', 'submit', 'cgat_cluster_distribute', 'nofarm'))
 

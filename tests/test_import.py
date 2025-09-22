@@ -81,7 +81,7 @@ def check_import(filename, outfile):
     assert True
 
 
-def test_imports():
+def test_import():
     '''test importing
 
     Relative imports will cause a failure because
@@ -98,5 +98,5 @@ def test_imports():
         for f in files:
             if os.path.isdir(f):
                 continue
-            check_import.description = os.path.abspath(f)
-            yield(check_import, os.path.abspath(f), outfile)
+            # Run check_import directly instead of yielding for pytest compatibility
+            check_import(os.path.abspath(f), outfile)

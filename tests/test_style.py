@@ -81,5 +81,5 @@ def test_style():
         for f in files:
             if os.path.isdir(f):
                 continue
-            check_style.description = os.path.abspath(f)
-            yield(check_style, os.path.abspath(f))
+            # Run check_style directly instead of yielding for pytest compatibility
+            check_style(os.path.abspath(f))

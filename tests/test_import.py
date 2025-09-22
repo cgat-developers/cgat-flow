@@ -40,7 +40,7 @@ EXPRESSIONS = (
 EXCLUDE = set(('__init__.py', 'version.py', 'cgat.py', 'cgatflow.py', 
                'geneinfo.py', 'MEDIPS_runner.py', 'expression_runner.py',
                'ZINBA_runner.py', 'idr.py', 'pipeline_splicing',
-               'cgat_logfiles2tsv.py'))
+               'cgat_logfiles2tsv'))
 
 
 def check_import(filename, outfile):

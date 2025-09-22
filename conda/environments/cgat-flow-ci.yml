@@ -27,6 +27,11 @@ dependencies:
 - scipy
 - scikit-learn
 - seaborn
+- rpy2
+- biopython
+- httplib2
+- intermine
+- mygene
 
 # Basic bioinformatics tools
 - bedtools

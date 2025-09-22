@@ -39,6 +39,8 @@ dependencies:
 # Testing dependencies
 - pytest
 - nose
+- pep8
+- pycodestyle
 
 # Misc
 - nomkl

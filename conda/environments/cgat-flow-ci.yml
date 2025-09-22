@@ -1,0 +1,45 @@
+# Minimal cgat-flow environment for CI/CD testing
+# Only includes essential dependencies to avoid conflicts
+
+name: cgat-flow
+
+channels:
+- conda-forge
+- bioconda
+- defaults
+
+dependencies:
+# Core Python dependencies
+- python >= 3.6
+- pip
+- setuptools
+- wheel
+
+# Essential cgat-flow dependencies
+- cgatcore
+- ruffus
+- sqlalchemy
+- pysam
+- pybedtools
+- numpy
+- pandas
+- matplotlib
+- scipy
+- scikit-learn
+- seaborn
+
+# Basic bioinformatics tools
+- bedtools
+- samtools
+- htslib
+
+# R base (without problematic bioconductor packages)
+- r-base
+
+# Testing dependencies
+- pytest
+- nose
+
+# Misc
+- nomkl
+- zlib

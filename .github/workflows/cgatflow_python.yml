@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-latest"]
         python-version: ["3.10", "3.11", "3.12"]
 
     defaults:
@@ -27,7 +27,7 @@ jobs:
           CACHE_NUMBER: 0
         with:
           path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('conda/environments/cgat-flow-pipelines.yml') }}
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('conda/environments/cgat-flow-ci.yml') }}
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -38,7 +38,7 @@ jobs:
           channels: conda-forge, bioconda, defaults
           channel-priority: true
           activate-environment: cgat-flow
-          environment-file: conda/environments/cgat-flow-pipelines.yml
+          environment-file: conda/environments/cgat-flow-ci.yml
 
       - name: Show conda
         run: |

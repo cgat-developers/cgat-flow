@@ -17,6 +17,7 @@ dependencies:
 
 # Essential cgat-flow dependencies
 - cgatcore
+- cgat-apps
 - ruffus
 - sqlalchemy
 - pysam
@@ -32,6 +33,10 @@ dependencies:
 - httplib2
 - intermine
 - mygene
+- toposort
+- beautifulsoup4
+- cython
+- drmaa
 
 # Basic bioinformatics tools
 - bedtools

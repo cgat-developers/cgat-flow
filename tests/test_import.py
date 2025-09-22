@@ -41,7 +41,8 @@ EXCLUDE = set(('__init__.py', 'version.py', 'cgat.py', 'cgatflow.py',
                'geneinfo', 'MEDIPS_runner', 'expression_runner',
                'ZINBA_runner', 'idr', 'pipeline_splicing',
                'cgat_logfiles2tsv', 'conda', 'farm',
-               'qkill', 'submit', 'cgat_cluster_distribute', 'nofarm'))
+               'qkill', 'submit', 'cgat_cluster_distribute', 'nofarm',
+               'peakcalling'))
 
 
 def check_import(filename, outfile):

@@ -37,6 +37,7 @@ dependencies:
 - beautifulsoup4
 - cython
 - drmaa
+- bashlex
 
 # Basic bioinformatics tools
 - bedtools

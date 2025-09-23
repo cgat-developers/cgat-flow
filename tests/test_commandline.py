@@ -191,30 +191,29 @@ def test_cmdline():
         pyxfile = (os.path.join(os.path.dirname(f), "_") +
                    os.path.basename(f) + "x")
 
-        fail_.description = script_name
         # check if script contains getopt
         with iotools.open_file(script_name) as inf:
             if "getopt" in inf.read():
-                yield (fail_,
-                       "script uses getopt directly: %s" % script_name)
+                # Run fail_ directly instead of yielding for pytest compatibility
+                fail_("script uses getopt directly: %s" % script_name)
                 continue
 
         module, modulename = load_script(script_name)
         if module is None:
-            yield (fail_,
-                   "module could not be imported: %s\n" % script_name)
+            # Run fail_ directly instead of yielding for pytest compatibility
+            fail_("module could not be imported: %s\n" % script_name)
             continue
         E.start = LocalStart
 
         try:
             module.main(argv=["dummy", "--help"])
         except AttributeError:
-            yield (fail_,
-                   "no main method in %s\n" % script_name)
+            # Run fail_ directly instead of yielding for pytest compatibility
+            fail_("no main method in %s\n" % script_name)
             ok_(False, "no main method in %s" % script_name)
         except SystemExit:
-            yield (fail_,
-                   "script does not use E.start() %s\n" % script_name)
+            # Run fail_ directly instead of yielding for pytest compatibility
+            fail_("script does not use E.start() %s\n" % script_name)
         except DummyError:
             pass
 
@@ -227,10 +226,8 @@ def test_cmdline():
             if optstring.startswith("--"):
                 optstring = optstring[2:]
 
-            check_option.description = script_name + ":" + optstring
-
-            yield(check_option, optstring, os.path.abspath(f),
-                  map_option2action)
+            # Run check_option directly instead of yielding for pytest compatibility
+            check_option(optstring, os.path.abspath(f), map_option2action)
 
         # clear up
         del sys.modules[modulename]

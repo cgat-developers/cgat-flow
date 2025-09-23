@@ -179,7 +179,7 @@ def check_script(test_name, script, stdin,
 
 
 def test_scripts():
-    '''yield list of scripts to test.'''
+    '''test list of scripts.'''
 
     scriptdirs = glob.glob("tests/*.py")
 
@@ -196,7 +196,7 @@ def test_scripts():
                     scriptdirs = [x for x in open("MANIFEST.in")
                                   if x.startswith("include scripts") and
                                   x.endswith(".py\n")]
-                    scriptdirs = [re.sub("include\s*scripts/", "tests/",
+                    scriptdirs = [re.sub(r"include\s*scripts/", "tests/",
                                          x[:-1]) for x in scriptdirs]
 
                 if "regex" in values:
@@ -229,9 +229,8 @@ def test_scripts():
 
         script_name = os.path.basename(scriptdir)
 
-        check_main.description = os.path.join(scriptdir, "def_main")
-        yield (check_main,
-               os.path.abspath(os.path.join("scripts", script_name)))
+        # Run check_main directly instead of yielding for pytest compatibility
+        check_main(os.path.abspath(os.path.join("scripts", script_name)))
 
         fn = '%s/tests.yaml' % scriptdir
         if not os.path.exists(fn):
@@ -240,7 +239,6 @@ def test_scripts():
         script_tests = yaml.load(open(fn))
 
         for test, values in list(script_tests.items()):
-            check_script.description = os.path.join(scriptdir, test)
 
             # deal with scripts in subdirectories. These are prefixed
             # by a "<subdir>_" for example: optic_compare_projects.py
@@ -251,14 +249,14 @@ def test_scripts():
                         "scripts", parts[0], "_".join(parts[1:]))):
                     script_name = os.path.join(parts[0], "_".join(parts[1:]))
 
-            yield(check_script,
-                  test,
-                  os.path.abspath(os.path.join("scripts", script_name)),
-                  values.get('stdin', None),
-                  values['options'],
-                  values['outputs'],
-                  values['references'],
-                  scriptdir)
+            # Run check_script directly instead of yielding for pytest compatibility
+            check_script(test,
+                         os.path.abspath(os.path.join("scripts", script_name)),
+                         values.get('stdin', None),
+                         values['options'],
+                         values['outputs'],
+                         values['references'],
+                         scriptdir)
 
 
 def _read(fn):

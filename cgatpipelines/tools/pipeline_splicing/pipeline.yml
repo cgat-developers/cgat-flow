@@ -161,6 +161,21 @@ IRFinder:
     # sphinxreport build options
     #
     ################################################################
+
+
+splicing:
+  leafcutter:
+    enabled: true
+
+    regtools_options: "-a 8 -m 50 -M 500000"
+
+    clustering:
+      min_reads_per_intron: 30
+
+    ds:
+      min_samples: 5
+
+
 report:
 
     # prefix to use for publishing the report from this pipeline

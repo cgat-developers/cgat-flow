@@ -189,6 +189,79 @@ TRACKS = tracks.Tracks(MySample).loadFromDirectory(
 Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
+BAMS = glob.glob("*.bam")
+
+
+###################################################################
+###################################################################
+###################################################################
+# Leafcutter workflow
+###################################################################
+
+@follows(mkdir("splicing.dir/leafcutter/junctions"))
+@transform(
+    BAMS,
+    regex(r"mapping.dir/(.+).bam"),
+    r"splicing.dir/leafcutter/junctions/\1.junc"
+)
+def leafcutterExtractJunctions(infile, outfile):
+
+    statement = """
+    regtools junctions extract
+        %(splicing_leafcutter_regtools_options)s
+        %(infile)s
+        -o %(outfile)s
+    """
+
+    P.run(statement)
+
+
+ 
+@follows(mkdir("splicing.dir/leafcutter/clusters"))
+@merge(
+    leafcutterExtractJunctions,
+    "splicing.dir/leafcutter/clusters/leafcutter"
+)
+def leafcutterClusterIntrons(infiles, outfile_prefix):
+
+    junctions = " ".join(infiles)
+
+    statement = """
+    leafcutter_cluster.py
+        -j %(junctions)s
+        -m %(splicing_leafcutter_clustering_min_reads_per_intron)s
+        -o %(outfile_prefix)s
+    """
+
+    P.run(statement)
+   
+
+@follows(mkdir("splicing.dir/leafcutter/diff"))
+@transform(
+    leafcutterClusterIntrons,
+    suffix("leafcutter"),
+    "splicing.dir/leafcutter/diff/results.txt"
+)
+def leafcutterDifferentialSplicing(_, outfile):
+
+    statement = """
+    Rscript run_ds.R
+        -i splicing.dir/leafcutter/clusters/leafcutter_perind_numers.counts.gz
+        -g %(design_groups)s
+        -o splicing.dir/leafcutter/diff
+        --min_samples %(splicing_leafcutter_ds_min_samples)s
+    """
+
+    P.run(statement)
+
+
+@follows(
+    leafcutterExtractJunctions,
+    leafcutterClusterIntrons,
+    leafcutterDifferentialSplicing
+)
+def leafcutter():
+    pass
 
 
 ###################################################################
@@ -231,6 +304,8 @@ def buildGff(infile, outfile):
     P.run(statement)
 
     os.unlink(tmpgff)
+
+
 
 
 @mkdir("counts.dir")
@@ -1082,7 +1157,8 @@ def runSashimi(infiles, outfile):
 # Pipeline management
 ###################################################################
 
-@follows(loadMATS,
+@follows(leafcutter, 
+         loadMATS,
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,

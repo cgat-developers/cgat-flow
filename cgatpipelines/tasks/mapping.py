@@ -578,12 +578,14 @@ class SequenceCollectionProcessor(object):
                         infile, infile2 = sra_extraction_files
                         track = os.path.splitext(os.path.basename(infile))[0]
 
-                        statement.append("""gunzip < %(infile)s
+                        statement.append("""
+                        gunzip < %(infile)s
                         | cgat fastq2fastq
-                        --method=change-format --target-format=sanger
-                        --guess-format=phred64
-                        --log=%(outfile)s.log %(compress_cmd)s
-                        > %(tmpdir_fastq)s/%(track)s_converted.1.fastq%(extension)s;
+                                --method=change-format --target-format=sanger
+                                --guess-format=phred64
+                                --log=%(outfile)s.log %(compress_cmd)s
+                            > %(tmpdir_fastq)s/%(track)s_converted.1.fastq%(extension)s &&
+                            
                         gunzip < %(infile2)s
                         | cgat fastq2fastq
                         --method=change-format --target-format=sanger
@@ -660,7 +662,7 @@ class SequenceCollectionProcessor(object):
                             basename1 = basename[:-11] + ".fastq.1.gz"
                             basename2 = basename[:-11] + ".fastq.2.gz"
                         statement.append(
-                            "mv %s %s/%s; mv %s %s/%s" %
+                            "mv %s %s/%s && mv %s %s/%s" %
                             (infile, tmpdir_fastq, basename1,
                              infile2, tmpdir_fastq, basename2))
                         fastqfiles.append(
@@ -764,18 +766,20 @@ class SequenceCollectionProcessor(object):
                     iotools.open_file(infile), raises=False)
 
                 if 'sanger' not in format and qual_format != 'phred64':
-                    statement.append("""gunzip < %(infile)s
+                    statement.append("""
+                    gunzip < %(infile)s
                     | cgat fastq2fastq
-                    --method=change-format --target-format=sanger
-                    --guess-format=%(qual_format)s
-                    --log=%(outfile)s.log
+                            --method=change-format --target-format=sanger
+                            --guess-format=%(qual_format)s
+                            --log=%(outfile)s.log
                     %(compress_cmd)s
-                    > %(tmpdir_fastq)s/%(track)s.1.fastq%(extension)s;
+                        > %(tmpdir_fastq)s/%(track)s.1.fastq%(extension)s &&
+                        
                     gunzip < %(infile2)s
                     | cgat fastq2fastq
-                    --method=change-format --target-format=sanger
-                    --guess-format=%(qual_format)s
-                    --log=%(outfile)s.log
+                            --method=change-format --target-format=sanger
+                            --guess-format=%(qual_format)s
+                            --log=%(outfile)s.log
                     %(compress_cmd)s
                     > %(tmpdir_fastq)s/%(track)s.2.fastq%(extension)s
                     """ % locals())
@@ -784,13 +788,15 @@ class SequenceCollectionProcessor(object):
                          "%s/%s.2.fastq%s" % (tmpdir_fastq, track, extension)))
 
                 elif 'sanger' not in format and qual_format == 'phred64':
-                    statement.append("""gunzip < %(infile)s
+                    statement.append("""
+                    gunzip < %(infile)s
                     | cgat fastq2fastq
-                    --method=change-format --target-format=sanger
-                    --guess-format=%(qual_format)s
-                    --log=%(outfile)s.log
+                            --method=change-format --target-format=sanger
+                            --guess-format=%(qual_format)s
+                            --log=%(outfile)s.log
                     %(compress_cmd)s
-                    > %(tmpdir_fastq)s/%(track)s.1.fastq%(extension)s;
+                        > %(tmpdir_fastq)s/%(track)s.1.fastq%(extension)s &&
+                        
                     gunzip < %(infile2)s
                     | cgat fastq2fastq
                     --method=change-format --target-format=sanger
@@ -812,7 +818,7 @@ class SequenceCollectionProcessor(object):
                 raise NotImplementedError("unknown file format %s" % infile)
 
         assert len(fastqfiles) > 0, "no fastq files for mapping"
-        return (" ; ".join(statement) + ";", fastqfiles)
+        return (" && ".join(statement), fastqfiles)
 
 
 class Mapper(SequenceCollectionProcessor):
@@ -891,7 +897,7 @@ class Mapper(SequenceCollectionProcessor):
 
     def cleanup(self, outfile):
         '''clean up.'''
-        statement = '''rm -rf %s;''' % (self.tmpdir_fastq)
+        statement = '''rm -rf %s''' % (self.tmpdir_fastq)
 
         return statement
 
@@ -913,7 +919,7 @@ class Mapper(SequenceCollectionProcessor):
         -------
         statement : string
              A command line statement. The statement can be a series
-             of commands separated by ``;`` and/or can be unix pipes.
+             of commands separated by ``&&`` and/or can be unix pipes.
 
         '''
 
@@ -922,21 +928,13 @@ class Mapper(SequenceCollectionProcessor):
         cmd_postprocess = self.postprocess(infiles, outfile)
         cmd_clean = self.cleanup(outfile)
 
-        assert cmd_preprocess.strip().endswith(";"),\
-            "missing ';' at end of command %s" % cmd_preprocess.strip()
-        assert cmd_mapper.strip().endswith(";"),\
-            "missing ';' at end of command %s" % cmd_mapper.strip()
-        if cmd_postprocess:
-            assert cmd_postprocess.strip().endswith(";"),\
-                "missing ';' at end of command %s" % cmd_postprocess.strip()
-        if cmd_clean:
-            assert cmd_clean.strip().endswith(";"),\
-                "missing ';' at end of command %s" % cmd_clean.strip()
+        steps = (cmd_preprocess,
+                 cmd_mapper,
+                 cmd_postprocess,
+                 cmd_clean)
 
-        statement = " ".join((cmd_preprocess,
-                              cmd_mapper,
-                              cmd_postprocess,
-                              cmd_clean))
+        # check for empty stages and don't concat them
+        statement = " && ".join(s for s in steps if s)
 
         return statement
 
@@ -1036,9 +1034,9 @@ class FastQC(Mapper):
 
                 statement.append(
                     '''fastqc --extract --outdir=%(outdir)s %(x)s
-                    %(contaminants_cmd)s >& %(outfile)s ; ''' % locals())
-        statement.append('''rm -f %(contaminants)s ;''' % locals())
-        return " ".join(statement)
+                    %(contaminants_cmd)s >& %(outfile)s ''' % locals())
+        statement.append('''rm -f %(contaminants)s''' % locals())
+        return " && ".join(statement)
 
 
 class FastqScreen(Mapper):
@@ -1083,7 +1081,7 @@ class FastqScreen(Mapper):
                      "--outdir %(outdir)s "
                      "--conf %(config_filename)s "
                      "%(input_files)s "
-                     ">& %(outdir)s/fastqscreen.log; ") % locals()
+                     ">& %(outdir)s/fastqscreen.log ") % locals()
         return statement
 
 class Salmon(Mapper):
@@ -1127,9 +1125,9 @@ class Salmon(Mapper):
         statement.append('''
         -l %%(salmon_libtype)s %(input_file)s -o %(outdir)s
         --numBootstraps %%(salmon_bootstrap)s
-        --threads %%(job_threads)s %%(salmon_options)s;''' % locals())
+        --threads %%(job_threads)s %%(salmon_options)s''' % locals())
 
-        statement = " ".join(statement)
+        statement = " && ".join(statement)
 
         return statement
 
@@ -1185,9 +1183,9 @@ class Kallisto(Mapper):
         if self.pseudobam:
             statement += '''
             --pseudobam | samtools view -b -
-            > %(outfile)s.bam 2> %(logfile)s;''' % locals()
+            > %(outfile)s.bam 2> %(logfile)s''' % locals()
         else:
-            statement += ''' > %(logfile)s &> %(logfile)s ;''' % locals()
+            statement += ''' > %(logfile)s &> %(logfile)s ''' % locals()
 
         self.tmpdir = tmpdir
 
@@ -1199,22 +1197,22 @@ class Kallisto(Mapper):
         tmpdir = self.tmpdir
 
         statement = ('''
-        mv -f %(tmpdir)s/abundance.h5 %(outfile)s;
+        mv -f %(tmpdir)s/abundance.h5 %(outfile)s
         ''' % locals())
 
         if self.readable_suffix:
 
             outfile_readable = outfile + self.readable_suffix
             statement += ('''
-            kallisto h5dump -o %(tmpdir)s %(outfile)s;
-            mv %(tmpdir)s/abundance.tsv %(outfile_readable)s;
-            rm -rf %(tmpdir)s/bs_abundance_*.tsv;''' % locals())
+            kallisto h5dump -o %(tmpdir)s %(outfile)s &&
+            mv %(tmpdir)s/abundance.tsv %(outfile_readable)s &&
+            rm -rf %(tmpdir)s/bs_abundance_*.tsv''' % locals())
 
         return statement
 
     def cleanup(self, outfile):
         '''clean up.'''
-        statement = '''rm -rf %s; rm -rf %s;''' % (
+        statement = '''rm -rf %s %s''' % (
             self.tmpdir_fastq, self.tmpdir)
 
         return statement
@@ -1236,8 +1234,8 @@ class Counter(Mapper):
             statement.append(
                 '''zcat %(x)s
                 | awk '{n+=1;} END {printf("nreads\\t%%%%i\\n",n/4);}'
-                >> %(outfile)s;''' % locals())
-        return " ".join(statement)
+                >> %(outfile)s''' % locals())
+        return " && ".join(statement)
 
 
 class SubsetHead(Mapper):
@@ -1265,7 +1263,7 @@ class SubsetHead(Mapper):
                 '''zcat %(f)s
                 | awk 'NR > %(limit)i {exit} {print}'
                 | gzip
-                > %(output_filename)s;''' % locals())
+                > %(output_filename)s''' % locals())
         elif len(infiles) > 1:
             for x, f in enumerate(infiles, 1):
                 output_filename = output_prefix + ".fastq.%i.gz" % x
@@ -1274,11 +1272,8 @@ class SubsetHead(Mapper):
                     | awk 'NR > %(limit)i {exit} {print}'
                     | gzip
                     > %(output_filename)s''' % locals())
-                if x == len(infiles):
-                    statement.append(';')
-                else:
-                    statement.append('&&')
-        return " ".join(statement)
+                
+        return " && ".join(statement)
 
 
 class SubsetHeads(Mapper):
@@ -1319,7 +1314,7 @@ class SubsetHeads(Mapper):
             awk_cmd += '{if (NR>%s) {exit}};' % limits[-1]
 
             statement.append(
-                """zcat %(f)s| awk '%(awk_cmd)s';""" % locals())
+                """zcat %(f)s| awk '%(awk_cmd)s'""" % locals())
 
         elif len(infiles) > 1:
             for x, f in enumerate(infiles):
@@ -1333,9 +1328,9 @@ class SubsetHeads(Mapper):
                 awk_cmd += '{if (NR>%s) {exit}};' % limits[-1]
 
                 statement.append(
-                    """zcat %(f)s| awk '%(awk_cmd)s';""" % locals())
+                    """zcat %(f)s| awk '%(awk_cmd)s'""" % locals())
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
 
 class SubsetRandom(Mapper):
@@ -1367,7 +1362,7 @@ class SubsetRandom(Mapper):
             paste - - - - |
             sort -R |
             awk -F'\\t'  'NR > %(limit)i {exit} {OFS="\\n";
-            print $1,$3,$5,$7 | "gzip > %(output_prefix)s.fastq.gz}"}';
+            print $1,$3,$5,$7 | "gzip > %(output_prefix)s.fastq.gz}"}'
             """ % locals()
 
         if len(infiles) == 2:
@@ -1378,7 +1373,7 @@ class SubsetRandom(Mapper):
             sort -R |
             awk -F'\\t'  'NR > %(limit)i {exit} {OFS="\\n";
             print $1,$3,$5,$7 | "gzip > %(output_prefix)s.fastq.1.gz";
-            print $2,$4,$6,$8 | "gzip > %(output_prefix)s.fastq.2.gz"}';
+            print $2,$4,$6,$8 | "gzip > %(output_prefix)s.fastq.2.gz"}'
             """ % locals()
 
         return statement
@@ -1428,7 +1423,7 @@ class BWA(Mapper):
         nfiles = max(num_files)
 
         tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
-        statement = ["mkdir -p %s;" % tmpdir]
+        statement = ["mkdir -p %s" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
         # add options specific to data type
@@ -1453,12 +1448,13 @@ class BWA(Mapper):
 
             statement.append('''
             bwa aln %%(bwa_aln_options)s -t %%(bwa_threads)i
-            %(index_prefix)s %(infiles)s
-            > %(tmpdir)s/%(track)s.sai 2>>%(outfile)s.bwa.log;
+                    %(index_prefix)s %(infiles)s
+                > %(tmpdir)s/%(track)s.sai 2>>%(outfile)s.bwa.log &&
+            
             bwa samse %%(bwa_samse_options)s %%(bwa_index_dir)s/%%(genome)s
             %(tmpdir)s/%(track)s.sai %(infiles)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log
             ''' % locals())
 
         elif nfiles == 2:
@@ -1470,15 +1466,15 @@ class BWA(Mapper):
             statement.append('''
             bwa aln %%(bwa_aln_options)s -t %%(bwa_threads)i
             %(index_prefix)s %(infiles1)s
-            > %(tmpdir)s/%(track1)s.sai 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track1)s.sai 2>>%(outfile)s.bwa.log &&
             bwa aln %%(bwa_aln_options)s -t %%(bwa_threads)i
             %(index_prefix)s %(infiles2)s
-            > %(tmpdir)s/%(track2)s.sai 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track2)s.sai 2>>%(outfile)s.bwa.log &&
             bwa sampe %%(bwa_sampe_options)s %(index_prefix)s
                       %(tmpdir)s/%(track1)s.sai %(tmpdir)s/%(track2)s.sai
                       %(infiles1)s %(infiles2)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log
             ''' % locals())
         else:
             raise ValueError(
@@ -1486,7 +1482,7 @@ class BWA(Mapper):
 
         self.tmpdir = tmpdir
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
     def postprocess(self, infiles, outfile):
         '''
@@ -1539,8 +1535,8 @@ class BWA(Mapper):
                 %(unique_cmd)s
                 %(strip_cmd)s
                 %(set_nh_cmd)s
-                | samtools sort -o %(outfile)s 2>>%(outfile)s.bwa.log;
-                samtools index %(outfile)s;''' % locals()
+                | samtools sort -o %(outfile)s 2>>%(outfile)s.bwa.log &&
+                samtools index %(outfile)s''' % locals()
 
         return statement
 
@@ -1585,7 +1581,7 @@ class BWAMEM(BWA):
         nfiles = max(num_files)
 
         tmpdir = os.path.join(self.tmpdir_fastq, "bwa")
-        statement = ["mkdir -p %s;" % tmpdir]
+        statement = ["mkdir -p %s" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
         # add options specific to data type
@@ -1612,7 +1608,7 @@ class BWAMEM(BWA):
             bwa-mem2 mem %%(bwa_mem_options)s -t %%(bwa_threads)i
             %(index_prefix)s %(infiles)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log
             ''' % locals())
 
         elif nfiles == 2:
@@ -1624,7 +1620,7 @@ class BWAMEM(BWA):
             %(index_prefix)s %(infiles1)s
             %(infiles2)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log;
+            > %(tmpdir)s/%(track)s.bam 2>>%(outfile)s.bwa.log
             ''' % locals())
         else:
             raise ValueError(
@@ -1632,7 +1628,7 @@ class BWAMEM(BWA):
 
         self.tmpdir = tmpdir
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
 
 class Bismark(Mapper):
@@ -1685,7 +1681,7 @@ class Bismark(Mapper):
             bismark %%(bismark_options)s -q --bowtie2
             --output_dir %(tmpdir_fastq)s
             -p %%(bismark_threads)s --bam --phred33-quals %(bismark_index)s
-            %(infiles)s;
+            %(infiles)s
             ''' % locals()
 
         elif nfiles == 2:
@@ -1696,7 +1692,7 @@ class Bismark(Mapper):
             bismark %%(bismark_options)s -q --bowtie2
             --output_dir %(tmpdir_fastq)s
             -p %%(bismark_threads)s --bam --non_directional
-            --phred33-quals %(bismark_index)s -1 %(infiles1)s -2 %(infiles2)s;
+            --phred33-quals %(bismark_index)s -1 %(infiles1)s -2 %(infiles2)s
             ''' % locals()
 
         else:
@@ -1722,17 +1718,17 @@ class Bismark(Mapper):
             %(tmpdir_fastq)s/%(base)s.fastq.gz_bismark_bt2.bam
             | awk -F" " '$14!~/^XM:Z:[zZhxUu\.]*[HX][zZhxUu\.]*[HX]/ ||
             $1=="@SQ" || $1=="@PG"' | samtools view -b - >
-            %%(outdir)s/%(track)s.bam;
+            %%(outdir)s/%(track)s.bam &&
             mv %(tmpdir_fastq)s/%(base)s.fastq.gz_bismark_bt2_SE_report.txt
-            %%(outdir)s/%(track)s_bismark_bt2_SE_report.txt;''' % locals()
+            %%(outdir)s/%(track)s_bismark_bt2_SE_report.txt''' % locals()
         elif infile.endswith(".fastq.1.gz"):
             statement = '''samtools view -h
             %(tmpdir_fastq)s/%(base)s.fastq.1.gz_bismark_bt2_pe.bam
             | awk -F" " '$14!~/^XM:Z:[zZhxUu\.]*[HX][zZhxUu\.]*[HX]/ ||
             $1=="@SQ" || $1=="@PG"' | samtools view -b - >
-            %%(outdir)s/%(track)s.bam;
+            %%(outdir)s/%(track)s.bam &&
             mv %(tmpdir_fastq)s/%(base)s.fastq.gz_bismark_bt2_PE_report.txt
-            %%(outdir)s/%(track)s_bismark_bt2_SE_report.txt;''' % locals()
+            %%(outdir)s/%(track)s_bismark_bt2_SE_report.txt''' % locals()
         elif infile.endswith(".sra"):
             # this should use Sra module to identify single or paired end
             for mapfile in mapfiles:
@@ -1742,17 +1738,17 @@ class Bismark(Mapper):
                     %(tmpdir_fastq)s/%(mapfile)s_bismark_bt2_pe.bam|
                     awk -F" " '$14!~/^XM:Z:[zZhxUu\.]*[HX][zZhxUu\.]*[HX]/ ||
                     $1=="@SQ" || $1=="@PG"' | samtools view -b - >
-                    %%(outdir)s/%(track)s.bam;
+                    %%(outdir)s/%(track)s.bam &&
                     mv %(tmpdir_fastq)s/%(mapfile)s_bismark_bt2_PE_report.txt
-                    %%(outdir)s/%(track)s_PE_report.txt;''' % locals()
+                    %%(outdir)s/%(track)s_PE_report.txt''' % locals()
                 else:
                     statement = '''samtools view -h
                     %(tmpdir_fastq)s/%(mapfile)s_bismark_bt2.bam|
                     awk -F" " '$14!~/^XM:Z:[zZhxUu\.]*[HX][zZhxUu\.]*[HX]/||
                     $1=="@SQ" || $1=="@PG"' | samtools view -b - >
-                    %%(outdir)s/%(track)s.bam;
+                    %%(outdir)s/%(track)s.bam &&
                     mv %(tmpdir_fastq)s/%(mapfile)s_bismark_bt2_SE_report.txt
-                    %%(outdir)s/%(track)s_SE_report.txt;''' % locals()
+                    %%(outdir)s/%(track)s_SE_report.txt''' % locals()
         else:
             # shouldn't arrive here
             statement = None
@@ -1770,14 +1766,7 @@ class Bismark(Mapper):
         cmd_postprocess = self.postprocess(infiles, mapfiles, outfile)
         cmd_clean = self.cleanup(outfile)
 
-        assert cmd_preprocess.strip().endswith(";")
-        assert cmd_mapper.strip().endswith(";")
-        if cmd_postprocess:
-            assert cmd_postprocess.strip().endswith(";")
-        if cmd_clean:
-            assert cmd_clean.strip().endswith(";")
-
-        statement = " ".join((cmd_preprocess,
+        statement = " && ".join((cmd_preprocess,
                               cmd_mapper,
                               cmd_postprocess,
                               cmd_clean))
@@ -1831,7 +1820,7 @@ class Stampy(BWA):
         executable = self.executable
 
         tmpdir = os.path.join(self.tmpdir_fastq + "stampy")
-        statement = ["mkdir -p %s;" % tmpdir]
+        statement = ["mkdir -p %s" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
         # add options specific to data type
@@ -1857,7 +1846,7 @@ class Stampy(BWA):
             %%(stampy_options)s
             -M %(infiles)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>%(outfile)s.log;
+            > %(tmpdir)s/%(track)s.bam 2>%(outfile)s.log
             ''' % locals())
 
         elif nfiles == 2:
@@ -1872,7 +1861,7 @@ class Stampy(BWA):
             %%(stampy_options)s
             -M %(infiles1)s %(infiles2)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam 2>%(outfile)s.log;
+            > %(tmpdir)s/%(track)s.bam 2>%(outfile)s.log
             ''' % locals())
         else:
             raise ValueError(
@@ -1924,7 +1913,7 @@ class Butter(BWA):
         nfiles = max(num_files)
 
         tmpdir = os.path.join(self.tmpdir_fastq + "butter")
-        statement = ["mkdir -p %s;" % tmpdir]
+        statement = ["mkdir -p %s" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
         track = P.snip(os.path.basename(outfile), ".bam")
@@ -1939,10 +1928,10 @@ class Butter(BWA):
 
             if infiles.endswith(".gz"):
                 statement.append('''
-                zcat %(infiles)s > %(track_fastq)s; ''' % locals())
+                zcat %(infiles)s > %(track_fastq)s ''' % locals())
             else:
                 statement.append('''
-                cat %(infiles)s > %(track_fastq)s; ''' % locals())
+                cat %(infiles)s > %(track_fastq)s ''' % locals())
 
             statement.append('''
             butter %%(butter_options)s
@@ -1950,7 +1939,7 @@ class Butter(BWA):
             %%(butter_index_dir)s/%%(genome)s.fa
             --aln_cores=%%(job_threads)s
             --bam2wig=none
-            > %(outfile)s_butter.log;
+            > %(outfile)s_butter.log
             ''' % locals())
 
         elif nfiles == 2:
@@ -1962,10 +1951,10 @@ class Butter(BWA):
 
         self.tmpdir = tmpdir
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
     def cleanup(self, outfile):
-        statement = '''rm -rf %s %s;''' % (self.tmpdir_fastq, self.tmpdir)
+        statement = '''rm -rf %s %s''' % (self.tmpdir_fastq, self.tmpdir)
 
         return statement
 
@@ -2049,7 +2038,7 @@ class Tophat(Mapper):
                    %%(tophat_options)s
                    %(index_prefix)s
                    %(infiles)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1
             ''' % locals()
 
         elif nfiles == 2:
@@ -2067,7 +2056,7 @@ class Tophat(Mapper):
                    %%(tophat_options)s
                    %(index_prefix)s
                    %(infiles1)s %(infiles2)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1 
             ''' % locals()
         elif nfiles == 4:
             # this section works both for paired-ended fastq files
@@ -2088,7 +2077,7 @@ class Tophat(Mapper):
                    %(index_prefix)s
                    %(infiles1)s %(infiles2)s
                    %(infiles3)s %(infiles4)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1 
             ''' % locals()
 
         else:
@@ -2138,10 +2127,10 @@ class Tophat(Mapper):
 
         statement = '''
         gzip < %(tmpdir_tophat)s/junctions.bed
-        > %(track)s.junctions.bed.gz;
-        mv %(tmpdir_tophat)s/logs %(outfile)s.logs;
-        mv %(tmpdir_tophat)s/accepted_hits.bam %(outfile)s;
-        samtools index %(outfile)s;
+        > %(track)s.junctions.bed.gz &&
+        mv %(tmpdir_tophat)s/logs %(outfile)s.logs &&
+        mv %(tmpdir_tophat)s/accepted_hits.bam %(outfile)s &&
+        samtools index %(outfile)s
         ''' % locals()
 
         return statement
@@ -2224,11 +2213,11 @@ class Tophat2_fusion(Tophat2):
 
         statement = '''
         gzip < %(tmpdir_tophat)s/junctions.bed
-        > %(track)s.junctions.bed.gz;
-        mv %(tmpdir_tophat)s/logs %(outfile)s.logs;
-        mv %(tmpdir_tophat)s/accepted_hits.bam %(outfile)s;
-        mv %(tmpdir_tophat)s/fusions.out %%(fusions)s;
-        samtools index %(outfile)s;
+        > %(track)s.junctions.bed.gz &&
+        mv %(tmpdir_tophat)s/logs %(outfile)s.logs &&
+        mv %(tmpdir_tophat)s/accepted_hits.bam %(outfile)s &&
+        mv %(tmpdir_tophat)s/fusions.out %%(fusions)s &&
+        samtools index %(outfile)s
         ''' % locals()
 
         return statement
@@ -2276,7 +2265,7 @@ class TopHat_fusion(Mapper):
                    %%(tophatfusion_options)s
                    %(index_prefix)s
                    %(infiles)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1 
             ''' % locals())
 
         elif nfiles == 2:
@@ -2296,7 +2285,7 @@ class TopHat_fusion(Mapper):
                   %%(tophatfusion_options)s
                    %(index_prefix)s
                    %(infiles1)s %(infiles2)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1 
             ''' % locals())
 
         elif nfiles == 4:
@@ -2320,7 +2309,7 @@ class TopHat_fusion(Mapper):
                    %(index_prefix)s
                    %(infiles1)s %(infiles2)s
                    %(infiles3)s %(infiles4)s
-                   >> %(outfile)s.log 2>&1 ;
+                   >> %(outfile)s.log 2>&1 
             ''' % locals())
 
         else:
@@ -2344,7 +2333,7 @@ class TopHat_fusion(Mapper):
         #    samtools index %(outfile)s;
         #    ''' % locals()
         statement = '''
-            mv -f %(tmpdir_tophat)s/* %(track)s/;
+            mv -f %(tmpdir_tophat)s/* %(track)s/
             ''' % locals()
         return statement
 
@@ -2416,17 +2405,18 @@ class Hisat(Mapper):
         if nfiles == 1:
             infiles = ",".join([x[0] for x in infiles])
             statement = '''
-            mkdir %(tmpdir_hisat)s;
+            mkdir %(tmpdir_hisat)s &&
+            
             %(executable)s
-            --threads %%(hisat_threads)i
-            %(strandedness)s
-            %%(hisat_options)s
-            -x %(index_prefix)s
-            -U %(infiles)s
-            --known-splicesite-infile %%(junctions)s
-            > %(tmpdir_hisat)s/%(track)s
-            --novel-splicesite-outfile %(outfile)s_novel_junctions
-            2>> %(outfile)s.log;
+               --threads %%(hisat_threads)i
+               %(strandedness)s
+               %%(hisat_options)s
+               -x %(index_prefix)s
+               -U %(infiles)s
+               --known-splicesite-infile %%(junctions)s
+             > %(tmpdir_hisat)s/%(track)s
+               --novel-splicesite-outfile %(outfile)s_novel_junctions
+            2>> %(outfile)s.log
             ''' % locals()
 
         elif nfiles == 2:
@@ -2434,18 +2424,19 @@ class Hisat(Mapper):
             infiles2 = ",".join([x[1] for x in infiles])
 
             statement = '''
-            mkdir %(tmpdir_hisat)s;
+            mkdir %(tmpdir_hisat)s &&
+            
             %(executable)s
-            --threads %%(hisat_threads)i
-            %(strandedness)s
-            %%(hisat_options)s
-            -x %(index_prefix)s
-            -1 %(infiles1)s
-            -2 %(infiles2)s
-            --known-splicesite-infile %%(junctions)s
-            > %(tmpdir_hisat)s/%(track)s
-            --novel-splicesite-outfile %(outfile)s_novel_junctions
-            2>> %(outfile)s.hisat.log;
+                --threads %%(hisat_threads)i
+                %(strandedness)s
+                %%(hisat_options)s
+                -x %(index_prefix)s
+                -1 %(infiles1)s
+                -2 %(infiles2)s
+                --known-splicesite-infile %%(junctions)s
+                > %(tmpdir_hisat)s/%(track)s
+                --novel-splicesite-outfile %(outfile)s_novel_junctions
+                2>> %(outfile)s.hisat.log
             ''' % locals()
 
         else:
@@ -2499,9 +2490,11 @@ class Hisat(Mapper):
         statement = '''
         samtools view -uS %(tmpdir_hisat)s/%(track)s
         %(strip_cmd)s
-        | samtools sort - -o %(outfile)s 2>>%(outfile)s.hisat.log;
-        samtools index %(outfile)s;
-        rm -rf %(tmpdir_hisat)s;
+        | samtools sort - -o %(outfile)s 2>>%(outfile)s.hisat.log &&
+        
+          samtools index %(outfile)s &&
+          
+          rm -rf %(tmpdir_hisat)s
         ''' % locals()
 
         return statement
@@ -2572,16 +2565,16 @@ class GSNAP(Mapper):
                 individual_infile = infiles[0][0]
                 files = "<(zcat %(individual_infile)s)" % locals()
 
-#            statement = '''
-#            zcat %(infiles)s
-#            | %(executable)s
-#                   --nthreads %%(gsnap_worker_threads)i
-#                   --format=sam
-#                   --db=%(index_prefix)s
-#                   %%(gsnap_options)
-#                   > %(tmpdir)s/%(track)s.sam
-#                   2> %(outfile)s.log;
-#            ''' % locals()
+            statement = '''
+            zcat %(infiles)s
+            | %(executable)s
+                   --nthreads %%(gsnap_worker_threads)i
+                   --format=sam
+                   --db=%(index_prefix)s
+                   %%(gsnap_options)
+                   > %(tmpdir)s/%(track)s.sam
+                   2> %(outfile)s.log
+            ''' % locals()
 
         elif nfiles == 2:
             # this section works both for paired-ended fastq files
@@ -2601,13 +2594,13 @@ class GSNAP(Mapper):
 
         statement = '''
         %(executable)s
-        --nthreads %%(gsnap_worker_threads)i
-        --format=sam
-        --db=%(index_prefix)s
-        %%(gsnap_options)s
-        %(files)s
+              --nthreads %%(gsnap_worker_threads)i
+              --format=sam
+              --db=%(index_prefix)s
+              %%(gsnap_options)s
+              %(files)s
         | samtools view -bS -
-        2> %(outfile)s.log ;
+          2> %(outfile)s.log 
         ''' % locals()
 
         return statement
@@ -2660,8 +2653,9 @@ class GSNAP(Mapper):
         cat %(tmpdir)s/%(track)s.bam
         %(unique_cmd)s
         %(strip_cmd)s
-        | samtools sort -o %(outfile)s 2>>%(outfile)s.log;
-        samtools index %(outfile)s;''' % locals()
+        | samtools sort -o %(outfile)s 2>>%(outfile)s.log &&
+        
+        samtools index %(outfile)s''' % locals()
 
         return statement
 
@@ -2732,18 +2726,18 @@ class STAR(Mapper):
 
             statement = '''
             %(executable)s
-            --runMode alignReads
-            --runThreadN %%(star_threads)i
-            --genomeDir %%(star_index_dir)s/%%(star_mapping_genome)s.dir
-            --outFileNamePrefix %(tmpdir)s/
-            --outStd SAM
-            --outSAMunmapped Within
-            %%(star_options)s
-            %(compress_option)s
-            --readFilesIn %(infiles)s
+              --runMode alignReads
+              --runThreadN %%(star_threads)i
+              --genomeDir %%(star_index_dir)s/%%(star_mapping_genome)s.dir
+              --outFileNamePrefix %(tmpdir)s/
+              --outStd SAM
+              --outSAMunmapped Within
+              %%(star_options)s
+              %(compress_option)s
+              --readFilesIn %(infiles)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam
-            2> %(logfile)s;
+              > %(tmpdir)s/%(track)s.bam
+              2> %(logfile)s
             ''' % locals()
 
         elif nfiles == 2:
@@ -2761,18 +2755,18 @@ class STAR(Mapper):
 
             statement = '''
             %(executable)s
-            --runMode alignReads
-            --runThreadN %%(star_threads)i
-            --genomeDir %%(star_index_dir)s/%%(star_mapping_genome)s.dir
-            --outFileNamePrefix %(tmpdir)s/
-            --outStd SAM
-            --outSAMunmapped Within
-            %%(star_options)s
-            %(compress_option)s
-            --readFilesIn %(files)s
+              --runMode alignReads
+              --runThreadN %%(star_threads)i
+              --genomeDir %%(star_index_dir)s/%%(star_mapping_genome)s.dir
+              --outFileNamePrefix %(tmpdir)s/
+              --outStd SAM
+              --outSAMunmapped Within
+              %%(star_options)s
+              %(compress_option)s
+              --readFilesIn %(files)s
             | samtools view -bS -
-            > %(tmpdir)s/%(track)s.bam
-            2> %(logfile)s;
+              > %(tmpdir)s/%(track)s.bam
+              2> %(logfile)s
             ''' % locals()
 
         else:
@@ -2822,16 +2816,22 @@ class STAR(Mapper):
         logfile = ("%sLog.final.out") % (P.snip(outfile, ".star.bam"))
 
         statement = '''
-        cp %(tmpdir)s/Log.std.out %(outfile)s.std.log;
-        cp %(tmpdir)s/Log.final.out %(logfile)s;
-        cp %(tmpdir)s/SJ.out.tab %(outfile)s.junctions;
-        cat %(tmpdir)s/Log.out >> %(outfile)s.log;
-        cp %(tmpdir)s/Log.progress.out %(outfile)s.progress;
+        cp %(tmpdir)s/Log.std.out %(outfile)s.std.log &&
+        
+        cp %(tmpdir)s/Log.final.out %(logfile)s &&
+        
+        cp %(tmpdir)s/SJ.out.tab %(outfile)s.junctions &&
+        
+        cat %(tmpdir)s/Log.out >> %(outfile)s.log &&
+        
+        cp %(tmpdir)s/Log.progress.out %(outfile)s.progress &&
+        
         cat %(tmpdir)s/%(track)s.bam
         %(unique_cmd)s
         %(strip_cmd)s
-        | samtools sort -o %(outfile)s 2>>%(outfile)s.log;
-        samtools index %(outfile)s;''' % locals()
+        | samtools sort -o %(outfile)s 2>>%(outfile)s.log &&
+        
+        samtools index %(outfile)s''' % locals()
 
         return statement
 
@@ -2960,16 +2960,16 @@ class Bowtie(Mapper):
                     infiles = ",".join([self.quoteFile(x) for x in infiles[0]])
             statement = '''
             %(executable)s
-            --threads %%(%(executable)s_threads)i
-            %(data_options)s
-            %(tool_options)s
-            %(index_option)s %(index_prefix)s
-            %(infiles)s
-            %(output_option)s
-            2>%(outfile)s_bowtie.log
+              --threads %%(%(executable)s_threads)i
+              %(data_options)s
+              %(tool_options)s
+              %(index_option)s %(index_prefix)s
+              %(infiles)s
+              %(output_option)s
+              2>%(outfile)s_bowtie.log
             | awk -v OFS="\\t" '{sub(/\/[12]$/,"",$1);print}'
             | samtools import %%(reffile)s - %(tmpdir_fastq)s/out.bam
-            1>&2 2>> %(outfile)s.log;
+              1>&2 2>> %(outfile)s.log
             ''' % locals()
 
         elif nfiles == 2:
@@ -2988,15 +2988,15 @@ class Bowtie(Mapper):
 
             statement = '''
             %(executable)s
-            --threads %%(%(executable)s_threads)i
-            %(data_options)s
-            %(tool_options)s
-            %(index_option)s %(index_prefix)s
-            -1 %(infiles1)s -2 %(infiles2)s
-            %(output_option)s
-            2>%(outfile)s_bowtie.log
+              --threads %%(%(executable)s_threads)i
+              %(data_options)s
+              %(tool_options)s
+              %(index_option)s %(index_prefix)s
+              -1 %(infiles1)s -2 %(infiles2)s
+              %(output_option)s
+              2>%(outfile)s_bowtie.log
             | samtools import %%(reffile)s - %(tmpdir_fastq)s/out.bam
-            1>&2 2>> %(outfile)s.log;
+              1>&2 2>> %(outfile)s.log &&
             ''' % locals()
         else:
             raise ValueError("unexpected number reads to map: %i " % nfiles)
@@ -3046,14 +3046,16 @@ class Bowtie(Mapper):
             --strip-method=all
             --method=strip-sequence --log=%(outfile)s.log''' % locals()
 
-        statement = '''cat %(tmpdir_fastq)s/out.bam
+        statement = '''
+        cat %(tmpdir_fastq)s/out.bam
         | cgat bam2bam
-        --method=set-nh
-        --log=%(outfile)s.log
+               --method=set-nh
+               --log=%(outfile)s.log
         %(unique_cmd)s
         %(strip_cmd)s
-        | samtools sort -o %(outfile)s;
-        samtools index %(outfile)s;
+        | samtools sort -o %(outfile)s &&
+        
+        samtools index %(outfile)s
         ''' % locals()
 
         return statement
@@ -3159,15 +3161,15 @@ class BowtieTranscripts(Mapper):
             infiles = ",".join(["<(zcat %s)" % x for x in infiles[0]])
             statement = '''
             %(executable)s --quiet --sam
-            --threads %%(bowtie_threads)i
-            %(data_options)s
-            %%(bowtie_options)s
-            %(index_prefix)s
-            %(infiles)s
-            2>%(outfile)s.log
+                           --threads %%(bowtie_threads)i
+                           %(data_options)s
+                           %%(bowtie_options)s
+                           %(index_prefix)s
+                           %(infiles)s
+                           2>%(outfile)s.log
             | awk -v OFS="\\t" '{sub(/\/[12]$/,"",$1);print}'
             | samtools import %%(reffile)s - %(tmpdir_fastq)s/out.bam
-            1>&2 2>> %(outfile)s.log;
+              1>&2 2>> %(outfile)s.log
             ''' % locals()
 
         elif nfiles == 2:
@@ -3176,14 +3178,14 @@ class BowtieTranscripts(Mapper):
 
             statement = '''
             %(executable)s --quiet --sam
-            --threads %%(bowtie_threads)i
-            %(data_options)s
-            %%(bowtie_options)s
-            %(index_prefix)s
-            -1 %(infiles1)s -2 %(infiles2)s
-            2>%(outfile)s.log
+                           --threads %%(bowtie_threads)i
+                           %(data_options)s
+                           %%(bowtie_options)s
+                           %(index_prefix)s
+                           -1 %(infiles1)s -2 %(infiles2)s
+                           2>%(outfile)s.log
             | samtools import %%(reffile)s - %(tmpdir_fastq)s/out.bam
-            1>&2 2>> %(outfile)s.log;
+               1>&2 2>> %(outfile)s.log
             ''' % locals()
         else:
             raise ValueError("unexpected number reads to map: %i " % nfiles)
@@ -3236,8 +3238,9 @@ class BowtieTranscripts(Mapper):
         statement = '''cat %(tmpdir_fastq)s/out.bam
              %(unique_cmd)s
              %(strip_cmd)s
-             | samtools sort -o %(outfile)s 2>>%(track)s.bwa.log;
-             samtools index %(outfile)s;
+             | samtools sort -o %(outfile)s 2>>%(track)s.bwa.log &&
+             
+             samtools index %(outfile)s
              ''' % locals()
 
         return statement
@@ -3300,13 +3303,14 @@ class BowtieJunctions(BowtieTranscripts):
         %(unique_cmd)s
         %(strip_cmd)s
         | cgat bam2bam
-        --method=set-nh
-        --log=%(outfile)s.log
+               --method=set-nh
+               --log=%(outfile)s.log
         | cgat rnaseq_junction_bam2bam
-        --contigs-tsv-file=%%(contigsfile)s
-        --log=%(outfile)s.log
-        | samtools sort -o %(outfile)s;
-        samtools index %(outfile)s;
+               --contigs-tsv-file=%%(contigsfile)s
+               --log=%(outfile)s.log
+        | samtools sort -o %(outfile)s &&
+        
+        samtools index %(outfile)s
         ''' % locals()
 
         return statement
@@ -3376,7 +3380,7 @@ class Shortstack(Bowtie):
         nfiles = max(num_files)
 
         tmpdir = os.path.join(self.tmpdir_fastq, "shortstack")
-        statement = ["mkdir -p %s;" % tmpdir]
+        statement = ["mkdir -p %s" % tmpdir]
         tmpdir_fastq = self.tmpdir_fastq
 
         track = P.snip(os.path.basename(outfile), ".shortstack.bam")
@@ -3395,17 +3399,17 @@ class Shortstack(Bowtie):
             track_fastq = os.path.join(tmpdir_fastq, track + ".fastq")
             if infiles.endswith(".gz"):
                 statement.append('''
-                zcat %(infiles)s > %(track_fastq)s; ''' % locals())
+                zcat %(infiles)s > %(track_fastq)s ''' % locals())
             else:
                 statement.append('''
-                cat %(infiles)s > %(track_fastq)s; ''' % locals())
+                cat %(infiles)s > %(track_fastq)s ''' % locals())
 
             statement.append('''
             ShortStack %%(shortstack_options)s
             --readfile %(track_fastq)s
             --genomefile %%(shortstack_index_dir)s/%%(genome)s.fa
             --bowtie_cores=%%(job_threads)s
-            --outdir %(dir_name)s/%(track)s;
+            --outdir %(dir_name)s/%(track)s
             ''' % locals())
 
         elif nfiles == 2:
@@ -3417,7 +3421,7 @@ class Shortstack(Bowtie):
 
         self.tmpdir = tmpdir
 
-        return " ".join(statement)
+        return " && ".join(statement)
 
     def postprocess(self, infiles, outfile):
         '''
@@ -3463,20 +3467,23 @@ class Shortstack(Bowtie):
             --strip-method=all
             --method=strip-sequence --log=%(outfile)s.log''' % locals()
 
-        statement = '''mv shortstack.dir/%(track)s/%(track)s.bam %(outfile)s;
+        statement = '''
+        mv shortstack.dir/%(track)s/%(track)s.bam %(outfile)s &&
+        
         cat %(outfile)s
         | cgat bam2bam
         --method=set-nh
         --log=%(outfile)s.log
         %(unique_cmd)s
         %(strip_cmd)s
-        | samtools sort -o %(outfile)s;
-        samtools index %(outfile)s;
+        | samtools sort -o %(outfile)s &&
+        
+        samtools index %(outfile)s
         ''' % locals()
 
         return statement
 
     def cleanup(self, outfile):
-        statement = '''rm -rf %s %s;''' % (self.tmpdir_fastq, self.tmpdir)
+        statement = '''rm -rf %s %s''' % (self.tmpdir_fastq, self.tmpdir)
 
         return statement

@@ -67,7 +67,7 @@ def buildPicardInsertSizeStats(infile, outfile, genome_file,
         Filename with genomic sequence.
     '''
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -159,7 +159,7 @@ def buildPicardAlignmentStats(infile, outfile, genome_file,
     '''
 
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -191,7 +191,7 @@ def buildPicardDuplicationStats(infile, outfile, picardmem):
     '''
 
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -244,7 +244,7 @@ def buildPicardDuplicateStats(infile, outfile, picardmem):
         Output filename with picard output.
     '''
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -279,7 +279,7 @@ def buildPicardCoverageStats(infile, outfile, baits, regions,
     '''
 
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -310,7 +310,7 @@ def buildPicardGCStats(infile, outfile, genome_file, picardmem):
     """
 
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
 
     if BamTools.getNumReads(infile) == 0:
@@ -1060,7 +1060,7 @@ def loadIdxstats(infiles, outfile):
                                       columns=(['region', 'mapped']))
 
         # reformat the df
-        df = df.append(reformatted_df, ignore_index=True)
+        df = df._append(reformatted_df, ignore_index=True)
         df.set_index('region', inplace=True)
         df1 = df[['mapped']].T
         dfs.append(df1)
@@ -1291,7 +1291,7 @@ def buildPicardRnaSeqMetrics(infiles, strand, outfile, picardmem):
 
     '''
     job_memory = picardmem
-    picard_opts = '-Xmx%(job_memory)s -XX:+UseParNewGC -XX:+UseConcMarkSweepGC' % locals()
+    picard_opts = '-Xmx%(job_memory)s -XX:+UseG1GC ' % locals()
     job_threads = 3
     infile, genome, rRNA_intervals = infiles
 

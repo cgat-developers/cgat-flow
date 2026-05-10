@@ -22,5 +22,8 @@ exclude scripts/*
 include scripts/__init__.py
 include scripts/version.py
 include scripts/cgat_ruffus_profile.py
+include cgatpipelines/Rtools/*
+include cgatpipelines/experiment.R
+
 
 # extensions

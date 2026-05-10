@@ -248,7 +248,7 @@ import matplotlib.gridspec as gridspec
 import cgatcore.experiment as E
 import cgatcore.iotools as iotools
 from cgatcore import pipeline as P
-import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.bamstats as bamstats
 import cgatpipelines.tasks.peakcalling as peakcalling
 import cgat.BamTools.bamtools as Bamtools
 import cgatcore.database as DB
@@ -522,7 +522,7 @@ def loadIdxstats(infiles, outfile):
         idxstats output. Filename format is expected to be 'sample.idxstats'
     outfile : string
         Logfile. The table name will be derived from `outfile`.'''
-    mappingqc.loadIdxstats(infiles, outfile)
+    bamstats.loadIdxstats(infiles, outfile)
 
 
 @transform((filterChipBAMs, filterInputBAMs),
@@ -533,9 +533,10 @@ def buildPicardStats(infiles, outfile):
     infile = infiles[0]
     reffile = os.path.join(PARAMS["genome_dir"], PARAMS["genome"] + ".fa")
 
-    mappingqc.buildPicardAlignmentStats(infile,
-                                                outfile,
-                                                reffile)
+    bamstats.buildPicardAlignmentStats(infile,
+                                       outfile,
+                                       reffile,
+                                       picardmem="9G")
 
 
 @jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
@@ -543,7 +544,7 @@ def buildPicardStats(infiles, outfile):
 def loadPicardStats(infiles, outfile):
     '''merge alignment stats into single tables.
     '''
-    mappingqc.loadPicardAlignmentStats(infiles, outfile)
+    bamstats.loadPicardAlignmentStats(infiles, outfile)
 
 
 @follows(loadFilteringStats,

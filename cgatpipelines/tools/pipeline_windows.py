@@ -120,7 +120,7 @@ import cgatcore.iotools as iotools
 from cgatcore import pipeline as P
 import cgatpipelines.tasks.windows as windows
 import cgatpipelines.tasks.tracks as tracks
-import cgatpipelines.tasks.mappingqc as mappingqc
+import cgatpipelines.tasks.bamstats as bamstats
 
 
 #########################################################################
@@ -210,13 +210,12 @@ def loadTagCounts(infiles, outfile):
                      suffix=".tsv")
 
 
-# @P.add_doc(mappingqc.loadPicardDuplicateStats)
 @merge(prepareTags, "picard_duplicates.load")
 def loadPicardDuplicateStats(infiles, outfile):
     '''Merge Picard duplicate stats into single table and load into SQLite
     table picard_duplicates.
     '''
-    mappingqc.loadPicardDuplicateStats(
+    bamstats.loadPicardDuplicateStats(
         infiles, outfile, pipeline_suffix=".bed.gz")
 
 

@@ -27,11 +27,6 @@ import copy
 # Set PARAMS in calling module
 PARAMS = {}
 
-
-def getGATKOptions():
-    return "-l mem_free=1.4G"
-
-
 def makeSoup(address):
     sock = urlopen(address)
     htmlSource = sock.read()
@@ -41,23 +36,23 @@ def makeSoup(address):
 ##############################################################################
 
 
-def GATKReadGroups(infile, outfile, genome,
+def GATKReadGroups(infile, outfile, dictionary,
                    library="unknown", platform="Illumina",
-                   platform_unit="1", track="unknown"):
+                   platform_unit="1", track="unknown", gatkmem="2G"):
     '''Reorders BAM according to reference fasta and adds read groups'''
 
     if track == 'unknown':
         track = P.snip(os.path.basename(infile), ".bam")
     tmpdir_gatk = P.get_temp_dir('.')
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     statement = '''picard ReorderSam
-                    INPUT=%(infile)s
-                    OUTPUT=%(tmpdir_gatk)s/%(track)s.reordered.bam
-                    REFERENCE=%(genome)s
-                    ALLOW_INCOMPLETE_DICT_CONCORDANCE=true
-                    VALIDATION_STRINGENCY=SILENT ;''' % locals()
+                    -INPUT %(infile)s
+                    -OUTPUT %(tmpdir_gatk)s/%(track)s.reordered.bam
+                    -SEQUENCE_DICTIONARY %(dictionary)s
+                    -ALLOW_INCOMPLETE_DICT_CONCORDANCE true
+                    -VALIDATION_STRINGENCY SILENT ;''' % locals()
 
     statement += '''samtools index %(tmpdir_gatk)s/%(track)s.reordered.bam ;
                  ''' % locals()
@@ -80,55 +75,28 @@ def GATKReadGroups(infile, outfile, genome,
 ##############################################################################
 
 
-def GATKIndelRealign(infile, outfile, genome, intervals, padding, threads=4):
-    '''Realigns BAMs around indels using GATK'''
-
-    intervalfile = outfile.replace(".bam", ".intervals")
-    job_options = getGATKOptions()
-    job_threads = 3
-
-    statement = '''GenomeAnalysisTK
-                    -T RealignerTargetCreator
-                    -o %(intervalfile)s
-                    --num_threads %(threads)s
-                    -R %(genome)s
-                    -L %(intervals)s
-                    -ip %(padding)s
-                    -I %(infile)s; ''' % locals()
-
-    statement += '''GenomeAnalysisTK
-                    -T IndelRealigner
-                    -o %(outfile)s
-                    -R %(genome)s
-                    -I %(infile)s
-                    -targetIntervals %(intervalfile)s;''' % locals()
-    P.run(statement)
-
-##############################################################################
-
-
 def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
-                  solid_options=""):
+                  options="", gatkmem="2G"):
     '''Recalibrates base quality scores using GATK'''
 
     track = P.snip(os.path.basename(infile), ".bam")
     tmpdir_gatk = P.get_temp_dir('.')
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK
-                    -T BaseRecalibrator
-                    --out %(tmpdir_gatk)s/%(track)s.recal.grp
+    statement = '''gatk
+                    BaseRecalibrator
+                    -O %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -L %(intervals)s
                     -ip %(padding)s
                     -I %(infile)s
-                    --knownSites %(dbsnp)s %(solid_options)s ;
+                    --known-sites %(dbsnp)s %(options)s ;
                     ''' % locals()
 
-    statement += '''GenomeAnalysisTK
-                    -T PrintReads -o %(outfile)s
-                    -BQSR %(tmpdir_gatk)s/%(track)s.recal.grp
+    statement += '''gatk
+                    ApplyBQSR -O %(outfile)s
+                    --bqsr-recal-file %(tmpdir_gatk)s/%(track)s.recal.grp
                     -R %(genome)s
                     -I %(infile)s ;
                     ''' % locals()
@@ -140,21 +108,19 @@ def GATKBaseRecal(infile, outfile, genome, intervals, padding, dbsnp,
 
 
 def haplotypeCaller(infile, outfile, genome,
-                    dbsnp, intervals, padding, options):
+                    dbsnp, intervals, padding, options, gatkmem = "2G"):
     '''Call SNVs and indels using GATK HaplotypeCaller in all members of a
     family together'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK
-                    -T HaplotypeCaller
+    statement = '''gatk
+                    HaplotypeCaller
                     -ERC GVCF
-                    -variant_index_type LINEAR
-                    -variant_index_parameter 128000
-                    -o %(outfile)s
+                    -O %(outfile)s
                     -R %(genome)s
                     -I %(infile)s
-                    --dbsnp %(dbsnp)s
+                    --dbsnp %(dbsnp)s 
                     -L %(intervals)s
                     -ip %(padding)s
                     %(options)s''' % locals()
@@ -164,16 +130,61 @@ def haplotypeCaller(infile, outfile, genome,
 ##############################################################################
 
 
-def genotypeGVCFs(inputfiles, outfile, genome, options):
+def consolidateGVCFs(inputfiles, outfile, inputlen, dbmem="20G"):
     '''Joint genotyping of all samples together'''
-    job_options = getGATKOptions()
-    job_threads = 3
 
-    statement = '''GenomeAnalysisTK
-                    -T GenotypeGVCFs
-                    -o %(outfile)s
+    runmem = dbmem
+    if not re.match(r' ', runmem):
+       runmem  = re.sub(r'([KMGT])', r' \1', runmem)
+    number, unit = [string.strip() for string in runmem.split()]
+    job_threads = 2
+    job_memory = f"{float(number)*1.2/job_threads:.1f}{unit}"
+    tmpdir = P.get_temp_dir('.')
+
+    tmpfile = P.get_temp_filename(".", suffix=".list")
+    chrID = [ 'chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y'] ]
+    with open(tmpfile, 'w+') as f:
+        for contig in chrID:
+            f.write('%s\n' % contig)
+
+    statement = '''gatk
+                    --java-options "-Xmx%(dbmem)s -Xms%(dbmem)s"
+                    GenomicsDBImport
+                    -V %(inputfiles)s
+                    -L %(tmpfile)s
+                    --reader-threads %(job_threads)s
+                    --tmp-dir %(tmpdir)s
+                    --genomicsdb-workspace-path %(outfile)s
+                    ''' % locals()
+    if inputlen > 50:
+        statement += ''' --batch-size 50'''
+    statement += ''' > %(outfile)s.log.tmp 2>&1;
+                     rm -rf %(tmpdir)s ;
+                     mv %(outfile)s.log.tmp %(outfile)s.log''' % locals()
+    P.run(statement)
+
+    os.unlink(tmpfile)
+
+
+##############################################################################
+
+
+def genotypeGVCFs(infile, outfile, genome, options, gatkmem="2G"):
+    '''Joint genotyping of all samples together'''
+    job_memory = gatkmem
+    job_threads = 3
+    infile = P.snip(infile, ".log")
+    tmpdir = P.get_temp_dir('.')
+    logfile = P.snip(outfile,".vcf")+".log"
+
+    statement = '''gatk
+                    GenotypeGVCFs
+                    -O %(outfile)s
                     -R %(genome)s
-                    --variant %(inputfiles)s''' % locals()
+                    -V gendb://%(infile)s
+                    --tmp-dir %(tmpdir)s
+                    %(options)s > %(logfile)s 2>&1;
+                    rm -rf %(tmpdir)s''' % locals()
     P.run(statement)
 
 ##############################################################################
@@ -245,113 +256,90 @@ def strelkaINDELCaller(infile_control, infile_tumor, outfile, genome, config,
 ##############################################################################
 
 
-def variantAnnotator(vcffile, bamlist, outfile, genome,
-                     dbsnp, annotations="", snpeff_file=""):
-    '''Annotate variant file using GATK VariantAnnotator'''
-    job_options = getGATKOptions()
-    job_threads = 3
-
-    if "--useAllAnnotations" in annotations:
-        anno = "--useAllAnnotations"
-    elif annotations:
-        anno = " -A " + " -A ".join(annotations)
-    else:
-        anno = ""
-
-    statement = '''GenomeAnalysisTK -T VariantAnnotator
-                    -R %(genome)s
-                    -I %(bamlist)s
-                    -A SnpEff
-                    --snpEffFile %(snpeff_file)s
-                    -o %(outfile)s
-                    --variant %(vcffile)s
-                    -L %(vcffile)s
-                    --dbsnp %(dbsnp)s
-                    %(anno)s''' % locals()
-    P.run(statement)
-
-##############################################################################
-
-
 def variantRecalibrator(infile, outfile, genome, mode, dbsnp=None,
-                        kgenomes=None, hapmap=None, omni=None, mills=None):
+                        kgenomes=None, hapmap=None, omni=None, mills=None, 
+                        axiom=None, gatkmem = "2G"):
     '''Create variant recalibration file'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
     track = P.snip(outfile, ".recal")
     if mode == 'SNP':
-        statement = '''GenomeAnalysisTK -T VariantRecalibrator
+        statement = '''gatk VariantRecalibrator
         -R %(genome)s
-        -input %(infile)s
-        -resource:hapmap,known=false,training=true,truth=true,prior=15.0 %(hapmap)s
-        -resource:omni,known=false,training=true,truth=true,prior=12.0 %(omni)s
-        -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 %(dbsnp)s
-        -resource:1000G,known=false,training=true,truth=false,prior=10.0 %(kgenomes)s
-        -an QD -an SOR -an MQRankSum
-        -an ReadPosRankSum -an FS -an MQ
-        --maxGaussians 4
+        -V %(infile)s
+        --trust-all-polymorphic
+        -tranche 100.0 -tranche 99.95 -tranche 99.9 -tranche 99.8 -tranche 99.6 -tranche 99.5 -tranche 99.4 -tranche 99.3 -tranche 99.0 -tranche 98.0 -tranche 97.0 -tranche 90.0
+        -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ -an SOR -an InbreedingCoeff
         -mode %(mode)s
-        -recalFile %(outfile)s
-        -tranchesFile %(track)s.tranches
-        -rscriptFile %(track)s.plots.R ''' % locals()
+        --max-gaussians 6
+        --resource:hapmap,known=false,training=true,truth=true,prior=15 %(hapmap)s
+        --resource:omni,known=false,training=true,truth=true,prior=12 %(omni)s
+        --resource:1000G,known=false,training=true,truth=false,prior=10 %(kgenomes)s
+        --resource:dbsnp,known=true,training=false,truth=false,prior=7 %(dbsnp)s
+        -O %(track)s.recal
+        --tranches-file %(track)s.tranches
+        --rscript-file %(track)s.plots.R
+        > %(track)s.log 2>&1 ''' % locals()
         P.run(statement)
     elif mode == 'INDEL':
-        statement = '''GenomeAnalysisTK -T VariantRecalibrator
+        statement = '''gatk VariantRecalibrator
         -R %(genome)s
-        -input %(infile)s
-        -resource:mills,known=true,training=true,truth=true,prior=12.0 %(mills)s
-        -an QD -an MQRankSum
-        -an ReadPosRankSum -an FS -an MQ
-        --maxGaussians 4
-        --minNumBadVariants 5000
+        -V %(infile)s
+        --resource:mills,known=true,training=true,truth=true,prior=12 %(mills)s
+        --resource:axiomPoly,known=false,training=true,truth=false,prior=10 %(axiom)s
+        --resource:dbsnp,known=true,training=false,truth=false,prior=2 %(dbsnp)s
+        -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ
+        --max-gaussians 4
         -mode %(mode)s
-        -recalFile %(outfile)s
-        -tranchesFile %(track)s.tranches
-        -rscriptFile %(track)s.plots.R ''' % locals()
+        -O %(track)s.recal
+        --tranches-file %(track)s.tranches
+        --rscript-file %(track)s.plots.R 
+        > %(track)s.log 2>&1 ''' % locals()
         P.run(statement)
 
 ##############################################################################
 
 
-def applyVariantRecalibration(vcf, recal, tranches, outfile, genome, mode):
+def applyVQSR(vcf, recal, tranches, outfile, genome, mode, gatkmem):
     '''Perform variant quality score recalibration using GATK '''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK -T ApplyRecalibration
+    statement = '''gatk ApplyVQSR
     -R %(genome)s
-    -input:VCF %(vcf)s
-    -recalFile %(recal)s
-    -tranchesFile %(tranches)s
-    --ts_filter_level 99.0
+    -V %(vcf)s
+    --recal-file %(recal)s
+    --tranches-file %(tranches)s
+    --truth-sensitivity-filter-level 99.7
+    --create-output-variant-index true
     -mode %(mode)s
-    -o %(outfile)s ''' % locals()
+    -O %(outfile)s
+    > %(outfile)s.log 2>&1  ''' % locals()
     P.run(statement)
 
 ##############################################################################
 
 
-def vcfToTable(infile, outfile, genome, columns):
+def vcfToTable(infile, outfile, genome, columns, gatkmem):
     '''Converts vcf to tab-delimited file'''
-    job_options = getGATKOptions()
+    job_memory = gatkmem
     job_threads = 3
 
-    statement = '''GenomeAnalysisTK -T VariantsToTable
+    statement = '''gatk VariantsToTable
                    -R %(genome)s
                    -V %(infile)s
-                   --showFiltered
-                   --allowMissingData
+                   --show-filtered
                    %(columns)s
-                   -o %(outfile)s''' % locals()
+                   -O %(outfile)s''' % locals()
     P.run(statement)
 
 ##############################################################################
 
 
 def selectVariants(infile, outfile, genome, select):
-    '''Filter de novo variants based on provided jexl expression'''
-    statement = '''GenomeAnalysisTK -T SelectVariants
+    '''Filter de novo variants based on provided expression'''
+    statement = '''gatk SelectVariants
                     -R %(genome)s
                     --variant %(infile)s
                     -select '%(select)s'
@@ -420,22 +408,6 @@ def buildSelectStatementfromPed(filter_type, pedfile, template):
     return select
 
 ##############################################################################
-
-
-def guessSex(infile, outfile):
-    '''Guess the sex of a sample based on ratio of reads
-    per megabase of sequence on X and Y'''
-    statement = '''calc `samtools idxstats %(infile)s
-                    | grep 'X'
-                    | awk '{print $3/($2/1000000)}'`
-                    /`samtools idxstats %(infile)s | grep 'Y'
-                    | awk '{print $3/($2/1000000)}'`
-                    | tr -d " " | tr "=" "\\t" | tr "/" "\\t"
-                    > %(outfile)s'''
-    P.run(statement)
-
-##############################################################################
-
 
 def filterMutect(infile, outfile, logfile,
                  control_id, tumour_id,
@@ -910,313 +882,6 @@ def filterQuality(infile, qualstr, qualfilter, outfiles):
 
 
 @cluster_runnable
-def FilterExacCols(infile, exac_suffs, exac_thresh):
-    '''
-    Returns a set of line indices indicating lines where either of the alleles
-    called have a frequency of greater that exac_thresh in any of the
-    populations specified as exac_suffs.
-    Where no data is available an allele frequency of -1 is used.
-
-    Exac provide data as AC_xxx and AN_xxx where AC is the allele count
-    - the number of times the allele has been called
-    - and AN is chromosome count - the number of
-    samples in which the allele could have been called - in population xxx.
-    AC / AN = allele frequecy.
-
-    exac_suffs are any columns where an AC_xxx and AN_xxx column is provided
-    in the VCF, e.g. Adj will calculate allele frequency from the AC_Adj
-    and AN_Adj columns
-
-    '''
-    # read columns from the input VCF
-    exac_suffs = exac_suffs.split(",")
-    cols = iotools.open_file(infile).readline().strip().split("\t")
-    nD = dict()
-    afdict = dict()
-    for e in exac_suffs:
-        # find the columns with the appropriate information
-        # Allele count
-        AC_i = cols.index("AC_%s" % (e))
-        # Allele Number
-        AN_i = cols.index("AN_%s" % (e))
-        # Genotype
-        GT_i = cols.index('GT')
-        nlist = set()
-        n = 0
-        AFS = []
-        with iotools.open_file(infile) as input:
-            for line in input:
-                if n > 1:
-                    line = line.strip().split("\t")
-                    # At multi-allelic sites, comma delimited AC and AN values
-                    # are provided
-                    # "." and "NA" indicate no data here - this is represented
-                    # as an AF of -1
-                    AC = line[AC_i].replace(".", "-1").replace(
-                        "NA", "-1").split(",")
-                    AN = line[AN_i].replace(".", "1").replace(
-                        "NA", "1").split(",")
-                    AC = np.array([float(a) for a in AC])
-                    AN = np.array([float(a) for a in AN])
-                    AF = AC / AN
-                    AF2 = [af if af > 0 else 0 for af in AF]
-                    AF = np.insert(AF, 0, (1 - sum(AF2)))
-
-                    # Chromosome count is usually the same for all minor
-                    # alleles (but not always)
-                    # If it is not the same the AC and AN lists should be the
-                    # same length
-                    # Otherwise AN will have length 1
-                    if len(AC) != len(AN):
-                        AN = [AN] * len(AC)
-
-                    # Record the genotype called in this sample for this SNP
-                    GT = line[GT_i]
-                    GT = GT.replace(".", '0')
-                    GT = GT.split("/")
-                    GT[0], GT[1] = int(GT[0]), int(GT[1])
-
-                    # If the variant is not in ExAC the ExAC columns show "."
-                    # but the site
-                    # may still have been called as multi allelic
-                    # - use -1 for all frequencies
-                    # in this case
-                    if max(GT) > (len(AF) - 1):
-                        AF = np.array([-1] * (max(GT) + 1))
-
-                    AF1 = AF[GT[0]]
-                    AF2 = AF[GT[1]]
-                    AFS.append((AF1, AF2))
-                    # Remember where both allele frequencies are
-                    # greater than exac_thresh
-                    if AF1 >= exac_thresh and AF2 >= exac_thresh:
-                        nlist.add(n)
-                else:
-                    AFS.append(('NA', 'NA'))
-                n += 1
-        afdict[e] = AFS
-        nD[e] = nlist
-
-    ns = set.union(*list(nD.values()))
-    return afdict, ns
-
-
-@cluster_runnable
-def FilterFreqCols(infile, thresh, fcols):
-    '''
-    Returns a set of line indices indicating lines where either of the alleles
-    called have a frequency of less than thresh in all of the columns specified
-    in fcols.
-    No information - assigned allele frequency of -1.
-    '''
-    fcols = fcols.split(",")
-    # read the column headings from the variant table
-    cols = iotools.open_file(infile).readline().strip().split("\t")
-    # store allele frequency columns
-    AFdict = dict()
-    # store low frequency indices
-    nD = dict()
-    for col in fcols:
-        ind = cols.index(col)
-        GT_i = cols.index('GT')
-        n = 0
-        nlist = set()
-        AFS = []
-        with iotools.open_file(infile) as input:
-            for line in input:
-                if n > 1:
-                    line = line.strip().split("\t")
-                    GT = line[GT_i].replace(".", "0").split("/")
-                    af = line[ind].split(",")
-                    AF = []
-                    # where the allele frequency is not numeric
-                    # "." or "NA" use -1 to indicate no data
-                    for a in af:
-                        try:
-                            AF.append(float(a))
-                        except:
-                            AF.append(float(-1))
-                    AF2 = [l if l > 0 else 0 for l in AF]
-                    AF = np.array(AF)
-                    AF = np.insert(AF, 0, 1 - sum(AF2))
-                    GT[0] = int(GT[0])
-                    GT[1] = int(GT[1])
-                    # If the variant is not in database the column shows "."
-                    # but the site
-                    # may still have been called as multi allelic
-                    # - use -1 for all frequencies
-                    # in this case
-                    if max(GT[0], GT[1]) > (len(AF) - 1):
-                        AF = [float(-1)] * (max(GT[0], GT[1]) + 1)
-                    AF1 = AF[GT[0]]
-                    AF2 = AF[GT[1]]
-                    if AF1 >= thresh and AF2 >= thresh:
-                        nlist.add(n)
-                    AFS.append((AF1, AF2))
-                else:
-                    AFS.append(('NA', 'NA'))
-                n += 1
-        AFdict[col] = AFS
-        nD[col] = nlist
-
-    ns = set.union(*list(nD.values()))
-    return AFdict, ns
-
-
-def WriteFreqFiltered(infile, exacdict, exacinds, otherdict, otherinds,
-                      outfiles):
-    '''
-    Writes the output of the frequency filtering steps to file, including
-    the new columns showing calculated allele frequency for the allele
-    in this specific sample.
-    '''
-    x = 0
-    out = iotools.open_file(outfiles[0], "w")
-    out2 = iotools.open_file(outfiles[1], "w")
-
-    exaccols = list(exacdict.keys())
-    othercols = list(otherdict.keys())
-
-    # column names for the new columns
-    exacnewcols = ["%s_calc" % c for c in exaccols]
-    othernewcols = ["%s_calc" % c for c in othercols]
-
-    with iotools.open_file(infile) as infile:
-        for line in infile:
-            line = line.strip()
-            if x <= 1:
-                # write the column names
-                out.write("%s\t%s\t%s\n" % (line, "\t".join(exacnewcols),
-                                            "\t".join(othernewcols)))
-            else:
-                freqs = []
-                for key in exaccols:
-                    col = exacdict[key]
-                    freqs.append(col[x])
-                for key in othercols:
-                    col = otherdict[key]
-                    freqs.append(col[x])
-                freqs = [str(freq) for freq in freqs]
-
-                if x not in exacinds and x not in otherinds:
-                    out.write("%s\t%s\n" % (line, "\t".join(freqs)))
-                else:
-                    out2.write("%s\t%s\n" % (line, "\t".join(freqs)))
-            x += 1
-    out.close()
-    out2.close()
-
-
-@cluster_runnable
-def filterRarity(infile, exac, freqs, thresh, outfiles):
-    '''
-    Filter out variants which are common in any of the exac or other
-    population datasets as specified in the pipeline.yml.
-    '''
-    exacdict, exacinds = FilterExacCols(infile, exac, thresh)
-    otherdict, otherinds = FilterFreqCols(infile, thresh, freqs)
-    WriteFreqFiltered(infile, exacdict, exacinds, otherdict,
-                      otherinds, outfiles)
-
-
-@cluster_runnable
-def filterDamage(infile, damagestr, outfiles):
-    '''
-    Filter variants which have not been assessed as damaging by any
-    of the specified tools.
-    Tools and thresholds can be specified in the pipeline.yml.
-
-    Does not account for multiple alt alleles - if any ALT allele has
-    been assessed as damaging with any tool the variant is kept,
-    regardless of if this is the allele called in the sample.
-
-    '''
-    damaging = damagestr.split(",")
-    cols = iotools.open_file(infile).readline().strip().split("\t")
-
-    D = dict()
-    # parses the "damage string" from the pipeline.yml
-    # this should be formatted as COLUMN|result1-result2-...,COLUMN|result1...
-    # where variants with any of these results in this column will
-    # be retained
-    for d in damaging:
-        d = d.split("|")
-        col = d[0]
-        res = d[1].split("-")
-        i = cols.index(col)
-        D[col] = ((res, i))
-
-    x = 0
-    out = iotools.open_file(outfiles[0], "w")
-    out2 = iotools.open_file(outfiles[1], "w")
-    with iotools.open_file(infile) as input:
-        for line in input:
-            if x > 1:
-                # grep for specific strings within this column of this
-                # line of the input file
-                line = line.strip().split("\t")
-                isdamaging = 0
-                for key in D:
-                    res, i = D[key]
-                    current = line[i]
-                    for r in res:
-                        if re.search(r, current):
-                            isdamaging = 1
-                if isdamaging == 1:
-                    out.write("%s\n" % "\t".join(line))
-                else:
-                    out2.write("%s\n" % "\t".join(line))
-            else:
-                out.write(line)
-            x += 1
-    out.close()
-    out2.close()
-
-
-@cluster_runnable
-def filterFamily(infile, infile2, outfiles):
-    '''
-    Filter variants according to the output of calculateFamily -
-    only variants shared by both members of a family will be kept.
-    '''
-    cps1 = set()
-    cps2 = set()
-
-    # make a list of variants in infile1
-    with iotools.open_file(infile) as input:
-        for line in input:
-            line = line.strip().split("\t")
-            chrom = line[0]
-            pos = line[1]
-            cp = "%s_%s" % (chrom, pos)
-            cps1.add(cp)
-
-    # make a list of variants in infile2
-    with iotools.open_file(infile2) as input:
-        for line in input:
-            line = line.strip().split("\t")
-            chrom = line[0]
-            pos = line[1]
-            cp = "%s_%s" % (chrom, pos)
-            cps2.add(cp)
-
-    # only variants in both are of interest
-    cps = cps1 & cps2
-
-    out = iotools.open_file(outfiles[0], "w")
-    out2 = iotools.open_file(outfiles[1], "w")
-    with iotools.open_file(infile) as input:
-        for line in input:
-            line = line.strip().split("\t")
-            if "%s_%s" % (line[0], line[1]) in cps:
-                out.write("%s\n" % "\t".join(line))
-            else:
-                out2.write("%s\n" % "\t".join(line))
-    out.close()
-    out2.close()
-
-
-@cluster_runnable
 def CleanVariantTables(genes, variants, cols, outfile):
     variants = pd.read_csv(variants, sep="\t")
     variants = variants.drop(0)
@@ -1276,3 +941,5 @@ def CleanVariantTables(genes, variants, cols, outfile):
     df.columns = ['gene', 'CHROM', 'POS']
     variants = vp1.merge(df, 'left')
     variants.to_csv(outfile, sep="\t")
+
+    

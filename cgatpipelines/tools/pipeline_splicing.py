@@ -189,6 +189,79 @@ TRACKS = tracks.Tracks(MySample).loadFromDirectory(
 Sample = tracks.AutoSample
 DESIGNS = tracks.Tracks(Sample).loadFromDirectory(
     glob.glob("*.design.tsv"), "(\S+).design.tsv")
+BAMS = glob.glob("*.bam")
+
+
+###################################################################
+###################################################################
+###################################################################
+# Leafcutter workflow
+###################################################################
+
+@follows(mkdir("splicing.dir/leafcutter/junctions"))
+@transform(
+    BAMS,
+    regex(r"mapping.dir/(.+).bam"),
+    r"splicing.dir/leafcutter/junctions/\1.junc"
+)
+def leafcutterExtractJunctions(infile, outfile):
+
+    statement = """
+    regtools junctions extract
+        %(splicing_leafcutter_regtools_options)s
+        %(infile)s
+        -o %(outfile)s
+    """
+
+    P.run(statement)
+
+
+ 
+@follows(mkdir("splicing.dir/leafcutter/clusters"))
+@merge(
+    leafcutterExtractJunctions,
+    "splicing.dir/leafcutter/clusters/leafcutter"
+)
+def leafcutterClusterIntrons(infiles, outfile_prefix):
+
+    junctions = " ".join(infiles)
+
+    statement = """
+    leafcutter_cluster.py
+        -j %(junctions)s
+        -m %(splicing_leafcutter_clustering_min_reads_per_intron)s
+        -o %(outfile_prefix)s
+    """
+
+    P.run(statement)
+   
+
+@follows(mkdir("splicing.dir/leafcutter/diff"))
+@transform(
+    leafcutterClusterIntrons,
+    suffix("leafcutter"),
+    "splicing.dir/leafcutter/diff/results.txt"
+)
+def leafcutterDifferentialSplicing(_, outfile):
+
+    statement = """
+    Rscript run_ds.R
+        -i splicing.dir/leafcutter/clusters/leafcutter_perind_numers.counts.gz
+        -g %(design_groups)s
+        -o splicing.dir/leafcutter/diff
+        --min_samples %(splicing_leafcutter_ds_min_samples)s
+    """
+
+    P.run(statement)
+
+
+@follows(
+    leafcutterExtractJunctions,
+    leafcutterClusterIntrons,
+    leafcutterDifferentialSplicing
+)
+def leafcutter():
+    pass
 
 
 ###################################################################
@@ -231,6 +304,8 @@ def buildGff(infile, outfile):
     P.run(statement)
 
     os.unlink(tmpgff)
+
+
 
 
 @mkdir("counts.dir")
@@ -789,6 +864,9 @@ def collateMATS(infiles, outfile):
     MATS_fdr : string
        :term:`PARAMS`. User specified threshold for result counting
 
+    MATS_psi: string
+       :term: `PARAMS`. User specified PSI threshold for result counting
+
     outfile: string
         summary file containing number of results below FDR threshold
     '''
@@ -811,20 +889,51 @@ def collateMATS(infiles, outfile):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (indir, event), sep='\t')
-        total.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
-        up.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
-        down.append(int(len(temp[(temp['FDR'] <
-                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        # calculate mean coverage for particular junction for each variable
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
+        # three conditions to be met:
+        # 1. FDR thrshold
+        # 2. Fixed PSI threshold
+        # 3. minimum coverage in both conditions
+        total.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                  (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                  (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                  (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        up.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                               (temp['IncLevelDifference'] > PARAMS['MATS_psi']) &
+                               (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                               (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        down.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                 (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
+                                 (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                 (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+
         temp = pd.read_csv("%s/%s.novelJunc.JC.tsv" %
                            (indir, event), sep='\t')
-        total_newJunc.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
-        up_newJunc.append(int(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] > 0.1)])))
-        down_newJunc.append(int(len(temp[(temp['FDR'] <
-                                  float(PARAMS['MATS_fdr'])) & (temp['IncLevelDifference'] < -0.1)])))
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
+        total_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                          (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                          (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                          (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        up_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                       (temp['IncLevelDifference'] > PARAMS['MATS_psi']) &
+                                       (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                       (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+        down_newJunc.append(int(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) &
+                                         (temp['IncLevelDifference'] < -PARAMS['MATS_psi']) &
+                                         (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                         (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
+
         #experimental feature - deactivated       
         #temp = pd.read_csv("%s/%s.novelSS.JC.tsv" %
         #                   (indir, event), sep='\t')
@@ -949,8 +1058,17 @@ def runPermuteMATS(infiles, outfile, design):
     for event in ["SE", "A5SS", "A3SS", "MXE", "RI"]:
         temp = pd.read_csv("%s/%s.MATS.JC.txt" %
                            (os.path.dirname(outfile), event), sep='\t')
-        collate.append(str(len(temp[(temp['FDR'] <
-                                float(PARAMS['MATS_fdr'])) & (abs(temp['IncLevelDifference']) > 0.1)])))
+        
+        temp['SJC_SUM_1'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_1'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_1.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['SJC_SUM_2'] = [sum(x)/len(x) for x in temp.SJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['IJC_SUM_2'] = [sum(x)/len(x) for x in temp.IJC_SAMPLE_2.str.split(',').apply(lambda x: [float(i) for i in x])]
+        temp['1_MAX'] = temp[['SJC_SUM_1','IJC_SUM_1']].max(axis=1)
+        temp['2_MAX'] = temp[['SJC_SUM_2','IJC_SUM_2']].max(axis=1)
+        collate.append(str(len(temp[(temp['FDR'] < float(PARAMS['MATS_fdr'])) & 
+                                  (abs(temp['IncLevelDifference']) > PARAMS['MATS_psi']) &
+                                  (temp['1_MAX'] >= PARAMS['MATS_coverage']) &
+                                  (temp['2_MAX'] >= PARAMS['MATS_coverage'])])))
     with open(outfile, "w") as f:
         f.write("Group1\tGroup2\tSE\tA5SS\tA3SS\tMXE\tRI\n")
         f.write('\t'.join(collate))
@@ -1039,7 +1157,8 @@ def runSashimi(infiles, outfile):
 # Pipeline management
 ###################################################################
 
-@follows(loadMATS,
+@follows(leafcutter, 
+         loadMATS,
          loadCollateMATS,
          loadPermuteMATS,
          runSashimi,

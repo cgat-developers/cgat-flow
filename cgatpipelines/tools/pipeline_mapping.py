@@ -225,7 +225,6 @@ import cgatcore.iotools as iotools
 import cgat.BamTools.bamtools as BamTools
 import cgatpipelines.tasks.geneset as geneset
 import cgatpipelines.tasks.mapping as mapping
-import cgatpipelines.tasks.mappingqc as mappingqc
 
 # Pipeline configuration
 P.get_parameters(
@@ -247,7 +246,6 @@ PARAMS.update(P.peek_parameters(
     restrict_interface=True))
 
 geneset.PARAMS = PARAMS
-mappingqc.PARAMS = PARAMS
 
 # Helper functions mapping tracks to conditions, etc
 # determine the location of the input files (reads).
@@ -1982,7 +1980,7 @@ if "merge_pattern_input" in PARAMS and PARAMS["merge_pattern_input"]:
 
         infiles = " ".join(infiles)
         statement = '''
-        samtools merge %(outfile)s %(infiles)s >& %(outfile)s.log &&
+        samtools merge -f %(outfile)s %(infiles)s >& %(outfile)s.log &&
         samtools index %(outfile)s
         '''
         P.run(statement)

@@ -539,7 +539,7 @@ def buildSalmonIndex(infile, outfile):
        path to output file
     '''
 
-    job_memory = "30G"
+    job_memory = "40G"
     threads = 12
     if PARAMS["salmon_threads"] is not None:
         threads = PARAMS["salmon_threads"]
@@ -1037,6 +1037,7 @@ def count():
 def filterDESeq2(infiles, outfile, design_name, quantifier_name):
     ''' Load counts into RDS object and filter'''
 
+    job_memory = '20G'
     counts, design = infiles
     transcripts, genes = counts
     quantifier_name = quantifier_name.lower()

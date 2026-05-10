@@ -9,6 +9,8 @@
 # the genome to use
 genome: human_g1k_v37
 
+picard_memory: 9G
+
 web_dir: ../web
 
 report_engine: cgatreport

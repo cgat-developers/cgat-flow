@@ -291,22 +291,6 @@ def buildRrnaIntervals(infile, outfile):
 #########################################################################
 
 
-@follows(mkdir("StrandSpec.dir"))
-@transform("*.bam",
-           suffix(".bam"),
-           r"StrandSpec.dir/\1.strand")
-def strandSpecificity(infile, outfile):
-    '''This function will determine the strand specificity of your library
-    from the bam file'''
-
-    statement = (
-        "cgat bam2libtype "
-        "--max-iterations 10000 "
-        "< {infile} "
-        "> {outfile}".format(**locals()))
-    return P.run(statement)
-
-
 @follows(mkdir("BamFiles.dir"))
 @transform("*.bam",
            regex("(.*).bam$"),
@@ -355,6 +339,26 @@ def buildPicardDuplicationStats(infile, outfile):
     bamstats.buildPicardDuplicationStats(infile, outfile,
                                          PICARD_MEMORY)
 
+
+@follows(mkdir("RSeQC.dir"))
+@follows(countReads)
+@transform(intBam,
+           regex("BamFiles.dir/(.*).bam$"),
+           r"RSeQC.dir/\1.read_distribution")
+def runRSeQC(infile, outfile):
+
+    bed_file = "/ceph/project/talbotlab/jscaber/iPS-C9TrapYan/bamstats-fullgenome/hg38_GENCODE.v38.bed"
+
+    job_memory = "6G"
+
+    statement = '''
+    read_distribution.py
+         -i %(infile)s
+         -r %(bed_file)s
+    > %(outfile)s
+    '''
+
+    P.run(statement)
 
 @follows(mkdir("BamStats.dir"))
 @follows(countReads)
@@ -804,14 +808,6 @@ def loadTranscriptProfile(infiles, outfile):
     bamstats.loadTranscriptProfile(infiles, outfile)
 
 
-@P.add_doc(bamstats.loadStrandSpecificity)
-@jobs_limit(PARAMS.get("jobs_limit_db", 1), "db")
-@follows(loadTranscriptProfile)
-@merge(strandSpecificity, "strand_spec.load")
-def loadStrandSpecificity(infiles, outfile):
-    ''' merge strand specificity data into a single table'''
-    bamstats.loadStrandSpecificity(infiles, outfile)
-
 
 @merge((loadBAMStats, loadPicardStats, loadContextStats), "view_mapping.load")
 def createViewMapping(infile, outfile):
@@ -856,8 +852,7 @@ def views():
          loadIdxStats,
          loadExonValidation,
          loadPicardRnaSeqMetrics,
-         loadTranscriptProfile,
-         loadStrandSpecificity)
+         loadTranscriptProfile)
 def full():
     '''a dummy task to run all tasks in the pipeline'''
     pass

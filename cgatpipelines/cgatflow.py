@@ -21,7 +21,7 @@ import os
 import sys
 import re
 import glob
-import imp
+import importlib.util
 import cgatpipelines
 
 
@@ -84,9 +84,10 @@ def main(argv=None):
     # remove 'cgatflow' from sys.argv
     del sys.argv[0]
 
-    (file, pathname, description) = imp.find_module(pipeline, paths)
-
-    module = imp.load_module(pipeline, file, pathname, description)
+    spec = importlib.util.spec_from_file_location(pipeline, path+"/"+pipeline+".py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[pipeline] = module
+    spec.loader.exec_module(module)
 
     module.main(sys.argv)
 

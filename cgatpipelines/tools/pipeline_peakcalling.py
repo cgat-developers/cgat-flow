@@ -609,7 +609,7 @@ def buildBigWig(infile, outfile):
     job_memory = "3G"
     statement = '''bedtools genomecov
     -ibam %(inf)s
-    -g %(contig_sizes)s
+
     -bg
     -scale %(scale)f
     > %(tmpfile)s &&
@@ -1263,7 +1263,7 @@ def splitForIDR(infile, outfiles):
     pairs['Condition'] = pairs['Condition'].astype('str')
     pairs['Tissue'] = pairs['Tissue'].astype('str')
     for p in pairs.index.values:
-        p = pairs.ix[p]
+        p = pairs.loc[p]
         p1 = P.snip(p[0].split("/")[-1])
         p2 = P.snip(p[1].split("/")[-1])
 

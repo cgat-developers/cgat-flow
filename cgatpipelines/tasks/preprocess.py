@@ -473,12 +473,10 @@ class Trimmomatic(ProcessTool):
             -threads %(threads)i
             -phred%(offset)s
             %(infile1)s %(infile2)s
-            %(outfile1)s %(output_prefix)s.1.unpaired
-            %(outfile2)s %(output_prefix)s.2.unpaired
+            %(outfile1)s %(output_prefix)s.1.unpaired.gz
+            %(outfile2)s %(output_prefix)s.2.unpaired.gz
             %(processing_options)s
-            2>> %(output_prefix)s.log &&
-            
-            gzip %(output_prefix)s.*.unpaired
+            2>> %(output_prefix)s.log
             ''' % locals()
 
         return cmd
@@ -526,6 +524,7 @@ class Cutadapt(ProcessTool):
         prefix = self.prefix
         processing_options = self.processing_options
         untrimmed = self.untrimmed
+        threads = self.threads
 
         assert len(infiles) == len(outfiles)
 
@@ -546,11 +545,9 @@ class Cutadapt(ProcessTool):
             cmds.append('''
             cutadapt %(processing_options)s %(in1)s %(in2)s
                      -p %(out2)s -o %(out1)s
+                     --cores=%(threads)s
             2>> %(output_prefix)s.log ''' % locals())
 
-            if untrimmed:
-                cmds.append("gzip %s" % untrimmed_output1)
-                cmds.append("gzip %s" % untrimmed_output2)
 
         else:
             for infile, outfile in zip(infiles, outfiles):
@@ -560,13 +557,9 @@ class Cutadapt(ProcessTool):
                     processing_options += " --untrimmed-output=%s" % \
                         outfile_untrimmed
 
-                cmds.append('''zcat %(infile)s
-                | cutadapt %(processing_options)s -
-                2>> %(output_prefix)s.log
-                | gzip > %(outfile)s''' % locals())
-
-                if untrimmed:
-                    cmds.append("gzip %s" % outfile_untrimmed)
+                cmds.append('''
+                cutadapt %(processing_options)s %(infile)s -o %(outfile)s
+                2>> %(output_prefix)s.log''' % locals())
 
         return " && ".join(cmds)
 
@@ -624,9 +617,9 @@ class Flash(ProcessTool):
         %(processing_options)s
         -o %(track)s
         -d %(outdir)s
+        -t %%(threads)s
+        --compress
         >& %(output_prefix)s-flash.log &&
-        
-        gzip %(outdir)s/* &&
         
         mv %(outdir)s/%(track)s.extendedFrags.fastq.gz %(outfile)s
         ''' % locals()

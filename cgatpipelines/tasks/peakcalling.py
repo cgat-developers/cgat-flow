@@ -520,7 +520,13 @@ def filterBams(infile, outfiles, filters, bedfiles, blthresh, pe, strip, qual,
     T = P.get_temp_filename(".")
     # "bamout" was generated above as part of the main statement
     # here, check it one more time while writing/copying "bamout" to <T>.bam
-    checkBams(bamout, filters, qual, pe, T, contigs_to_remove, submit=True, job_memory=job_memory)
+    checkBams(bamout,
+              filters,
+              qual,
+              pe,
+              T,
+              contigs_to_remove,
+              submit=True, job_memory=job_memory)
     if int(keep_intermediates) == 1:
         shutil.copy(bamout, bamout.replace(".bam", "_beforepaircheck.bam"))
     shutil.move("%s.bam" % T, bamout)
@@ -844,33 +850,41 @@ def makePseudoBams(infile, outfiles, pe, randomseed, filters):
     os.unlink(tmp_bam_filename)
     lens = []
 
+    for outf in outfiles:
+        bamfile = pysam.AlignmentFile(outf,"rb")
+        if pe is True and "unpaired" in filters and "secondary" in filters:
+            all_reads = 0
+            unique_names = 0
+
+            current_name = None
+            for read in bamfile:
+                all_reads += 1
+                if read.qname != current_name:
+                    unique_names += 1
+                    current_name = read.qname
+
+            expectedreads = all_reads // 2
+
+            assert (
+                (unique_names <= expectedreads + 2) &
+                (unique_names >= expectedreads - 2)), """
+                Error splitting bam file %(outf)s\
+                %(all_reads)i reads in bam file and\
+                %(unique_names)i unique read names -
+                expecting %(expectedreads)i unique read names\
+                """ % locals()
+            lens.append(all_reads)
+        else:
+            lens.append(bamfile.count())
+ 
+        bamfile.close()
+        
     # sort output
     for outf in outfiles:
         sortIndex(outf)
 
     # check that there are twice as many reads as read names for a paired
     # end bam file and check the lengths of the files
-    for outf in outfiles:
-        bamfile = pysam.AlignmentFile(outf, "rb")
-        all = []
-        for nam in bamfile:
-            all.append(nam.qname)
-
-        if pe is True and "unpaired" in filters and "secondary" in filters:
-            allreads = len(all)
-            uniquereads = len(set(all))
-            expectedreads = len(all) // 2
-            assert (
-                (len(set(all)) <= (len(all) // 2) + 2) &
-                (len(set(all)) >= (len(all) // 2) - 2)), """
-                Error splitting bam file %(outf)s\
-                %(allreads)i reads in bam file and\
-                %(uniquereads)s unique read names -
-                expecting %(expectedreads)i unique read names\
-                """ % locals()
-
-        lens.append(bamfile.count())
-
     E.info("Bamfile 1 length %i, Bamfile 2 length %i" % (lens[0], lens[1]))
 
 #############################################
